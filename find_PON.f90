@@ -13,6 +13,11 @@ SUBROUTINE find_PON
      IF (P1_p(yy) < zero) THEN
         P1_p(yy) = zero
      END IF
+! Flagella.v.0
+     IF (Pnano1_p(yy) < zero) THEN
+        Pnano1_p(yy)= zero
+     END IF
+
      IF (NO1_p(yy) < zero) THEN
         NO1_p(yy) = zero
      END IF
@@ -28,8 +33,10 @@ SUBROUTINE find_PON
   END DO
  
   DO xx = 1,M
-     PON%new(xx) = P1_p(xx)+Detritus1_p(1,xx)+Detritus1_p(2,xx)
-     PON%old(xx) = P%micro%new(xx)+Detritus(1)%D%new(xx)+Detritus(2)%D%new(xx)
+     PON%new(xx) = P1_p(xx)+Pnano1_p(xx)+Detritus1_p(1,xx)+Detritus1_p(2,xx)
+     !Flagella.v.0 PON%new(xx) = P1_p(xx)+Detritus1_p(1,xx)+Detritus1_p(2,xx)
+     PON%old(xx) = P%nano%new(xx)+P%micro%new(xx)+Detritus(1)%D%new(xx)+Detritus(2)%D%new(xx)
+     !Flagella.v.0 PON%old(xx) = P%micro%new(xx)+Detritus(1)%D%new(xx)+Detritus(2)%D%new(xx)
      newNO(xx) = NO1_p(xx)
      newNH(xx) = NH1_p(xx)
   END DO
