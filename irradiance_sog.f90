@@ -1,5 +1,8 @@
-SUBROUTINE irradiance_sog(clouds,cf,t_ime,Jday, In, Ipar, d, waters, I_k, Qs,&
-     euphotic,Qriver,hh,P_i)
+! $Id$
+! $Source$
+
+SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
+     waters, I_k, Qs, euphotic, Qriver, hh, P_i)
 
       USE mean_param
       USE surface_forcing
@@ -60,6 +63,7 @@ SUBROUTINE irradiance_sog(clouds,cf,t_ime,Jday, In, Ipar, d, waters, I_k, Qs,&
       ELSE
          II = 0.
       END IF
+
 ! so II is the incoming radiation
 
       Qs = Qso*(((clouds%type(of)%A+clouds%type(of)%B*a)*a+clouds%type(of)%B*b**2.0/2.0)*&
@@ -89,9 +93,10 @@ SUBROUTINE irradiance_sog(clouds,cf,t_ime,Jday, In, Ipar, d, waters, I_k, Qs,&
      ! plank=P_i%micro%new(1)+P_i%micro%new(2)+P_i%micro%new(3)+P_i%micro%new(4)+P_i%micro%new(5)
      ! plank=plank/5;
 
+         KK = 0.0146 * P_i%micro%new(1) + Qriver * 3.6597e-05 &
+              - 0.0110 * hh%new + 0.2697
       DO k = 1, d%M    
          !KK=0.0108*P_i%micro%new(1)+Qriver*3.9232e-05-0.0117*hh%new+0.2713
-         KK=0.0146*P_i%micro%new(1)+Qriver*3.6597e-05-0.0110*hh%new+0.2697
          Ipar(k) = Ipar(0)*EXP(-d%d_i(k)*KK)
          Iparmax(k) = Iparmax(0)*EXP(-d%d_i(k)*KK)
 
@@ -135,7 +140,8 @@ ELSE IF (j==2) THEN !! this is the new total light scheme, jan 2006
 
 !In(k)=0.70*II*EXP(-d%d_i(k)*(1.4303*KK+0.8221)) + 0.30*II*EXP(-d%d_i(k)*(0.646*KK-0.0245))
 
-In(k)=0.70*II*EXP(-d%d_i(k)*(0.8102*KK+1.1854)) + 0.30*II*EXP(-d%d_i(k)*(0.8226*KK-0.0879))
+In(k) = 0.70 * II * exp(-d%d_i(k) * (0.8102 * KK + 1.1854)) &
+     + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK -0.0879))
 
 
 ENDIF !this turns this Total light scheme off or on
@@ -169,5 +175,3 @@ write(556,*)KK
 
 
 END SUBROUTINE irradiance_sog
-
-
