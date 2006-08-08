@@ -3,7 +3,18 @@ $Id$
 List of tags in this project's repository and their meaning:
 
 UBC_EOS	- VENDOR_TAG used for initial import
+
 v1_9	- RELEASE_TAG used for initial import
+
 v1_9_1	- rev where the code successfully compiles and execute with
 	  pgf90: FFLAGS = -O0 -g -Mbounds -Mdclchk -Mstandard -Minform=warn
 	  g95: FFLAGS = -O0 -g -fimplicit-none -fbounds-check -ftrace=full -Wall
+
+v2_0    - headers added to profile results file so that profiles can be
+          analyzed and compared using compareSOG
+	- several critical bugs, mostly found by Susan, corrected
+	- physics results agree well with kcollins_06 on coho, but
+          there are still small differences between results on coho
+          and on ludwig/clara
+
+# end of file
