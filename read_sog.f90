@@ -32,7 +32,7 @@ subroutine read_sog
   yr=year_o
   ! *** Name of the wind data file should be moved to the run 
   ! *** parameters file **
-  open(unit = 12, file = "input/wind/SH200123456_rot.dat", &
+  open(unit = 12, file = "../sog-forcing/wind/SHcompRotFmt.dat", &
        status = "OLD", action = "READ")
   !OPEN(UNIT = 12,FILE = "input/wind/wtwice.dat",STATUS = "OLD", &
   !    ACTION = "READ")
@@ -59,44 +59,21 @@ subroutine read_sog
   ! Read the cloud fraction data
   ! *** Name of the cloud faction data file should be moved to the 
   ! *** run parameters file **
-  open(12, file="input/met/yvr/cf200123456.dat", &
+  open(12, file="../sog-forcing/met/YVRCombCF.dat", &
        status = "OLD", action = "READ")
   ! *** This appears to be some number of year days ~(5.25 * 365)
   ! *** Should be defined elsewhere, or better, calculated from the data read
-  ndays = 1919
+  ndays = 1918
   do ic = 1, ndays
      read(12, *) stn, year, month, day, para, (cf(ic,j), j = 1, 24)
   enddo
+
   close (12)
-  ! Interpolate data to fill in missing observations
-  ! *** This code is used several places, s/b a subroutine
-  do ic = 1, ndays
-     do j = 1, 24
-        if (cf(ic,j) < -100) then
-           idl = 0
-           idu = 0
-           il = ic
-           jl = j
-           do while (cf(il,jl) < 0)
-              call stepdown(il, jl)
-              idl = idl + 1
-              !                  write (*,*) il,jl,cf(il,jl),' cf'
-           enddo
-           iu = ic
-           ju = j
-           do while (cf(iu,ju) < 0)
-              call stepup(iu, ju)
-              idu = idu + 1
-           enddo
-           cf(ic,j) = (idu * cf(il,jl) + idl * cf(iu,ju)) / (idu + idl)
-        endif
-     enddo
-  enddo
 
   ! Read the air temperature data
   ! *** Name of the air temperature data file should be moved to the 
   ! *** run parameters file **
-  open(12, file="input/met/yvr/temp200123456.dat", &
+  open(12, file="../sog-forcing/met/YVRCombATemp.dat", &
        status = "OLD", action = "READ")
   do ic = 1, ndays
      read(12, *) stn, year, month, day, para, (atemp(ic,j), j = 1, 24)
@@ -104,29 +81,6 @@ subroutine read_sog
   enddo
   close(12)
   ! *** Should confirm that dates are in sync with wind data **
-  ! Interpolate temperature data to fill in missing observations
-  ! *** This code is used several places, s/b a subroutine
-  do ic = 1, ndays
-     do j = 1, 24
-        if (atemp(ic,j).lt.-100) then
-           idl = 0
-           idu = 0
-           il = ic
-           jl = j
-           do while (atemp(il,jl).lt.0)
-              call stepdown (il,jl)
-              idl = idl + 1
-           enddo
-           iu = ic
-           ju = j
-           do while (atemp(iu,ju).lt.0)
-              call stepup(iu,ju)
-              idu = idu + 1
-           enddo
-           atemp(ic,j) = (idu*atemp(il,jl)+idl*atemp(iu,ju))/(idu+idl)
-        endif
-     enddo
-  enddo
   ! Take out the times 10 scaling of the raw temperature data and
   ! convert temperatures from Celius to Kelvin
   ! *** We need a C2K() utility function
@@ -139,36 +93,13 @@ subroutine read_sog
   ! Read air humidity data
   ! *** Name of the humidity data file should be moved to the 
   ! *** run parameters file **
-  open(12, file="input/met/yvr/hum200123456.dat", &
+  open(12, file="../sog-forcing/met/YVRCombHum.dat", &
        status = "OLD", action = "READ")
   do ic = 1, ndays
      read(12, *) stn, year, month, day, para, (humid(ic,j), j = 1, 24)
   enddo
   close(12)
   ! *** Should confirm that dates are in sync with wind data **
-  ! Interpolate humidity data to fill in missing observations
-  ! *** This code is used several places, s/b a subroutine
-  do ic=1,ndays
-     do j=1,24
-        if (humid(ic,j).lt.-100) then
-           idl = 0
-           idu = 0
-           il = ic
-           jl = j
-           do while (humid(il,jl).lt.0)
-              call stepdown (il,jl)
-              idl = idl + 1
-           enddo
-           iu = ic
-           ju = j
-           do while (humid(iu,ju).lt.0)
-              call stepup(iu,ju)
-              idu = idu + 1
-           enddo
-           humid(ic,j) = (idu*humid(il,jl)+idl*humid(iu,ju))/(idu+idl)
-        endif
-     enddo
-  enddo
 
   ! Read Fraser River flow data
   open(12, file="input/rivers/fr200123456.dat", &
@@ -259,41 +190,3 @@ subroutine read_sog
 
 end subroutine read_sog
 
-!------------------------------------------------------------
-subroutine stepdown (il, jl)
-
-  ! Adjust array indices "downward" for interpolation of
-  ! missing meteorological data
-
-  implicit none
-
-  integer, intent(inout) :: il, jl
-
-  if (jl == 1) then
-     il = il - 1
-     jl = 24
-  else
-     il = il
-     jl = jl - 1
-  endif
-
-end subroutine stepdown
-
-subroutine stepup(iu, ju)
-
-  ! Adjust array indices "upward" for interpolation of
-  ! missing meteorological data
-
-  implicit none
-
-  integer, intent(inout) :: iu, ju
-
-  if (ju == 24) then
-     iu = iu + 1
-     ju = 1
-  else
-     iu = iu
-     ju = ju + 1
-  endif
-
-end subroutine stepup
