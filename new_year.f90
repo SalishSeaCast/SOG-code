@@ -1,4 +1,5 @@
-SUBROUTINE new_year(day_ti,o_day, o_year, ti, ddt,day_ch,day_ch2, month,data_point)
+subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
+     month, data_point)
 
   USE mean_param
   USE surface_forcing      
