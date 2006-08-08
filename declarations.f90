@@ -81,7 +81,7 @@ module declarations
   DOUBLE PRECISION :: u_star, w_star,L_star, day_time, Io, h_Ekman  !depth
   !friction vel, convective vel scale
   !monin_obukov length and julian day
-  DOUBLE PRECISION::e_flux, beta_t1, beta_t 
+  DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
   INTEGER, DIMENSION(:), ALLOCATABLE::Q_test
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::V_t_square, &
        Ri_b, Q_n, F_n, &
