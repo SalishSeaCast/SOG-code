@@ -93,8 +93,12 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
      ! plank=P_i%micro%new(1)+P_i%micro%new(2)+P_i%micro%new(3)+P_i%micro%new(4)+P_i%micro%new(5)
      ! plank=plank/5;
 
-         KK = 0.0146 * P_i%micro%new(1) + Qriver * 3.6597e-05 &
-              - 0.0110 * hh%new + 0.2697
+      !V.flagella.0
+!!$         KK = 0.0146 * P_i%micro%new(1) + Qriver * 3.6597e-05 &
+!!$              - 0.0110 * hh%new + 0.2697
+      !added V.flagella.01
+      KK = 0.0146 * (P_i%micro%new(1) + P_i%nano%new(1)) &
+           + Qriver * 3.6597e-05 - 0.0110 * hh%new + 0.2697
       DO k = 1, d%M    
          !KK=0.0108*P_i%micro%new(1)+Qriver*3.9232e-05-0.0117*hh%new+0.2713
          Ipar(k) = Ipar(0)*EXP(-d%d_i(k)*KK)
@@ -141,7 +145,7 @@ ELSE IF (j==2) THEN !! this is the new total light scheme, jan 2006
 !In(k)=0.70*II*EXP(-d%d_i(k)*(1.4303*KK+0.8221)) + 0.30*II*EXP(-d%d_i(k)*(0.646*KK-0.0245))
 
 In(k) = 0.70 * II * exp(-d%d_i(k) * (0.8102 * KK + 1.1854)) &
-     + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK -0.0879))
+     + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK - 0.0879))
 
 
 ENDIF !this turns this Total light scheme off or on
