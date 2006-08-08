@@ -87,7 +87,7 @@ program SOG
   D_bins = 3
   grid%M = M
   grid%D = D
-  wind_n = 46056
+  wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
   Large_data_size = 63617
 
