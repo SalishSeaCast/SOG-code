@@ -31,6 +31,10 @@ subroutine find_new
         P1_p(yy) = zero
         neg_count = neg_count + 1
      END IF
+     IF (Pnano1_p(yy) < zero) THEN
+        Pnano1_p(yy)= zero
+        neg_count = neg_count + 1
+     END IF
      IF (NO1_p(yy) < zero) THEN
         NO1_p(yy) = zero
         neg_count = neg_count + 1
@@ -48,16 +52,19 @@ subroutine find_new
      END DO
 
      P%micro%new(yy) = P1_p(yy)
+     P%nano%new(yy) = Pnano1_p(yy)
      N%O%new(yy) = NO1_p(yy)
      N%H%new(yy) = NH1_p(yy)
 
   END DO
 
   P%micro%new(0) = P%micro%new(1)
+  P%nano%new(0) = P%nano%new(1)
   N%O%new(0) = N%O%new(1)
   N%H%new(0) = N%H%new(1)
 
   P%micro%new(M+1) = P%micro%old(M+1)
+  P%nano%new(M+1) = P%nano%old(M+1)
   N%O%new(M+1) = N%O%old(M+1)
   N%H%new(M+1) = N%H%old(M+1)
 
