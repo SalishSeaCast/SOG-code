@@ -17,4 +17,7 @@ v2_0    - headers added to profile results file so that profiles can be
           there are still small differences between results on coho
           and on ludwig/clara
 
+before_FLAGELLA_merge - immediately before starting to merge code from
+                        Nilgun's FLAGELLA project
+
 # end of file
