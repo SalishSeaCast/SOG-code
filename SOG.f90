@@ -200,13 +200,21 @@ program SOG
            !PRINT*,cf(day_met,j),day_met,day
            !pause
 
+           ! Interpolate river flows for the second we're at
+           ! *** Implicit type conversion problem here!!!
+           Qinter = (day_time * Qriver(day_met) &
+                + (86400. - day_time) * Qriver(day_met-1)) / 86400.
+           Einter = (day_time * Eriver(day_met) &
+                + (86400. - day_time) * Eriver(day_met-1)) / 86400.
+
+
            CALL irradiance_sog(cloud,cf(day_met,j),day_time,day,I,I_par,&
                 grid, &
                 water, jmax_i, Q_sol,euph,Qinter,h,P)
 
            !  CALL define_adv(grid,P_q,P_f,P_q_fraction(month_o),A_q,W_q,A_f,W_f,h) ! fudge advection
 
-        ENDIF
+        ENDIF ! first time through iteration loop
 
         CALL buoyancy(alph, T%new, S%new, &
              grid, h, B%new, I, Br, density%new, Cp, beta, Q_n) 
@@ -233,19 +241,13 @@ program SOG
         !PRINT*,day,day_met,cf(day_met,1)/10.,'day,day_met,cf(day_met,j)/10.'
 
 
-        ! Interpolate river flows for the second we're at
-        ! *** Implicit type conversion problem here!!!
-        Qinter = (day_time * Qriver(day_met) &
-             + (86400. - day_time) * Qriver(day_met-1)) / 86400.
-        Einter = (day_time * Eriver(day_met) &
-             + (86400. - day_time) * Eriver(day_met-1)) / 86400.
 
         !PRINT*,'humid',humid(day_met,j),j,day_met,cf(day_met,j),atemp(day_met,j)
         !pause
 
-        CALL surface_flux_sog(grid%M,density%new,w,wt_r,S%new(0),S%new(h%i),S%new(M),T%new(0),j_gamma, &
+        CALL surface_flux_sog(grid%M,density%new,w,wt_r,S%old(1),S%new(h%i),S%new(M),T%new(0),j_gamma, &
              I, Q_t(0), alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10., atemp(day_met,j), humid(day_met,j), &
-             Qinter,stress, rho_fresh_o,day,dt/grid%i_space(1),h,upwell,Einter,u%new(1)) 
+             Qinter,stress, rho_fresh_o,day,dt/grid%i_space(1),h,upwell,Einter,u%new(1), dt) 
 
         Bf%b(0) = -w%b(0)+Br   !surface buoyancy forcing *nonturbulent heat flux beta*F_n would also go here  Br is radiative contribution
 
@@ -512,16 +514,17 @@ program SOG
            w%b_err(xx) = g*(alph%idiv(xx)*w%t(xx)- beta%idiv(xx)*w%s(xx))
         END DO
 
-        e_flux = MINVAL(w%b)   !entrainment flux
 
-        ! beta_t is the ratio of the entrainment flux to the surface buoyancy flux
+        ! beta_t is the ratio of the entrainment flux to the surface buoyancy flux -- set equal to -0.2 when convection is occuring
 
-        beta_t = 0.
+        if (w%b(0)>0) then
+           beta_t = -0.2
+        else
+           beta_t = 0.
+        endif
+
         V_t_square = 0.
 
-        IF (w%b(0) /= 0.0 .AND. e_flux/w%b(0) < 0.) THEN
-           beta_t = e_flux/w%b(0) !not -0.2 for beginning conv
-        END IF
 
         IF (beta_t < 0.) THEN  !omega, vertical velocity scale
            CALL def_v_t_sog(grid, h, N_2_g, omega%s%value, V_t_square, beta_t, L_star) !test conv  
