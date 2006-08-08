@@ -48,6 +48,7 @@ contains
     Pmicro(1:mm%M) = PZ(1:mm%M)
     Zmicro(1:mm%M) = PZ(mm%M+1:2*mm%M)
     Pnano(1:mm%M) = PZ(2*mm%M+1:3*mm%M)
+    !V.flagella.01=> should have been but since this sub is not called in this version does not matter=> Pnano(1:mm%M) = PZ(mm%M+1:2*mm%M)
     !sinking particulates
     SPN(1:mm%M) = PZ(5*mm%M+bin_tot+Csources*mm%M+mm%M+1:5*mm%M+bin_tot+Csources*mm%M+2*mm%M)
     DO k = 1, Csources  
@@ -60,10 +61,10 @@ contains
 
        IF (species(k)%Ntot > small .AND. Cevent(k)%on /= 0) THEN
 
-          !!define ingestion averaged over z given n(z) (eg. of [P] for wt_j: 
-!!!= < (delta-eta)*(Gmax*ks*[P(z)]^2/(Gmax + ks*([P(z)]^2+q(1)*[Z]^2+q(2)*[SPN]^2))*n(z)*wt_j^(b_Ex-1)>_z
-!!!delta = assimilation efficiency ==> (1-delta)*grazing = egestion
-!!!eta = Excretion fraction ==> eta*grazing + Excretion(wt) = excretion
+!!define ingestion averaged over z given n(z) (eg. of [P] for wt_j: 
+       !!!= < (delta-eta)*(Gmax*ks*[P(z)]^2/(Gmax + ks*([P(z)]^2+q(1)*[Z]^2+q(2)*[SPN]^2))*n(z)*wt_j^(b_Ex-1)>_z
+       !!!delta = assimilation efficiency ==> (1-delta)*grazing = egestion
+       !!!eta = Excretion fraction ==> eta*grazing + Excretion(wt) = excretion
 
           !Find n(j):
           CALL pdf_avg(Zcopepod(k,1:mm%M),mm%i_space,mm%M,Ntot)
@@ -220,7 +221,7 @@ contains
 
     TYPE(plankton2), INTENT(IN OUT)::micro  
     TYPE(gr_d), INTENT(IN)::mm  !grid
-    DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::P 
+    DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::P !V.flagella.01 note: either Pmicro or Pnano
     INTEGER, INTENT(IN)::M2  
     DOUBLE PRECISION, DIMENSION(M2), INTENT(IN)::PZ 
     TYPE(nutrient), INTENT(IN OUT)::N
@@ -231,6 +232,7 @@ contains
     DOUBLE PRECISION, DIMENSION(mm%M)::Uc, Oup_cell, Hup_cell, ratio  ! Carbon uptake
     DOUBLE PRECISION, DIMENSION(mm%M)::Nitrate,Ammonium,Rmax
     DOUBLE PRECISION, DIMENSION(2*mm%M)::Resp
+!!!!!!!!!!!Define growth Due to I_par!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     Nitrate(1:mm%M) = PZ(mm%M+1:2*mm%M)
     Ammonium(1:mm%M) = PZ(2*mm%M+1:3*mm%M)
@@ -238,7 +240,9 @@ contains
     ratio = 0.
     Oup_cell = 0.
     Hup_cell = 0.
-
+    
+! flagella_jun06/ Next loop is different from V.16.1 => Rmax(replaces micro%R in KPP) 
+! is temp dependent in SOG 
 
     DO j = 1,mm%M
        Rmax(j)=micro%R*1.88**(0.1*(TT(j)-273.15-20))
@@ -247,9 +251,8 @@ contains
        Resp(j+mm%M)=(micro%M_z)*1.88**(0.1*(TT(j)-273.15-20))
        micro%growth%light(j) = Rmax(j)*(1.0-EXP(-micro%sigma*I_par(j)/Rmax(j))) 
        Uc(j) = (1.0-micro%gamma)*micro%growth%light(j)*(1/(1+micro%inhib*I_par(j))) !- micro%Rm
-    END DO
-
-
+    END DO 
+!!!!!!!!!!!!!!!Define growth due to nutrients!!!!!!!!!!!!!!!!!!!!!!!!!
 
     DO j = 1,mm%M
        IF (Nitrate(j) > small) THEN
@@ -340,6 +343,7 @@ contains
 
     Z_micro(1:mm%M) = PZ(mm%M+1:2*mm%M)
     Pnano(1:mm%M) = PZ(2*mm%M+1:3*mm%M)
+    ! V.flagella.01 the same explanation as above=> Pnano(1:mm%M) = PZ(mm%M+1:2*mm%M)
     !suspended and sinking particulates
     SUS(1:mm%M) = PZ(5*mm%M+bin_tot+Csources*mm%M+1:5*mm%M+bin_tot+Csources*mm%M+mm%M)
     SPN(1:mm%M) = PZ(5*mm%M+bin_tot+Csources*mm%M+mm%M+1:5*mm%M+bin_tot+Csources*mm%M+2*mm%M)  
