@@ -1,10 +1,13 @@
-SUBROUTINE buoyancy(alp, Te, Sa,d, hh, Bu, II, Br, rho, &
+! $Id$
+! $Source$
+
+SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
                     Cpi, beta, Qn)     
 
-      USE mean_param
-      USE surface_forcing
+      use mean_param
+      use surface_forcing
 
-      IMPLICIT NONE
+      implicit none
 
       TYPE(gr_d), INTENT(IN)::d
       TYPE(constant), INTENT(IN)::alp, beta, Cpi
@@ -27,12 +30,14 @@ SUBROUTINE buoyancy(alp, Te, Sa,d, hh, Bu, II, Br, rho, &
 
       Bu = g*(alp%g*Te - beta%g*Sa)    !Large eq.A3a
  
-!!! Intensity should be defined on the interface levels and not the grid levels!!!
+      ! *** Investigate this comment:
+!!!Intensity should be defined on the interface levels and not the grid levels!!!
  
 
-     Qn(0) = II(0)/Cpi%i(0)/rho(0)        
+     Qn(0) = II(0) / Cpi%i(0) / rho(0)        
      DO k = 1, d%M       
-         Qn(k) = II(k)/Cpi%i(k)/(rho(k)+(d%d_i(k)-d%d_g(k))*(rho(k+1)-rho(k))/d%g_space(k))       
+         Qn(k) = II(k) / Cpi%i(k) / (rho(k) + (d%d_i(k) - d%d_g(k)) &
+              * (rho(k+1) - rho(k)) / d%g_space(k))
      END DO       
 
       IF (h_B%g == 1) THEN   !!!Shouldn't make a difference!!!
@@ -62,5 +67,3 @@ SUBROUTINE buoyancy(alp, Te, Sa,d, hh, Bu, II, Br, rho, &
 
 
 END SUBROUTINE buoyancy
-     
-
