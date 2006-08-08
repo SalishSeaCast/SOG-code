@@ -144,9 +144,12 @@ subroutine read_sog
   OPEN(UNIT = 11,FILE = "input/nutrient.dat",STATUS = "OLD", &
        ACTION = "READ")
 
-  READ (7,*)micro%R, micro%sigma, micro%gamma, micro%Rm, micro%M_z, micro%inhib!, &
+  read(7, *) micro%R, micro%sigma, micro%gamma, micro%Rm, micro%M_z,   &
+       micro%inhib, nano%R, nano%sigma, nano%gamma, nano%Rm, nano%M_z, &
+       nano%inhib
   !       Csources, C_types,D_bins
-  READ (11,*) micro%k,micro%kapa,micro%N_o,micro%N_x,micro%gamma_o,N%r
+  read(11, *) nano%k, nano%kapa, nano%N_o, nano%N_x, nano%gamma_o, &
+       micro%k, micro%kapa, micro%N_o, micro%N_x, micro%gamma_o, N%r
 
 
   !-------read file PAPMD.60 -----------------------------------------  
