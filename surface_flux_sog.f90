@@ -1,7 +1,7 @@
 SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
                          salinity_o,salinity_m,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
-                         stress,rho_fresh_o,day,dtdz,h,upwell,Eriver,u)
+                         stress,rho_fresh_o,day,dtdz,h,upwell,Eriver,u,dt)
 
       USE mean_param
       USE surface_forcing
@@ -13,7 +13,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION, INTENT(IN):: alp, Cp_o, bet !alph%i(0), Cp%i(0), beta%i(0)
       DOUBLE PRECISION, INTENT(IN)::salinity_o, salinity_m, salinity_d,temp_o, & 
            U_ten, V_ten, &
-           rho_fresh_o, dtdz, u 
+           rho_fresh_o, dtdz, u, dt
            !Q_tot,F_tot, Q_sol,  !U_ten, V_ten are unow, vnow
       REAL, INTENT(IN):: cf,atemp,humid, Qriver, Eriver
       INTEGER, INTENT(IN)::j_gamma
@@ -71,7 +71,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 !----------Salinity------------------------------------
 
      S_riv = 29.1166 - Qriver*(0.0019) - Eriver*(0.0392)  !june 16 2005    
-     Sa=salinity_o + (S_riv-salinity_o)*900/(0.5*24*3600) 
+     Sa=salinity_o + (S_riv-salinity_o)*dt/(0.5*24*3600) 
 
      Ft = (salinity_o-Sa)/(Sa*dtdz)
 
