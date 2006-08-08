@@ -60,7 +60,8 @@ program SOG
   ! calls in write statements
   character*19 :: str_runDatetime, str_proDatetime
 
-  ! Get the current date/time from operating system to timestamp the run with
+  ! Get the current date/time from operating system to timestamp the
+  ! run with
   call os_datetime(runDatetime)
 
   ! Open a bunch of output files
@@ -80,8 +81,8 @@ program SOG
 
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
 
-  ! These constants should be set as parameter somewhere else, or read
-  ! from the main run parameters file
+  ! *** These constants should be set as parameter somewhere else, or read
+  ! *** from the main run parameters file
   Csources = 1
   C_types = 1
   D_bins = 3
@@ -147,15 +148,22 @@ program SOG
 
   
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
+     ! Store previous time_steps in old (n) and old_old (n-1)
+     CALL define_sog(time_step) 
 
-     CALL define_sog(time_step) !!store previous time_steps in old (n) and old_old (n-1)!!     
-
+     ! Iteration limit for implicit solver that calculates physics
+     ! *** This should be read from the run parameters data file
      niter = 30
-     DO count = 1, niter !20  !cutoff at 20 for iterations
+     DO count = 1, niter !------ Beginning of the implicit solver loop ------
+        ! *** I think this is finding the depths of the grid point
+        ! *** and grid interface that bound the mixed layer depth
+        ! d_g(j_max_g) > h ie, hh%g is grid point just below h
+        CALL find_jmax_g(h, grid)
+        ! d_i(j_max_i) > h ie h%i is just above h
+        CALL find_jmax_i(h, grid)
 
-        CALL find_jmax_g(h, grid) !d_g(j_max_g) > h ie, hh%g is grid point just below h
-        CALL find_jmax_i(h, grid) !d_i(j_max_i) > h ie h%i is just above h
-
+        ! *** Does this allocation really need to be done for every pass
+        ! *** through the implicit loop?
         CALL allocate2(alloc_stat) ! allocate shape and K's
         DO xx = 16,17
            IF (alloc_stat(xx) /= 0) THEN
@@ -165,24 +173,28 @@ program SOG
            END IF
         END DO
 
-
+        ! *** Does this block really need to be inside the implicit loop?
         IF (time_step == 1 .AND. count == 1) THEN
-           CALL alpha_sub(T%new, S%new, alph, grid) ! find the actual alpha values over the grid 
+           ! Find the actual alpha values over the grid 
+           CALL alpha_sub(T%new, S%new, alph, grid) 
            CALL alpha_sub(T%new, S%new, beta, grid)
-           CALL Cp_sub(T%new, S%new, Cp, grid)   
-           CALL density_sub(T, S, density%new, M,rho_fresh_o) ! density with depth and density of fresh water
-
+           CALL Cp_sub(T%new, S%new, Cp, grid)
+           ! Density with depth and density of fresh water
+           CALL density_sub(T, S, density%new, M,rho_fresh_o) 
            CALL div_i_param(grid, alph) ! alph%idiv = d alpha /dz
-           CALL div_i_param(grid, beta) ! beta@idiv = d beta /dz
+           CALL div_i_param(grid, beta) ! beta%idiv = d beta /dz
         END IF
 
-        IF (count == 1) THEN   !only starts with zooplankton!! <- no idea what this means 
+        ! Initialization of the implicit loop
+        IF (count == 1) THEN
+           ! *** What do these comments mean?
+           !only starts with zooplankton!! <- no idea what this means 
            !        
-
            ! fixed cloud_type
+
            ! *** Implicit type conversion problem
            j = day_time / 3600.0 + 1
-
+           ! *** There has to be a better way...
            IF (year==2001) then
               day_met=day
            else if (year==2002) then
@@ -197,9 +209,6 @@ program SOG
               day_met=day+1826
            endif
 
-           !PRINT*,cf(day_met,j),day_met,day
-           !pause
-
            ! Interpolate river flows for the second we're at
            ! *** Implicit type conversion problem here!!!
            Qinter = (day_time * Qriver(day_met) &
@@ -207,22 +216,17 @@ program SOG
            Einter = (day_time * Eriver(day_met) &
                 + (86400. - day_time) * Eriver(day_met-1)) / 86400.
 
-
-           CALL irradiance_sog(cloud,cf(day_met,j),day_time,day,I,I_par,&
-                grid, &
-                water, jmax_i, Q_sol,euph,Qinter,h,P)
-
-           !  CALL define_adv(grid,P_q,P_f,P_q_fraction(month_o),A_q,W_q,A_f,W_f,h) ! fudge advection
-
-        ENDIF ! first time through iteration loop
-
-        CALL buoyancy(alph, T%new, S%new, &
-             grid, h, B%new, I, Br, density%new, Cp, beta, Q_n) 
-
+           CALL irradiance_sog(cloud, cf(day_met, j), day_time, day, &
+                I, I_par, grid, water, jmax_i, Q_sol, euph, Qinter, h, P)
+        endif  !------ End of implicit loop initialization ------
 
         ! Br radiative contribution to the surface buoyancy forcing
         ! B%new buoyancy profile B(d)
         ! Q_n nonturbulent heat flux profile
+        CALL buoyancy(alph, T%new, S%new, grid, h, B%new, I, Br, &
+             density%new, Cp, beta, Q_n)
+
+
         CALL div_grid(grid, density)
         ! take density from grid points to interface or vice-versa
 
@@ -389,10 +393,14 @@ program SOG
 
 
 
-        ! calculate matrix B(changed to Amatrix later) and RHS called Gvector (D9) (D10)
-        CALL diffusion(grid,Bmatrix%t,Gvector%t,K%t%all,gamma%t,w%t(0),-Q_n,dt,T%new(grid%M+1))
-        CALL diffusion(grid,Bmatrix%s,Gvector%s,K%s%all,gamma%s,w%s(0),F_n,dt,S%new(grid%M+1))
-        ! start with basic and all Coriolis later, extra scalar terms work out to 0
+        ! Calculate matrix B(changed to Amatrix later) 
+        ! and RHS called Gvector (D9) (D10)
+        CALL diffusion(grid, Bmatrix%t, Gvector%t, K%t%all, gamma%t, &
+             w%t(0), -Q_n, dt, T%new(grid%M+1))
+        CALL diffusion(grid, Bmatrix%s, Gvector%s, K%s%all, gamma%s, &
+             w%s(0), F_n, dt, S%new(grid%M+1))
+        ! Start with basic and all Coriolis later, extra scalar terms
+        ! work out to 0
         CALL diffusion(grid,Bmatrix%u,Gvector%u,K%u%all,gamma%m,w%u(0),gamma%m,dt,U%new(grid%M+1))
         CALL diffusion(grid,Bmatrix%u,Gvector%v,K%u%all,gamma%m,w%v(0),gamma%m,dt,V%new(grid%M+1))           
 
@@ -1009,7 +1017,6 @@ program SOG
   ! *** cleaned up and i is safe to use as a local index
   do i_pro = 0, M + 1
      sigma_t = density%new(i_pro) - 1000.
-     ! *** We need a K2C conversion function here
      write(6, 201) grid%d_g(i_pro), KtoC(T%new(i_pro)), S%new(i_pro),  &
           sigma_t, P%micro%new(i_pro), N%O%new(i_pro), N%H%new(i_pro), &
           Detritus(1)%D%new(i_pro), Detritus(2)%D%new(i_pro),          &
