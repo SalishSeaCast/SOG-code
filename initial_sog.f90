@@ -33,7 +33,7 @@ module initial_sog
        Div_U_M = 0.0, &
        Div_V_M = 0.0, &                             
        P_micro = 0.3D-3, &
-       P_nano = 2.6D-3, &
+       P_nano = 2.6D-3, & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
        Z_micro = 1.6D-3, &
        Deto =  1.D-3, &
        NOo =  0.21, &
@@ -72,6 +72,7 @@ contains
     Si%new(1) = So
     Ti%new(1) = To 
     Pi%micro%new(1) = P_micro
+    Pi%nano%new(1) = P_nano !V.flagella.01
     Ni%O%new(1) = NOo
     Ni%H%new(1) = NHo
 
@@ -108,9 +109,11 @@ contains
        IF (d%d_g(i) <= hm) THEN  !Large1996  March 1960 initial profile        
 
           Pi%micro%new(i) = P_micro
+          Pi%nano%new(i) = P_nano !V.flagella.01
           Ni%H%new(i) = NHo
        ELSE       !IF (d%d_g(i) <= Zd) THEN
           Pi%micro%new(i) = 0.
+          Pi%nano%new(i) = 0. !V.flagella.01
           Ni%H%new(i) = 0.
        END IF
        IF (d%d_g(i) <= hs) THEN  !Large1996
@@ -127,6 +130,7 @@ contains
     END DO
 
     Pi%micro%new(d%M+1) = zero !0.
+    Pi%nano%new(d%M+1) = zero !0. !V.flagella.01
     Ni%O%new(d%M+1) = NOd
     Ni%H%new(d%M+1) = zero !0.
     Detritus(1)%D%new(d%M+1) = zero ! 0. (DON ==> Detritus(1), need some deep ocean value)
