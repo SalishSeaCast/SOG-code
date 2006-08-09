@@ -28,4 +28,6 @@ after_FLAGELLA_merge - immediately after completing merge of code from
                        use; all of this is expected to be temporary
                        code
 
+SOG_created - project name changed to SOG from dlatornell_NH4
+
 # end of file
