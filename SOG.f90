@@ -20,7 +20,7 @@ program SOG
 
   implicit none
 
-  external derivs_sog, rkqs
+  external derivs_noflag, derivs_sog, rkqs
 
   ! Local variables:
   integer :: bin_tot2, smooth_i, icheck
@@ -59,21 +59,27 @@ program SOG
   ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
   ! calls in write statements
   character*19 :: str_runDatetime, str_proDatetime
+  ! *** Temporary flag to turn flagellates model on/off, and the
+  ! *** function to read it
+  logical :: flagellates
+  logical :: getparl
+  external getparl
 
   ! Get the current date/time from operating system to timestamp the
   ! run with
   call os_datetime(runDatetime)
 
-  ! Open a bunch of output files
+  ! *** This needs to be expanded into a real input processor
+  ! Initialize the parameter reader to output a report
+  ! *** runDatetime and date/time that getpar_init() prints should be same
+  call getpar_init(1)
+  ! Read a flag to determine whether or not flagellates are included
+  ! in the model
+  flagellates = getparl('flagellates_on', 1)
+  ! Open the time series output files
   CALL write_open
-
-
-  ! infile contains the names of several other files to read
-  ! It is opened on unit 5 to allow those names to be read by getpars()
-  ! *** but that could be changed to use redirection of stdin
-  open(5, file="infile")
-
-  ! Get the name of the main run parameters file, open it, and read them
+  ! Get the name of the main run parameters file from stdin, open it,
+  ! and read them
   str = getpars("inputfile", 1)
   open(10, file=str, status="OLD", action="READ")
   read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o, &
@@ -128,7 +134,7 @@ program SOG
   CALL initialize ! initializes everything (biology too)
   CALL define_grid(grid, D, lambda) ! sets up the grid
   CALL initial_mean(U, V, T, S, P, N, Detritus, h%new, ut, vt, pbx, pby, &
-       grid, D_bins, cruise_id)
+       grid, D_bins, cruise_id, flagellates)
 
 
   M2 = 6*M   !size of PZ in biology
@@ -780,8 +786,14 @@ program SOG
 
      next_time = time+dt
 
-     call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
-          N_ok, N_bad, derivs_sog, rkqs, icheck, T%new)
+     ! *** Temporary code to allow flagellates model to be turned on/off
+     if (flagellates) then
+        call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
+             N_ok, N_bad, derivs_sog, rkqs, icheck, T%new)
+     else
+        call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
+             N_ok, N_bad, derivs_noflag, rkqs, icheck, T%new)
+     endif
 
      IF (MINVAL(PZ(2*M+1:3*M)) < 0.) THEN
         DO xx = 2*M+1,3*M
@@ -977,7 +989,6 @@ program SOG
   ! Quantities without initial condition value value at bottom of the
   ! model domain (M values in the profile)
   ! *** K, I_par
-  open(5, file="infile")
   str = getpars("profile_out1", 1)
   open(4, file=str)
   do isusan = 0, M
@@ -992,7 +1003,6 @@ program SOG
   ! 0 to M + 1)
   ! Water temperature, salinity, sigma-t, phytoplankton, nitrate, ammonia,
   ! and detritus (remineralized, sinking, and mortality)
-  open (5, file="infile")
   str = getpars("profile_out2", 1)
   open(6, file=str)
   ! Write the profile results file header
