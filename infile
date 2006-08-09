@@ -1,9 +1,12 @@
-"writefile1"	"output/phys_weekTest.out"	"write file"
-"writefile2"	"output/bio_weekTest.out"	"write file"
-"inputfile"	"input/weekTest.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0414004.str"	"ctd file"	
-"profile_out1"	"profiles/KI_weekTest.out"	"profile"
-"profile_out2"	"profiles/phys_weekTest.out"	"profile"
+"flagellates_on" .true.                        "include flagellates in model?"
+"writefile1"	"output/phys_nov04-test.out"	"physics model time series"
+"writefile2"	"output/bio_nov04-test.out"	"biology model time series"
+"inputfile"	"input/nov04-test.dat"		"run parameters"
+"ctd_in"	"input/ctd_in/SG0414004.str"	"initialization CTD file"
+"profile_out1"	"profiles/KI_nov04-test.out"	"K & I profiles"
+"profile_out2"	"profiles/phys_nov04-test.out"	"main profiles"
+
+# information below this line is ignored
 
 
 "writefile1"	"output/phys0315.dat"		"write file"
