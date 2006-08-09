@@ -20,4 +20,12 @@ v2_0    - headers added to profile results file so that profiles can be
 before_FLAGELLA_merge - immediately before starting to merge code from
                         Nilgun's FLAGELLA project
 
+after_FLAGELLA_merge - immediately after completing merge of code from
+                       Nilgun's FLAGELLA project 
+		     - includes flag to turn flagellates on/off which
+                       changes the initial biomass value, and selects
+                       one of 2 derivs_* subroutines for odeint to
+                       use; all of this is expected to be temporary
+                       code
+
 # end of file
