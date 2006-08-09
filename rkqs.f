@@ -4,7 +4,8 @@
       DOUBLE PRECISION eps,hdid,hnext,htry,x,dydx(n),y(n),yscal(n),
      *TT(1:81)
       PARAMETER(NMAX = 1000)
-      EXTERNAL derivs_sog,rkck
+      ! *** Temporaily added derivs_noflag until flagellates code works
+      EXTERNAL derivs_sog, derivs_noflag, rkck
       INTEGER check,ii
       DOUBLE PRECISION errmax,hh,xnew,yerr(NMAX),ytemp(NMAX),SAFETY,
      *PGROW,PSHRNK,ERRCON

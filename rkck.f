@@ -2,7 +2,8 @@
       INTEGER n,NMAX
       DOUBLE PRECISION h,x,dydx(n),y(n),yerr(n),yout(n),TT(1:81)
       PARAMETER (NMAX=1000)
-      EXTERNAL derivs_sog
+      ! *** Temporaily added derivs_noflag until flagellates code works
+      EXTERNAL derivs_sog, derivs_noflag
 !    USES derivs_sog
       INTEGER i
       DOUBLE PRECISION ak2(NMAX),ak3(NMAX),ak4(NMAX),ak5(NMAX),
