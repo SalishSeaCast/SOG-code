@@ -7,8 +7,8 @@ module initial_sog
 
   implicit none
 
-  ! This appears to be a collection of parameters of the Large, et al KPP
-  ! model.  Why are they declared here?
+  ! *** This appears to be a collection of parameters of the Large, et al KPP
+  ! *** model.  Why are they declared here?
   DOUBLE PRECISION, PARAMETER::To = 5. +273.15, & !!Large1996, &!22.000 + 273.15000   
        So = 32.70, & ! Large199635.0 !32.8, &!PSU  !32.70 Large1996
        Uo = 0.0,     & ! m/s
@@ -33,7 +33,10 @@ module initial_sog
        Div_U_M = 0.0, &
        Div_V_M = 0.0, &                             
        P_micro = 0.3D-3, &
-       P_nano = 2.6D-3, & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
+! *** Parameter value setting of P_nano replaced by a variable version in 
+! *** initial_mean below, so that initial value of flagellates biomass may
+! *** be set to zero without recompiling
+!       P_nano = 2.6D-3 * 0., & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
        Z_micro = 1.6D-3, &
        Deto =  1.D-3, &
        NOo =  0.21, &
@@ -41,31 +44,46 @@ module initial_sog
        NOd = 0.52, &
        NHo = .5D-3 
 
-  ! This can go into initial_mean, I think
-  character*80	str1	
-
 contains
 
   subroutine initial_mean (Ui, Vi, Ti, Si, Pi, Ni, Detritus, hi, ut, vt, &
-       pbx, pby, d, D_bins, xx)       
+       pbx, pby, d, D_bins, xx, flagellates)       
 
-    type(gr_d), intent(in) :: d
-    type(nutrient), intent(out) :: Ni
-    integer, intent(in) :: D_bins
-    type(snow), dimension(D_bins), intent(in out) :: Detritus
+    ! Arguments:
+    type(prop), intent(out) :: Ui, Vi, Ti, Si
     type(plankton), intent(out) :: Pi 
-    type(prop), intent(out) :: Ui, Vi, Ti, Si, ut,vt
-    double precision, dimension(d%M), intent(out) :: pbx,pby
+    type(nutrient), intent(out) :: Ni
+    type(snow), dimension(D_bins), intent(inout) :: Detritus
     double precision, intent(out) :: hi !h%new
+    type(prop), intent(out) :: ut, vt
+    double precision, dimension(d%M), intent(out) :: pbx, pby
+    type(gr_d), intent(in) :: d
+    integer, intent(in) :: D_bins
     integer xx           ! cruise_id
+    ! *** Temporary flag to turn flagellates model on/off
+    logical :: flagellates
 
+    ! Local variables:
     integer :: i, j      ! loop index
-    integer :: ii, imax  ! unused loop indices
+    ! File name to open
+    character*80 :: fn           
     ! *** Get rid of this hard-coded dimension!
     double precision, dimension (3854) :: NN
     ! Place holders for reading CTD data file
     integer :: dum1
     real :: depth, dumc, dumt, dump, dumo
+    ! *** P_nano variable replaces parameter version above,
+    ! *** so that initial value of flagellates biomass may
+    ! *** be set to zero without recompiling
+    double precision :: P_nano
+
+    ! *** Temporary code to allow flagellates biomass to be initialized to zero
+    if (flagellates) then
+       !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
+       P_nano = 2.6D-3
+    else
+       P_nano = 0.
+    endif
 
     Ui%new(1) = Uo
     Vi%new(1) = Vo
@@ -160,9 +178,10 @@ contains
 
     !---end biology------------------------------------------ 
 
-    open(5, file="infile")
-    str1=getpars("ctd_in", 1)
-    open(46, FILE=str1, STATUS="OLD")
+    ! STRATOGEM CTD data from station S3 to initialize temperature,
+    ! phytoplacnkton biomass, and salinity in water column
+    fn = getpars("ctd_in", 1)
+    open(unit=46, file=fn, status="old")
     ! *** Maybe rework this so we can read orginal (not stripped) CTD
     ! *** data files?
     do i = 1, d%M + 1
