@@ -53,12 +53,12 @@ contains
     type(prop), intent(out) :: Ui, Vi, Ti, Si
     type(plankton), intent(out) :: Pi 
     type(nutrient), intent(out) :: Ni
+    integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     double precision, intent(out) :: hi !h%new
     type(prop), intent(out) :: ut, vt
-    double precision, dimension(d%M), intent(out) :: pbx, pby
     type(gr_d), intent(in) :: d
-    integer, intent(in) :: D_bins
+    double precision, dimension(d%M), intent(out) :: pbx, pby
     integer xx           ! cruise_id
     ! *** Temporary flag to turn flagellates model on/off
     logical :: flagellates
