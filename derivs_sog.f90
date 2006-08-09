@@ -96,7 +96,9 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
         DYDX_deriv(j_j) = -N%O_uptake%new(j_j-2*M) +N%bacteria(j_j-2*M)
      ELSE IF (j_j > 3*M .AND. j_j <= 4*M) THEN  
         !NH
-        DYDX_deriv(j_j) = -N%H_uptake%new(j_j-3*M) + Resp(j_j-3*M) + waste%medium(j_j-3*M)*waste%m%destiny(0)+N%remin(j_j-3*M) - N%bacteria(j_j-3*M) 
+        DYDX_deriv(j_j) = -N%H_uptake%new(j_j-3*M) + Resp(j_j-3*M)       &
+             + waste%medium(j_j-3*M)*waste%m%destiny(0)+N%remin(j_j-3*M) &
+             - N%bacteria(j_j-3*M) 
      ELSE IF (j_j > 4*M .AND. j_j <= 4*M+D_bins*M) THEN 
         !Detritus
         do k_k = 1, D_bins-1
