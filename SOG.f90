@@ -127,7 +127,9 @@ program SOG
 
   CALL initialize ! initializes everything (biology too)
   CALL define_grid(grid, D, lambda) ! sets up the grid
-  CALL initial_mean(U,V,T,S,P,N,Detritus,h%new,ut,vt,pbx,pby,grid,D_bins,cruise_id)
+  CALL initial_mean(U, V, T, S, P, N, Detritus, h%new, ut, vt, pbx, pby, &
+       grid, D_bins, cruise_id)
+
 
   M2 = 6*M   !size of PZ in biology
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
@@ -778,7 +780,8 @@ program SOG
 
      next_time = time+dt
 
-     CALL odeint(PZ,M2,time,next_time,precision,step_guess,step_min,N_ok,N_bad,derivs_sog,rkqs,icheck,T%new)
+     call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
+          N_ok, N_bad, derivs_sog, rkqs, icheck, T%new)
 
      IF (MINVAL(PZ(2*M+1:3*M)) < 0.) THEN
         DO xx = 2*M+1,3*M
