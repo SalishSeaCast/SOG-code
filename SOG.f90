@@ -25,6 +25,7 @@ program SOG
   ! Local variables:
   integer :: bin_tot2, smooth_i, icheck
   integer :: isusan, ecmapp, day_met
+  TYPE(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
   double precision:: cz, unow, vnow, upwell, Sa
   DOUBLE PRECISION, DIMENSION(0:80+1) :: dS
   ! Interpolated river flows
@@ -91,14 +92,43 @@ program SOG
   ! *** from the main run parameters file
   Csources = 1
   C_types = 1
-  D_bins = 3
   grid%M = M
   grid%D = D
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
   Large_data_size = 63617
 
-  !print*,day,ecmapp,year_o,'sog 1'
+  if (flagellates) then
+     ! Size of the biology we are using (Quantities and Detritus)
+     PZ_bins%Quant = 4
+     ! Position of Diatoms (micro plankton)
+     PZ_bins%micro = 1
+     ! Position of Flagellates (nano plankton)
+     PZ_bins%nano = 2
+     ! Position of Nitrate
+     PZ_bins%NO = 3
+     ! Position of Ammonium
+     PZ_bins%NH = 4
+     ! Start of detritus
+     PZ_bins%det = 5
+  else
+     ! Size of the biology we are using (Quantities and Detritus)
+     PZ_bins%Quant = 3
+     ! Position of Diatoms (micro plankton)
+     PZ_bins%micro = 1
+     ! Position of Nitrate
+     PZ_bins%NO = 2
+     ! Position of Ammonium
+     PZ_bins%NH = 3
+     ! Start of detritus
+     PZ_bins%det = 4
+  endif
+
+  ! Number of detritus bins, dissolved, slow sink and fast sink
+  D_bins = 3
+  M2 = (PZ_bins%Quant+D_bins)*M   !size of PZ in biology: 
+
+
 
   IF (year_o==2001) then
      ecmapp = 1
@@ -135,14 +165,6 @@ program SOG
   CALL define_grid(grid, D, lambda) ! sets up the grid
   CALL initial_mean(U, V, T, S, P, N, Detritus, h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
-
-
-  M2 = 7*M   !size of PZ in biology: 
-! One for      Diatoms (P%micro)
-! One for      Flagellates (P%nano) -- not currently in define_PZ
-! One for      Nitrate (N%O)
-! One for      Ammonium,(N%H)
-! Three for the three detritus bins (Detritus)
 
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
 
@@ -845,8 +867,10 @@ program SOG
      DO xx = 1,D_bins-1
         CALL advection(grid,Detritus(2)%v,Detritus(2)%D%old,dt,Gvector_ao%d(2)%bin)
      END DO
-
-     CALL reaction_p_sog(grid,M2,D_bins,PZ(1:3*M),PZ(3*M+1:5*M),P%micro%old,N%O%old,N%H%old,Detritus,Gvector_ro)  !define Gevtor_ro
+     
+     CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*M), &
+          PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, N%O%old, N%H%old, &
+          Detritus, Gvector_ro)  !define Gvector_ro
      bin_tot2 = 0.
 
 
