@@ -137,7 +137,13 @@ program SOG
        grid, D_bins, cruise_id, flagellates)
 
 
-  M2 = 6*M   !size of PZ in biology
+  M2 = 7*M   !size of PZ in biology: 
+! One for      Diatoms (P%micro)
+! One for      Flagellates (P%nano) -- not currently in define_PZ
+! One for      Nitrate (N%O)
+! One for      Ammonium,(N%H)
+! Three for the three detritus bins (Detritus)
+
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
 
   CALL allocate4
