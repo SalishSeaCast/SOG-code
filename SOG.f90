@@ -25,7 +25,7 @@ program SOG
   ! Local variables:
   integer :: bin_tot2, smooth_i, icheck
   integer :: isusan, ecmapp, day_met
-  double precision:: cz, unow, vnow, upwell, uplume, factor, Sa
+  double precision:: cz, unow, vnow, upwell, Sa
   DOUBLE PRECISION, DIMENSION(0:80+1) :: dS
   ! Interpolated river flows
   real :: Qinter  ! Fraser River
@@ -734,18 +734,9 @@ program SOG
 
         do yy = 1, M
            pbx(yy) = (pbx(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                + stress%u%new / (1025 * M * grid%i_space(yy))
+                + stress%u%new / (1025. * M * grid%i_space(yy))
            pby(yy) = (pby(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                + stress%v%new / (1025 * M * grid%i_space(yy))     &
-                + dS(yy) * uplume * factor * K%u%all(h_m%g) / h_m%new * 20.
-           !            write (*,*) 'tadkfj', yy,h%i,uplume,pbx(yy)
-           !            if (yy.le.h%i+1) then
-           !               pbx(yy) = pbx(yy) + uplume/7200.
-           !            else
-           !               pbx(yy) = pbx(yy) - uplume*(h%i+1)/(M-h%i-1)/7200.
-           !            endif
-           !            write (*,*) 'tadkfj', yy,h%i,uplume,pbx(yy)
-           !            write (*,173) v%new(yy),pby(yy),sumpby*gorLy*grid%i_space(yy),vt%new(yy),-stress%v%new/(1025*M*grid%i_space(yy))
+                + stress%v%new / (1025. * M * grid%i_space(yy))     
         enddo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
