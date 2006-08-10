@@ -102,18 +102,18 @@ subroutine read_sog
   ! *** Should confirm that dates are in sync with wind data **
 
   ! Read Fraser River flow data
-  open(12, file="input/rivers/fr200123456.dat", &
+  open(12, file="../sog-forcing/rivers/Fraser_2001_2005.dat", &
        status = "OLD", action = "READ")
-  ! *** Another hard-coded constant to det rid of **
+  ! *** Another hard-coded constant to get rid of **
   do ic = 1, 1640
      read(12, *) year, month, day, Qriver(ic)
   enddo
   close(12)
 
   ! Read Englishman River flow data
-  open(12, file="input/rivers/eng200123456.dat", &
+  open(12, file="../sog-forcing/rivers/eng200123456.dat", &
        status = "OLD", action = "READ")
-  ! *** Another hard-coded constant to det rid of **
+  ! *** Another hard-coded constant to get rid of **
   do ic = 1, 1919
      read(12, *) year, month, day, Eriver(ic)
   enddo
