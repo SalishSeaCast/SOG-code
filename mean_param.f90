@@ -32,6 +32,11 @@ module mean_param
      DOUBLE PRECISION :: day, data
   END TYPE Large1996_data
 
+  TYPE :: bins
+     INTEGER :: micro, nano, NO, NH, det, Quant
+  END TYPE bins
+
+
   TYPE :: constant          !expansion coefficients, heat capacity, surface density
      TYPE(alpha), DIMENSION(13) :: data
      DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
