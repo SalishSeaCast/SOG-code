@@ -17,6 +17,7 @@ program SOG
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
   use find_wind_mod
+  use Coriolis_and_pg_mod
 
   implicit none
 
@@ -452,8 +453,16 @@ program SOG
         CALL define_adv_bio(grid,U%new,Gvector%u,dt,P_u,wupwell,grid%i_space(1))  !upwell u similar to NO
         CALL define_adv_bio(grid,V%new,Gvector%v,dt,P_v,wupwell,grid%i_space(1))  !upwell v similar to NO
 
-        CALL Coriolis_and_pg(grid,V%new,pbx,Gvector_c%u,dt)
-        CALL Coriolis_and_pg(grid,-U%new,pby,Gvector_c%v,dt)      
+        ! Calculate the Coriolis and baroclinic pressure gradient
+        ! components of the G vector for each velocity component
+        ! *** f (Coriolis factor) is assigned as a parameter in
+        ! *** surface_forcing.  It should be read from the run
+        ! *** parameters file.  It is used here and in h_Ekman
+        ! *** calculation later in SOG.
+        CALL Coriolis_and_pg(f, dt, V%new, pbx, &
+             Gvector_c%u)
+        CALL Coriolis_and_pg(f, dt, -U%new, pby, &
+             Gvector_c%v)      
 
         IF (time_step == 1 .AND. count  == 1) THEN
 
