@@ -37,9 +37,9 @@ CVS2CL = ../cvs2cl/cvs2cl.pl
 CLFLAGS = -rt
 
 # List of objects (order matters)
-# OBJS = precision_defs.o unit_defs.o mean_param.o declarations.o         
-OBJS = unit_conversions.o datetime.o mean_param.o declarations.o         \
-surface_forcing.o \
+# OBJS = unit_defs.o mean_param.o declarations.o         
+OBJS = precision_defs.o unit_conversions.o datetime.o mean_param.o \
+declarations.o surface_forcing.o \
 getpar.o \
 initial_sog.o IMEX_constants.o write_open.o           \
 allocate1.o read_sog.o find_wind.o 	\
