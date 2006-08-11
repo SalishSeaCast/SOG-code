@@ -1,11 +1,21 @@
 ! $Id$
 ! $Source$
 
-MODULE surface_forcing
+module surface_forcing
+  ! *** This is a very poorly named module!
 
-  USE mean_param
+  use precision_defs
+  use mean_param
 
-  IMPLICIT NONE
+  implicit none
+
+  real(kind=dp), parameter :: PI = 3.141592653589793
+  ! Coriolis factor
+  ! *** This should be reworked so that the latitude is read as a run
+  ! *** parameter, and f calculated for the run.
+  real(kind=dp), parameter :: latitude = 49. + 7.517 / 60. ! station S3
+  real(kind=dp), parameter :: omeg = 2. * PI / 86400.
+  real(kind=dp), parameter :: f = 2. * omeg * sin(PI * latitude / 180.)
 
   DOUBLE PRECISION, PARAMETER::g = 9.81, & !m/s^2
        small = 1.D-15, &
@@ -37,11 +47,9 @@ MODULE surface_forcing
        Ri_rho_o = 1.9, &
        p_2 = 3.0, & !salt finger diff power constant
        nu = 1.5D-06 !m^2/s molecular viscosity
-  DOUBLE PRECISION, PARAMETER::C_star = 9.9, &
-       f = 1.1D-04              !coriolis parameter 1.0E-04
+  DOUBLE PRECISION, PARAMETER::C_star = 9.9
   DOUBLE PRECISION, PARAMETER::del_o = 0.10, &!tolerance
        A_stress = -0.6, & !N/m^2 Wind stress constant
-       PI = 3.1415926, &                              
        T_stress = 57600.0, &  !seconds or 16 hrs
        Q_o = 1368.0, & !1367.0? W/m^2  Solar constant
        Lat = 0.85521, &  ! 49 degrees  latitude
