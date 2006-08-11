@@ -455,13 +455,9 @@ program SOG
 
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
-        ! *** f (Coriolis factor) is assigned as a parameter in
-        ! *** surface_forcing.  It should be read from the run
-        ! *** parameters file.  It is used here and in h_Ekman
-        ! *** calculation later in SOG.
-        CALL Coriolis_and_pg(f, dt, V%new, pbx, &
+        call Coriolis_and_pg(f, dt, V%new, pbx, &
              Gvector_c%u)
-        CALL Coriolis_and_pg(f, dt, -U%new, pby, &
+        call Coriolis_and_pg(f, dt, -U%new, pby, &
              Gvector_c%v)      
 
         IF (time_step == 1 .AND. count  == 1) THEN
