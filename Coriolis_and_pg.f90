@@ -1,23 +1,29 @@
-SUBROUTINE Coriolis_and_pg(mm,U,pg,Gx,step)
+! $Id$
+! $Source$
 
-      USE mean_param
-      USE surface_forcing
+module Coriolis_and_pg_mod
 
-      IMPLICIT NONE
+  use precision_defs
 
-      TYPE(gr_d),INTENT(IN)::mm
-      DOUBLE PRECISION, DIMENSION(0:mm%M+1),INTENT(IN)::U
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::pg
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(OUT)::Gx        
-      DOUBLE PRECISION, INTENT(IN)::step  !dt     
+  implicit none
 
-      INTEGER::index
+contains
 
-      Gx = 0.
-      
-      DO index = 1, mm%M
-         Gx(index) = step*f*U(index) - step*pg(index)
-!         write (*,*) index,Gx(index),-step*pg(index)
-      END DO
+  subroutine Coriolis_and_pg(f, dt, vel, pbgrad, Gvector_c)
+    ! Calculate the Coriolis and baroclinic pressure gradient
+    ! components of the G vector for the specified velocity component.
 
-END SUBROUTINE Coriolis_and_pg
+    implicit none
+
+    ! Arguments:
+    real(kind=dp), intent(in) :: f
+    real(kind=dp), intent(in) :: dt
+    real(kind=dp), dimension(0:), intent(in)::vel
+    real(kind=dp), dimension(1:), intent(in)::pbgrad
+    real(kind=dp), dimension(1:), intent(out)::Gvector_c
+
+    Gvector_c = (f * vel(1:) - pbgrad) * dt
+
+  end subroutine Coriolis_and_pg
+
+end module Coriolis_and_pg_mod
