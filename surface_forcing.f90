@@ -14,8 +14,10 @@ module surface_forcing
   ! *** This should be reworked so that the latitude is read as a run
   ! *** parameter, and f calculated for the run.
   real(kind=dp), parameter :: latitude = 49. + 7.517 / 60. ! station S3
-  real(kind=dp), parameter :: omeg = 2. * PI / 86400.
-  real(kind=dp), parameter :: f = 2. * omeg * sin(PI * latitude / 180.)
+!*** Correction pgf90 will not except an intrinsic in parameter statement  
+!*** real(kind=dp), parameter :: f = 2. * (2. * PI / 86400.) * &
+!***    sin(PI * latitude / 180.)
+  real(kind=dp), parameter :: f = 1.1d-4
 
   DOUBLE PRECISION, PARAMETER::g = 9.81, & !m/s^2
        small = 1.D-15, &
@@ -24,8 +26,6 @@ module surface_forcing
        cutoff = 10.0, &
        var_c = 5.0, &   !***  !11.0
        zero =  0.
-  !           upwelling = 1.D-07!0.1D-7(not enough) !0.5D-7 !1.D-07 ! 1.5D-07!2.3D-07 !3.2D-07 ! 1.9D-06 == 60m/y ! 9.51D-07 == 30 m/y  !double to give average in upper 200 m of 30 m/y !20m/y == 6.3D-07
-  !4.8D-07 == 15m/y, 3.2D-07 ==> 10m/y  Note. see Matear and Wong (1997) who estimate w = 0.5 m/year at base of mixed layer.  try 6m/y 1.9D-07
   DOUBLE PRECISION, PARAMETER:: Cv = 1.5, & !1.99 !set to keep beta_t = -0.2
        !beta_t = -0.2 only for convection
   Ri_c = 0.3
