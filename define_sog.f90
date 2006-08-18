@@ -16,6 +16,7 @@ SUBROUTINE define_sog(timestep)
          T%old_old = T%old
          h%old_old = h%old
          P%micro%old_old = P%micro%old
+         P%nano%old_old = P%nano%old
          N%O%old_old = N%O%old
          N%H%old_old = N%H%old
 
@@ -50,6 +51,7 @@ SUBROUTINE define_sog(timestep)
          Gvector_o_o%t = Gvector_o%t
 
          Gvector_o_o%p%micro = Gvector_o%p%micro
+         Gvector_o_o%p%nano = Gvector_o%p%nano
          Gvector_o_o%n%o = Gvector_o%n%o
          Gvector_o_o%n%h = Gvector_o%n%h
 
@@ -60,7 +62,9 @@ SUBROUTINE define_sog(timestep)
 !         Gvector_ao_o%p%nano = Gvector_ao%p%nano
 
          Gvector_ro_o%p%micro = Gvector_ro%p%micro
+         Gvector_ro_o%p%nano = Gvector_ro%p%nano
          Gvector_ro_o%p%micro_Q = Gvector_ro%p%micro_Q
+         Gvector_ro_o%p%nano_Q = Gvector_ro%p%nano_Q
          Gvector_ro_o%n%o = Gvector_ro%n%o
          Gvector_ro_o%n%h = Gvector_ro%n%h
 
@@ -87,6 +91,7 @@ SUBROUTINE define_sog(timestep)
          Gvector_o%t = Gvector%t
 
          Gvector_o%p%micro = Gvector%p%micro
+         Gvector_o%p%nano = Gvector%p%nano
          Gvector_o%n%o = Gvector%n%o
          Gvector_o%n%h = Gvector%n%h
 
@@ -101,7 +106,7 @@ SUBROUTINE define_sog(timestep)
             Gvector_o%d(kk)%bin = Gvector%d(kk)%bin !crashes here
             Gvector_ao_o%d(kk)%bin = Gvector_ao%d(kk)%bin
          END DO
-         nano%Q_old_old = nano%Q_old
+         nano%Q_old_old = nano%Q_old !V.flagella.01 not sure to keep it or not
 
          
       END IF
@@ -112,6 +117,7 @@ SUBROUTINE define_sog(timestep)
          T%old = T%new
          h%old = h%new
          P%micro%old = P%micro%new
+         P%nano%old = P%nano%new
          N%O%old = N%O%new
          N%H%old = N%H%new
          PON%old = PON%new
