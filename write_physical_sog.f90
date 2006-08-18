@@ -47,12 +47,13 @@ subroutine write_physical_sog(unow, vnow, euphotic)
      endif
   enddo
 
-111 format (17(1x,f10.4))   
+111 format (17(1x,f15.9)) !V.flagella.01  
+! V.flagella.0 111 format (17(1x,f10.4))   
   write(293, 111) time/3600., h%new, stress%u%new, stress%v%new,t%new(0), &
        s%new(0), u%new(1), Q_t(0), K%t%all(1), I_par(0), density%new(0), &
        Q_n(1)*100000.
 
-  write(295, 111) time/3600., P%micro%new(0), N%O%new(0), N%H%new(0), &
+  write(295, 111) time/3600., P%micro%new(0), P%nano%new(0), N%O%new(0), N%H%new(0), &
        Detritus(1)%D%new(0), Detritus(2)%D%new(0), Detritus(3)%D%new(0), &
        f_ratio(1)
 
