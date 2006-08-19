@@ -14,17 +14,10 @@ module surface_forcing
   ! *** This should be reworked so that the latitude is read as a run
   ! *** parameter, and f calculated for the run.
   real(kind=dp), parameter :: latitude = 49. + 7.517 / 60. ! station S3
-  !<<<<<<< surface_forcing.f90
-  real(kind=dp), parameter :: omeg = 2. * PI / 86400.
-  !real(kind=dp), parameter :: f = 2. * omeg * sin(PI * latitude / 180.)
-  !real(kind=sp), parameter::f=2. * omeg
-  !f = 2. * omeg * sin(PI * latitude / 180.)
-!=======
 !*** Correction pgf90 will not except an intrinsic in parameter statement  
 !*** real(kind=dp), parameter :: f = 2. * (2. * PI / 86400.) * &
 !***    sin(PI * latitude / 180.)
   real(kind=dp), parameter :: f = 1.1d-4
-  !>>>>>>> 1.4
 
   DOUBLE PRECISION, PARAMETER::g = 9.81, & !m/s^2
        small = 1.D-15, &
