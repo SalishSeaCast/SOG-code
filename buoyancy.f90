@@ -2,15 +2,17 @@
 ! $Source$
 
 SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
-                    Cpi, beta, Qn)     
+                    Cp, beta, Qn)     
 
       use mean_param
+      use water_properties
       use surface_forcing
 
       implicit none
 
       TYPE(gr_d), INTENT(IN)::d
-      TYPE(constant), INTENT(IN)::alp, beta, Cpi
+      TYPE(constant), INTENT(IN)::alp, beta
+      type(water_property), intent(in) :: Cp
       TYPE(height), INTENT(IN)::hh
       DOUBLE PRECISION, DIMENSION(0:d%M+1), INTENT(IN)::Te, Sa !T, S
       DOUBLE PRECISION, DIMENSION(0:d%M+1), INTENT(OUT)::Bu !B
@@ -34,21 +36,21 @@ SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
 !!!Intensity should be defined on the interface levels and not the grid levels!!!
  
 
-     Qn(0) = II(0) / Cpi%i(0) / rho(0)        
+     Qn(0) = II(0) / Cp%i(0) / rho(0)        
      DO k = 1, d%M       
-         Qn(k) = II(k) / Cpi%i(k) / (rho(k) + (d%d_i(k) - d%d_g(k)) &
+         Qn(k) = II(k) / Cp%i(k) / (rho(k) + (d%d_i(k) - d%d_g(k)) &
               * (rho(k+1) - rho(k)) / d%g_space(k))
      END DO       
 
       IF (h_B%g == 1) THEN   !!!Shouldn't make a difference!!!
          rho_hb = rho(0)
-         Cp_hb = Cpi%i(0)
+         Cp_hb = Cp%i(0)
          alp_hb = alp%i(0)
          In_hb = II(0)
       ELSE
          rho_hb = rho(h_B%g-1)+(rho(h_B%g)-rho(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
                  d%g_space(h_B%g-1)
-         Cp_hb = Cpi%g(h_B%g-1)+(Cpi%g(h_B%g)-Cpi%g(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
+         Cp_hb = Cp%g(h_B%g-1)+(Cp%g(h_B%g)-Cp%g(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
                  d%g_space(h_B%g-1)
          alp_hb = alp%g(h_B%g-1)+(alp%g(h_B%g)-alp%g(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
                  d%g_space(h_B%g-1)
@@ -56,10 +58,10 @@ SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
                  d%i_space(h_B%i)
       END IF
 
-      Br = g*(alp%i(0)*II(0)/(Cpi%i(0)*rho(0))- &         !!eq. A3c in Large
+      Br = g*(alp%i(0)*II(0)/(Cp%i(0)*rho(0))- &         !!eq. A3c in Large
                         alp_hb*In_hb/(rho_hb*Cp_hb))
 
-!      write (*,*) Br/g/alp%i(0)*Cpi%i(0)*rho(0)
+!      write (*,*) Br/g/alp%i(0)*Cp%i(0)*rho(0)
 
 !      Br = 0.
 !      Qn = 0.
