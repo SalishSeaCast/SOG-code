@@ -3,8 +3,7 @@
 "writefile2"	"output/bio_nov04-test.out"	"biology model time series"
 "inputfile"	"input/nov04-test.dat"		"run parameters"
 "ctd_in"	"input/ctd_in/SG0414004.str"	"initialization CTD file"
-"profile_out1"	"profiles/KI_nov04-test.out"	"K & I profiles"
-"profile_out2"	"profiles/phys_nov04-test.out"	"main profiles"
+"profile_out"	"profiles/phys_nov04-test.out"	"profiles"
 
 # information below this line is ignored
 
