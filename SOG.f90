@@ -996,10 +996,6 @@ program SOG
         END IF
      END DO
 
-
-     !CALL write_biological_sog
-
-
      !-----END BIOLOGY------------------------------------------------
 
      !--------bottom boundaries--------------------------
