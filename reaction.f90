@@ -12,6 +12,7 @@ module reaction
 contains
 
   SUBROUTINE p_growth(NO,NH,P,M2,I_par,mm,N,micro,TT,Resp) 
+!~>>>>>>> 1.5
 
     TYPE(gr_d), INTENT(IN)::mm  !grid
     ! Nitrate and ammonium concentrations
@@ -116,5 +117,6 @@ contains
 
   END SUBROUTINE p_growth
 
+!~>>>>>>> 1.5
 
 end module reaction
