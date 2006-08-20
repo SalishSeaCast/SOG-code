@@ -13,10 +13,11 @@ contains
 
   SUBROUTINE p_growth(NO,NH,P,M2,I_par,mm,N,micro,TT,Resp) 
 
-    double precision, dimension(mm%M) :: NO, NH ! nitrate and ammonium conc.
-
-    TYPE(plankton2), INTENT(IN OUT)::micro  
     TYPE(gr_d), INTENT(IN)::mm  !grid
+    ! Nitrate and ammonium concentrations
+    double precision, dimension(mm%M), intent(in) :: NO, NH 
+
+    TYPE(plankton2), INTENT(IN OUT)::micro 
     DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::P !V.flagella.01 note: either Pmicro or Pnano
     INTEGER, INTENT(IN)::M2  
     TYPE(nutrient), INTENT(IN OUT)::N
