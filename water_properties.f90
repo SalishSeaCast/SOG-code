@@ -25,7 +25,7 @@ module water_properties
   ! dalloc_water_props() -- Deallocate memory from water property
   !                         profiles.
 
-  use precision_defs
+  use precision_defs, only: dp
 
   implicit none
 
@@ -56,7 +56,7 @@ contains
 
   subroutine alloc_water_props(M, Cp)
     ! Allocate memory for water property profiles.
-    use malloc
+    use malloc, only: alloc_check
     implicit none
     ! Argument:
     integer, intent(in)               :: M   ! Number of grid points
@@ -73,7 +73,7 @@ contains
 
   subroutine dalloc_water_props(Cp)
     ! Deallocate memory for water property profiles.
-    use malloc
+    use malloc, only: dalloc_check
     implicit none
     ! Argument:
     type(water_property), intent(out) :: Cp  ! Heat capacity profile [J/kg.K]
@@ -97,7 +97,7 @@ contains
     ! dependency removed.
     !
     ! Check value: Cp(10., 24.) = 4047.5 J/kg-K
-    use unit_conversions
+    use unit_conversions, only: KtoC
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(in) :: T    ! Temperature [K]

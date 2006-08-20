@@ -9,7 +9,7 @@ contains
 
   SUBROUTINE define_flux(Cpi)
 
-    use precision_defs
+    use precision_defs, only: dp
 
     USE mean_param
     USE declarations

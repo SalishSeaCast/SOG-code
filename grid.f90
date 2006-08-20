@@ -19,7 +19,7 @@ module grid_mod
   !
   ! dalloc_grid() -- Deallocate memory from grid arrays.
 
-  use precision_defs
+  use precision_defs, only: dp
 
   implicit none
 
@@ -50,9 +50,9 @@ contains
     ! Initialize grid interpolation factor values
     ! *** Eventually this will absorb define_grid() and do all grid
     ! *** initialization.
-    use malloc
+    use malloc, only: alloc_check
     ! *** This is temporary, but we need the grid type-def
-    use mean_param
+    use mean_param, only: gr_d
     implicit none
     ! Argument:
     integer, intent(in)    :: M     ! Number of grid points
@@ -78,7 +78,7 @@ contains
   subroutine dalloc_grid
     ! Deallocate memory for grid interface interpolation factors
     ! *** and eventually the rest of the grid
-    use malloc
+    use malloc, only: dalloc_check
     implicit none
     ! Local variables:
     integer              :: dallocstat  ! Allocation return status

@@ -5,7 +5,7 @@ SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
                     Cp, beta, Qn)     
 
       use mean_param
-      use water_properties
+      use water_properties, only: water_property
       use surface_forcing
 
       implicit none
@@ -60,12 +60,5 @@ SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
 
       Br = g*(alp%i(0)*II(0)/(Cp%i(0)*rho(0))- &         !!eq. A3c in Large
                         alp_hb*In_hb/(rho_hb*Cp_hb))
-
-!      write (*,*) Br/g/alp%i(0)*Cp%i(0)*rho(0)
-
-!      Br = 0.
-!      Qn = 0.
-
-
 
 END SUBROUTINE buoyancy
