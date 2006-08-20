@@ -1,63 +1,60 @@
-SUBROUTINE define_PZ(check)
+SUBROUTINE define_PZ(M, PZ_bins, D_bins, M2, Pmicro, Pnano, NO, NH, Detritus, &
+                      PZ)
 
-!  USE mean_param
-  USE declarations
-!  USE surface_forcing
+! This subroutine takes all the separate variables (microplankton,
+! nanoplankton, nitrate, ammonium and detritus and loads them
+! sequentially into the PZ vector for the ODE solver to use.
+
+  USE mean_param, only : bins, snow 
+
 
   IMPLICIT NONE
 
-  INTEGER::check,isusan
+  INTEGER, INTENT (IN) :: M
+  TYPE (bins), INTENT (IN) :: PZ_bins
+  INTEGER, INTENT (IN) :: D_bins
+  INTEGER, INTENT (IN) :: M2
+  DOUBLE PRECISION, DIMENSION(0:M+1), INTENT(IN)::Pmicro, Pnano, NO, NH
+  TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
+  DOUBLE PRECISION, DIMENSION (M2), INTENT (OUT) :: PZ
 
-  !Copepod variables
-  !n(i), Ntot and Z_new(i) where i is grid point:
-  !sum_i {Z_new(i)*i_space(i)}/ sum_i {n(i)*i_space(i)} = Ntot ==> average number per m^2
-  !as well, n(i) is normalized such that sum_i {n(i)*i_space(i)} = 1
+! Local Variables
 
+  INTEGER :: bPZ, ePZ ! start position and end position in PZ array
+  INTEGER :: j
 
   PZ = 0.
 
-  DO xx = 1, M2
-     IF (xx <= M) THEN
-        PZ(xx) = P%micro%new(xx)
-     ELSE IF (xx > M .AND. xx <= 2*M) THEN
-        PZ(xx) = P%nano%new(xx-M)
-     ELSE IF (xx > 2*M .AND. xx <= 3*M) THEN
-        PZ(xx) = N%O%new(xx-2*M)
-     ELSE IF (xx > 3*M .AND. xx <= 4*M) THEN
-        PZ(xx) = N%H%new(xx-3*M)
-     ELSE IF (xx > 4*M .AND. xx <= 4*M+D_bins*M) THEN 
-        DO yy = 1,D_bins    ! 1 is suspended particulate N (SUS), 2 is sinking PN (SPN), and 3 is fast sink
-           IF (xx > 4*M+(yy-1)*M .AND. xx <= 4*M+yy*M) THEN
-             PZ(xx) = Detritus(yy)%D%new(xx-(4*M+(yy-1)*M))
-           END IF
-        END DO
-     END IF
-  END DO
+! Microplankton
 
-! Nanoplanktons are placed after microplanktons. 
-! The whole scheme is different now. See above
-!  DO xx = 1, M2
-!     IF (xx <= M) THEN
-!        PZ(xx) = P%micro%new(xx)
-!     ELSE IF (xx > M .AND. xx <= 2*M) THEN
-!        PZ(xx) = N%O%new(xx-M)
-!     ELSE IF (xx > 2*M .AND. xx <= 3*M) THEN
-!        PZ(xx) = N%H%new(xx-2*M)
-!     ELSE IF (xx > 3*M .AND. xx <= 3*M+D_bins*M) THEN 
-!        DO yy = 1,D_bins    ! 1 is suspended particulate N (SUS), 2 is sinking PN (SPN), and 3 is fast sink
-!           IF (xx > 3*M+(yy-1)*M .AND. xx <= 3*M+yy*M) THEN
-!             PZ(xx) = Detritus(yy)%D%new(xx-(3*M+(yy-1)*M))
-!           END IF
-!        END DO
-!     END IF
-!  END DO
+  bPz = (PZ_bins%micro-1) * M + 1
+  ePZ = PZ_bins%micro * M
+  PZ(bPZ:ePZ) = Pmicro(1:M)
 
-!      open(558,file="output/PZ.dat")!
-!      do isusan=1,M2
-!      write(558,*)PZ(isusan)
-!      enddo
-!      close(558)      
+! Nanoplankton
 
+  bPz = (PZ_bins%nano-1) * M + 1
+  ePZ = PZ_bins%nano * M
+  PZ(bPZ:ePZ) = Pnano(1:M)
+
+! Nitrate
+
+  bPz = (PZ_bins%NO-1) * M + 1
+  ePZ = PZ_bins%NO * M
+  PZ(bPZ:ePZ) = NO(1:M)
+
+! Ammonium
+
+  bPz = (PZ_bins%NH-1) * M + 1
+  ePZ = PZ_bins%NH * M
+  PZ(bPZ:ePZ) = NH(1:M)
+
+! Detritus
+  do j=1,D_bins
+     bPz = (PZ_bins%Quant + (j-1) ) * M + 1
+     ePz = (PZ_bins%Quant + j) * M
+     PZ(bPz:ePz) = Detritus(j)%D%new(1:M)
+  enddo
 
 
 END SUBROUTINE define_PZ
