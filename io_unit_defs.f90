@@ -15,4 +15,7 @@ module io_unit_defs
   integer, parameter :: met_data = 12
   integer, parameter :: river_data = 12
 
+  ! Results output file units
+  integer, parameter :: profiles = 200
+
 end module io_unit_defs
