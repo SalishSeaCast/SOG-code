@@ -23,7 +23,7 @@ module declarations
   integer :: stormday           ! *** apparently not used
   integer :: cruise_id          ! *** apparently not used
 
-  TYPE(constant)::alph, Cp, beta, dens
+  TYPE(constant)::alph, beta, dens
   TYPE(gr_d)::grid
   TYPE(prop)::T, S, U, V, B, density, P_temp, PON, vt, ut
   TYPE(plankton):: P 
