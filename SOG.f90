@@ -30,10 +30,15 @@ program SOG
   ! Local variables:
   integer :: icheck
   integer :: isusan, ecmapp, day_met
-  TYPE(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
-  double precision:: cz, unow, vnow, upwell
+
+  type(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
+  common /derivs/ PZ_bins
+
+  double precision:: cz, unow, vnow, upwell 
+
   ! Water column physical properties
   type(water_property) :: Cp    ! Heat capacity in J/kg-K
+
   ! Interpolated river flows
   real :: Qinter  ! Fraser River
   real :: Einter  ! Englishman River
@@ -119,15 +124,17 @@ program SOG
      PZ_bins%det = 5
   else
      ! Size of the biology we are using (Quantities and Detritus)
-     PZ_bins%Quant = 3
+     PZ_bins%Quant = 4
      ! Position of Diatoms (micro plankton)
      PZ_bins%micro = 1
      ! Position of Nitrate
      PZ_bins%NO = 2
      ! Position of Ammonium
      PZ_bins%NH = 3
+     ! unused
+     PZ_bins%nano = 4
      ! Start of detritus
-     PZ_bins%det = 4
+     PZ_bins%det = 5
   endif
 
   ! Number of detritus bins, dissolved, slow sink and fast sink
@@ -662,7 +669,7 @@ program SOG
 
         IF (h_i < grid%d_g(1)) THEN  !minimum mixing
            h_i = grid%d_g(1)
-           write (*,*) 'minimum mixing', h_i
+!           write (*,*) 'minimum mixing', h_i
         END IF
 
         CALL find_jmax_g(h,grid) !***! can't be less than the grid
@@ -806,15 +813,16 @@ program SOG
 
      ENDDO
 
-     !------BIOLOGICAL MODEL--------------------------------------------
+!------BIOLOGICAL MODEL--------------------------------------------
 
-     !      PRINT "(A)","KPP: start bio model ==> day,time,year"
-     !      PRINT *,day,time,year
 
-     CALL define_PZ(icheck)
+! load the PZ vector with all the biological quantities
+     call define_PZ(M, PZ_bins, D_bins, M2, &                    !in
+          P%micro%new, P%nano%new, N%O%new, N%H%new, Detritus, & !in
+          PZ)                                                    !out
 
      IF (MINVAL(PZ) < 0.) THEN
-        PRINT "(A)","PZ < 0. see KPP.f90"
+        PRINT "(A)","PZ < 0. see SOG.f90"
         PRINT "(A)","time,day"
         PRINT *,time,day
         STOP
