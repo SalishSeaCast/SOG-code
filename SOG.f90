@@ -5,8 +5,9 @@ program SOG
   ! Coupled physical and biological model of the Strait of Georgia
 
   ! Utility modules:
-  use unit_conversions
-  use datetime
+  use unit_conversions, only: KtoC
+  use datetime, only: datetime_, os_datetime, calendar_date, &
+       clock_time, datetime_str
 
   use declarations
   use surface_forcing
@@ -14,8 +15,9 @@ program SOG
   use pdf
   use IMEX_constants  
 
-  use water_properties
-  use grid_mod
+  use water_properties, only: water_property, alloc_water_props, &
+       dalloc_water_props, Cp_profile
+  use grid_mod, only: init_grid, dalloc_grid, interp_i
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
@@ -65,8 +67,8 @@ program SOG
   character*70 :: &
        codeId = "$Source$"
   ! Date/time structures for output file headers
-  type(t_datetime) :: runDatetime     ! Date/time of code run
-  type(t_datetime) :: profileDatetime ! Date/time of profile
+  type(datetime_) :: runDatetime     ! Date/time of code run
+  type(datetime_) :: profileDatetime ! Date/time of profile
   ! Temporary storage for formated datetime strings.  Needed to work around
   ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
   ! calls in write statements
