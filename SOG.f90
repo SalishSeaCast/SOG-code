@@ -5,6 +5,7 @@ program SOG
   ! Coupled physical and biological model of the Strait of Georgia
 
   ! Utility modules:
+  use io_unit_defs, only: profiles
   use unit_conversions, only: KtoC
   use datetime, only: datetime_, os_datetime, calendar_date, &
        clock_time, datetime_str
@@ -1030,34 +1031,17 @@ program SOG
   profileDatetime%day_sec = day_time
   call calendar_date(profileDatetime)
   call clock_time(profileDatetime)
-131  format (13(1x,f10.4))
-  ! Quantities without initial condition value value at bottom of the
-  ! model domain (M values in the profile)
-  ! *** K, I_par
-  str = getpars("profile_out1", 1)
-  open(4, file=str)
-  do isusan = 0, M
-     write(4, 131) K%u%all(isusan), K%s%all(isusan), I_par(isusan), &
-          K%t%all(isusan)
-  end do
-  close(4)
-
-  ! Quantities whose grid point are in the middle of the model cells, 
-  ! and that have boundary condition values at the surface, and at the
-  ! bottom of the model domain (M + 2 values in the profile, ranging from
-  ! 0 to M + 1)
-  ! Water temperature, salinity, sigma-t, phytoplankton, nitrate, ammonia,
-  ! and detritus (remineralized, sinking, and mortality)
-  str = getpars("profile_out2", 1)
-  open(6, file=str)
+  ! Get the profile results file name, and open it
+  ! *** Reading the file name should be done much earlier
+  str = getpars("profile_out", 1)
+  open(unit=profiles, file=str)
   ! Write the profile results file header
   ! Avoid a pgf90 idiocyncracy by getting datetimes formatted into
   ! string here rather than in the write statement
   str_runDatetime = datetime_str(runDatetime)
   str_proDatetime = datetime_str(profileDatetime)
-  write(6, 200) trim(codeId), str_runDatetime, time, str_proDatetime
-  ! *** Need to add a bunch of code to convert time value to calendar date
-  ! *** and clock time so that we can write *ProfileDateTime value
+  write(profiles, 200) trim(codeId), str_runDatetime, time, &
+       str_proDatetime
 200 format("! Profiles of Temperature, Salinity, Density, ",         &
        "Phytoplankton, Nitrate, Ammonium,"/,                         &
        "! and Detritus (remineralized, sinking, and mortality)"/,    &
@@ -1065,26 +1049,40 @@ program SOG
        "*RunDateTime: ", a/,                                         &
        "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
        "phytoplankton, nitrate, ammonium, remineralized detritus, ", &
-       "sinking detritus, mortality detritus"/,                      &
+       "sinking detritus, mortality detritus, ",                     &
+       "total momentum eddy diffusivity, ",                          &
+       "total temperature eddy diffusivity, ",                       &
+       "total salinity eddy diffusivity, ",                          &
+       "photosynthetic available radiation, ",                       &
+       "u velocity, v velocity"/,                                    &
        "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, ",      &
-       "uM N, uM N, uM N"/,                                          &
+       "uM N, uM N, uM N, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s"/,    &
        "*ProfileTime: ", f9.0/                                       &
        "*ProfileDateTime: ", a/,                                     &
        "*EndOfHeader")
+  ! Write the profile values at the surface, and at all grid points
   ! *** Change this index to i when we know common block effects have been
   ! *** cleaned up and i is safe to use as a local index
-  do i_pro = 0, M + 1
+  do i_pro = 0, M
      sigma_t = density%new(i_pro) - 1000.
-     write(6, 201) grid%d_g(i_pro), KtoC(T%new(i_pro)), S%new(i_pro),  &
-          sigma_t, P%micro%new(i_pro), N%O%new(i_pro), N%H%new(i_pro), &
-          Detritus(1)%D%new(i_pro), Detritus(2)%D%new(i_pro),          &
-          Detritus(3)%D%new(i_pro)
-     ! *** Removed f_ratio, ratio of nitrate uptake to total nitrogen uptake
-     ! *** from above write, because it is dimensioned (1:M) and causes an
-     ! *** array bound error in this loop
-201 format(f7.3, 9(2x, f8.4))
+     write(profiles, 201) grid%d_g(i_pro), KtoC(T%new(i_pro)),          &
+          S%new(i_pro), sigma_t, P%micro%new(i_pro), N%O%new(i_pro),    & 
+          N%H%new(i_pro), Detritus(1)%D%new(i_pro),                     &
+          Detritus(2)%D%new(i_pro), Detritus(3)%D%new(i_pro),           &
+          K%u%all(i_pro), K%t%all(i_pro), K%s%all(i_pro), I_par(i_pro), &
+          U%new(i_pro), V%new(i_pro)
   end do
-  close(6)
+  ! Write the values at the bottom grid boundary.  Some quantities are
+  ! not defined there, so use their values at the Mth grid point.
+  sigma_t = density%new(M+1) - 1000.
+  write(profiles, 201) grid%d_g(M+1), KtoC(T%new(M+1)),        &
+          S%new(M+1), sigma_t, P%micro%new(M+1), N%O%new(M+1), &
+          N%H%new(M+1), Detritus(1)%D%new(M+1),                &
+          Detritus(2)%D%new(M+1), Detritus(3)%D%new(M+1),      &
+          K%u%all(M), K%t%all(M), K%s%all(M), I_par(M),        &
+          U%new(M+1), V%new(M+1)
+201 format(f7.3, 15(2x, f8.4))
+  close(unit=profiles)
 
   ! Deallocate memory
   call dalloc_water_props(Cp)
