@@ -20,7 +20,7 @@ module datetime
   ! *** We may need an interface block here to handle overloading of
   ! *** functions that need to be defined for more than 1 type.
 
-  type :: t_datetime
+  type :: datetime_
      integer :: yr
      integer :: mo
      integer :: day
@@ -29,7 +29,7 @@ module datetime
      integer :: min
      integer :: sec
      integer :: day_sec
-  end type t_datetime
+  end type datetime_
 
 contains
 
@@ -41,7 +41,7 @@ contains
     ! CACM 13(10):621.
     implicit none
     ! Arguments:
-    type(t_datetime), intent(inout) :: datetime
+    type(datetime_), intent(inout) :: datetime
 
     ! Local variables:
     integer :: yyyy
@@ -80,7 +80,7 @@ contains
     ! structure provided from its day_sec element.
     implicit none
     ! Argument:
-    type(t_datetime), intent(inout) :: datetime
+    type(datetime_), intent(inout) :: datetime
     ! Local variable:
     integer :: rem
 
@@ -97,7 +97,7 @@ contains
     ! 
     implicit none
     ! Argument:
-    type(t_datetime) :: datetime
+    type(datetime_) :: datetime
 
     day_s = (datetime%hr * 3600) + (datetime%min * 60) + datetime%sec
   end function day_sec
@@ -109,7 +109,7 @@ contains
     ! *** Add an option arg to spec the separator like python isoformat()
     implicit none
     ! Argument:
-    type(t_datetime), intent(in) :: datetime
+    type(datetime_), intent(in) :: datetime
 
     write(str, 100) datetime%yr, datetime%mo, datetime%day, &
          datetime%hr, datetime%min, datetime%sec
@@ -122,7 +122,7 @@ contains
     ! day, hr, min & sec elements of the datetime structure provided.
     implicit none
     ! Argument:
-    type(t_datetime), intent(out) :: datetime
+    type(datetime_), intent(out) :: datetime
     ! Local variable:
     integer, dimension(8) :: timeparts
 
@@ -150,7 +150,7 @@ contains
     ! in Jan-1972, and converted to f90 by Alan Miller on 1999-12-22.
     implicit none
     ! Argument:
-    type(t_datetime), intent(in) :: datetime
+    type(datetime_), intent(in) :: datetime
     ! Local variables:
     integer :: yyyy, mm, dd
     yyyy = datetime%yr
