@@ -32,7 +32,7 @@ program SOG
 
   ! Local variables:
   integer :: icheck
-  integer :: isusan, ecmapp, day_met
+  integer :: ecmapp, day_met
 
   type(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
   common /derivs/ PZ_bins
