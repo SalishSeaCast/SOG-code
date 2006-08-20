@@ -2,7 +2,8 @@
 ! $Source$
 
 subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
-  ! What's it do?
+  ! Calculate the derivatives of the biological model for odeint to
+  ! use to advance the biology to the next time step.
 
   use surface_forcing
   use declarations
@@ -24,6 +25,8 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
   DOUBLE PRECISION::bottom,bottom2
   DOUBLE PRECISION, DIMENSION(2*grid%M)::Resp
 
+  double precision, dimension(grid%m) :: NO, NH
+
 
   bin_tot2 = M2
   bin = M2
@@ -42,12 +45,17 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
   waste%medium = 0.
   N%remin = 0.
 
-  CALL p_growth(Yplus,Yplus(1:M),nvar1,I_par,grid,N,micro,Temp,Resp) !microplankton
+! put PZ nitrate and ammonium data into special arrays here, rather
+! than in define_PZ
+  NO(1:grid%M) = PZ(2*grid%M+1:3*grid%M)
+  NH(1:grid%M) = PZ(3*grid%M+1:4*grid%M)
+
+  CALL p_growth(NO,NH,Yplus(1:M),nvar1,I_par,grid,N,micro,Temp,Resp) !microplankton
 !      waste%medium = waste%medium + micro%M_z*Yplus(1:M) !comm.add V.flagella.01->similar line
 !org.line      waste%medium = waste%medium + Resp(M+1:2*M)*Yplus(1:M)
   waste%medium = waste%medium + Resp(1:M)*Yplus(1:M)
   
-  CALL p_growth(Yplus,Yplus(M+1:2*M),nvar1,I_par,grid,N,nano,Temp,Resp) !nanoplankton !add V.flagella.01
+  CALL p_growth(NO,NH,Yplus(M+1:2*M),nvar1,I_par,grid,N,nano,Temp,Resp) !nanoplankton !add V.flagella.01
   ! maybe exchange the belo line with above. check the M number. 
   !CALL p_growth(Yplus,Yplus(1:M),nvar1,I_par,grid,N,nano,Temp,Resp) !nanoplankton !add V.flagella.01
   waste%small = waste%small + Resp(M+1:2*M)*Yplus(M+1:2*M) !waste%small is rel. to nano !add V.flagella.01
