@@ -33,6 +33,7 @@ module mean_param
   END TYPE Large1996_data
 
   TYPE :: bins
+     sequence
      INTEGER :: micro, nano, NO, NH, det, Quant
   END TYPE bins
 
