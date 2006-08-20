@@ -864,6 +864,7 @@ program SOG
           P%micro%new(grid%M+1))
 
      Gvector%n%h = Gvector%p%micro
+     Gvector%p%nano = Gvector%p%micro ! V.flagella ??? Not sure 
      Gvector%d(D_bins)%bin = 0.
      DO xx = 1, D_bins-1
         Gvector%d(xx)%bin = Gvector%p%micro
@@ -872,7 +873,8 @@ program SOG
      CALL diffusion(grid,Bmatrix%no,Gvector%n%o,K%s%all,gamma%m,pflux_o,gamma%m,dt,&
           N%O%new(grid%M+1))
 
-     CALL define_adv_bio(grid,P%micro%new,Gvector%p%micro,dt,P_na,wupwell,grid%i_space(1))
+     CALL define_adv_bio(grid,P%micro%new,Gvector%p%micro,dt,P_na,wupwell,grid%i_space(1)) ! shouldn't this be P_di?
+     CALL define_adv_bio(grid,P%nano%new,Gvector%p%nano,dt,P_na,wupwell,grid%i_space(1)) !V.flagella.01
      CALL define_adv_bio(grid,N%O%new,Gvector%n%o,dt,P_no,wupwell,grid%i_space(1))
      CALL define_adv_bio(grid,N%H%new,Gvector%n%h,dt,P_nh,wupwell,grid%i_space(1))
 
@@ -897,9 +899,8 @@ program SOG
      END DO
      
      CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*M), &
-          PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, N%O%old, N%H%old, &
+          PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, P%nano%old, N%O%old, N%H%old, &
           Detritus, Gvector_ro)  !define Gvector_ro
-
 
      CALL matrix_A(Amatrix%bio,Bmatrix%bio,time_step)   !define Amatrix%A,%B,%C
      CALL matrix_A(Amatrix%no,Bmatrix%no,time_step)
@@ -919,6 +920,7 @@ program SOG
         Bmatrix_o%no%B = Bmatrix%no%B
         Bmatrix_o%no%C = Bmatrix%no%C
         Gvector_o%p%micro = Gvector%p%micro
+        Gvector_o%p%nano = Gvector%p%nano !V.flagella.01
         Gvector_o%n%o = Gvector%n%o
         Gvector_o%n%h = Gvector%n%h
 
@@ -937,6 +939,8 @@ program SOG
            CALL P_H(grid,Hvector%p%micro,Gvector%p%micro,Gvector_o%p%micro,Gvector_o_o%p%micro, &
                 null_vector, null_vector,Gvector_ao%p%micro,Gvector_ao_o%p%micro, &
                 Bmatrix_o%bio,Bmatrix_o_o%bio,P%micro)
+           CALL N_H(grid,Hvector%p%nano,Gvector%p%nano,Gvector_o%p%nano,Gvector_o_o%p%nano, &
+                null_vector, null_vector,Bmatrix_o%bio,Bmatrix_o_o%bio,P%nano) !V.flagella
 
            DO xx = 1,D_bins-1
               CALL P_H(grid,Hvector%d(xx)%bin,Gvector%d(xx)%bin,Gvector_o%d(xx)%bin, &
@@ -958,6 +962,9 @@ program SOG
            CALL P_H(grid,Hvector%p%micro,Gvector%p%micro,Gvector_o%p%micro,Gvector_o_o%p%micro, &
                 Gvector_ro%p%micro,Gvector_ro_o%p%micro,Gvector_ao%p%micro,Gvector_ao_o%p%micro, &
                 Bmatrix_o%bio,Bmatrix_o_o%bio,P%micro)
+           CALL N_H(grid,Hvector%p%nano,Gvector%p%nano,Gvector_o%p%nano,Gvector_o_o%p%nano, &
+                Gvector_ro%p%nano,Gvector_ro_o%p%nano,Bmatrix_o%bio,Bmatrix_o_o%bio,P%nano) !V.flagella
+
 
            DO xx = 1,D_bins-1
               CALL P_H(grid,Hvector%d(xx)%bin,Gvector%d(xx)%bin,Gvector_o%d(xx)%bin, &
@@ -979,6 +986,7 @@ program SOG
 
         END IF
         CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%p%micro,P1_p,M)
+        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%p%nano,Pnano1_p,M)
         CALL TRIDAG(Amatrix%no%A,Amatrix%no%B,Amatrix%no%C,Hvector%n%o,NO1_p,M) 
         CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%n%h,NH1_p,M)
 
@@ -1002,6 +1010,7 @@ program SOG
 
      N%O%new(M+1) = ctd_bottom(day_met-281)%No
      P%micro%new(M+1) = ctd_bottom(day_met-281)%P
+     P%nano%new(M+1) = ctd_bottom(day_met-281)%P !V.flagella ???
      S%new(M+1) = ctd_bottom(day_met-281)%sal
      T%new(M+1) = ctd_bottom(day_met-281)%temp+273.15
      N%H%new(M+1) = N%H%new(M)
