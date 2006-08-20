@@ -36,8 +36,8 @@ module mean_param
      INTEGER :: micro, nano, NO, NH, det, Quant
   END TYPE bins
 
-
-  TYPE :: constant          !expansion coefficients, heat capacity, surface density
+  ! expansion coefficients, heat capacity, surface density
+  TYPE :: constant          
      TYPE(alpha), DIMENSION(13) :: data
      DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
   END TYPE constant
