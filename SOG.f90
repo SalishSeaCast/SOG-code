@@ -13,22 +13,27 @@ program SOG
   use initial_sog
   use pdf
   use IMEX_constants  
+
+  use water_properties
+  use grid_mod
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
   use find_wind_mod
   use Coriolis_and_pg_mod
+  use define_flux_mod
 
   implicit none
 
   external derivs_noflag, derivs_sog, rkqs
 
   ! Local variables:
-  integer :: bin_tot2, smooth_i, icheck
+  integer :: icheck
   integer :: isusan, ecmapp, day_met
   TYPE(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
-  double precision:: cz, unow, vnow, upwell, Sa
-  DOUBLE PRECISION, DIMENSION(0:80+1) :: dS
+  double precision:: cz, unow, vnow, upwell
+  ! Water column physical properties
+  type(water_property) :: Cp    ! Heat capacity in J/kg-K
   ! Interpolated river flows
   real :: Qinter  ! Fraser River
   real :: Einter  ! Englishman River
@@ -131,6 +136,7 @@ program SOG
 
 
 
+
   IF (year_o==2001) then
      ecmapp = 1
   else if (year_o == 2002) then
@@ -151,8 +157,9 @@ program SOG
   icheck=346
 
   CALL allocate1(alloc_stat) 
+  call alloc_water_props(grid%M, Cp)
   CALL read_sog
-  CALL coefficients(alph, beta, Cp, dens, cloud,p_Knox)
+  CALL coefficients(alph, beta, dens, cloud,p_Knox)
   CALL allocate3(alloc_stat)
   DO xx = 1,12
      IF (alloc_stat(xx) /= 0) THEN
@@ -164,6 +171,9 @@ program SOG
 
   CALL initialize ! initializes everything (biology too)
   CALL define_grid(grid, D, lambda) ! sets up the grid
+  ! Set up grid interpolation factor arrays
+  ! *** Eventually, define_grid will be refactored into init_grid
+  call init_grid(M, grid)
   CALL initial_mean(U, V, T, S, P, N, Detritus, h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
 
@@ -182,7 +192,17 @@ program SOG
   !    initialize h_m
   h_m%new = 10.
 
-
+  ! Initialize the profiles of the water column properties
+  ! Thermal and salinity expansion and their gradients
+  CALL alpha_sub(T%new, S%new, alph, grid) 
+  CALL alpha_sub(T%new, S%new, beta, grid)
+  CALL div_i_param(grid, alph) ! alph%idiv = d alpha /dz
+  CALL div_i_param(grid, beta) ! beta%idiv = d beta /dz
+  ! Heat capacity
+  Cp%g = Cp_profile(T%new, S%new)
+  Cp%i = interp_i(Cp%g)
+  ! Density with depth and density of fresh water
+  CALL density_sub(T, S, density%new, M,rho_fresh_o) 
   
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store previous time_steps in old (n) and old_old (n-1)
@@ -209,18 +229,6 @@ program SOG
               STOP
            END IF
         END DO
-
-        ! *** Does this block really need to be inside the implicit loop?
-        IF (time_step == 1 .AND. count == 1) THEN
-           ! Find the actual alpha values over the grid 
-           CALL alpha_sub(T%new, S%new, alph, grid) 
-           CALL alpha_sub(T%new, S%new, beta, grid)
-           CALL Cp_sub(T%new, S%new, Cp, grid)
-           ! Density with depth and density of fresh water
-           CALL density_sub(T, S, density%new, M,rho_fresh_o) 
-           CALL div_i_param(grid, alph) ! alph%idiv = d alpha /dz
-           CALL div_i_param(grid, beta) ! beta%idiv = d beta /dz
-        END IF
 
         ! Initialization of the implicit loop
         IF (count == 1) THEN
@@ -426,7 +434,8 @@ program SOG
         CALL div_interface(grid, U)
         CALL div_interface(grid, V)
 
-        CALL define_flux        !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
+        !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
+        CALL define_flux(Cp%i)
 
 
 
@@ -525,12 +534,15 @@ program SOG
         T%new(M+1) = T%old(M+1)
         S%new(M+1) = S%old(M+1)
 
-        CALL alpha_sub(T%new, S%new, alph, grid) ! find actual alpha values over grid
+        ! Update the profiles of the water column properties
+        ! Thermal and salinity expansion and their gradients
+        CALL alpha_sub(T%new, S%new, alph, grid)
         CALL alpha_sub(T%new, S%new, beta, grid)
-        CALL Cp_sub(T%new, S%new, Cp, grid)
-        !PRINT*,'dens',dens_i(0),S%new(0),T%new(0)
-        CALL density_sub(T, S, dens_i, M,rho_fresh_o) ! update density
-        !PRINT*,'dens',dens_i(0)
+        ! Heat capacity
+        Cp%g = Cp_profile(T%new, S%new)
+        Cp%i = interp_i(Cp%g)
+        ! Density with depth and density of fresh water
+        CALL density_sub(T, S, dens_i, M,rho_fresh_o)
         density%new = dens_i
 
         CALL div_i_param(grid,alph)
@@ -876,9 +888,6 @@ program SOG
      CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*M), &
           PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, N%O%old, N%H%old, &
           Detritus, Gvector_ro)  !define Gvector_ro
-     bin_tot2 = 0.
-
-
 
 
      CALL matrix_A(Amatrix%bio,Bmatrix%bio,time_step)   !define Amatrix%A,%B,%C
@@ -1066,5 +1075,9 @@ program SOG
 201 format(f7.3, 9(2x, f8.4))
   end do
   close(6)
+
+  ! Deallocate memory
+  call dalloc_water_props(Cp)
+  call dalloc_grid
 
 end program SOG
