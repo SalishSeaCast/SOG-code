@@ -30,7 +30,7 @@ contains
     ! Check the stat result of an allocate statement.
     ! If it is non-zero, output the specified message on stderr
     ! and stop execution.
-    use io_unit_defs
+    use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     integer, intent(in)           :: alloc_stat
@@ -47,7 +47,7 @@ contains
     ! Check the stat result of an deallocate statement.
     ! If it is non-zero, output the specified message on stderr
     ! and stop execution.
-    use io_unit_defs
+    use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     integer, intent(in)           :: dalloc_stat

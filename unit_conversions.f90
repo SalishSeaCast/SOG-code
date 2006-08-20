@@ -6,7 +6,7 @@ module unit_conversions
   !  CtoK -- degrees Celcius to Kelvins
   !  KtoC -- Kelvins to degrees Celcius
 
-  use precision_defs
+  use precision_defs, only: dp, sp
 
   implicit none
 
