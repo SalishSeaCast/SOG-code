@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-subroutine derivs_noflag(x_var, nvar1, Y_var, DYDX_deriv, Temp)
+subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   ! Calculate the derivatives of the biological model for odeint to
   ! use to advance the biology to the next time step.
   !
@@ -9,115 +9,189 @@ subroutine derivs_noflag(x_var, nvar1, Y_var, DYDX_deriv, Temp)
   ! *** It should not be needed once the flagellates model in
   ! *** derivs_sog is working.
 
-  use surface_forcing
-  use declarations
-  use reaction
-  use pdf
+  use mean_param, only: bins, losses, plankton2, nutrient, snow
+  use declarations, only: M, D_bins, N, micro, f_ratio, waste, Detritus, &
+       I_par, grid
+  use reaction, only: p_growth
 
   implicit none
 
   ! Arguments:
-  INTEGER, INTENT(IN)::nvar1 !5*M+bin_tot + Csources*M+D_bins*M
-  DOUBLE PRECISION, DIMENSION(nvar1), INTENT(IN)::Y_var  !INTENT(IN OUT)
-  DOUBLE PRECISION, DIMENSION(nvar1), INTENT(OUT)::DYDX_deriv
-  DOUBLE PRECISION, INTENT(IN)::x_var  !Y_var known at x_var
+  DOUBLE PRECISION, INTENT(IN):: time_in ! not used
+  INTEGER, INTENT(IN):: M2_in ! size of PZ
+  DOUBLE PRECISION, DIMENSION(M2_in), INTENT(IN):: PZ_in  ! values
+  DOUBLE PRECISION, DIMENSION(M2_in), INTENT(OUT)::dPZdt ! derivatives
+  double precision, dimension(1:M), INTENT(IN):: Temp ! temperature
 
-  INTEGER::j_j, k_k,bin_tot2,bin,isusan
-  DOUBLE PRECISION, DIMENSION(nvar1)::Yplus
-  DOUBLE PRECISION, DIMENSION(1:grid%M)::PO_deriv,pellet_prod!,N_urea_save
-  DOUBLE PRECISION, DIMENSION(1:grid%M)::Temp,fratioavg
-  DOUBLE PRECISION::bottom,bottom2
-  DOUBLE PRECISION, DIMENSION(2*grid%M)::Resp
+  type (bins) :: PZ_bins
+  common /derivs/  PZ_bins
+
+  ! Local variables
+
+  integer :: ii ! counter through grid ie 1 to M
+  integer :: jj ! counter through PZ
+  integer :: kk ! counter through detritus
+
+  DOUBLE PRECISION, DIMENSION(M2_in) :: PZnn ! PZ no negative values
+
+  DOUBLE PRECISION, DIMENSION(2*M):: Resp ! respiration and mortality
+
+  double precision, dimension (M) :: Pmicro ! microplankton concentrations
+  double precision, dimension (M) :: NO, NH ! nitrate and ammonium conc.
+  double precision, dimension (D_bins, M) :: detr ! detritus
+
+! put PZ micro values into Pmicro variable, removing any negative values
+
+  do ii = 1,M                        ! counter through grid
+     jj = (PZ_bins%micro-1) * M + ii ! counter into PZ
+
+     if (PZ_in(jj)>0) then
+        Pmicro(ii) = PZ_in(jj)
+     else
+        Pmicro(ii) = 0
+     endif
+  enddo
+
+! put PZ nitrate values into NO variable, removing any negative values
+
+  do ii = 1,M                        ! counter through grid
+     jj = (PZ_bins%NO-1) * M + ii    ! counter into PZ
+     
+     if (PZ_in(jj)>0) then
+        NO(ii) = PZ_in(jj)
+     else
+        NO(ii) = 0
+     endif
+  enddo
+
+! put PZ ammonium values into NH variable, removing any negative values
+
+  do ii = 1,M                        ! counter through grid
+     jj = (PZ_bins%NH-1) * M + ii    ! counter into PZ
+     
+     if (PZ_in(jj)>0) then
+        NH(ii) = PZ_in(jj)
+     else
+        NH(ii) = 0
+     endif
+  enddo
+
+! put PZ detritus values into detr  variable, removing any negative values
+
+  do kk = 1,D_bins
+     do ii = 1,M                                 ! counter through grid
+        jj = (PZ_bins%Quant + (kk-1)) * M + ii   ! counter through PZ
+
+        if (PZ_in(jj)>0) then
+           detr(kk,ii) = PZ_in(jj)
+        else
+           detr(kk,ii) = 0
+        endif
+     enddo
+  enddo
 
 
-  bin_tot2 = M2
-  bin = M2
+!*** write PZ variables to PZnn variables, making any negative values 0
+! should be removed in time and replaced by above explicit variables
 
-  DO j_j = 1,nvar1  
-     IF (Y_var(j_j) >= 0.) THEN 
-        Yplus(j_j) = Y_var(j_j)
+  DO jj = 1, M2_in 
+     IF ( PZ_in(jj) >= 0.) THEN 
+        PZnn(jj) = PZ_in(jj)
      ELSE
-        Yplus(j_j) = 0.
+        PZnn(jj) = 0.
      END IF
   END DO
 
+! initialize transfer rates between the pools
   N%O_uptake%new = 0.
   N%H_uptake%new = 0.
   waste%medium = 0.
   N%remin = 0.
 
-  CALL p_growth(Yplus,Yplus(1:M),nvar1,I_par,grid,N,micro,Temp,Resp) !microplankton
-  !      waste%medium = waste%medium + micro%M_z*Yplus(1:M)
-  waste%medium = waste%medium + Resp(M+1:2*M)*Yplus(1:M)
+!*** phytoplankton growth: PZnn used for nitrate and ammonimum (should be changed)
+!*** I_par is light (IN) , grid is used for M only I think (should be changed)
+! N ammonium and nitrate uptake rates (IN and OUT)
+! micro is the growth numbers for micro plankton (IN and OUT)
+! Temp is temperature (IN)
+! Resp is respiration values (OUT)
 
-  DYDX_deriv(1:nvar1) = 0.      
+  call p_growth(PZnn,Pmicro,M2_in,I_par,grid,N,micro,Temp,Resp) !microplankton
+
+! put microplankton mortality into the medium detritus flux
+  waste%medium = waste%medium + Resp(M+1:2*M)*Pmicro
 
 !!!New quantity, bacterial 0xidation of NH to NO pool ==> NH^2
-  N%bacteria(1:M) = N%r*Yplus(2*M+1:3*M)**2.0
+  N%bacteria(1:M) = N%r*NH**2.0
 
+! remineralization of detritus groups 1 and 2 (not last one)
+  do kk = 1,D_bins-1
+     N%remin(:) = N%remin(:) + Detritus(kk)%r*detr(kk,:)
+  enddo
 
-  DO k_k = 1,D_bins-1
-     N%remin(:) = N%remin(:) + Detritus(k_k)%r*Yplus(3*M+(k_k-1)*M+1:3*M+k_k*M)
-  END DO
   IF (MINVAL(N%remin) < 0.) THEN
      PRINT "(A)","N%remin < 0. in derivs.f90"
      PRINT *,N%remin
      STOP
   END IF
 
-  DO j_j = 1,M 
-     IF (N%O_uptake%new(j_j)+N%H_uptake%new(j_j) > 0.) THEN
-        f_ratio(j_j) = N%O_uptake%new(j_j)/(N%O_uptake%new(j_j)+N%H_uptake%new(j_j))
-
-        !fratioavg(j_j) = f_ratio(j_j)*(N%H_uptake%new(j_j)+N%O_uptake%new(j_j))
+! calculate the f-ratio
+  do jj = 1,M 
+     IF (N%O_uptake%new(jj)+N%H_uptake%new(jj) > 0.) THEN
+        f_ratio(jj) = N%O_uptake%new(jj)/(N%O_uptake%new(jj)+N%H_uptake%new(jj))
      ELSE
-        f_ratio(j_j) = 0.
+        f_ratio(jj) = 0.
      END IF
   END DO
 
+! now put it all together into the derivatives
 
-  do j_j = 1, nvar1
-     if(j_j  <= M .AND. Yplus(j_j) > 0.) then 
-        !Pmicro mortality
-        DYDX_deriv(j_j) = (micro%growth%new(j_j) - Resp(j_j) &
-             - Resp(j_j+M)) * Yplus(j_j)
-        ! DYDX_deriv(j_j) = (micro%growth%new(j_j)-Resp(j_j)-micro%M_z)*Yplus(j_j)
-     else if (j_j > M .AND. j_j <= 2*M .AND. Yplus(j_j) > 0.) then  
-        ! NO
-        DYDX_deriv(j_j) = -N%O_uptake%new(j_j-M) + N%bacteria(j_j-M)
-     else if (j_j > 2*M .AND. j_j <= 3*M) then  
-        ! NH
-        DYDX_deriv(j_j) = -N%H_uptake%new(j_j-2*M) + Resp(j_j-2*M) &
-             + waste%medium(j_j-2*M) * waste%m%destiny(0)          &
-             + N%remin(j_j-2*M) - N%bacteria(j_j-2*M) 
-     else if (j_j > 3*M .AND. j_j <= 3*M+D_bins*M) then
-        ! Detritus
-        do k_k = 1, D_bins-1
-           if (j_j > 3 * M + (k_k-1) * M .AND. j_j <= 3 * M + k_k * M) then
-              DYDX_deriv(j_j) = waste%medium(j_j-(3*M+(k_k-1)*M)) &
-                   * waste%m%destiny(k_k) - Detritus(k_k)%r * Yplus(j_j) 
-           end if
-        end do
-     end if
+! initialize derivatives
+  dPZdt(1:M2_in) = 0.      
+
+! microplankton
+
+  do ii = 1,M ! index for Pmicro etc
+     jj = (PZ_bins%micro-1) * M + ii ! index for PZ, derivatives etc
+
+     if (Pmicro(ii) > 0.) then 
+        dPZdt(jj) = (micro%growth%new(ii) - Resp(ii) &
+             - Resp(ii+M)) * Pmicro(ii)
+     endif
+  enddo
+
+! nitrate
+
+  do ii = 1,M ! index for NO
+     jj = (PZ_bins%NO-1) * M + ii ! index for PZ, derivatives etc
+
+     if (NO(ii) > 0.) then  
+        dPZdt(jj) = -N%O_uptake%new(ii) + N%bacteria(ii)
+     endif
+  enddo
+
+! ammonium
+
+  do ii = 1,M ! index for NH
+     jj = (PZ_bins%NH-1) * M + ii ! index for PZ, derivatives etc
+     
+     if (NH(ii) > 0.) then  
+        dPZdt(jj) = -N%H_uptake%new(ii) + Resp(ii) &
+             + waste%medium(ii) * waste%m%destiny(0)          &
+             + N%remin(ii) - N%bacteria(ii)
+     endif
+  enddo
+
+! detritus (not last bin)
+
+  do ii = 1, M
+     do kk = 1, D_bins-1
+        jj = (PZ_bins%Quant + (kk-1)) * M + ii
+        
+        if (detr(kk,ii) > 0) then
+           dPZdt(jj) = waste%medium(ii) * waste%m%destiny(kk)  &
+                - Detritus(kk)%r * detr(kk,ii) 
+        end if
+     end do
   end do
-
-
-  PO_deriv(1:M) = DYDX_deriv(1:M)
-
-  ! Integrate rate of urea production
-  ! *** More hard-coded constants to get rid of
-  ! *** These refer to the depth of the model domain and have caused
-  ! *** trouble with index out of bounds runtime errors in sum_g()
-  ! In the top 5 meters
-  bottom = 5.  
-  call sum_g(grid, DYDX_deriv(M+1:2*M), bottom, NO50_rate)
-  call sum_g(grid, PO_deriv(1:M), bottom, PO50_rate)
-  ! In the whole model domain
-  bottom = 40.
-  ! *** These calls produce array index out of bounds error in sum_g
-  ! *** and they may have nothing to do with phytoplankton so 
-  ! *** don't do them for now
-!!$  call sum_g(grid, DYDX_deriv(M+1:2*M), bottom, NO100_rate)
-!!$  call sum_g(grid, PO_deriv(1:M), bottom, PO100_rate)
 
 end subroutine derivs_noflag
