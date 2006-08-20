@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
+subroutine derivs_noflag(time, M2, PZ, dPZdt, Temp)
   ! Calculate the derivatives of the biological model for odeint to
   ! use to advance the biology to the next time step.
   !
@@ -17,10 +17,10 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   implicit none
 
   ! Arguments:
-  DOUBLE PRECISION, INTENT(IN):: time_in ! not used
-  INTEGER, INTENT(IN):: M2_in ! size of PZ
-  DOUBLE PRECISION, DIMENSION(M2_in), INTENT(IN):: PZ_in  ! values
-  DOUBLE PRECISION, DIMENSION(M2_in), INTENT(OUT)::dPZdt ! derivatives
+  DOUBLE PRECISION, INTENT(IN):: time ! not used
+  INTEGER, INTENT(IN):: M2 ! size of PZ
+  DOUBLE PRECISION, DIMENSION(M2), INTENT(IN):: PZ  ! values
+  DOUBLE PRECISION, DIMENSION(M2), INTENT(OUT)::dPZdt ! derivatives
   double precision, dimension(1:M), INTENT(IN):: Temp ! temperature
 
   type (bins) :: PZ_bins
@@ -31,8 +31,6 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   integer :: ii ! counter through grid ie 1 to M
   integer :: jj ! counter through PZ
   integer :: kk ! counter through detritus
-
-  DOUBLE PRECISION, DIMENSION(M2_in) :: PZnn ! PZ no negative values
 
   DOUBLE PRECISION, DIMENSION(2*M):: Resp ! respiration and mortality
 
@@ -45,8 +43,8 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   do ii = 1,M                        ! counter through grid
      jj = (PZ_bins%micro-1) * M + ii ! counter into PZ
 
-     if (PZ_in(jj)>0) then
-        Pmicro(ii) = PZ_in(jj)
+     if (PZ(jj)>0) then
+        Pmicro(ii) = PZ(jj)
      else
         Pmicro(ii) = 0
      endif
@@ -57,8 +55,8 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   do ii = 1,M                        ! counter through grid
      jj = (PZ_bins%NO-1) * M + ii    ! counter into PZ
      
-     if (PZ_in(jj)>0) then
-        NO(ii) = PZ_in(jj)
+     if (PZ(jj)>0) then
+        NO(ii) = PZ(jj)
      else
         NO(ii) = 0
      endif
@@ -69,8 +67,8 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   do ii = 1,M                        ! counter through grid
      jj = (PZ_bins%NH-1) * M + ii    ! counter into PZ
      
-     if (PZ_in(jj)>0) then
-        NH(ii) = PZ_in(jj)
+     if (PZ(jj)>0) then
+        NH(ii) = PZ(jj)
      else
         NH(ii) = 0
      endif
@@ -82,25 +80,13 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
      do ii = 1,M                                 ! counter through grid
         jj = (PZ_bins%Quant + (kk-1)) * M + ii   ! counter through PZ
 
-        if (PZ_in(jj)>0) then
-           detr(kk,ii) = PZ_in(jj)
+        if (PZ(jj)>0) then
+           detr(kk,ii) = PZ(jj)
         else
            detr(kk,ii) = 0
         endif
      enddo
   enddo
-
-
-!*** write PZ variables to PZnn variables, making any negative values 0
-! should be removed in time and replaced by above explicit variables
-
-  DO jj = 1, M2_in 
-     IF ( PZ_in(jj) >= 0.) THEN 
-        PZnn(jj) = PZ_in(jj)
-     ELSE
-        PZnn(jj) = 0.
-     END IF
-  END DO
 
 ! initialize transfer rates between the pools
   N%O_uptake%new = 0.
@@ -108,14 +94,14 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
   waste%medium = 0.
   N%remin = 0.
 
-!*** phytoplankton growth: PZnn used for nitrate and ammonimum (should be changed)
+! phytoplankton growth: Nitrate and Ammonimum
 !*** I_par is light (IN) , grid is used for M only I think (should be changed)
 ! N ammonium and nitrate uptake rates (IN and OUT)
 ! micro is the growth numbers for micro plankton (IN and OUT)
 ! Temp is temperature (IN)
 ! Resp is respiration values (OUT)
 
-  call p_growth(PZnn,Pmicro,M2_in,I_par,grid,N,micro,Temp,Resp) !microplankton
+  call p_growth(NO,NH,Pmicro,M2,I_par,grid,N,micro,Temp,Resp) !microplankton
 
 ! put microplankton mortality into the medium detritus flux
   waste%medium = waste%medium + Resp(M+1:2*M)*Pmicro
@@ -146,7 +132,7 @@ subroutine derivs_noflag(time_in, M2_in, PZ_in, dPZdt, Temp)
 ! now put it all together into the derivatives
 
 ! initialize derivatives
-  dPZdt(1:M2_in) = 0.      
+  dPZdt(1:M2) = 0.      
 
 ! microplankton
 
