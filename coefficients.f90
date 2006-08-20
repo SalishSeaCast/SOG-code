@@ -1,14 +1,12 @@
-SUBROUTINE coefficients(alph, beta, Cp, dens, cloud,p_Knox)
-      !(alph, beta, Cp, dens, cloud,water,p_Knox,P_q_fraction)
+SUBROUTINE coefficients(alph, beta, dens, cloud,p_Knox)
+      !(alph, beta, dens, cloud, p_Knox)
       USE mean_param
 
       IMPLICIT NONE
 
-      TYPE(constant), INTENT(OUT)::alph, Cp, beta, dens
+      TYPE(constant), INTENT(OUT)::alph, beta, dens
       TYPE(okta), INTENT(OUT)::cloud
-!      TYPE(light), INTENT(OUT)::water
       DOUBLE PRECISION, DIMENSION(23)::p_Knox
-!      DOUBLE PRECISION, DIMENSION(12)::P_q_fraction
       
  !!Define thermal expansion coefficient matrix 1/K!!      
 
@@ -43,21 +41,6 @@ SUBROUTINE coefficients(alph, beta, Cp, dens, cloud,p_Knox)
       beta%data(12) = alpha(0.808, 273.15, 35.0, 0.)
       beta%data(13) = alpha(0.814, 271.15, 35.0, 0.)
       
-  !!Define heat capacity matrix J/kg/K!!
-
-      Cp%data(1) = alpha(4002.0, 304.15, 35.0,-4.7)
-      Cp%data(2) = alpha(4000.0, 301.15, 35.0,-4.8)
-      Cp%data(3) = alpha(3998.0, 298.15, 35.0,-4.9)
-      Cp%data(4) = alpha(3996.0, 295.15, 35.0,-4.9)
-      Cp%data(5) = alpha(3993.0, 292.15, 35.0,-5.1)
-      Cp%data(6) = alpha(3991.0, 289.15, 35.0,-5.2)
-      Cp%data(7) = alpha(3988.0, 286.15, 35.0,-5.3)
-      Cp%data(8) = alpha(3986.0, 283.15, 35.0,-5.5)
-      Cp%data(9) = alpha(3985.0, 280.15, 35.0,-5.6)
-      Cp%data(10) = alpha(3985.0, 277.15, 35.0,-5.8)
-      Cp%data(11) = alpha(3985.0, 275.15, 35.0,-5.9)
-      Cp%data(12) = alpha(3987.0, 273.15, 35.0,-6.1)
-      Cp%data(13) = alpha(3989.0, 271.15, 35.0,-6.2)
 
 !!Define surface dens%data matrix !!
       
@@ -79,18 +62,6 @@ SUBROUTINE coefficients(alph, beta, Cp, dens, cloud,p_Knox)
 
 !!!Define Okta Cloud Model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! based on Dobson and Smith, table 5
-      !cloud%type(0) = cloudy(0.400,0.386,  0) ! NJ: don't use at OSP.  For no cloud use 1 parameters 
-                                                 !Large 1996 
-!      cloud%type(0) = cloudy(0.517,0.317,0.51) 
-!      cloud%type(1) = cloudy(0.517,0.317,0.51)  
-!      cloud%type(2) = cloudy(0.474,0.381,0.65)
-!      cloud%type(3) = cloudy(0.421,0.413 ,0.73 )
-!      cloud%type(4) = cloudy(0.380,0.468, 0.82)
-!      cloud%type(5) = cloudy(0.350, 0.457 ,0.91)
-!      cloud%type(6) = cloudy(0.304, 0.438, 0.98)
-!      cloud%type(7) = cloudy(0.230, 0.384 , 0.99)
-!      cloud%type(8) = cloudy(0.106,0.285, 0.84)
-!      cloud%type(9) = cloudy(0.134,0.295,0.75)
 
 !!!KC-- new coefficients addded august, 2004. Check on the standard deviation values, but I don't think these are used anywhere, anyway
 
@@ -105,14 +76,6 @@ SUBROUTINE coefficients(alph, beta, Cp, dens, cloud,p_Knox)
       cloud%type(8) = cloudy(0.2835,0.2949,0.0081)
       cloud%type(9) = cloudy(0.1482,0.3384,0.1345)
 
-!!!!!!!!!!!!!!!!Jerlov Water Type!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !!!!Jerlov water type:  1 == I, 2 == IA, 3 == IB, *4 == II*, 5 == III!!!!!
-
-!      water%type(1) = light(0.58,0.35,23.0)
-!      water%type(2) = light(0.62,0.60,20.0)
-!      water%type(3) = light(0.67,1.0,17.0)
-!      water%type(4) = light(0.77,1.5,14.0)
-!      water%type(5) = light(0.78,1.4,7.9)
 
 !!!!!!!!!!!!!!!!!Knox piecewise linear function for Precipitation!!!!!!!!!!!!!!!!
       
@@ -120,11 +83,5 @@ SUBROUTINE coefficients(alph, beta, Cp, dens, cloud,p_Knox)
            17.891,23.349,11.617,11.747,11.499,16.059,13.747,14.257, &
            15.112,17.472,18.455,22.199,17.954,25.277,23.985 /) 
 
-!!!!!!!!!!!!!!!!!!Large 1996 Horizontal advection Fraction each month !!!!!!!!!!used in P_q
-
-!      P_q_fraction = (/ 0.1, 0.1, 0., 0., 0., 0., 0., 0.05, 0.15, 0.1, 0.3, 0.2 /)
-!      P_q_fraction = (/ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. /)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE coefficients
