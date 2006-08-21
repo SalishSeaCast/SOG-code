@@ -129,15 +129,7 @@ subroutine read_sog
   end do
   close(16)
 
-  !---total light with depth (jerlov)--------------------------
-
-  !OPEN(UNIT = 12,FILE = "input/jerlov_types2.dat", STATUS = "OLD", &
-  !     ACTION = "READ")
-  !    DO xx = 1, 82
-  !       READ(12,*)water%type1(xx),water%type3(xx),water%type5(xx),water%type7(xx),water%type9(xx)
-  !    END DO
   !--biology-----------------------
-
   OPEN(UNIT = 7,FILE = "input/biology_sog.dat", STATUS = "OLD", &  
        ACTION = "READ")
   OPEN(UNIT = 11,FILE = "input/nutrient.dat",STATUS = "OLD", &
@@ -146,7 +138,6 @@ subroutine read_sog
   read(7, *) micro%R, micro%sigma, micro%gamma, micro%Rm, micro%M_z,   &
        micro%inhib, nano%R, nano%sigma, nano%gamma, nano%Rm, nano%M_z, &
        nano%inhib
-  !       Csources, C_types,D_bins
   read(11, *) nano%k, nano%kapa, nano%N_o, nano%N_x, nano%gamma_o, &
        micro%k, micro%kapa, micro%N_o, micro%N_x, micro%gamma_o, N%r
 
