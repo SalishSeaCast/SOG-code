@@ -204,8 +204,8 @@ subroutine write_physical_sog(unow, vnow, euphotic)
      Uten_o(day_count) = Uten_o(day_count)+ stress%u%new !Uten_o(day_count) + U_ten 
      Vten_o(day_count) = Vten_o(day_count)+stress%v%new !Vten_o(day_count) + V_ten  !
      UVten_o(day_count) = UVten_o(day_count) + &
-          SQRT(stress%u%new**2.0 +stress%v%new**2.0) !UVten_o(day_count) +  Large_data(data_point_papmd)%Uten
-     !
+          SQRT(stress%u%new ** 2.0 + stress%v%new ** 2.0)
+
      Qflux(day_count) = Qflux(day_count) + Q_t(0)  !W/m^2
      Fflux(day_count) = Fflux(day_count) + w%s(0)  !Ft*S_o/rho_o  (PSU*m/s)
      CALL average3(grid,K%s%all(1:grid%M),h_m%new,Ks_ml)

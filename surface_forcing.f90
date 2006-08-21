@@ -83,8 +83,6 @@ module surface_forcing
        precision = 1.0D-3, &
        step_min = 30., &
        step_guess = 3600.0
-  !      INTEGER::Large_data_size = 13560
-
 
 CONTAINS
 

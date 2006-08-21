@@ -208,21 +208,6 @@ module mean_param
      TYPE(old_new)::u,v
   END TYPE windstress
 
-  !stores data from Large's data file PAPMD.60
-  TYPE :: papmd  ! Large_data
-     INTEGER::ymdh, y, jday,leap !year-month-day-hour, year, jday, leap = 1 (yes) 
-     !or 0 (no) if leap year 
-     DOUBLE PRECISION::Uten, &! 10 m velocity (cm/s) ==> m/s
-          theta, &  !direction (wind blowing from) measured east from north
-          SST, & !sea surface temperature (oC) ==> K
-          Ta, &!air temperature (oC) at 17 m ==> K
-          Tw, & !wet bulb temperature (oC) ==> K
-          Td, & !dew point temp (oC) ==> K
-          cf, & !cloud fraction
-          P, & !air pressure (mbar)
-          t !time (s)
-  END TYPE papmd
-
 
   !Copepod Types:
 

@@ -44,7 +44,6 @@ module declarations
   TYPE(wind_ecmwf), DIMENSION(:), ALLOCATABLE::wind  
   TYPE(insol_daily), DIMENSION(:), ALLOCATABLE::insol   !2922 data points, about 3 years worth  some of 83, 84, 85, 86
   TYPE(Large1996_data), DIMENSION(14)::QN_1996, FN_1996
-  TYPE(papmd), DIMENSION(:), ALLOCATABLE::Large_data  !Stores data from file PAPMD.60
   TYPE(entrain)::euph
 
   DOUBLE PRECISION, DIMENSION(365)::insol_avg, insol_actual_avg, insol_smooth, insol_actual_smooth
@@ -126,10 +125,6 @@ module declarations
   integer :: wind_n
   integer :: insol_n, smooth_x
 
-  !current data number and Size of PAPMD.60 data array Large_data(:)
-
-  INTEGER::data_point_papmd, Large_data_size  ! see initialize.f90 and read_data.f90 
-  !     INTEGER::data_point_papmd  ! see initialize.f90 and read_data.f90 
   DOUBLE PRECISION::vapour_pressure, prain ! (atmosphere at 17m) and current value for &
   !precipitation from p_Knox (Large_param.f90) !
   DOUBLE PRECISION, DIMENSION(23)::p_Knox  !Piecewise linear function for precipitation

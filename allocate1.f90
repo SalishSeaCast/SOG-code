@@ -98,7 +98,7 @@ subroutine allocate1(STAT)
                null_vector(M),STAT = alloc_stat(8)) !**&
                
       ALLOCATE(U_p(M),V_p(M),S_p(M),T_p(M),P1_p(M),Pnano1_p(M),Z1_p(M),NO1_p(M),NH1_p(M), & 
-           wind(wind_n), insol(insol_n), Large_data(Large_data_size),STAT = alloc_stat(9))
+           wind(wind_n), insol(insol_n), STAT = alloc_stat(9))
 
       ALLOCATE(micro%growth%light(M),micro%growth%new(M),nano%growth%light(M),nano%growth%new(M),&
            N%O_uptake%new(M),N%H_uptake%new(M),N%urea%new(M),N%remin(M),N%bacteria(M), &

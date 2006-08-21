@@ -62,11 +62,7 @@ SUBROUTINE initialize
       buoy_i = 0.
       density_i = 0.
 
-!!!initialize current data_point 
-      data_point_papmd = 1 
-   
 !Copepod conditions
-
       bin_tot = 0
 
       DO k_k = 1,SIZE(leap_year,1)
