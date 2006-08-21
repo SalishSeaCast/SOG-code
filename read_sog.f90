@@ -18,12 +18,11 @@ subroutine read_sog
   implicit none
 
   ! Local variables:
-  integer :: ndays, ic, j, il, jl, iu, ju, para, stn, yr, check
-  real :: idu,idl
+  integer :: ndays, ic, j, para, stn, yr
 
   ! *** Should be able to replace this external statment with uses of
   ! corresponding modules **
-  external y_jday_t, Julian_day  
+  external Julian_day  
 
   ! Read the wind data
   ! Preserve the value of year_o so the actual year does not change 
@@ -151,19 +150,6 @@ subroutine read_sog
   read(11, *) nano%k, nano%kapa, nano%N_o, nano%N_x, nano%gamma_o, &
        micro%k, micro%kapa, micro%N_o, micro%N_x, micro%gamma_o, N%r
 
-
-  !-------read file PAPMD.60 -----------------------------------------  
-
-
-  OPEN(UNIT = 42, FILE = "input/PAPMD.60",STATUS = "OLD",&
-       ACTION = "READ") 
-
-  DO xx = 1,Large_data_size 
-     !  DO xx = 1,wind_n
-     READ(42, *)Large_data(xx)%ymdh, Large_data(xx)%Uten, Large_data(xx)%theta, Large_data(xx)%SST, &
-          Large_data(xx)%Ta, Large_data(xx)%Tw, Large_data(xx)%Td, Large_data(xx)%cf, Large_data(xx)%P 
-     CALL y_jday_t(Large_data(xx))  !find year and leap_year, Julian day, time (s) and change units 
-  END DO
 
   !---Large Parameters--------------------------
 
