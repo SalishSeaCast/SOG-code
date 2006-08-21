@@ -1,5 +1,5 @@
 subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
-     month, data_point)
+     month)
 
   USE mean_param
   USE surface_forcing      
@@ -9,7 +9,7 @@ subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
   DOUBLE PRECISION, INTENT(IN OUT)::day_ti, ti   !day_time, time
   DOUBLE PRECISION, INTENT(IN)::ddt             !dt
   INTEGER, INTENT(IN OUT)::o_day,o_year,day_ch,day_ch2      !day, year, day_check,day_check2
-  INTEGER, INTENT(IN OUT)::month, data_point  !data_point_papmd
+  INTEGER, INTENT(IN OUT)::month
 
   INTEGER::zz
 
@@ -29,7 +29,6 @@ subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
            o_year = o_year + 1        
            o_day = 1
         PRINT *,ti,o_day,o_year
-           !data_point = 1  !
            DO zz = 1,SIZE(leap_year,1)
               IF (o_year == leap_year(zz)) THEN
                  is_leap_year = 1
@@ -44,7 +43,6 @@ subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
         o_year = o_year + 1        
         o_day = 1 
         is_leap_year = 0
-        !data_point = 1  !
      ELSE IF (o_day == 367 .AND. is_leap_year == 0) THEN
         PRINT "(A)", "Error in new_year.f90. is_leap_year,o_day:"
         PRINT *,is_leap_year,o_day

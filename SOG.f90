@@ -110,7 +110,6 @@ program SOG
   grid%D = D
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
-  Large_data_size = 63617
 
   if (flagellates) then
      ! Size of the biology we are using (Quantities and Detritus)
@@ -1025,7 +1024,7 @@ program SOG
      ! the last time through the loop
      if(time_step < steps) then
         call new_year(day_time, day, year, time, dt, day_check, day_check2, &
-             month_o, data_point_papmd)
+             month_o)
      endif
   end do  !--------- End of time loop ----------
 
