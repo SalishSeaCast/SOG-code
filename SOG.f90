@@ -271,7 +271,7 @@ program SOG
                 + (86400. - day_time) * Eriver(day_met-1)) / 86400.
 
            CALL irradiance_sog(cloud, cf(day_met, j), day_time, day, &
-                I, I_par, grid, water, jmax_i, Q_sol, euph, Qinter, h, P)
+                I, I_par, grid, jmax_i, Q_sol, euph, Qinter, h, P)
         endif  !------ End of implicit loop initialization ------
 
         ! Br radiative contribution to the surface buoyancy forcing
