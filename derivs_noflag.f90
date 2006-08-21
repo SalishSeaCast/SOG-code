@@ -21,7 +21,7 @@ subroutine derivs_noflag(time, M2, PZ, dPZdt, Temp)
   INTEGER, INTENT(IN):: M2 ! size of PZ
   DOUBLE PRECISION, DIMENSION(M2), INTENT(IN):: PZ  ! values
   DOUBLE PRECISION, DIMENSION(M2), INTENT(OUT)::dPZdt ! derivatives
-  double precision, dimension(1:M), INTENT(IN):: Temp ! temperature
+  double precision, dimension(0:M), INTENT(IN):: Temp ! temperature
 
   type (bins) :: PZ_bins
   common /derivs/  PZ_bins
@@ -32,7 +32,7 @@ subroutine derivs_noflag(time, M2, PZ, dPZdt, Temp)
   integer :: jj ! counter through PZ
   integer :: kk ! counter through detritus
 
-  DOUBLE PRECISION, DIMENSION(2*M):: Resp ! respiration and mortality
+  DOUBLE PRECISION, DIMENSION(M):: Resp, Mort ! respiration and mortality
 
   double precision, dimension (M) :: Pmicro ! microplankton concentrations
   double precision, dimension (M) :: NO, NH ! nitrate and ammonium conc.
@@ -94,20 +94,22 @@ subroutine derivs_noflag(time, M2, PZ, dPZdt, Temp)
   waste%medium = 0.
   N%remin = 0.
 
-! phytoplankton growth: Nitrate and Ammonimum
-!*** I_par is light (IN) , grid is used for M only I think (should be changed)
-! N ammonium and nitrate uptake rates (IN and OUT)
-! micro is the growth numbers for micro plankton (IN and OUT)
-! Temp is temperature (IN)
-! Resp is respiration values (OUT)
+! phytoplankton growth: Nitrate and Ammonimum, conc. of micro plankton
+! I_par is light, Temp is temperature 
+! N ammonium and nitrate uptake rates (IN and OUT) incremented
+! micro is the growth parameters for micro plankton (IN) and the growth rates 
+! (OUT)
+! Resp is respiration, Mort is mortality
 
-  call p_growth(NO,NH,Pmicro,M2,I_par,grid,N,micro,Temp,Resp) !microplankton
+  call p_growth(M, NO, NH, Pmicro, I_par, Temp, & ! in
+       N, micro, &                                ! in and out
+       Resp, Mort)                                ! ouy
 
 ! put microplankton mortality into the medium detritus flux
-  waste%medium = waste%medium + Resp(M+1:2*M)*Pmicro
+  waste%medium = waste%medium + Mort*Pmicro
 
 !!!New quantity, bacterial 0xidation of NH to NO pool ==> NH^2
-  N%bacteria(1:M) = N%r*NH**2.0
+  N%bacteria(1:M) = N%r * NH**2.0
 
 ! remineralization of detritus groups 1 and 2 (not last one)
   do kk = 1,D_bins-1
@@ -141,7 +143,7 @@ subroutine derivs_noflag(time, M2, PZ, dPZdt, Temp)
 
      if (Pmicro(ii) > 0.) then 
         dPZdt(jj) = (micro%growth%new(ii) - Resp(ii) &
-             - Resp(ii+M)) * Pmicro(ii)
+             - Mort(ii)) * Pmicro(ii)
      endif
   enddo
 
