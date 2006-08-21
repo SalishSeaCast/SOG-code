@@ -116,7 +116,7 @@ module declarations
 
   !Variable for odeint.f,  rkqs.f and derivs.f
 
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::PZ, PZ_old
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::PZ
   !     DOUBLE PRECISION::precision, step_min, step_guess, next_time  !see Read_data.f90 and input file 
   DOUBLE PRECISION::next_time  !see Read_data.f90 and input file 
   ! input/forcing.dat

@@ -3,7 +3,6 @@ SUBROUTINE allocate4
   USE mean_param
   USE surface_forcing
   USE declarations
-!  USE Copepod_mod
   
   IMPLICIT NONE
 
@@ -32,11 +31,10 @@ SUBROUTINE allocate4
   END DO
 
   DO y_y = 1,Csources
-!     ALLOCATE(PZ(M2),PZ_old(M2))
      ALLOCATE(species(y_y)%ingest(Cevent(y_y)%length),species(y_y)%Ex(Cevent(y_y)%length),&
           Hvector%z%c(y_y)%wt(Cevent(y_y)%length),Gvector_ro%z%c(y_y)%wt(Cevent(y_y)%length),&
           Gvector_ro_o%z%c(y_y)%wt(Cevent(y_y)%length),Copepod_wt1_p(Csources,max_length),PZ(M2),&
-          PZ_old(M2),Amatrix%null2%A(max_length),Amatrix%null2%B(max_length))
+          Amatrix%null2%A(max_length),Amatrix%null2%B(max_length))
   END DO
 
 

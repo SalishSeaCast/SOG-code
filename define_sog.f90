@@ -20,7 +20,6 @@ SUBROUTINE define_sog(timestep)
          N%O%old_old = N%O%old
          N%H%old_old = N%H%old
 
-         PZ_old = PZ       
          B%old = B%new   
          density%old = density%new
          K%t%old = K%t%all
