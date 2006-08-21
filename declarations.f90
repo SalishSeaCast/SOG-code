@@ -43,7 +43,6 @@ module declarations
   TYPE(losses)::waste
   TYPE(wind_ecmwf), DIMENSION(:), ALLOCATABLE::wind  
   TYPE(insol_daily), DIMENSION(:), ALLOCATABLE::insol   !2922 data points, about 3 years worth  some of 83, 84, 85, 86
-  TYPE(Large1996_data), DIMENSION(14)::QN_1996, FN_1996
   TYPE(entrain)::euph
 
   DOUBLE PRECISION, DIMENSION(365)::insol_avg, insol_actual_avg, insol_smooth, insol_actual_smooth

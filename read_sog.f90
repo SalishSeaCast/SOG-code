@@ -151,21 +151,6 @@ subroutine read_sog
        micro%k, micro%kapa, micro%N_o, micro%N_x, micro%gamma_o, N%r
 
 
-  !---Large Parameters--------------------------
-
-  OPEN(UNIT = 14,FILE = "input/Large1996_FN.dat",STATUS = "OLD", &
-       ACTION = "READ") 
-  OPEN(UNIT = 15,FILE = "input/Large1996_QN.dat",STATUS = "OLD",&
-       ACTION = "READ")
-  DO xx = 1, 14 !data/Large1996_FN.dat
-     ! EXIT
-     READ(14, *)FN_1996(xx)%day, FN_1996(xx)%data ! nonturbulent freshwater flux
-     READ(15, *)QN_1996(xx)%day, QN_1996(xx)%data ! heat flux in mixed layer (as opposed to at surface)
-  END DO
-
-  !-----------------------
-
-
   ! Read detritus model parameters
   ! *** Name of the detritus parameters file should be moved to the 
   ! *** run parameters file **

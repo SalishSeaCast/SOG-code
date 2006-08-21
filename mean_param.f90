@@ -28,10 +28,6 @@ module mean_param
      DOUBLE PRECISION :: actual, clear_sky, ratio
   END TYPE insol_daily
 
-  TYPE :: Large1996_data
-     DOUBLE PRECISION :: day, data
-  END TYPE Large1996_data
-
   TYPE :: bins
      sequence
      INTEGER :: micro, nano, NO, NH, det, Quant
