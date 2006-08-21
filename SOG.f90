@@ -458,19 +458,18 @@ program SOG
         ! work out to 0
         CALL diffusion(grid,Bmatrix%u,Gvector%u,K%u%all,gamma%m,w%u(0),gamma%m,dt,U%new(grid%M+1))
         CALL diffusion(grid,Bmatrix%u,Gvector%v,K%u%all,gamma%m,w%v(0),gamma%m,dt,V%new(grid%M+1))           
-
-        !      CALL horizontal_adv(grid,Gvector%t,P_q,density%new(1:M),Cp%g(1:M),dt)      
-        !      CALL horizontal_adv(grid,Gvector%s,-P_f,density%new(1:M),1./S%new(1:M),dt)  !add salt to bottom 
-        !!commented out by KC, july 20 because since P_q_fraction is 0, and define_adv is zero, P_q and P_f are zero so nothing happens in this function
-
         ! Calculate profile of upwelling velocity
         call find_upwell(grid, wupwell, upwell, S%new)
-
-        CALL define_adv_bio(grid,S%new,Gvector%s,dt,P_sa,wupwell,grid%i_space(1))  !upwell salt similar to NO      
-        CALL define_adv_bio(grid,T%new,Gvector%t,dt,P_ta,wupwell,grid%i_space(1))  !upwell temp too
-        CALL define_adv_bio(grid,U%new,Gvector%u,dt,P_u,wupwell,grid%i_space(1))  !upwell u similar to NO
-        CALL define_adv_bio(grid,V%new,Gvector%v,dt,P_v,wupwell,grid%i_space(1))  !upwell v similar to NO
-
+        ! Upwell salinity, temperature, and u & v velocity components
+        ! similarly to nitrates
+        call define_adv_bio(grid, S%new, Gvector%s, dt, P_sa, wupwell, &
+             grid%i_space(1))
+        call define_adv_bio(grid, T%new, Gvector%t, dt, P_ta, wupwell, &
+             grid%i_space(1))
+        call define_adv_bio(grid, U%new, Gvector%u, dt, P_u, wupwell, &
+             grid%i_space(1))
+        call define_adv_bio(grid, V%new, Gvector%v, dt, P_v, wupwell, &
+             grid%i_space(1))
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
         call Coriolis_and_pg(f, dt, V%new, pbx, &
