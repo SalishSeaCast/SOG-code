@@ -187,15 +187,6 @@ module mean_param
      TYPE(cloudy), DIMENSION(0:9) :: type
   END TYPE okta
 
-  TYPE :: light
-     !     DOUBLE PRECISION, DIMENSION (365) :: R, mu_1, mu_2
-     DOUBLE PRECISION, DIMENSION (82) :: type1,type3,type5,type7,type9
-  END TYPE light
-
-  !      TYPE :: Jerlov
-  !        TYPE(light), DIMENSION(82) :: type
-  !      END TYPE Jerlov
-
   TYPE :: old_new
      DOUBLE PRECISION::old,new
   END TYPE old_new

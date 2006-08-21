@@ -37,7 +37,6 @@ module declarations
        Gvector_ao, Gvector_ao_o, Gvector_ro , Gvector_ro_o          !**&
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o, Bmatrix_o_o !**&
   TYPE(okta)::cloud
-  TYPE(light)::water
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano, zmicro
   TYPE(losses)::waste
