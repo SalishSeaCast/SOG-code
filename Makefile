@@ -46,7 +46,7 @@ initial_sog.o IMEX_constants.o write_open.o           \
 allocate1.o read_sog.o find_wind.o 	\
 stability.o \
 \
-allocate2.o Julian_day.o y_jday_t.o initialize.o	\
+allocate2.o Julian_day.o initialize.o	\
 smoothdata.o coefficients.o define_grid.o define_sog.o	\
 alpha_sub.o density_sub.o irradiance_sog.o define_adv.o	\
 buoyancy.o interpolate.o surface_flux_sog.o fun_constants.o		\
