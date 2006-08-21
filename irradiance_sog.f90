@@ -2,7 +2,7 @@
 ! $Source$
 
 SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
-     waters, I_k, Qs, euphotic, Qriver, hh, P_i)
+     I_k, Qs, euphotic, Qriver, hh, P_i)
 
       USE mean_param
       USE surface_forcing
@@ -14,8 +14,6 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
       TYPE(height), INTENT(IN)::hh
       TYPE(okta), INTENT(IN) :: clouds
       REAL, INTENT(IN) :: cf, Qriver !cloud_fraction  (random variable)
-      TYPE(light), INTENT(IN)::waters
- !     INTEGER, INTENT(IN)::w_type  
       INTEGER, INTENT(OUT)::I_k 
       DOUBLE PRECISION, INTENT(OUT)::Qs   !integrated daily solar contribution to
                                               !the heat flux 
@@ -24,15 +22,13 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
       DOUBLE PRECISION, INTENT(IN) :: t_ime!, phyto  !day_time
       INTEGER, INTENT(IN)::Jday  ! julian day 
 
-      INTEGER::k, check, j, of                          
-      DOUBLE PRECISION::declination, hour, cos_Z, P_avg, P_a,P_b, day_length, hour_angle, &
+      INTEGER::k, check, of                          
+      DOUBLE PRECISION::declination, hour, cos_Z, day_length, hour_angle, &
                         sunrise, sunset, Qso, a, b,KK
       DOUBLE PRECISION:: II, cos_Z_max, IImax      
       DOUBLE PRECISION, DIMENSION(0:d%M)::Iparmax
-      DOUBLE PRECISION::plank
 
       check = 0
-      j = t_ime/3600
       hour = (t_ime/3600.0-12.0)*15.  !degrees
       declination = 23.45*PI/180.0*SIN((284.0+DBLE(Jday))/365.25*2.0*PI)  !radians
 
@@ -47,12 +43,12 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
 
 
       Qso = Q_o*(1.0+0.033*COS(DBLE(Jday)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
-      if (cf.ge.9) then
-         of = cf-2
-      elseif (cf.ge.3) then
-         of = cf-1
+      if (cf .ge. 9) then
+         of = int(cf) - 2
+      elseif (cf .ge. 3) then
+         of = int(cf) - 1
       else 
-         of = cf
+         of = int(cf)
       endif
 
       IImax = Qso*(clouds%type(of)%A + clouds%type(of)%B*cos_Z_max)*cos_Z_max  
@@ -99,63 +95,20 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
       !added V.flagella.01
       KK = 0.0146 * (P_i%micro%new(1) + P_i%nano%new(1)) &
            + Qriver * 3.6597e-05 - 0.0110 * hh%new + 0.2697
-      DO k = 1, d%M    
-         !KK=0.0108*P_i%micro%new(1)+Qriver*3.9232e-05-0.0117*hh%new+0.2713
-         Ipar(k) = Ipar(0)*EXP(-d%d_i(k)*KK)
-         Iparmax(k) = Iparmax(0)*EXP(-d%d_i(k)*KK)
-
-
-         IF (Ipar(k) < 0.01*Ipar(0) .AND. check == 0) THEN            
+      do k = 1, d%M    
+         Ipar(k) = Ipar(0) * exp(-d%d_i(k) * KK)
+         Iparmax(k) = Iparmax(0) * exp(-d%d_i(k) * KK)
+         if (Ipar(k) < 0.01 * Ipar(0) .and. check == 0) then            
             I_k = k                                          
             check = 1                 
-         END IF               
-
-
-
-!---total light for heat budget--------------------
-
-j=2; !1 is for old scheme 2 is for new scheme 3 for even new scheme
-
-If (j==1) THEN !this turns this Total light scheme off or on 
-
-!kc oct 28 2004
-open(444,file="output/wtype.dat")
-IF      (P_i%micro%new(1) <=7  .AND. Qriver <= 3000) THEN 
-           In(k) = II*waters%type1(k)/100
-write(444,*)1   
-ELSE IF (Qriver >= 3000 ) THEN 
-         In(k) = II*waters%type3(k)/100
-write(444,*)3   
-!PRINT*,'water type 3  
-ELSE IF (P_i%micro%new(1) >= 10 .AND. Qriver <= 3000 ) THEN 
-         In(k) = II*waters%type5(k)/100
-write(444,*)5   
-!PRINT*,'water type 5'   
-!ELSE IF (hh%new >= 17.67 .AND. Qriver <= 2368 ) THEN 
-!         In(k) = II*waters%type7(k)/100
-!PRINT*,'water type 7'   
-!ELSE IF (hh%new <= 8.8 .AND. Qriver >= 2368 ) THEN 
-!         In(k) = II*waters%type9(k)/100
-!PRINT*,'water type 9'  
-END IF
-        
-
-ELSE IF (j==2) THEN !! this is the new total light scheme, jan 2006
-
-!In(k)=0.70*II*EXP(-d%d_i(k)*(1.4303*KK+0.8221)) + 0.30*II*EXP(-d%d_i(k)*(0.646*KK-0.0245))
-
-In(k) = 0.70 * II * exp(-d%d_i(k) * (0.8102 * KK + 1.1854)) &
-     + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK - 0.0879))
-
-
-ENDIF !this turns this Total light scheme off or on
-
-END DO 
+         end if               
+         ! Total light for heat budget
+         In(k) = 0.70 * II * exp(-d%d_i(k) * (0.8102 * KK + 1.1854)) &
+              + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK - 0.0879))
+      end do
 
 open(556,file="output/light.dat")
 write(556,*)KK
-!111 format (14(x,f10.4))   
-
 
 
 !----------------------------------------------------------
