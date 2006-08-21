@@ -128,25 +128,16 @@ module declarations
   DOUBLE PRECISION, DIMENSION(23)::p_Knox  !Piecewise linear function for precipitation
   !defined in coefficients.f90 !
 
-  !Advection corrections to heat and salinity profiles
-
-  DOUBLE PRECISION,DIMENSION(12)::P_q_fraction !defined in coefficients
-  DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::P_q,P_f  !define in define_adv.f90
-  !     DOUBLE PRECISION::A_q,W_q,A_f,W_f  !read in values in read_data2.f90
-
   !Upwelling corrections to biology and salinity
-
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::P_no,P_nh,P_di,P_na,P_mi,P_d1,P_d2,P_sa,P_u,P_v,P_ta,wupwell
 
   !Copepod variables
-
   INTEGER::Csources, C_types,bin_tot
   TYPE(event), DIMENSION(:), ALLOCATABLE::Cevent    
   TYPE(copepod), DIMENSION(:), ALLOCATABLE::species 
   TYPE(Cdata), DIMENSION(:), ALLOCATABLE::Zoo  
 
   !Detritus variables
-
   INTEGER::D_bins  !number of detrital compartments  see input/biology.dat
   TYPE(snow), DIMENSION(:), ALLOCATABLE::Detritus  
 
