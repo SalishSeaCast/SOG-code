@@ -76,10 +76,7 @@ module surface_forcing
   !See read_data.f90 and input/biology for values
   DOUBLE PRECISION, PARAMETER::desired_var = 6.267101794384283, &  !12.6, & !6.267101794384283, & !used for ECMWF smoothed winds
        desired_avg =   10.06734127539335 
-  DOUBLE PRECISION::A_q = -21.5, &   !KC june 18 2004
-       W_q = -1.5, &           
-       A_f = 5.D-6, &
-       W_f = 0., &
+  DOUBLE PRECISION :: &
        precision = 1.0D-3, &
        step_min = 30., &
        step_guess = 3600.0
