@@ -19,9 +19,7 @@ module declarations
                                 ! *** t_o should match CTD profile time of day
   double precision :: t_f       ! end of run time [s]
   double precision :: dt        ! time step [s]
-  integer :: windyear           ! *** apparently not used
-  integer :: stormday           ! *** apparently not used
-  integer :: cruise_id          ! *** apparently not used
+  integer :: cruise_id
 
   TYPE(constant)::alph, beta, dens
   TYPE(gr_d)::grid
@@ -225,10 +223,6 @@ module declarations
 
   DOUBLE PRECISION::smooth_avg_u,smooth_avg_v,smooth_var_u,smooth_var_v,test_avg,test_var
 
-  INTEGER, DIMENSION(366)::cloud_type_rand
-  INTEGER :: cloud_day, ironday
-
-  !TYPE(bottom_fit), DIMENSION(48):: ctd_bottom
   TYPE(bottom_fit), DIMENSION(1659):: ctd_bottom
 
 end module declarations

@@ -98,7 +98,7 @@ program SOG
   str = getpars("inputfile", 1)
   open(10, file=str, status="OLD", action="READ")
   read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o, &
-       windyear, stormday, cruise_id
+       cruise_id
 
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
 
