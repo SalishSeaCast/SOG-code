@@ -21,9 +21,11 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
   INTEGER::j_j, k_k,bin_tot2,bin,isusan
   DOUBLE PRECISION, DIMENSION(nvar1)::Yplus
   DOUBLE PRECISION, DIMENSION(1:grid%M)::PO_deriv,pellet_prod!,N_urea_save
-  DOUBLE PRECISION, DIMENSION(1:grid%M)::Temp,fratioavg
+  DOUBLE PRECISION, DIMENSION(0:grid%M), intent(in)::Temp
+  double precision, dimension(1:grid%M)::fratioavg
   DOUBLE PRECISION::bottom,bottom2
-  DOUBLE PRECISION, DIMENSION(2*grid%M)::Resp
+  DOUBLE PRECISION, DIMENSION(grid%M)::Resp_micro, Mort_micro
+  DOUBLE PRECISION, DIMENSION(grid%M)::Resp_nano, Mort_nano
 
   double precision, dimension(grid%m) :: NO, NH
 
@@ -50,15 +52,23 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
   NO(1:grid%M) = PZ(2*grid%M+1:3*grid%M)
   NH(1:grid%M) = PZ(3*grid%M+1:4*grid%M)
 
-  CALL p_growth(NO,NH,Yplus(1:M),nvar1,I_par,grid,N,micro,Temp,Resp) !microplankton
+!microplankton
+  CALL p_growth(M, NO, NH, Yplus(1:M), I_par, Temp, & ! in
+       N, micro, &                                    ! in and out
+       Resp_micro, Mort_micro)                        ! out
+
 !      waste%medium = waste%medium + micro%M_z*Yplus(1:M) !comm.add V.flagella.01->similar line
 !org.line      waste%medium = waste%medium + Resp(M+1:2*M)*Yplus(1:M)
-  waste%medium = waste%medium + Resp(1:M)*Yplus(1:M)
+  waste%medium = waste%medium + Mort_micro*Yplus(1:M)
   
-  CALL p_growth(NO,NH,Yplus(M+1:2*M),nvar1,I_par,grid,N,nano,Temp,Resp) !nanoplankton !add V.flagella.01
+!nanoplankton !add V.flagella.01
+  CALL p_growth(M, NO, NH, Yplus(M+1:2*M), I_par, Temp, & ! in
+       N, nano, &                                         ! in and out 
+       Resp_nano, Mort_nano)                              ! out
   ! maybe exchange the belo line with above. check the M number. 
   !CALL p_growth(Yplus,Yplus(1:M),nvar1,I_par,grid,N,nano,Temp,Resp) !nanoplankton !add V.flagella.01
-  waste%small = waste%small + Resp(M+1:2*M)*Yplus(M+1:2*M) !waste%small is rel. to nano !add V.flagella.01
+
+  waste%small = waste%small + Mort_nano*Yplus(M+1:2*M) !waste%small is rel. to nano !add V.flagella.01
   ! V.flagella.01 the line below is noted as the nano natural mortality in KPP
   !      waste%small = waste%small + nano%M_z*Yplus(2*M+1:3:M) !waste%small is rel. to nano !add V.flagella.01
   
@@ -93,19 +103,21 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
   do j_j = 1, nvar1
      if(j_j  <= M .AND. Yplus(j_j) > 0.) then 
         !Pmicro mortality
-        DYDX_deriv(j_j) = (micro%growth%new(j_j) - Resp(j_j) &
-             - Resp(j_j+M)) * Yplus(j_j)
+        DYDX_deriv(j_j) = (micro%growth%new(j_j) - Resp_micro(j_j) &
+             - Mort_micro(j_j)) * Yplus(j_j)
         ! DYDX_deriv(j_j) = (micro%growth%new(j_j)-Resp(j_j)-micro%M_z)*Yplus(j_j)
      else if (j_j > M .AND. j_j <= 2*M .AND. Yplus(j_j) > 0.) then  
-        DYDX_deriv(j_j) = (nano%growth%new(j_j-M)-Resp(j_j-M)-Resp(j_j))*Yplus(j_j-M) !V.flagella.01 not sure about this line
+        DYDX_deriv(j_j) = (nano%growth%new(j_j-M)-Resp_nano(j_j-M)-Mort_nano(j_j-M))*Yplus(j_j) !V.flagella.01 not sure about this line
         !V.flagella.01 the lines below are mod -> (multiplier+1)*M
      ELSE IF (j_j > 2*M .AND. j_j <= 3*M .AND. Yplus(j_j) > 0.) THEN  
         !NO
         DYDX_deriv(j_j) = -N%O_uptake%new(j_j-2*M) +N%bacteria(j_j-2*M)
      ELSE IF (j_j > 3*M .AND. j_j <= 4*M) THEN  
         !NH
-        DYDX_deriv(j_j) = -N%H_uptake%new(j_j-3*M) + Resp(j_j-3*M)       &
+        DYDX_deriv(j_j) = -N%H_uptake%new(j_j-3*M) + Resp_micro(j_j-3*M) &
+             + Resp_nano(j_j-3*M) &
              + waste%medium(j_j-3*M)*waste%m%destiny(0)+N%remin(j_j-3*M) &
+!*** perhaps should include some waste%small here too
              - N%bacteria(j_j-3*M) 
      ELSE IF (j_j > 4*M .AND. j_j <= 4*M+D_bins*M) THEN 
         !Detritus
@@ -113,6 +125,7 @@ subroutine derivs_sog(x_var, nvar1, Y_var, DYDX_deriv, Temp)
            if (j_j > 4 * M + (k_k-1) * M .AND. j_j <= 4 * M + k_k * M) then
               DYDX_deriv(j_j) = waste%medium(j_j - (4 * M + (k_k - 1) * M)) &
                    * waste%m%destiny(k_k) - Detritus(k_k)%r * Yplus(j_j) 
+!*** perhaps should include some waste%small here too
            end if
         end do
      end if
