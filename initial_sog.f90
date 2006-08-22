@@ -39,27 +39,27 @@ module initial_sog
 !       P_nano = 2.6D-3 * 0., & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
        Z_micro = 1.6D-3, &
        Deto =  1.D-3, &
-       NOo =  0.21, &
-       NOs = 0.49, &
-       NOd = 0.52, &
        NHo = .5D-3 
 
 contains
 
-  subroutine initial_mean (Ui, Vi, Ti, Si, Pi, Ni, Detritus, hi, ut, vt, &
-       pbx, pby, d, D_bins, xx, flagellates)       
+  subroutine initial_mean (Ui, Vi, Ti, Si, Pi, NO, NH, Sil, Detritus, &
+       hi, ut, vt, &
+       pbx, pby, d, D_bins, cruise_id, flagellates)       
 
     ! Arguments:
     type(prop), intent(out) :: Ui, Vi, Ti, Si
     type(plankton), intent(out) :: Pi 
-    type(nutrient), intent(out) :: Ni
+    double precision, dimension (0:), intent(out) :: NO  ! N%O%new,  nitrate
+    double precision, dimension (0:), intent(out) :: NH  ! N%H%new,  ammonium
+    double precision, dimension (0:), intent(out) :: Sil ! Sil%new,  silicon
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     double precision, intent(out) :: hi !h%new
     type(prop), intent(out) :: ut, vt
     type(gr_d), intent(in) :: d
     double precision, dimension(d%M), intent(out) :: pbx, pby
-    integer xx           ! cruise_id
+    character*4  cruise_id           ! cruise_id
     ! *** Temporary flag to turn flagellates model on/off
     logical :: flagellates
 
@@ -67,8 +67,6 @@ contains
     integer :: i, j      ! loop index
     ! File name to open
     character*80 :: fn           
-    ! *** Get rid of this hard-coded dimension!
-    double precision, dimension (3854) :: NN
     ! Place holders for reading CTD data file
     integer :: dum1
     real :: depth, dumc, dumt, dump, dumo
@@ -91,8 +89,7 @@ contains
     Ti%new(1) = To 
     Pi%micro%new(1) = P_micro
     Pi%nano%new(1) = P_nano !V.flagella.01
-    Ni%O%new(1) = NOo
-    Ni%H%new(1) = NHo
+    NH(1) = NHo
 
     !-----detritus loop added march 2006---------------------------------
 
@@ -106,19 +103,9 @@ contains
     open(unit=49, file="input/NH4.dat", status="OLD", &
          action="READ")
     do i = 1, d%M + 1
-       read(49, *) Ni%H%new(i)
+       read(49, *) NH(i)
     end do
     close(49)
-
-    !             DO i = 1, D_bins
-    !                 IF (i < D_bins) THEN
-    !                    Detritus(i)%D%new = Deto
-    !                 ELSE
-    !                    Detritus(i)%D%new = zero !0.
-    !                 END IF
-    !              END DO 
-
-
 
 
     !---biology jan 10 2005---------------------------------
@@ -128,20 +115,12 @@ contains
 
           Pi%micro%new(i) = P_micro
           Pi%nano%new(i) = P_nano !V.flagella.01
-          Ni%H%new(i) = NHo
+          NH(i) = NHo
        ELSE       !IF (d%d_g(i) <= Zd) THEN
           Pi%micro%new(i) = 0.
           Pi%nano%new(i) = 0. !V.flagella.01
-          Ni%H%new(i) = 0.
+          NH(i) = 0.
        END IF
-       IF (d%d_g(i) <= hs) THEN  !Large1996
-          Ni%O%new(i) = NOo
-       ELSE IF (d%d_g(i) > hs .AND. d%d_g(i) <= hs2) THEN
-          Ni%O%new(i) = NOo + (NOs-NOo)/(hs2-hs)*(d%d_g(i)-hs)
-       ELSE !IF (d%d_g(i) <= Zd) THEN
-          Ni%O%new(i) = NOs + (NOd-NOs)/(Zd-hs2)*(d%d_g(i)-hs2)
-       END IF
-
        Ui%new(i) = Uo
        Vi%new(i) = Vo
 
@@ -149,31 +128,26 @@ contains
 
     Pi%micro%new(d%M+1) = zero !0.
     Pi%nano%new(d%M+1) = zero !0. !V.flagella.01
-    Ni%O%new(d%M+1) = NOd
-    Ni%H%new(d%M+1) = zero !0.
+    NH(d%M+1) = zero !0.
     Detritus(1)%D%new(d%M+1) = zero ! 0. (DON ==> Detritus(1), need some deep ocean value)
     Detritus(2)%D%new(d%M+1) =  zero !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
 
 
+    ! read in nutrients data
+    write (fn,'("../sog-iniital/Nuts_",a4,".txt")') cruise_id
+    open(unit=66, file=fn, status="OLD", action="READ")
 
-
-
-    !               open (66,file="input/nitratetest.dat")
-    open(unit=66, file="input/nitrate.dat", &
-         status="OLD", action="READ")
-    ! *** More hard-coded constants to get rid of!
-    do i = 1, 3854
-       read(66, *) NN(i)
+    do i = 0, d%M
+       read(66, *) depth, NO(i), Sil(i)
+       if (depth.ne.i*0.5) then
+          write (*,*) 'Expecting nutrients, NO3 and Silicon at 0.5 m intervals'
+          stop
+       endif
     enddo
     close (66)
-
-    if (xx == 1) then 
-       Ni%O%new = NN(1:82)
-    else
-       Ni%O%new = NN(82 * (xx-1) + 1:82 * (xx-1) + 82)
-    endif
-
-
+    NO(d%M+1) = NO(d%M)
+    Sil(d%M+1) = Sil(d%M)
+    
 
 
     !---end biology------------------------------------------ 
@@ -197,8 +171,7 @@ contains
     Ti%new(0) = Ti%new(1)  !Surface
     Si%new(0) = Si%new(1)  !Boundary
     Pi%micro%new(0) = Pi%micro%new(1)
-    Ni%O%new(0) = Ni%O%new(1)
-    Ni%H%new(0) = Ni%H%new(1)
+    NH(0) = NH(1)
 
     ! assuming dz = 0.5
     ! Interpolate CTD data values for grid points between measurements?
@@ -230,8 +203,6 @@ contains
        pbx(i) = 0.
        pby(i) = 0.
     enddo
-
-    !PON%new(1:M) = Pi%micro%new(1:M)+ Detritus(1)%D%new(1:M)+ Detritus(2)%D%new(1:M)
 
   end subroutine initial_mean
 
