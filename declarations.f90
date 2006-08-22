@@ -69,9 +69,7 @@ module declarations
   INTEGER, DIMENSION(20)::alloc_stat  !***
   INTEGER :: steps, time_step, index,xx, xx2, year, month, jmax_i,    &
        count, yy, yy2, gg, jmaxg, cloud_type, day, stable,  &
-       water_type, t_start, t_end, neg_count, current_day, day_check, &
-       day_check2,                                         &
-       migrate  ! migrate = 1 if timestep has copepod migration, else 0
+       water_type, neg_count
   REAL::D_test
   DOUBLE PRECISION :: u_star, w_star,L_star, day_time, Io, h_Ekman  !depth
   !friction vel, convective vel scale
@@ -82,31 +80,25 @@ module declarations
        Ri_b, Q_n, F_n, &
        N_2_i, N_2_g, N_2_dens_g
   double precision, dimension(:), allocatable:: pbx,pby,dzx,dzy
-  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, T_To, Q_t, dens_i       
   !I = intensity, Q_n is the
   !non_turbulent heat flux  (i.e. I)
   !F_n is freshwater flux (0 no ice)
+  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, T_To, Q_t, dens_i
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
+  !Temporary vectors U_i , U_p...
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::P1_p, Pnano1_p, Z1_p, &
        NO1_p, NH1_p,&
-       U_p, V_p, S_p, T_p, density_i, &
-       buoy_i, uv_square_i, TKE_rate       
-  !Temporary vectors U_i , U_p...
+       U_p, V_p, S_p, T_p
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE::Copepod1_p,Copepod_wt1_p
-  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE::cgraze   !total grazing  of (prey+d_prey,M) by copepods
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE::Detritus1_p
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::m_TKE,b_TKE, TKE
-  DOUBLE PRECISION::KE_o,P_m,P_b,PE_o,IKE,PE, KE_old,PE_old,Pm_old,Pb_old, Perr, &
-       Perr_old, TKE_o
-  !Surface Kinetic energy, Mechanical Production of TKE, Buoyant production of TKE,
-  !Surface Potential energy
-  DOUBLE PRECISION::pflux_o  !surface biological flux == 0
+  ! Surface biological flux == 0
+  DOUBLE PRECISION::pflux_o
 
   !Variables for printing test functions !
 
   DOUBLE PRECISION :: avg_T, read_var 
-  INTEGER :: counter,count_two,count_tot,count_no,count2_two,count2_tot,count2_no
+  INTEGER :: counter, count_two, count_tot, count_no
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::ref_T, avg_12, tot_avg
 
   !Variable for odeint.f,  rkqs.f and derivs.f
@@ -131,12 +123,6 @@ module declarations
   !Upwelling corrections to biology and salinity
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::P_no,P_nh,P_di,P_na,P_mi,P_d1,P_d2,P_sa,P_u,P_v,P_ta,wupwell
 
-  !Copepod variables
-  INTEGER::Csources, C_types,bin_tot
-  TYPE(event), DIMENSION(:), ALLOCATABLE::Cevent    
-  TYPE(copepod), DIMENSION(:), ALLOCATABLE::species 
-  TYPE(Cdata), DIMENSION(:), ALLOCATABLE::Zoo  
-
   !Detritus variables
   INTEGER::D_bins  !number of detrital compartments  see input/biology.dat
   TYPE(snow), DIMENSION(:), ALLOCATABLE::Detritus  
@@ -157,7 +143,6 @@ module declarations
   DOUBLE PRECISION, DIMENSION(1:27,0:50)::bin_cnt_year
   INTEGER, DIMENSION(:),ALLOCATABLE::daybins
   TYPE(write_bio)::mixlay, depth150, ezone, depth80, total, depth100,doubleT,halfT,depth200
-  INTEGER::g_150, g_80, g_100 !grid spacing near 150m defined in initialize
   INTEGER,DIMENSION(27)::j_day !1,15,29,...,365  every 14 days
   DOUBLE PRECISION,DIMENSION(365)::c_biomass
   DOUBLE PRECISION::c_biomass_150
@@ -199,7 +184,7 @@ module declarations
   INTEGER::cntp_mar,cntp_sep,cntp_jun,cntp_dec
 
   !!variables for finding PON flux
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::null_vector,null_vector2
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::null_vector
   DOUBLE PRECISION::PONflux_200,PONflux_100,PONflux_ml,NOflux_200,NOflux_ml,NOflux_100,NHflux_200,&
        NHflux_ml,NHflux_100  !due to physical processes
 
