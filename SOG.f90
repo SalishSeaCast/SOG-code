@@ -36,6 +36,8 @@ program SOG
 
   type(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
   common /derivs/ PZ_bins
+  integer :: bPZ, ePZ ! start position and end position in PZ array
+
 
   double precision:: cz, unow, vnow, upwell 
 
@@ -829,19 +831,24 @@ program SOG
         STOP
      END IF
 
-     next_time = time+dt
+     next_time = time+dt ! note, biology is calculated for the NEXT step
 
      ! *** Temporary code to allow flagellates model to be turned on/off
+     !*** Size of T in odeint is hard-coded to 81
      if (flagellates) then
         call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
-             N_ok, N_bad, derivs_sog, rkqs, icheck, T%new)
+             N_ok, N_bad, derivs_sog, rkqs, icheck, T%new(0:M))
      else
         call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
-             N_ok, N_bad, derivs_noflag, rkqs, icheck, T%new)
+             N_ok, N_bad, derivs_noflag, rkqs, icheck, T%new(0:M))
      endif
 
-     IF (MINVAL(PZ(2*M+1:3*M)) < 0.) THEN
-        DO xx = 2*M+1,3*M
+     ! check for negative NH values and then for negative Micro phyto values
+     !*** add nanos and move into a subroutine in bio module 
+     bPZ = (PZ_bins%NH - 1) * M + 1
+     ePZ = PZ_bins%NH * M
+     IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
+        DO xx = bPZ,ePZ
            IF (PZ(xx) < 0.) THEN
               PRINT "(A)","N%H%new(xx-4*M) < 0."
               PRINT *,PZ(xx)
@@ -850,11 +857,12 @@ program SOG
            END IF
         END DO
      END IF
-
-     IF (MINVAL(PZ(1:M)) < 0.) THEN
+     bPZ = (PZ_bins%micro - 1) * M + 1
+     ePZ = PZ_bins%micro * M
+     IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
         PRINT "(A)","PZ < 0. After odeint.f see KPP.f90"
         PRINT "(A)","time,day"
-        PRINT *,time,day,PZ(1:M)
+        PRINT *,time,day,PZ(bPZ:ePZ)
         STOP
      END IF
 
