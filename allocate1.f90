@@ -21,14 +21,8 @@ subroutine allocate1(STAT)
                Z%micro%old_old(0:M+1), P%nano%new(0:M+1),P%nano%old(0:M+1),P%nano%old_old(0:M+1),&
                N%O%new(0:M+1),N%O%old(0:M+1),N%O%old_old(0:M+1),&
                N%H%new(0:M+1),N%H%old(0:M+1),N%H%old_old(0:M+1),&
-               P_temp%new(0:M+1),density%old(0:M+1),density%new(0:M+1),density_i(0:M+1),dens_i(0:M+1),&
-               buoy_i(0:M+1), STAT = alloc_stat(1))
-
-
-      ALLOCATE(species(Csources),Cevent(Csources),Hvector%z%c(Csources),&
-           Gvector%z%c(Csources), Gvector_o%z%c(Csources),Gvector_o_o%z%c(Csources),&
-           Gvector_ro%z%c(Csources),Gvector_ro_o%z%c(Csources),Copepod1_p(Csources,M),&
-           STAT = alloc_stat(2))
+               P_temp%new(0:M+1),density%old(0:M+1),density%new(0:M+1),dens_i(0:M+1),&
+               STAT = alloc_stat(1))
 
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
               Gvector_o_o%d(D_bins),Gvector_ro%d(D_bins),Gvector_ro_o%d(D_bins),&
@@ -37,9 +31,8 @@ subroutine allocate1(STAT)
 
       ALLOCATE(alph%g(0:M+1), alph%i(0:M), alph%idiv(M), &
            beta%idiv(M), beta%g(0:M+1), beta%i(0:M),     &
-!!$           Cp%g(0:M+1),Cp%i(0:M), &
-           w%b(0:M),w%b_old(0:M),w%b_err(0:M),w%b_err_old(0:M),Bf%b(0:M),&
-               Bf%b_old(0:M),Bf%b_err(0:M),Bf%b_err_old(0:M),w%t(0:M),w%s(0:M),w%u(0:M),&
+           w%b(0:M),w%b_err(0:M),Bf%b(0:M),&
+               Bf%b_err(0:M),w%t(0:M),w%s(0:M),w%u(0:M),&
                w%v(0:M),w%p%micro(0:M),Amatrix%u%A(M),Amatrix%u%B(M),&
                Amatrix%u%C(M),Amatrix%t%A(M),Amatrix%t%B(M),Amatrix%t%C(M),Amatrix%s%A(M),Amatrix%s%B(M),&
                Amatrix%s%C(M),Bmatrix%u%A(M),Bmatrix%u%B(M),&
@@ -67,12 +60,12 @@ subroutine allocate1(STAT)
                K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
                K%t%old(0:M),K%s%old(0:M),K%u%old(0:M),STAT = alloc_stat(5))
 
-      ALLOCATE(TKE_rate(0:M+1), uv_square_i(0:M+1), ref_T(0:M+1), &
+      ALLOCATE(ref_T(0:M+1), &
            avg_12(0:M+1), tot_avg(0:M+1), Q_t(0:M), T_To(0:M+1), &
            I(0:M), I_par(0:M), Q_n(0:M), F_n(0:M),  grid%d_g(0:M+1), &
            grid%d_i(0:M), grid%i_space(M), grid%g_space(0:M), &
-           phi%m%value(0:M), phi%s%value(0:M), Ri_b(M), m_TKE(M), &
-           b_TKE(M), TKE(M), N_2_i(M), N_2_g(M), N_2_dens_g(M), &
+           phi%m%value(0:M), phi%s%value(0:M), Ri_b(M), &
+           N_2_i(M), N_2_g(M), N_2_dens_g(M), &
            Q_test(M), V_t_square(M), omega%s%value(0:M), omega%m%value(0:M), &
            STAT = alloc_stat(6)) 
                      
@@ -111,7 +104,7 @@ subroutine allocate1(STAT)
 
 !Copepod allocations and plot allocations
 
-      ALLOCATE(Zoo(C_types),f_ratio(M), &
+      ALLOCATE(f_ratio(M), &
            nano_pro(84,M),diatom_pro(84,M), zmicro_pro(84,M), copepod_pro(84,M), &
            NO_pro(84,M), NH_pro(84,M), fratio_pro(84,M), T_pro(84,M), S_pro(84,M), &
            U_pro(84,M), V_pro(84,M), PON_pro(84,M), &
