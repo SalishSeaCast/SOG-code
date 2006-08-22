@@ -1,5 +1,4 @@
-subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
-     month)
+subroutine new_year(day_ti, o_day, o_year, ti, ddt, month)
 
   USE mean_param
   USE surface_forcing      
@@ -8,7 +7,7 @@ subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
 
   DOUBLE PRECISION, INTENT(IN OUT)::day_ti, ti   !day_time, time
   DOUBLE PRECISION, INTENT(IN)::ddt             !dt
-  INTEGER, INTENT(IN OUT)::o_day,o_year,day_ch,day_ch2      !day, year, day_check,day_check2
+  INTEGER, INTENT(IN OUT)::o_day, o_year
   INTEGER, INTENT(IN OUT)::month
 
   INTEGER::zz
@@ -19,8 +18,6 @@ subroutine new_year(day_ti, o_day, o_year, ti, ddt, day_ch, day_ch2, &
   IF (day_ti >= 86400.0) THEN
      day_ti = day_ti - 86400.0
      o_day = o_day + 1
-     day_ch = 0
-     day_ch2 = 0
      IF (o_day == 366) THEN 
         PRINT "(A)","time,day,year"
         PRINT *,ti,o_day,o_year
