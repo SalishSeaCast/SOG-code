@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE initialize
 
       USE mean_param
@@ -21,72 +24,13 @@ SUBROUTINE initialize
 
       day_time = time
       time_step = 1
-      current_day = 0 !used in interpolate loop  (KPP.f90)
 
       j_gamma = 0  !h_gamma = 0 or wt_r contribution to gamma%t vanishes
       count_two = 0         !counts convergence at iteration 2
       count_tot = 0        !counts total convergences
       count_no = 0           ! counts no convergence
 
-      count2_two = 0        
-      count2_tot = 0       
-      count2_no = 0        
-
       neg_count = 0  ! counts number of times scheme biology becomes negative
-     ! t_start = (86400.0-t_o)/dt + 1 ! day 1  Start and Stop energy measure  
-     ! t_end = (172800.0-t_o)/dt + 1 ! day 2                                  
- 
-      t_start = 2    
-      t_end = 3   
-
-
-      !!!Initialize energies to zero!!!!!!!!!!!!!!!!!!!!
-
-      PE_o = 0.
-      KE_o = 0.
-      P_m = 0.
-      P_b = 0.
-      IKE = 0.
-      PE = 0.
-      KE_old = 0.
-      PE_old = 0.
-      Pm_old = 0.
-      Pb_old = 0.
-      stress%u%old = 0.
-      stress%v%old = 0.
-      w%b_old = 0.
-      Bf%b_old = 0.
-      w%b_err_old = 0.
-      Bf%b_err_old = 0.
-      uv_square_i = 0.
-      buoy_i = 0.
-      density_i = 0.
-
-!Copepod conditions
-      bin_tot = 0
-
-      DO k_k = 1,SIZE(leap_year,1)
-         IF (year == leap_year(k_k)) THEN
-            is_leap_year = 1
-            was_leap_year = 0
-            EXIT
-         ELSE IF (year-1 == leap_year(k_k)) THEN
-            was_leap_year = 1
-            is_leap_year = 0
-            EXIT
-         ELSE
-            is_leap_year = 0
-            was_leap_year = 0
-         END IF
-      END DO
-
-     
-      day_check = 0
-      day_check2 = 0
-      pflux_o = 0.
-      DO k_k = 1,Csources
-         Cevent(k_k)%on = 0  !2
-      END DO
 
 !!!!Initial CN ratios for P%micro and P%nano
 
@@ -94,9 +38,6 @@ SUBROUTINE initialize
       nano%Q_cn = Q_min !6.67 
 
 !write_biology.f90
-      g_100 = 20 !actually 97.5
-      g_150 = 30 !147.5
-      g_80 = 16 !77.5
       o_cnt = 0
       NO_o = 0.
       nano_ml = 0.
