@@ -99,8 +99,9 @@ program SOG
   ! and read them
   str = getpars("inputfile", 1)
   open(10, file=str, status="OLD", action="READ")
-  read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o, &
-       cruise_id
+  read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o
+  cruise_id = getpars("cruise_id", 1)
+
 
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
 
@@ -185,7 +186,8 @@ program SOG
   ! Set up grid interpolation factor arrays
   ! *** Eventually, define_grid will be refactored into init_grid
   call init_grid(M, grid)
-  CALL initial_mean(U, V, T, S, P, N, Detritus, h%new, ut, vt, pbx, pby, &
+  CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
+       h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
 
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
