@@ -19,7 +19,7 @@ module declarations
                                 ! *** t_o should match CTD profile time of day
   double precision :: t_f       ! end of run time [s]
   double precision :: dt        ! time step [s]
-  integer :: cruise_id
+  character*4 :: cruise_id      ! four number code that labels the start cruise
 
   TYPE(constant)::alph, beta, dens
   TYPE(gr_d)::grid
