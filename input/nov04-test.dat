@@ -1,5 +1,5 @@
- 80 40. 0.     44520. 1124520. 900. 293   2004   10      39
-! M  D  lambda t_o    t_f      dt   day_o year_o month_o cruise_id
+ 80 40. 0.     44520. 1124520. 900. 293   2004   10      
+! M  D  lambda t_o    t_f      dt   day_o year_o month_o
 ! M = # of grid points
 ! D = model domain depth [m]
 ! lambda = something to do with grid spacing; maybe log if non-zero?
@@ -8,8 +8,6 @@
 ! dt = time step [s]
 ! day_o = year-day on which run starts [1-Jan = 1]
 ! year_o = year in which run starts
-! cruise_id = used to initialize nitrate concentration
-
 ! run parameters for a 300 hr run of SOG
 ! for testing during code development
 !
