@@ -71,7 +71,7 @@ module surface_forcing
   DOUBLE PRECISION, PARAMETER::Q_max = 8.,&   !maximum and minimum allowed CN ratios
        Q_min = 5. !4.                             !
 
-  INTEGER::prey,d_prey,zprey  !number of Copepod animal prey (P%micro+Z%micro) and 
+  INTEGER :: zprey  !number of Copepod animal prey (P%micro+Z%micro) and 
   !detrital prey (Detritus(1:D_bins-1)
   !See read_data.f90 and input/biology for values
   DOUBLE PRECISION, PARAMETER::desired_var = 6.267101794384283, &  !12.6, & !6.267101794384283, & !used for ECMWF smoothed winds
