@@ -162,7 +162,7 @@ module mean_param
   END TYPE trivector
 
   TYPE :: UVSTmatrix
-     TYPE(trivector)::u,s,t,bio,no,null,null2
+     TYPE(trivector)::u,s,t,bio,no,null
      DOUBLE PRECISION, DIMENSION(1)::QA,QB
   END TYPE UVSTmatrix
 
@@ -197,18 +197,6 @@ module mean_param
 
 
   !Copepod Types:
-
-  TYPE :: event                      !Cevent(Csources)
-     DOUBLE PRECISION::var, norm, var_67   !may not need norm!!!!  used in year 1967
-     DOUBLE PRECISION, DIMENSION(:), POINTER::s, stage_time   !!both allocated
-     DOUBLE PRECISION::nauplii,nauplii_67    !total number of arrival nauplii , used in year 1967           
-     INTEGER::Cday, year_s, year_e, type, length, start, end, on, n, change_67,Cday_67
-  END TYPE event
-
-  !TYPE :: wt_dist
-  !   DOUBLE PRECISION::wt, wt_old, wt_old_old, f  !weight (and old copies) and fraction
-  !END TYPE wt_dist
-
   TYPE :: mat_dist
      DOUBLE PRECISION::M,sigma_M, f, o_f, pdf_out, o_pdf_out, & 
           !<M>, (<M^2>-<M>^2)^1/2, number of animals
@@ -221,50 +209,6 @@ module mean_param
      INTEGER::day  !arrival day
      DOUBLE PRECISION, DIMENSION(:), POINTER::stage_dur  !stage #-1 stage_dur(Zoo%s_number-1) allocated
   END TYPE mat_dist
-
-  TYPE :: copepod                     !species(number of copepod events == Csources)
-     !use Cevent to find copepod type. may be same for each species
-     DOUBLE PRECISION, DIMENSION(:), POINTER::stage_f, o_stage_f,& !allocated  Total fraction in stage(yy)
-          avg_stage_wt,o_avg_stage_wt !stage(zoo(Cevent(yy)%type)%s_number-1)
-     DOUBLE PRECISION::n_out, wt_out !number of Copepods per m^2 in diapause and 
-     DOUBLE PRECISION::new_wt_out, new_wt_in  !use to find daily migration flux (in or out) of ml 
-     !total wt per m^2 in diapause(number*size)
-     TYPE(prop)::Z   !species%n*species%Ntot = species%Z%new
-     DOUBLE PRECISION, DIMENSION(:), POINTER::n !, PZ  
-     !n(0:M+1) number density  !allocated  see define_PZ for precise definition
-     !x(Zoo%s_number) ~ day-mature_pdf%day and y(Zoo%s_number) ~ Maturity
-     ! interpolation points
-     !for mature_pdf%M  !allocated
-     !stores PZ(M) version of species%Z%new  !allocated
-     DOUBLE PRECISION, DIMENSION(:), POINTER::x,y
-     DOUBLE PRECISION::Ntot,gamma, avg_wt, node_wt, gamma_wt, a, b !Avg number of animals per m^2 
-     !see define_PZ for precise definition
-     !gamma*(t-t_o) = sigma for stage_pdf
-     !gamma_wt*(wt(t+1)-wt(t)) = var for each bin of wt_pdf
-     !a and b are best fit line coefficients for M = a*log(wt)+b
-     INTEGER::current_arrival  !number from 1--cvent%length+1, If cevent%length + 1 ==> all have arrived
-     !TYPE(wt_dist), DIMENSION(:), POINTER::wt_pdf !wt_pdf(bin)   
-     TYPE(mat_dist), DIMENSION(:), POINTER::mature_pdf  !mature_pdf(Cevent%length)  !allocated
-     DOUBLE PRECISION, DIMENSION(:), POINTER::ingest !ingest(Cevent%length)  !allocated
-     DOUBLE PRECISION, DIMENSION(:,:), POINTER::graze !graze(prey,M) !allocated
-     DOUBLE PRECISION, DIMENSION(:), POINTER::Ex  !excrete(Cevent%length) !allocated
-     DOUBLE PRECISION, DIMENSION(:,:), POINTER::p !preferences(prey,M)  !allocated
-     DOUBLE PRECISION, DIMENSION(:), POINTER::mort !mortality(M) m^3/#/s
-  END TYPE copepod
-
-  TYPE :: Cdata                  !Zoo(number of copepod types == C_types)
-     INTEGER::s_number        !number of stages  
-     DOUBLE PRECISION, DIMENSION(:),POINTER::stage_dur   !dimension: stage #-1  !allocated
-     DOUBLE PRECISION, DIMENSION(:),POINTER::molt_wt !dimension: stage #  molt_wt(0:stage#-1)
-     ! DOUBLE PRECISION::wt, min_wt  !weight of arrival nauplii/first stage and smallest wt
-     DOUBLE PRECISION, DIMENSION(:),POINTER::q  !preference_coefficient(prey)  !allocated
-     DOUBLE PRECISION::delta, eta, a_Ex, b_Ex, Gmax, ks, M, nn, b2_Ex ! delta = assimilation eff ;
-     !eta, a_Ex and b_Ex = excretion coefficients
-     !Gmax = max grazing rate; ks = in holling grazing
-     !M = mortality coefficient
-     !nn = holling type nn+1 exponent
-     DOUBLE PRECISION::B,k  !M = LOG((1.+species%B)/(1.+species%B*EXP(-species%k*day)))
-  END TYPE Cdata
 
   TYPE :: write_bio   !total
      DOUBLE PRECISION::nano,diatom,zmicro,copepod,out,NO,NH,size,PN,NPP,n_loss,ngrow,dgrow,DN,&
