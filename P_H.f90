@@ -18,8 +18,6 @@ SUBROUTINE P_H(mm,Hvector,Gvect,Gvect_o,Gvect_o_o,Gvect_ro,Gvect_ro_o,Gvect_ao,G
 
       Hvector = 0.
 
-   !   IF (tstep == 1 .OR. migrate == 1) THEN      !!!First order IMEX!!!
-
          DO index = 1, mm%M
             Hvector(index) = PP%old(index)+Gvect_ao(index)+Gvect_ro(index)+(1.0-a_IMEX1)*(Gvect_o(index) + &
             Bmat_o%A(index)*PP%old(index-1) + Bmat_o%B(index)*PP%old(index) + &
