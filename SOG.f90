@@ -104,12 +104,12 @@ program SOG
 
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
 
-  ! *** These constants should be set as parameter somewhere else, or read
-  ! *** from the main run parameters file
-  Csources = 1
-  C_types = 1
+  ! *** Why not read M & D directly into grid?
+  ! *** D has an implicit type conversion problem too
   grid%M = M
   grid%D = D
+  ! *** These constants should be set as parameter somewhere else, or read
+  ! *** from the main run parameters file
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
 
@@ -168,10 +168,6 @@ program SOG
   icheck=346
 
   CALL allocate1(alloc_stat) 
-  call alloc_water_props(grid%M, Cp)
-  CALL read_sog
-  CALL coefficients(alph, beta, dens, cloud,p_Knox)
-  CALL allocate3(alloc_stat)
   DO xx = 1,12
      IF (alloc_stat(xx) /= 0) THEN
         PRINT "(A)","ALLOCATION failed.  KPP.f  xx:"
@@ -179,6 +175,10 @@ program SOG
         STOP
      END IF
   END DO
+  call alloc_water_props(grid%M, Cp)
+  CALL read_sog
+  CALL coefficients(alph, beta, dens, cloud,p_Knox)
+  CALL allocate3
 
   CALL initialize ! initializes everything (biology too)
   CALL define_grid(grid, D, lambda) ! sets up the grid
@@ -189,10 +189,6 @@ program SOG
        grid, D_bins, cruise_id, flagellates)
 
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
-
-  CALL allocate4
-
-
 
   !---End Biology from KPP--------------------------------------
 
@@ -917,8 +913,6 @@ program SOG
         Bmatrix%null%C = 0.
         Amatrix%null%A = 0. !(M)
         Amatrix%null%B = 1.
-        Amatrix%null2%A = 0.!(bin)  
-        Amatrix%null2%B = 1.
         Bmatrix_o%bio%A = Bmatrix%bio%A
         Bmatrix_o%bio%B = Bmatrix%bio%B
         Bmatrix_o%bio%C = Bmatrix%bio%C
@@ -1030,8 +1024,7 @@ program SOG
      ! Increment time, calendar date and clock time, unless this is
      ! the last time through the loop
      if(time_step < steps) then
-        call new_year(day_time, day, year, time, dt, day_check, day_check2, &
-             month_o)
+        call new_year(day_time, day, year, time, dt, month_o)
      endif
   end do  !--------- End of time loop ----------
 
