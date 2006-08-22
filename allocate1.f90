@@ -21,6 +21,7 @@ subroutine allocate1(STAT)
                Z%micro%old_old(0:M+1), P%nano%new(0:M+1),P%nano%old(0:M+1),P%nano%old_old(0:M+1),&
                N%O%new(0:M+1),N%O%old(0:M+1),N%O%old_old(0:M+1),&
                N%H%new(0:M+1),N%H%old(0:M+1),N%H%old_old(0:M+1),&
+               Sil%new(0:M+1), Sil%old(0:M+1), &            ! silicon
                P_temp%new(0:M+1),density%old(0:M+1),density%new(0:M+1),dens_i(0:M+1),&
                STAT = alloc_stat(1))
 

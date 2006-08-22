@@ -24,6 +24,7 @@ module declarations
   TYPE(constant)::alph, beta, dens
   TYPE(gr_d)::grid
   TYPE(prop)::T, S, U, V, B, density, P_temp, PON, vt, ut
+  type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
   TYPE(zplankton):: Z
   TYPE(nutrient):: N
