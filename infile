@@ -2,6 +2,7 @@
 "writefile1"	"output/phys_nov04-test.out"	"physics model time series"
 "writefile2"	"output/bio_nov04-test.out"	"biology model time series"
 "inputfile"	"input/nov04-test.dat"		"run parameters"
+"cruise_id"	"0414"	                        "Cruise id number"
 "ctd_in"	"input/ctd_in/SG0414004.str"	"initialization CTD file"
 "profile_out"	"profiles/phys_nov04-test.out"	"profiles"
 
