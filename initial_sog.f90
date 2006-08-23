@@ -134,7 +134,7 @@ contains
 
 
     ! read in nutrients data
-    write (fn,'("../sog-iniital/Nuts_",a4,".txt")') cruise_id
+    write (fn,'("../sog-initial/Nuts_",a4,".txt")') cruise_id
     open(unit=66, file=fn, status="OLD", action="READ")
 
     do i = 0, d%M
