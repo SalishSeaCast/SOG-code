@@ -1,7 +1,8 @@
 SUBROUTINE define_sog(timestep)
 
-      USE mean_param
-      USE declarations
+      USE declarations, only: U, V, S, T, h, P, N, Sil, &
+           B, density, K, Bmatrix, Gvector, Detritus, nano, &
+           PON, ut, vt
 
       IMPLICIT NONE
 
@@ -102,7 +103,7 @@ SUBROUTINE define_sog(timestep)
             Detritus(kk)%D%old_old = Detritus(kk)%D%old
             Gvector_o_o%d(kk)%bin = Gvector_o%d(kk)%bin
             Gvector_ro_o%d(kk)%bin =Gvector_ro%d(kk)%bin
-            Gvector_o%d(kk)%bin = Gvector%d(kk)%bin !crashes here
+            Gvector_o%d(kk)%bin = Gvector%d(kk)%bin 
             Gvector_ao_o%d(kk)%bin = Gvector_ao%d(kk)%bin
          END DO
          nano%Q_old_old = nano%Q_old !V.flagella.01 not sure to keep it or not
@@ -119,6 +120,7 @@ SUBROUTINE define_sog(timestep)
          P%nano%old = P%nano%new
          N%O%old = N%O%new
          N%H%old = N%H%new
+         Sil%old = Sil%new
          PON%old = PON%new
 
          ut%old = ut%new
