@@ -1,24 +1,20 @@
 SUBROUTINE define_sog(timestep)
-
-      USE mean_param
-      USE declarations
+  
+  !!store previous time_steps in old (n)
+  
+  USE declarations, only: D_bins, U, V, S, T, h, P, N, Sil, &
+       B, density, K, Bmatrix, Bmatrix_o, Bmatrix_o_o, & 
+       Gvector, Gvector_ao, Gvector_ao_o, &
+       Gvector_o, Gvector_o_o, Gvector_ro, Gvector_ro_o, Gvector_c, &
+       Gvector_co, Gvector_co_o, Detritus, PON, ut, vt
 
       IMPLICIT NONE
 
       INTEGER, INTENT(IN)::timestep
       INTEGER::kk
-                                !!store previous time_steps in old (n) and old_old (n-1)!!
+
 
       IF (timestep > 1) THEN
-         U%old_old = U%old
-         V%old_old = V%old
-         S%old_old = S%old
-         T%old_old = T%old
-         h%old_old = h%old
-         P%micro%old_old = P%micro%old
-         P%nano%old_old = P%nano%old
-         N%O%old_old = N%O%old
-         N%H%old_old = N%H%old
 
          B%old = B%new   
          density%old = density%new
@@ -102,11 +98,9 @@ SUBROUTINE define_sog(timestep)
             Detritus(kk)%D%old_old = Detritus(kk)%D%old
             Gvector_o_o%d(kk)%bin = Gvector_o%d(kk)%bin
             Gvector_ro_o%d(kk)%bin =Gvector_ro%d(kk)%bin
-            Gvector_o%d(kk)%bin = Gvector%d(kk)%bin !crashes here
+            Gvector_o%d(kk)%bin = Gvector%d(kk)%bin 
             Gvector_ao_o%d(kk)%bin = Gvector_ao%d(kk)%bin
          END DO
-         nano%Q_old_old = nano%Q_old !V.flagella.01 not sure to keep it or not
-
          
       END IF
 
@@ -119,6 +113,7 @@ SUBROUTINE define_sog(timestep)
          P%nano%old = P%nano%new
          N%O%old = N%O%new
          N%H%old = N%H%new
+         Sil%old = Sil%new
          PON%old = PON%new
 
          ut%old = ut%new
