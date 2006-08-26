@@ -171,6 +171,7 @@ contains
     Ti%new(0) = Ti%new(1)  !Surface
     Si%new(0) = Si%new(1)  !Boundary
     Pi%micro%new(0) = Pi%micro%new(1)
+    Pi%nano%new(0) = Pi%nano%new(1) !V.flagella.02
     NH(0) = NH(1)
 
     ! assuming dz = 0.5
@@ -180,12 +181,14 @@ contains
        if (j * 2 == i) then
           Ti%new(i) = Ti%new(j)
           Si%new(i) = Si%new(j)
-          Pi%micro%new(i) = Pi%micro%new(j)
+          Pi%micro%new(i) = Pi%micro%new(j) 
+          Pi%nano%new(i) = Pi%nano%new(j) !V.flagella.02
        else
           ! *** This looks like a job for a arith_mean function
           Ti%new(i) = Ti%new(j) * 0.5 + Ti%new(j+1) * 0.5
           Si%new(i) = Si%new(j) * 0.5 + Si%new(j+1) * 0.5
           Pi%micro%new(i) = Pi%micro%new(j) * 0.5 + Pi%micro%new(j+1) * 0.5
+          Pi%nano%new(i) = Pi%nano%new(j) * 0.5 + Pi%nano%new(j+1) * 0.5 !V.flagella.02
        endif
     enddo
 
