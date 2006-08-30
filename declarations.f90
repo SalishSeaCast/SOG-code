@@ -34,8 +34,13 @@ module declarations
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::phi,omega
   TYPE(MSTscalar)::a2,a3  !shape constants
-  TYPE(UVST)::Hvector, Gvector, Gvector_o, Gvector_o_o, Gvector_c, Gvector_co, Gvector_co_o, &
-       Gvector_ao, Gvector_ao_o, Gvector_ro , Gvector_ro_o          !**&
+  TYPE(UVST)::Hvector
+  type(UVST):: Gvector, Gvector_o ! vert. adv. & nonlocal and surf/bot fluxes
+  type(UVST):: Gvector_o_o
+  type(UVST):: Gvector_c, Gvector_co ! Coriolis and pg forces
+  type(UVST):: Gvector_co_o, &
+       Gvector_ao, Gvector_ao_o !**&
+  type(UVST):: Gvector_ro , Gvector_ro_o   ! contains effect of biol. model
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o, Bmatrix_o_o !**&
   TYPE(okta)::cloud
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
