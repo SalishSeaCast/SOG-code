@@ -482,9 +482,11 @@ program SOG
         END IF
 
 !!!!! IMEX SCHEME !!!!   
-        CALL matrix_A(Amatrix%u,Bmatrix%u,time_step)   ! changed from Bmatrix to Amatrix
-        CALL matrix_A(Amatrix%t,Bmatrix%t,time_step)   ! now have (D9)
-        CALL matrix_A(Amatrix%s,Bmatrix%s,time_step)
+        CALL matrix_A (Amatrix%u, Bmatrix%u) ! changed from Bmatrix to Amatrix
+        CALL matrix_A (Amatrix%t, Bmatrix%t) ! now have (D9)
+        CALL matrix_A (Amatrix%s, Bmatrix%s)
+
+        ! add Xt to H vector (D7)
 
         CALL scalar_H(grid,Hvector%s,Gvector%s,Gvector_o%s,Gvector_o_o%s,Bmatrix_o%s,Bmatrix_o_o%s,&
              time_step,S)
@@ -492,10 +494,12 @@ program SOG
              time_step,T)
 
         ! add in Coriolis term (Gvector_c) and previous value to H vector (D7)
-        CALL U_H(grid,Hvector%u,Gvector%u,Gvector_o%u,Gvector_o_o%u,Gvector_c%u,Gvector_co%u,&
-             Gvector_co_o%u,Bmatrix_o%u,Bmatrix_o_o%u,time_step,U)
-        CALL U_H(grid,Hvector%v,Gvector%v,Gvector_o%v,Gvector_o_o%v,Gvector_c%v,Gvector_co%v,&
-             Gvector_co_o%v,Bmatrix_o%u,Bmatrix_o_o%u,time_step,V)
+        CALL U_H(M, U%old, Gvector%u, Gvector_o%u, Gvector_c%u, &    ! in
+             Gvector_co%u, Bmatrix_o%u, &                            ! in
+             Hvector%u)                                              ! out
+        CALL U_H(M, V%old, Gvector%v, Gvector_o%v, Gvector_c%v, &    ! in
+             Gvector_co%v, Bmatrix_o%u, &                            ! in
+             Hvector%v)                                              ! out
         ! solves tridiagonal system
         CALL TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%u,U_p,M)
         CALL TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%v,V_p,M)
@@ -833,6 +837,9 @@ program SOG
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
           N%H%new(grid%M+1), &                                         ! in
           Gvector%n%h)                                                 ! out
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+          Sil%new(grid%M+1), &                                         ! in
+          Gvector%sil)                                                 ! out
 
      ! vertical advection
      call vertical_advection (grid, dt, P%micro%new, wupwell, &
@@ -843,6 +850,8 @@ program SOG
           Gvector%n%o)
      call vertical_advection (grid, dt, N%H%new, wupwell, &
           Gvector%n%h)
+     call vertical_advection (grid, dt, Sil%new, wupwell, &
+          Gvector%sil)
      DO xx = 1,D_bins-1
         call vertical_advection (grid, dt, Detritus(xx)%D%new, wupwell, &
              Gvector%d(xx)%bin)
@@ -853,18 +862,18 @@ program SOG
 
      !      Gvector_ao%d(D_bins)%bin = 0.
 
-
-
      DO xx = 1,D_bins-1
         CALL advection(grid,Detritus(2)%v,Detritus(2)%D%old,dt,Gvector_ao%d(2)%bin)
      END DO
      
-     CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*M), &
-          PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, P%nano%old, N%O%old, N%H%old, &
-          Detritus, Gvector_ro)  !define Gvector_ro
+     CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*M), & !in
+          PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, P%nano%old, N%O%old, &   !in
+          N%H%old, Detritus, &                                              !in
+          Gvector_ro)                                       ! out
+     Gvector_ro%Sil = 0 ! for now
 
-     CALL matrix_A(Amatrix%bio,Bmatrix%bio,time_step)   !define Amatrix%A,%B,%C
-     CALL matrix_A(Amatrix%no,Bmatrix%no,time_step)
+     CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
+     CALL matrix_A (Amatrix%no,Bmatrix%no)
 
      IF (time_step == 1) THEN
         Bmatrix%null%A = 0. !no diffusion
@@ -887,11 +896,7 @@ program SOG
            Gvector_o%d(xx)%bin = Gvector%d(xx)%bin
         END DO
 
-     END IF
-
-
-     !------------------- 
-
+     END IF ! time_step == 1
 
      DO xx2 = 1,2
         IF (xx2 == 1) THEN
