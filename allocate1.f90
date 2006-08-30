@@ -87,8 +87,9 @@ subroutine allocate1(STAT)
                Gvector_ro%z%micro(M),Gvector_ro_o%z%micro(M), Gvector_ao%z%micro(M), &
                Gvector_ao_o%z%micro(M), &
                Hvector%n%o(M), Hvector%n%h(M), Gvector%n%o(M), Gvector%n%h(M), &
+               Gvector%sil(M), &
                Gvector_o%n%o(M), Gvector_o%n%h(M), Gvector_o_o%n%o(M), Gvector_o_o%n%h(M),&
-               Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro_o%n%o(M), Gvector_ro_o%n%h(M),&
+               Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%sil(M), Gvector_ro_o%n%o(M), Gvector_ro_o%n%h(M),&
                null_vector(M),STAT = alloc_stat(8)) !**&
                
       ALLOCATE(U_p(M),V_p(M),S_p(M),T_p(M),P1_p(M),Pnano1_p(M),Z1_p(M),NO1_p(M),NH1_p(M), & 
