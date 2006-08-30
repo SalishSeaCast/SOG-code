@@ -19,6 +19,7 @@ program SOG
   use water_properties, only: water_property, alloc_water_props, &
        dalloc_water_props, Cp_profile
   use grid_mod, only: init_grid, dalloc_grid, interp_i
+  use find_upwell, only: upwell_profile, vertical_advection
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
@@ -459,17 +460,17 @@ program SOG
         CALL diffusion(grid,Bmatrix%u,Gvector%u,K%u%all,gamma%m,w%u(0),gamma%m,dt,U%new(grid%M+1))
         CALL diffusion(grid,Bmatrix%u,Gvector%v,K%u%all,gamma%m,w%v(0),gamma%m,dt,V%new(grid%M+1))           
         ! Calculate profile of upwelling velocity
-        call find_upwell(grid, wupwell, upwell, S%new)
+        call upwell_profile(grid, S%new, upwell, wupwell)
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
-        call define_adv_bio(grid, S%new, Gvector%s, dt, P_sa, wupwell, &
-             grid%i_space(1))
-        call define_adv_bio(grid, T%new, Gvector%t, dt, P_ta, wupwell, &
-             grid%i_space(1))
-        call define_adv_bio(grid, U%new, Gvector%u, dt, P_u, wupwell, &
-             grid%i_space(1))
-        call define_adv_bio(grid, V%new, Gvector%v, dt, P_v, wupwell, &
-             grid%i_space(1))
+        call vertical_advection (grid, dt, S%new, wupwell, &
+             Gvector%s)
+        call vertical_advection (grid, dt, T%new, wupwell, &
+             Gvector%t)
+        call vertical_advection (grid, dt, U%new, wupwell, &
+             Gvector%u)
+        call vertical_advection (grid, dt, V%new, wupwell, &
+             Gvector%v)
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
         call Coriolis_and_pg(f, dt, V%new, pbx, &
@@ -877,18 +878,18 @@ program SOG
      CALL diffusion(grid,Bmatrix%no,Gvector%n%o,K%s%all,gamma%m,pflux_o,gamma%m,dt,&
           N%O%new(grid%M+1))
 
-     CALL define_adv_bio(grid,P%micro%new,Gvector%p%micro,dt,P_na,wupwell,grid%i_space(1)) ! shouldn't this be P_di?
-     CALL define_adv_bio(grid,P%nano%new,Gvector%p%nano,dt,P_na,wupwell,grid%i_space(1)) !V.flagella.01
-     CALL define_adv_bio(grid,N%O%new,Gvector%n%o,dt,P_no,wupwell,grid%i_space(1))
-     CALL define_adv_bio(grid,N%H%new,Gvector%n%h,dt,P_nh,wupwell,grid%i_space(1))
-
-
+     ! vertical advection
+     call vertical_advection (grid, dt, P%micro%new, wupwell, &
+          Gvector%p%micro)
+     call vertical_advection (grid, dt, P%nano%new, wupwell, &
+          Gvector%p%nano)
+     call vertical_advection (grid, dt, N%O%new, wupwell, &
+          Gvector%n%o)
+     call vertical_advection (grid, dt, N%H%new, wupwell, &
+          Gvector%n%h)
      DO xx = 1,D_bins-1
-        IF (xx == 1) THEN
-           CALL define_adv_bio(grid,Detritus(xx)%D%new,Gvector%d(xx)%bin,dt,P_d1,wupwell,grid%i_space(1))
-        ELSE
-           CALL define_adv_bio(grid,Detritus(xx)%D%new,Gvector%d(xx)%bin,dt,P_d2,wupwell,grid%i_space(1))
-        END IF
+        call vertical_advection (grid, dt, Detritus(xx)%D%new, wupwell, &
+             Gvector%d(xx)%bin)
      END DO
 
      !      micro%sink=1.1574D-05
