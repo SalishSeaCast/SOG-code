@@ -1,70 +1,90 @@
-SUBROUTINE find_upwell(mm,w,wo,S)
+module find_upwell
 
-  USE mean_param
+  private
+  public upwell_profile, vertical_advection
 
-  IMPLICIT NONE
+contains
+
+  SUBROUTINE upwell_profile(grid,S,upwell,wupwell)
+
+    use mean_param, only: gr_d
+
+    IMPLICIT NONE
   
-  TYPE(gr_d),INTENT(IN)::mm      !grid  
-  DOUBLE PRECISION, INTENT(IN) :: wo
-  DOUBLE PRECISION, DIMENSION(1:mm%M+1),INTENT(OUT):: w
-  DOUBLE PRECISION, DIMENSION(1:mm%M+1),INTENT(IN):: S
-  DOUBLE PRECISION, DIMENSION(1:mm%M+1)::fwc
-  REAL:: d
-  INTEGER:: index,xx,f75,d75
+    type(gr_d),INTENT(IN):: grid      ! length of grid 
+    double precision, intent(in), dimension(0:) :: S ! current salinity
+    double precision, intent(in) :: upwell ! maximum upwelling
+    double precision, intent(out), dimension(:) :: &
+         wupwell ! vertical profile of upwelling
 
-!-----------------------------------
-!susan's old upwelling plan
-!   do index=1,mm%M+1
-!      w(index)= wo*index/(mm%M+1)
-!   enddo
-!-----------------------------------
-!susan's new upwelling plan, March 29, 2006
+    ! internal variables
 
-!find the freshwater content
-fwc(1)=30-S(1)
-DO index=2,mm%M+1
-   fwc(index)=30-S(index)+fwc(index-1)
-ENDDO
+    DOUBLE PRECISION, DIMENSION(1:grid%M)::fwc ! fresh water content
+    double precision :: fwc68 ! 68% of total fresh water content
+    double precision :: d ! depth in m, of 68% fwc
+    double precision :: d25 ! 2.5 d, depth of upwelling variation
+    integer :: index ! counter through depth
 
-!find the depth of 75% freshness
-f75=floor(fwc(mm%M+1)*0.67);   
-DO index=2,mm%M+1
-   IF (floor(fwc(index))==f75) THEN
-      d75=index;
-   ELSE IF (floor(fwc(index))+1==f75) THEN 
-      d75=index;
-   ENDIF
-ENDDO
+    ! sum the freshwater content : note fwc is defined on the interfaces
+    fwc(1) = (30.0 - S(1)) * grid%i_space(1) ! 30 is the base salinity
+    DO index=2,grid%M
+       fwc(index)= (30.0 - S(index)) * grid%i_space(index) + fwc(index-1)
+    ENDDO
 
-!choose one of three choices for d
+    ! depth of upwelling layer is defined as multiple of d, depth of 68% fwc
+    ! see entrainment.pdf
 
-xx=2
+    fwc68 = 0.68*fwc(grid%M)
+    index = 1
+    do while (fwc(index).lt.fwc68)
+       index = index + 1
+    end do
+    ! depth wanted is between index and index-1
+    d = (fwc68 - fwc(index-1)) / (fwc(index) - fwc(index-1)) * &
+         grid%i_space(index) + grid%d_i(index-1)
 
-IF (xx==1) THEN
-   d=37.5;
-ELSE IF (xx==2) THEN 
-   d=2.51*d75;
-ELSE IF (xx==3) THEN
-    d=2.51*d75   
-   IF (d > 80) THEN
-      d=80   
-   ENDIF
-ENDIF
+    ! depth of upwelling variation is defined as 2.5*d see entrainment.pdf
+    d25 = 2.5*d
 
-DO index=1,mm%M+1
-   IF (index<d) THEN
-      w(index)=wo*(1-((1-index/d)**2.0))
-   ELSE 
-      w(index)=wo
-   ENDIF
-ENDDO
+    ! set vertical velocity profile
+    do index = 1, grid%M+1
+       if (grid%d_g(index) < d25) then
+          wupwell(index)= upwell * (1. - ( (1.- grid%d_g(index) / d)**2) )
+       else
+          wupwell(index) = upwell
+       endif
+    enddo
 
+  end SUBROUTINE upwell_profile
 
-!open(666,file="output/upwell.dat")
-!do index=1,mm%M+1
-!write(666,*)w(index)
-!enddo
-!close(666)
+  subroutine vertical_advection (grid, dt, property, wupwell, gvector)
 
-end
+    use mean_param, only: gr_d
 
+    implicit none
+
+    type(gr_d), intent(in) :: grid 
+    double precision, intent(in) :: dt ! time step
+    double precision, dimension (0:), intent(in) &
+         :: property ! quantity to be advected
+    double precision, intent(in), dimension(:) :: wupwell
+    double precision, intent(in out), dimension(:) :: Gvector
+
+    ! internal variables
+    integer :: index  ! counter through depth
+    double precision :: inbottom, outtop, squashing, valuelost
+
+    do index = 1, grid%M
+       inbottom = wupwell(index+1) * property(index+1) ! upwind scheme
+       outtop = wupwell(index) * property(index)       ! upwind scheme
+       squashing = wupwell(index+1) - wupwell(index)
+       valuelost = property(index) * (grid%i_space(index) - wupwell(index)*dt)&
+            + property(index+1) * (wupwell(index+1)*dt)
+       Gvector(index) = Gvector(index) + dt / grid%i_space(index) * &
+            (inbottom - outtop & 
+            - squashing * valuelost / (grid%i_space(index) + squashing * dt))
+    enddo
+
+  end subroutine vertical_advection
+
+end module find_upwell
