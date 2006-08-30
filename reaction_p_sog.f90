@@ -12,7 +12,7 @@ SUBROUTINE reaction_p_sog(M, PZ_bins, D_bins, PZ_quant, PZ_det, Pmicro, Pnano, N
       DOUBLE PRECISION, DIMENSION(D_bins*M),INTENT(IN)::PZ_det
       DOUBLE PRECISION, DIMENSION(0:M+1), INTENT(IN)::Pmicro,Pnano, NO, NH
       TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
-      TYPE(UVST), INTENT(OUT)::Gvector
+      TYPE(UVST), INTENT(IN OUT)::Gvector  ! IN only 'cause not setting all
 ! Local variables
       INTEGER :: bPZ, ePZ ! start position and end position in PZ array
       INTEGER::j
