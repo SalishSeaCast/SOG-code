@@ -1,28 +1,36 @@
-SUBROUTINE U_H(mm,Hx,Gx,Gx_o,Gx_o_o,Gx_c,Gx_co,Gx_co_o,Bx_o,Bx_o_o,tstep,vel)                    
+SUBROUTINE U_H (M, velold, Gvector, Gvector_o, Gvector_c, Gvector_co, &
+  Bmatrix_o, Hvector)
+  ! subroutine puts vert adv, bottom and surface fluxes (Gvector),
+  ! Coriolis and prressure gradient fluxes (Gvector_c) and appropriate old
+  ! diffusion (Bmatrix_o) into Hvector
 
-      USE mean_param
-      USE IMEX_constants
+  USE mean_param, only: trivector
+  USE IMEX_constants, only: a_IMEX1
 
-      IMPLICIT NONE
+  IMPLICIT NONE
 
-      TYPE(gr_d),INTENT(IN)::mm                 
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(OUT)::Hx  !zonal vector     
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::Gx, Gx_o, Gx_o_o, Gx_c, Gx_co, Gx_co_o
-      TYPE(trivector),INTENT(IN)::Bx_o,Bx_o_o
-      INTEGER,INTENT(IN)::tstep
-      TYPE(prop),INTENT(IN)::vel   !U
+  integer, intent(in) :: M
+  double precision, dimension(0:M+1):: velold   ! U%old etc
+  DOUBLE PRECISION, DIMENSION(M), INTENT(IN):: &
+       Gvector, Gvector_o, &  ! vert adv & surf/bot fluxes
+       Gvector_c, Gvector_co  ! Coriolis and Pressure gradient forces     
+  TYPE(trivector),INTENT(IN)::Bmatrix_o ! old diffusion
+
+  DOUBLE PRECISION, DIMENSION(M), INTENT(OUT)::Hvector  ! zonal vector
  
-      INTEGER::index
+  ! local variables
+  INTEGER::index ! count through vertical
 
-      Hx = 0.
+  Hvector = 0.
 
-         
-      DO index = 1, mm%M
-         Hx(index) = vel%old(index) + (1.0-a_IMEX1)*(Gx_o(index) + Gx_co(index) + &
-              Bx_o%A(index)*vel%old(index-1) + &
-              Bx_o%B(index)*vel%old(index) + Bx_o%C(index)*vel%old(index+1)) + a_IMEX1*(Gx(index) + &
-              Gx_c(index))
-      END DO
+  DO index = 1, M
+     Hvector(index) = velold(index) + &
+          (1.0 - a_IMEX1) * (Gvector_o(index) + Gvector_co(index) + &
+           Bmatrix_o%A(index) * velold(index-1) + &
+           Bmatrix_o%B(index) * velold(index) + &
+           Bmatrix_o%C(index)*velold(index+1)) + &
+           a_IMEX1 * (Gvector(index) + Gvector_c(index))
+  END DO
 
 END SUBROUTINE U_H
 
