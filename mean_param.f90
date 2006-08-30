@@ -150,7 +150,7 @@ module mean_param
   END TYPE MST
 
   TYPE :: UVST              
-     DOUBLE PRECISION, DIMENSION(:), POINTER::u,v,s,t
+     DOUBLE PRECISION, DIMENSION(:), POINTER::u, v, s, t, sil
      TYPE(phyto)::p 
      TYPE(zooplank)::z
      TYPE(nut)::n
