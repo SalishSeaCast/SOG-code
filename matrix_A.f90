@@ -1,22 +1,16 @@
-SUBROUTINE matrix_A(Ax,Bx,tstep)
+SUBROUTINE matrix_A(Amatrix, Bmatrix)
 
-      USE mean_param
-      USE surface_forcing
-      USE IMEX_constants
+      USE mean_param, only: trivector
+      USE IMEX_constants, only: a_IMEX1
 
       IMPLICIT NONE
 
-      TYPE(trivector), INTENT(OUT)::Ax !integration matrix      
-      TYPE(trivector), INTENT(IN)::Bx !integration matrix
-      INTEGER, INTENT(IN)::tstep  !time_step
+      TYPE(trivector), INTENT(OUT)::Amatrix !integration matrix      
+      TYPE(trivector), INTENT(IN):: Bmatrix !integration matrix
 
-      Ax%A = 0.
-      Ax%B = 0.
-      AX%C = 0.
-
-         Ax%A = -a_IMEX1*Bx%A
-         Ax%B = 1.0 - a_IMEX1*Bx%B
-         Ax%C = -a_IMEX1*Bx%C
+      Amatrix%A = -a_IMEX1 * Bmatrix%A
+      Amatrix%B = 1.0 - a_IMEX1 * Bmatrix%B
+      Amatrix%C = -a_IMEX1 * Bmatrix%C
 
 END SUBROUTINE matrix_A
 
