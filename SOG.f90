@@ -20,6 +20,8 @@ program SOG
        dalloc_water_props, Cp_profile
   use grid_mod, only: init_grid, dalloc_grid, interp_i
   use find_upwell, only: upwell_profile, vertical_advection
+  use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
+       diffusion_bot_surf_flux
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
@@ -115,40 +117,21 @@ program SOG
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
 
-  if (flagellates) then
-     ! Size of the biology we are using (Quantities and Detritus)
-     PZ_bins%Quant = 4
-     ! Position of Diatoms (micro plankton)
-     PZ_bins%micro = 1
-     ! Position of Flagellates (nano plankton)
-     PZ_bins%nano = 2
-     ! Position of Nitrate
-     PZ_bins%NO = 3
-     ! Position of Ammonium
-     PZ_bins%NH = 4
-     ! Start of detritus
-     PZ_bins%det = 5
-  else
-     ! Size of the biology we are using (Quantities and Detritus)
-     PZ_bins%Quant = 4
-     ! Position of Diatoms (micro plankton)
-     PZ_bins%micro = 1
-     ! Position of Nitrate
-     PZ_bins%NO = 2
-     ! Position of Ammonium
-     PZ_bins%NH = 3
-     ! unused
-     PZ_bins%nano = 4
-     ! Start of detritus
-     PZ_bins%det = 5
-  endif
-
+  ! Size of the biology we are using (Quantities and Detritus)
+  PZ_bins%Quant = 4
+  ! Position of Diatoms (micro plankton)
+  PZ_bins%micro = 1
+  ! Position of Flagellates (nano plankton)
+  PZ_bins%nano = 2
+  ! Position of Nitrate
+  PZ_bins%NO = 3
+  ! Position of Ammonium
+  PZ_bins%NH = 4
+  ! Start of detritus
+  PZ_bins%det = 5
   ! Number of detritus bins, dissolved, slow sink and fast sink
   D_bins = 3
   M2 = (PZ_bins%Quant+D_bins)*M   !size of PZ in biology: 
-
-
-
 
   IF (year_o==2001) then
      ecmapp = 1
@@ -281,11 +264,9 @@ program SOG
         CALL buoyancy(alph, T%new, S%new, grid, h, B%new, I, Br, &
              density%new, Cp, beta, Q_n)
 
-
         CALL div_grid(grid, density)
         ! take density from grid points to interface or vice-versa
 
-        ! KPP uses smooth_x below but this is just set equal to 0 in input file 
         ! Search and interpolate the wind data for the u and v components
         ! of the wind at the current time step
         call find_wind(year, day, time, ecmapp, wind_n, wind, unow, vnow)
@@ -293,16 +274,6 @@ program SOG
         ! *** Implicit type conversion problem
         ! *** Identical statement to this above - why???
         j = day_time / 3600.0 + 1
-        !            write (*,*) day, j, atemp(day,j), 'air temperature'
-
-
-
-        !PRINT*,day,day_met,cf(day_met,1)/10.,'day,day_met,cf(day_met,j)/10.'
-
-
-
-        !PRINT*,'humid',humid(day_met,j),j,day_met,cf(day_met,j),atemp(day_met,j)
-        !pause
 
         CALL surface_flux_sog(grid%M,density%new,w,wt_r,S%old(1),S%new(h%i),S%new(M),T%new(0),j_gamma, &
              I, Q_t(0), alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10., atemp(day_met,j), humid(day_met,j), &
@@ -447,18 +418,28 @@ program SOG
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
         CALL define_flux(Cp%i)
 
+        ! Calculate matrix B (changed to Amatrix later) 
+        call diffusion_coeff(grid, dt, K%t%all, &
+             Bmatrix%t)
+        call diffusion_coeff(grid, dt, K%s%all, &
+             Bmatrix%s)
+        call diffusion_coeff(grid, dt, K%u%all, &
+             Bmatrix%u)
 
+        ! Start calculation of RHS called Gvector (D9) (D10)
+        call diffusion_nonlocal_fluxes(grid, dt, K%t%all, gamma%t, &   ! in
+             w%t(0), -Q_n, T%new(grid%M+1), &                          ! in
+             Gvector%t)                                                ! out
+        call diffusion_nonlocal_fluxes(grid, dt, K%s%all, gamma%s, &   ! in
+             w%s(0), F_n, S%new(grid%M+1), &                           ! in
+             Gvector%s)                                                ! out
+        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%u(0), &    ! in
+             U%new(grid%M+1), &                                       ! in
+             Gvector%u)                                               ! out
+        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%v(0), &    ! in
+             V%new(grid%M+1), &                                       ! in
+             Gvector%v)                                               ! out
 
-        ! Calculate matrix B(changed to Amatrix later) 
-        ! and RHS called Gvector (D9) (D10)
-        CALL diffusion(grid, Bmatrix%t, Gvector%t, K%t%all, gamma%t, &
-             w%t(0), -Q_n, dt, T%new(grid%M+1))
-        CALL diffusion(grid, Bmatrix%s, Gvector%s, K%s%all, gamma%s, &
-             w%s(0), F_n, dt, S%new(grid%M+1))
-        ! Start with basic and all Coriolis later, extra scalar terms
-        ! work out to 0
-        CALL diffusion(grid,Bmatrix%u,Gvector%u,K%u%all,gamma%m,w%u(0),gamma%m,dt,U%new(grid%M+1))
-        CALL diffusion(grid,Bmatrix%u,Gvector%v,K%u%all,gamma%m,w%v(0),gamma%m,dt,V%new(grid%M+1))           
         ! Calculate profile of upwelling velocity
         call upwell_profile(grid, S%new, upwell, wupwell)
         ! Upwell salinity, temperature, and u & v velocity components
@@ -471,6 +452,7 @@ program SOG
              Gvector%u)
         call vertical_advection (grid, dt, V%new, wupwell, &
              Gvector%v)
+
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
         call Coriolis_and_pg(f, dt, V%new, pbx, &
@@ -504,12 +486,8 @@ program SOG
         CALL matrix_A(Amatrix%t,Bmatrix%t,time_step)   ! now have (D9)
         CALL matrix_A(Amatrix%s,Bmatrix%s,time_step)
 
-        ! add Xt to H vector (D7)
-        !PRINT*,'Hvec',Hvector%s(1)
-
         CALL scalar_H(grid,Hvector%s,Gvector%s,Gvector_o%s,Gvector_o_o%s,Bmatrix_o%s,Bmatrix_o_o%s,&
              time_step,S)
-        !PRINT*,'Gvec',Gvector%s(1),Hvector%s(1)
         CALL scalar_H(grid,Hvector%t,Gvector%t,Gvector_o%t,Gvector_o_o%t,Bmatrix_o%t,Bmatrix_o_o%t,&
              time_step,T)
 
@@ -536,8 +514,6 @@ program SOG
         S%new(0) = S%new(1)   
         T%new(0) = T%new(1)
 
-        !         U%new(M+1) = U%old(M+1) 
-        !         V%new(M+1) = V%old(M+1) 
         U%new(M+1) = U%new(M) 
         V%new(M+1) = V%new(M) 
         T%new(M+1) = T%old(M+1)
@@ -550,6 +526,7 @@ program SOG
         ! Heat capacity
         Cp%g = Cp_profile(T%new, S%new)
         Cp%i = interp_i(Cp%g)
+        
         ! Density with depth and density of fresh water
         CALL density_sub(T, S, dens_i, M,rho_fresh_o)
         density%new = dens_i
@@ -565,8 +542,6 @@ program SOG
         DO xx = 1,grid%M
            N_2_g(xx) = -g/density%new(xx)*density%div_g(xx) !B%div_g(xx)
         END DO
-
-
 
 !!!Define turbulent velocity shear V_t_square for Ri_b  use last count values
 
@@ -605,11 +580,6 @@ program SOG
         ! (21)
         CALL ML_height_sog(grid, Ri_b, h_i, jmaxg) !test conv
         ! (21) tested for minimum value of d at which Ri_b = Ri_c
-        !PRINT*,'hi',h_i
-
-        ! detrain for plume effect
-        !         h_i = h_i - 0.1*S%new(jmaxg+2)*50/(S%new(jmaxg+2)-S%new(1))/ &
-        !                  (h_i*100e3)*dt
 
         IF (jmaxg >= grid%M-2) THEN ! mixing down to bottom of grid
            PRINT "(A)","jmaxg >= grid%M-2. OR. h_i >= grid%d_g(grid%M-2) in KPP"
@@ -635,7 +605,6 @@ program SOG
            END DO
            PRINT "(A)","density%new"
 
-
            DO xx = 0,grid%M+1
               PRINT *,density%new(xx)
            END DO
@@ -648,12 +617,8 @@ program SOG
            STOP
         END IF
 
-        !PRINT*,'hi,hnew',h_i,h%new
-
         h_i = (h_i + h%new)/2.0 !use the average value!!!!!!!!##
 
-        !PRINT*,'average, new h_i',h_i
-        !pause
         IF (stable == 1) THEN          !Stability criteria 
            h_Ekman = 0.7*u_star/f         ! see (24) and surrounding
            IF (h_Ekman < L_star) THEN
@@ -664,20 +629,17 @@ program SOG
            ELSE
               IF (h_i > L_star) THEN
                  h_i = L_star
-                 ! write (*,*) 'L*,u*, h_i', L_star, u_star, h_i
               END IF
            END IF
         END IF
 
         IF (h_i < grid%d_g(1)) THEN  !minimum mixing
            h_i = grid%d_g(1)
-!           write (*,*) 'minimum mixing', h_i
         END IF
 
         CALL find_jmax_g(h,grid) !***! can't be less than the grid
 
         del = ABS(h_i - h%new)/grid%i_space(jmaxg)  !##
-        ! write (*,*), 'count,h_i,h%new,del',count,h_i,h%new,del 
         h%new = h_i
         CALL find_jmax_g(h,grid)
         CALL define_hm_sog(grid,S%new,h_m) !***! definition of mixed layer depth
@@ -704,8 +666,6 @@ program SOG
         uprev = U%new(1)
         vprev = V%new(1)
 
-        !         write (*,*) delu,delv,U%new(1),V%new(1)
-
         if (del.lt.delu) del = delu
         if (del.lt.delv) del = delv
 
@@ -721,21 +681,14 @@ program SOG
         do yy=1,M
            ut%new(yy) = ut%old(yy)+U%new(yy)*dt*oLx
            vt%new(yy) = vt%old(yy)+V%new(yy)*dt*oLy 
-           !            if (yy.lt.h%g) then
-           !               vt%new(yy) = vt%new(yy) + dt*Qriver(day)*oLx*oLx/(2.*h%new)*S%new(M)/(S%new(M)-S%new(0))
-           !            else
-           !               vt%new(yy) = vt%new(yy) - dt*Qriver(day)*oLx*oLx/(2.*(80.-h%new))*S%new(M)/(S%new(M)-S%new(0))
-           !            endif
-           !            write (*,*) yy,vt%new(yy),h%g,h%new
         enddo
 
         dzx(1) = ut%new(1)+1
         dzy(1) = vt%new(1)+1
-        !            write (*,*) dzx(1),dzy(1),' dzx'
+
         do yy=2,M
            dzx(yy) = dzx(yy-1) + (ut%new(yy)+1)
            dzy(yy) = dzy(yy-1) + (vt%new(yy)+1)
-           !            write (*,*) yy,dzx(yy),dzy(yy),' dzx'
         enddo
 
         ! Calculate the baroclinic pressure gradient
@@ -747,20 +700,16 @@ program SOG
         do yy=1,M
            if (yy == 1) then
               pbx(yy) = -density%new(yy)
-              !               write (*,*) ii,yy,pbx(yy),cz,density%new(yy),'  **1'
            else
               pbx(yy) = pbx(yy-1)-density%new(yy)
-              !               write (*,*) ii,yy,pbx(yy),cz,density%new(yy),'  **1'
            endif
            do while ((dzx(ii)-yy) < -tol .and. ii < M)
               pbx(yy) = pbx(yy) + density%new(ii)*(dzx(ii)-cz)
               cz = dzx(ii)
-              !               write (*,*) ii,yy,pbx(yy),cz,density%new(ii),'  **2'
               ii = ii + 1
            enddo
            pbx(yy) = pbx(yy) + density%new(ii)*(yy-cz)
            sumpbx = sumpbx + pbx(yy)
-           !            write (*,*) ii,yy,pbx(yy),yy-cz,density%new(ii),'  **3'
            cz = yy
         enddo
 
@@ -801,17 +750,12 @@ program SOG
               count_two = count_two + 1         
            END IF
            count_tot = count_tot + 1
-           !            write (*,*) 'count ',count,' Next step'
            CALL write_physical_sog(unow,vnow,euph)
            EXIT
         ELSE IF (count == niter .AND. del >= del_o) THEN
-           !            write (*,*) 'count ',count,' Next step'
            count_no =  count_no + 1 
            CALL write_physical_sog (unow,vnow,euph)
-        ELSE IF (count == 1) THEN
-           !            CALL write_physical_sog
         END IF
-        !         call write_physical_sog
 
      ENDDO
 
@@ -859,24 +803,36 @@ program SOG
      bPZ = (PZ_bins%micro - 1) * M + 1
      ePZ = PZ_bins%micro * M
      IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
-        PRINT "(A)","PZ < 0. After odeint.f see KPP.f90"
+        PRINT "(A)","PZ < 0. After odeint.f see SOG.f90"
         PRINT "(A)","time,day"
         PRINT *,time,day,PZ(bPZ:ePZ)
         STOP
      END IF
 
-     CALL diffusion(grid,Bmatrix%bio,Gvector%p%micro,K%s%all,gamma%m,pflux_o,gamma%m,dt,&
-          P%micro%new(grid%M+1))
+     ! Calculate diffusion matrix Bmatrix
+     call diffusion_coeff (grid, dt, K%s%all, &
+          Bmatrix%bio)
+     Bmatrix%no = Bmatrix%bio          ! both diffuse like S
 
-     Gvector%n%h = Gvector%p%micro
-     Gvector%p%nano = Gvector%p%micro ! V.flagella ??? Not sure 
-     Gvector%d(D_bins)%bin = 0.
+     ! Initialize Gvector and add the upward from the bottom (surface flux = 0)
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+          P%micro%new(grid%M+1), &                                     ! in
+          Gvector%p%micro)                                             ! out
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+          P%nano%new(grid%M+1), &                                      ! in
+          Gvector%p%nano)                                              ! out
      DO xx = 1, D_bins-1
-        Gvector%d(xx)%bin = Gvector%p%micro
+        call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &       ! in
+             Detritus(xx)%d%new(grid%M+1), &                           ! in
+             Gvector%d(xx)%bin)                                        ! out
      END DO
-
-     CALL diffusion(grid,Bmatrix%no,Gvector%n%o,K%s%all,gamma%m,pflux_o,gamma%m,dt,&
-          N%O%new(grid%M+1))
+     Gvector%d(D_bins)%bin = 0.
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+          N%O%new(grid%M+1), &                                         ! in
+          Gvector%n%o)                                                 ! out
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+          N%H%new(grid%M+1), &                                         ! in
+          Gvector%n%h)                                                 ! out
 
      ! vertical advection
      call vertical_advection (grid, dt, P%micro%new, wupwell, &
