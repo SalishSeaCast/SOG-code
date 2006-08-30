@@ -7,6 +7,11 @@ contains
 
   SUBROUTINE upwell_profile(grid,S,upwell,wupwell)
 
+! This subroutine takes the value of upwell (a function of the Fraser
+! River flow) and calculates the vertical profile of the entrainment
+! velocity (wupwell) based on the salinity distribution. This is all
+! based on the document entrainment.pdf written in late June 2006.
+
     use mean_param, only: gr_d
 
     IMPLICIT NONE
@@ -58,6 +63,11 @@ contains
   end SUBROUTINE upwell_profile
 
   subroutine vertical_advection (grid, dt, property, wupwell, gvector)
+
+! This subroutine takes the vertical profile of the entrainment velocity, 
+! wupwell, and the values of the "property" and vertically advects it.  Note
+! that the vertical velocity decreases as the surface is approaches and so
+! water and property is squeezed out the sides of the water column.
 
     use mean_param, only: gr_d
 
