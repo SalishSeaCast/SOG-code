@@ -4,8 +4,8 @@ SUBROUTINE define_sog(timestep)
   
   USE declarations, only: D_bins, U, V, S, T, h, P, N, Sil, &
        B, density, K, Bmatrix, Bmatrix_o, Bmatrix_o_o, & 
-       Gvector, Gvector_ao, Gvector_ao_o, &
-       Gvector_o, Gvector_o_o, Gvector_ro, Gvector_ro_o, Gvector_c, &
+       Gvector, &
+       Gvector_o, Gvector_o_o, Gvector_c, &
        Gvector_co, Gvector_co_o, Detritus, PON, ut, vt
 
       IMPLICIT NONE
@@ -53,16 +53,6 @@ SUBROUTINE define_sog(timestep)
          Gvector_co_o%u = Gvector_co%u
          Gvector_co_o%v = Gvector_co%v           !check
 
-         Gvector_ao_o%p%micro = Gvector_ao%p%micro
-!         Gvector_ao_o%p%nano = Gvector_ao%p%nano
-
-         Gvector_ro_o%p%micro = Gvector_ro%p%micro
-         Gvector_ro_o%p%nano = Gvector_ro%p%nano
-         Gvector_ro_o%p%micro_Q = Gvector_ro%p%micro_Q
-         Gvector_ro_o%p%nano_Q = Gvector_ro%p%nano_Q
-         Gvector_ro_o%n%o = Gvector_ro%n%o
-         Gvector_ro_o%n%h = Gvector_ro%n%h
-
          Bmatrix_o%u%A = Bmatrix%u%A
          Bmatrix_o%u%B = Bmatrix%u%B
          Bmatrix_o%u%C = Bmatrix%u%C         
@@ -89,7 +79,7 @@ SUBROUTINE define_sog(timestep)
          Gvector_o%p%nano = Gvector%p%nano
          Gvector_o%n%o = Gvector%n%o
          Gvector_o%n%h = Gvector%n%h
-
+         Gvector_o%sil = Gvector%sil
         
          Gvector_co%u = Gvector_c%u
          Gvector_co%v = Gvector_c%v
@@ -97,9 +87,7 @@ SUBROUTINE define_sog(timestep)
          DO kk = 1, D_bins
             Detritus(kk)%D%old_old = Detritus(kk)%D%old
             Gvector_o_o%d(kk)%bin = Gvector_o%d(kk)%bin
-            Gvector_ro_o%d(kk)%bin =Gvector_ro%d(kk)%bin
             Gvector_o%d(kk)%bin = Gvector%d(kk)%bin 
-            Gvector_ao_o%d(kk)%bin = Gvector_ao%d(kk)%bin
          END DO
          
       END IF
