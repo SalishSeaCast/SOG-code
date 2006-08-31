@@ -859,7 +859,7 @@ program SOG
 
      !      micro%sink=1.1574D-05
      !      CALL advection(grid,micro%sink,P%micro%old,dt,Gvector_ao%p%micro) !sinking phytoplankton
-
+     Gvector_ao%p%micro = 0. ! sinking not implemented
      !      Gvector_ao%d(D_bins)%bin = 0.
 
      DO xx = 1,D_bins-1
@@ -873,9 +873,9 @@ program SOG
      Gvector_ro%Sil = 0 ! for now
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
-     CALL matrix_A (Amatrix%no,Bmatrix%no)
+     CALL matrix_A (Amatrix%no, Bmatrix%no)
 
-     IF (time_step == 1) THEN
+     IF (time_step == 1) THEN ! initial estimate is better than 0.
         Bmatrix%null%A = 0. !no diffusion
         Bmatrix%null%B = 0.
         Bmatrix%null%C = 0.
@@ -887,10 +887,11 @@ program SOG
         Bmatrix_o%no%A = Bmatrix%no%A
         Bmatrix_o%no%B = Bmatrix%no%B
         Bmatrix_o%no%C = Bmatrix%no%C
-        Gvector_o%p%micro = Gvector%p%micro
+        Gvector_o%p%micro = Gvector%p%micro 
         Gvector_o%p%nano = Gvector%p%nano !V.flagella.01
         Gvector_o%n%o = Gvector%n%o
         Gvector_o%n%h = Gvector%n%h
+        Gvector_o%sil = Gvector%sil
 
         DO xx = 1,D_bins
            Gvector_o%d(xx)%bin = Gvector%d(xx)%bin
@@ -898,75 +899,48 @@ program SOG
 
      END IF ! time_step == 1
 
-     DO xx2 = 1,2
-        IF (xx2 == 1) THEN
-           CALL P_H(grid,Hvector%p%micro,Gvector%p%micro,Gvector_o%p%micro,Gvector_o_o%p%micro, &
-                null_vector, null_vector,Gvector_ao%p%micro,Gvector_ao_o%p%micro, &
-                Bmatrix_o%bio,Bmatrix_o_o%bio,P%micro)
-           CALL N_H(grid,Hvector%p%nano,Gvector%p%nano,Gvector_o%p%nano,Gvector_o_o%p%nano, &
-                null_vector, null_vector,Bmatrix_o%bio,Bmatrix_o_o%bio,P%nano) !V.flagella
-
-           DO xx = 1,D_bins-1
-              CALL P_H(grid,Hvector%d(xx)%bin,Gvector%d(xx)%bin,Gvector_o%d(xx)%bin, &
-                   Gvector_o_o%d(xx)%bin, null_vector, null_vector, &
-                   Gvector_ao%d(xx)%bin,Gvector_ao_o%d(xx)%bin,Bmatrix_o%bio,Bmatrix_o_o%bio,&
-                   Detritus(xx)%D)
-           END DO
-
-           CALL N_H(grid,Hvector%d(D_bins)%bin,Gvector%d(D_bins)%bin,Gvector_o%d(D_bins)%bin, &
-                Gvector_o_o%d(D_bins)%bin, null_vector, null_vector, &
-                Bmatrix%null,Bmatrix%null,Detritus(D_bins)%D)
-
-           CALL N_H(grid,Hvector%n%o,Gvector%n%o,Gvector_o%n%o,Gvector_o_o%n%o, &
-                null_vector, null_vector,Bmatrix_o%no,Bmatrix_o_o%no,N%O)
-           CALL N_H(grid,Hvector%n%h,Gvector%n%h,Gvector_o%n%h,Gvector_o_o%n%h, &
-                null_vector, null_vector,Bmatrix_o%bio,Bmatrix_o_o%bio,N%H)
-
-        ELSE IF (xx2 == 2) THEN
-           CALL P_H(grid,Hvector%p%micro,Gvector%p%micro,Gvector_o%p%micro,Gvector_o_o%p%micro, &
-                Gvector_ro%p%micro,Gvector_ro_o%p%micro,Gvector_ao%p%micro,Gvector_ao_o%p%micro, &
-                Bmatrix_o%bio,Bmatrix_o_o%bio,P%micro)
-           CALL N_H(grid,Hvector%p%nano,Gvector%p%nano,Gvector_o%p%nano,Gvector_o_o%p%nano, &
-                Gvector_ro%p%nano,Gvector_ro_o%p%nano,Bmatrix_o%bio,Bmatrix_o_o%bio,P%nano) !V.flagella
-
-
-           DO xx = 1,D_bins-1
-              CALL P_H(grid,Hvector%d(xx)%bin,Gvector%d(xx)%bin,Gvector_o%d(xx)%bin, &
-                   Gvector_o_o%d(xx)%bin,Gvector_ro%d(xx)%bin,Gvector_ro_o%d(xx)%bin, &
-                   Gvector_ao%d(xx)%bin,Gvector_ao_o%d(xx)%bin,Bmatrix_o%bio,Bmatrix_o_o%bio,&
-                   Detritus(xx)%D)
-           END DO
-
-
-           CALL N_H(grid,Hvector%d(D_bins)%bin,Gvector%d(D_bins)%bin,Gvector_o%d(D_bins)%bin, &
-                Gvector_o_o%d(D_bins)%bin,Gvector_ro%d(D_bins)%bin,Gvector_ro_o%d(D_bins)%bin, &
-                Bmatrix%null,Bmatrix%null,Detritus(D_bins)%D)
-
-           CALL N_H(grid,Hvector%n%o,Gvector%n%o,Gvector_o%n%o,Gvector_o_o%n%o, &
-                Gvector_ro%n%o,Gvector_ro_o%n%o,Bmatrix_o%no,Bmatrix_o_o%no,N%O)
-           CALL N_H(grid,Hvector%n%h,Gvector%n%h,Gvector_o%n%h,Gvector_o_o%n%h, &
-                Gvector_ro%n%h,Gvector_ro_o%n%h,Bmatrix_o%bio,Bmatrix_o_o%bio,N%H)
-
-
-        END IF
-        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%p%micro,P1_p,M)
-        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%p%nano,Pnano1_p,M)
-        CALL TRIDAG(Amatrix%no%A,Amatrix%no%B,Amatrix%no%C,Hvector%n%o,NO1_p,M) 
-        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%n%h,NH1_p,M)
-
-
-
-        DO xx = 1,D_bins-1
-           CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%d(xx)%bin,Detritus1_p(xx,:),M)
-        END DO
-        CALL TRIDAG(Amatrix%null%A,Amatrix%null%B,Amatrix%null%A,Hvector%d(D_bins)%bin,Detritus1_p(D_bins,:),M)
-
-        IF (xx2 == 1) THEN
-           CALL find_PON
-        ELSE
-           CALL find_new
-        END IF
+     CALL P_H (M, P%micro%old, Gvector%p%micro, Gvector_o%p%micro, &
+          Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix_o%bio, &
+          Hvector%p%micro)
+     CALL P_H(M, P%nano%old, Gvector%p%nano, Gvector_o%p%nano, &
+          Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
+          Hvector%p%nano) ! null_vector 'cause no sinking
+     DO xx = 1,D_bins-1
+        CALL P_H (M, Detritus(xx)%D%old, Gvector%d(xx)%bin, &
+             Gvector_o%d(xx)%bin, Gvector_ro%d(xx)%bin, &
+             Gvector_ao%d(xx)%bin, Bmatrix_o%bio, &
+             Hvector%d(xx)%bin)
      END DO
+     CALL P_H(M, Detritus(D_bins)%D%old, Gvector%d(D_bins)%bin, &
+          Gvector_o%d(D_bins)%bin, Gvector_ro%d(D_bins)%bin, &
+          null_vector, Bmatrix%null, Hvector%d(D_bins)%bin) 
+     CALL P_H(M, N%O%old, Gvector%n%o, Gvector_o%n%o, &
+          Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
+          Hvector%n%o)  ! null_vector 'cause no sinking
+     CALL P_H(M,  N%H%old, Gvector%n%h, Gvector_o%n%h, &
+          Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
+          Hvector%n%h)  ! null_vector 'cause no sinking
+     CALL P_H(M,  Sil%old, Gvector%sil, Gvector_o%sil, &
+          Gvector_ro%sil, null_vector, Bmatrix_o%no, &
+          Hvector%sil)  ! null_vector 'cause no sinking
+
+     CALL TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%micro,&
+          P1_p, M)
+     CALL TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%nano, &
+          Pnano1_p, M)
+     CALL TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
+          NO1_p, M) 
+     CALL TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
+          NH1_p, M) 
+     call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%sil, &
+          SIL1_p, M)
+
+     DO xx = 1,D_bins-1
+        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%d(xx)%bin,Detritus1_p(xx,:),M)
+     END DO
+     CALL TRIDAG(Amatrix%null%A,Amatrix%null%B,Amatrix%null%A,Hvector%d(D_bins)%bin,Detritus1_p(D_bins,:),M)
+
+     CALL find_new
 
      !-----END BIOLOGY------------------------------------------------
 
