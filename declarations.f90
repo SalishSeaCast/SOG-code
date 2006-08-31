@@ -92,9 +92,9 @@ module declarations
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, T_To, Q_t, dens_i
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
-  !Temporary vectors U_i , U_p...
+  !Temporary vectors U_i , U_p... to hold results from tridag solver
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::P1_p, Pnano1_p, Z1_p, &
-       NO1_p, NH1_p,&
+       NO1_p, NH1_p, SIL1_p, &
        U_p, V_p, S_p, T_p
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE::Copepod1_p,Copepod_wt1_p
   DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE::Detritus1_p
