@@ -1,4 +1,6 @@
-      SUBROUTINE TRIDAG(A,B,C,R,U,N) !!A,B,C are N dimensional vectors
+      SUBROUTINE TRIDAG(A,B,C,R,U,N) !!A,B,C,R,U are N dimensional vectors
+c     Solves the matrix equation MU=R where M is a tridiagonal matrix with 
+c     diagonal B, sub-diagonal A? and super-diagonal C
       INTEGER NMAX
       PARAMETER (NMAX=300)
       DOUBLE PRECISION A,B,C,R,U,GAM,BET
