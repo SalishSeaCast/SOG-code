@@ -17,35 +17,9 @@ subroutine write_physical_sog(unow, vnow, euphotic)
   ! Local variables:
   integer :: jj, years, sizerun, jj_day, day_count
   double precision :: dh_dt_hour, Ks_ml, I_ml_hour
-  integer :: isusan, nsal, isal(6), tsal
-  double precision :: sal(6), dsal(6)
 
 100 format(1X, E15.8)
 
-  nsal = 6
-  sal(1) = 28.75
-  sal(2) = 29
-  sal(3) = 29.25
-  sal(4) = 28.75
-  sal(5) = 29.
-  sal(6) = 29.25
-  do jj=1,nsal
-     isal(jj) = 0
-  enddo
-
-  do isusan=1,grid%M
-     do jj=1,nsal
-        if (S%new(isusan).lt.sal(jj)) isal(jj) = isusan
-     enddo
-  enddo
-  do jj=1,nsal
-     tsal = isal(jj)
-     if (tsal.lt.grid%M.and.S%new(tsal+1).ne.S%new(tsal)) then
-        dsal(jj) = isal(jj) + (sal(jj)-S%new(tsal))/(S%new(tsal+1)-S%new(tsal))
-     else
-        dsal(jj) = isal(jj)
-     endif
-  enddo
 
 111 format (17(1x,f10.4))   
 
@@ -53,7 +27,8 @@ subroutine write_physical_sog(unow, vnow, euphotic)
        s%new(0), u%new(1), Q_t(0), K%t%all(1), I_par(0), density%new(0), &
        Q_n(1)*100000.
 
-  write(295, 111) time/3600., P%micro%new(0), P%nano%new(0), N%O%new(0), N%H%new(0), &
+  write(295, 111) time/3600., P%micro%new(0), P%nano%new(0), N%O%new(0), &
+       N%H%new(0), Sil%new(0), &
        Detritus(1)%D%new(0), Detritus(2)%D%new(0), Detritus(3)%D%new(0), &
        f_ratio(1)
 
