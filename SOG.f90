@@ -982,19 +982,20 @@ program SOG
   write(profiles, 200) trim(codeId), str_runDatetime, time, &
        str_proDatetime
 200 format("! Profiles of Temperature, Salinity, Density, ",         &
-       "Phytoplankton, Nitrate, Ammonium,"/,                         &
+       "Phytoplankton, Nitrate, Ammonium, Silcion"/,                 &
        "! and Detritus (remineralized, sinking, and mortality)"/,    &
        "*FromCode: ", a/,                                            &
        "*RunDateTime: ", a/,                                         &
        "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
-       "phytoplankton, nitrate, ammonium, remineralized detritus, ", &
+       "phytoplankton, nitrate, ammonium, silicon, ",                &
+       "remineralized detritus, ",                                   &
        "sinking detritus, mortality detritus, ",                     &
        "total momentum eddy diffusivity, ",                          &
        "total temperature eddy diffusivity, ",                       &
        "total salinity eddy diffusivity, ",                          &
        "photosynthetic available radiation, ",                       &
        "u velocity, v velocity"/,                                    &
-       "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, ",      &
+       "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM, ",  &
        "uM N, uM N, uM N, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s"/,    &
        "*ProfileTime: ", f9.0/                                       &
        "*ProfileDateTime: ", a/,                                     &
@@ -1006,7 +1007,7 @@ program SOG
      sigma_t = density%new(i_pro) - 1000.
      write(profiles, 201) grid%d_g(i_pro), KtoC(T%new(i_pro)),          &
           S%new(i_pro), sigma_t, P%micro%new(i_pro), N%O%new(i_pro),    & 
-          N%H%new(i_pro), Detritus(1)%D%new(i_pro),                     &
+          N%H%new(i_pro), Sil%new(i_pro), Detritus(1)%D%new(i_pro),     &
           Detritus(2)%D%new(i_pro), Detritus(3)%D%new(i_pro),           &
           K%u%all(i_pro), K%t%all(i_pro), K%s%all(i_pro), I_par(i_pro), &
           U%new(i_pro), V%new(i_pro)
@@ -1016,11 +1017,11 @@ program SOG
   sigma_t = density%new(M+1) - 1000.
   write(profiles, 201) grid%d_g(M+1), KtoC(T%new(M+1)),        &
           S%new(M+1), sigma_t, P%micro%new(M+1), N%O%new(M+1), &
-          N%H%new(M+1), Detritus(1)%D%new(M+1),                &
+          N%H%new(M+1), Sil%new(M+1), Detritus(1)%D%new(M+1),  &
           Detritus(2)%D%new(M+1), Detritus(3)%D%new(M+1),      &
           K%u%all(M), K%t%all(M), K%s%all(M), I_par(M),        &
           U%new(M+1), V%new(M+1)
-201 format(f7.3, 15(2x, f8.4))
+201 format(f7.3, 16(2x, f8.4))
   close(unit=profiles)
 
   ! Deallocate memory
