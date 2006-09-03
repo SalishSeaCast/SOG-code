@@ -37,15 +37,20 @@ CVS2CL = ../cvs2cl/cvs2cl.pl
 CLFLAGS = -rt
 
 # List of objects (order matters)
-# OBJS = declarations.o         
 OBJS = precision_defs.o io_unit_defs.o malloc.o unit_conversions.o \
-datetime.o mean_param.o declarations.o surface_forcing.o \
-water_properties.o grid.o find_upwell.o diffusion.o \
-fitbottom.o \
-getpar.o define_flux.o \
+datetime.o grid.o \
+\
+mean_param.o declarations.o surface_forcing.o \
+\
+water_properties.o find_upwell.o diffusion.o fitbottom.o \
+getpar.o \
+\
+define_flux.o \
 initial_sog.o IMEX_constants.o write_open.o           \
 allocate1.o read_sog.o find_wind.o 	\
 stability.o \
+\
+timeseries_output.o \
 \
 allocate2.o Julian_day.o initialize.o	\
 smoothdata.o coefficients.o define_grid.o define_sog.o	\
