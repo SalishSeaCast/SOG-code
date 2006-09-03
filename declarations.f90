@@ -4,22 +4,23 @@
 module declarations
 ! *** What's in here?
 
+  use precision_defs, only: dp
   use mean_param
 
   implicit NONE
 
   ! Run parameters read from file specified as 'inputfile' in infile
-  double precision :: D         ! depth of model domain [m]
-  integer :: M                  ! # of grid points in model domain
-  double precision :: lambda    ! grid spacing parameter ???
-  integer :: year_o             ! year in which run starts [yr]
+  real(kind=dp) :: D        ! depth of model domain [m]
+  integer :: M              ! # of grid points in model domain
+  real(kind=dp) :: lambda   ! grid spacing parameter ???
+  integer :: year_o         ! year in which run starts [yr]
   ! *** Why is month_o not declared here; rather it's local in SOG.f90
-  integer :: day_o              ! year-day on which run starts [1-Jan = 1]
-  double precision :: t_o       ! start of run time on day_o [s]
-                                ! *** t_o should match CTD profile time of day
-  double precision :: t_f       ! end of run time [s]
-  double precision :: dt        ! time step [s]
-  character*4 :: cruise_id      ! four number code that labels the start cruise
+  integer :: day_o          ! year-day on which run starts [1-Jan = 1]
+  real(kind=dp) :: t_o      ! start of run time on day_o [s]
+                            ! *** t_o should match CTD profile time of day
+  real(kind=dp) :: t_f      ! end of run time [s]
+  real(kind=dp) :: dt       ! time step [s]
+  character*4 :: cruise_id  ! four number code that labels the start cruise
 
   TYPE(constant)::alph, beta, dens
   TYPE(gr_d)::grid
@@ -126,8 +127,8 @@ module declarations
   DOUBLE PRECISION, DIMENSION(23)::p_Knox  !Piecewise linear function for precipitation
   !defined in coefficients.f90 !
 
-  !Upwelling corrections to biology and salinity
-  DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::P_no,P_nh,P_di,P_na,P_mi,P_d1,P_d2,P_sa,P_u,P_v,P_ta,wupwell
+  ! Vertical profile of the entrainment velocity
+  real(kind=dp), dimension(:), allocatable :: wupwell
 
   !Detritus variables
   INTEGER::D_bins  !number of detrital compartments  see input/biology.dat
