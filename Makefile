@@ -46,7 +46,7 @@ mean_param.o declarations.o surface_forcing.o \
 water_properties.o find_upwell.o diffusion.o fitbottom.o \
 getpar.o \
 \
-define_flux.o \
+define_flux.o phys_Hvector.o \
 initial_sog.o IMEX_constants.o write_open.o           \
 allocate1.o read_sog.o find_wind.o 	\
 stability.o \
@@ -59,7 +59,7 @@ ND_flux_profile.o vel_scales.o convection_scales.o		\
 shear_diff.o double_diff.o interior_match.o interior_match2.o		\
 shape_parameters.o modify_K.o def_gamma.o 	\
 Coriolis_and_pg.o 		\
-matrix_A.o scalar_H.o U_H.o def_v_t_sog.o TRIDAG.o	\
+matrix_A.o def_v_t_sog.o TRIDAG.o	\
 define_Ri_b_sog.o ML_height_sog.o define_hm_sog.o pdf.o 		\
 write_physical_sog.o new_year.o SOG.o define_PZ.o		\
 odeint.o reaction_p_sog.o P_H.o find_new.o			\
