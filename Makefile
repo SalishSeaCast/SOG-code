@@ -65,7 +65,7 @@ write_physical_sog.o new_year.o SOG.o define_PZ.o		\
 odeint.o reaction_p_sog.o P_H.o find_new.o			\
 fit.o polint.o gammq.o gser.o gcf.o	\
 gammln.o allocate3.o reaction.o derivs_noflag.o derivs_sog.o rkqs.o     \
-rkck.o find_PON.o advection.o
+rkck.o advection.o
 
 # The executable is the default target that is built by "make"
 # It depends on all of the objects which are built from the
