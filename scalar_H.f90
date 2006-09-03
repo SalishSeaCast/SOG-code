@@ -1,32 +1,31 @@
-SUBROUTINE scalar_H(mm,Hx,Gx,Gx_o,Gx_o_o,Bx_o,Bx_o_o,tstep,scalar)     
+! $Id$
+! $Source$
 
-      USE mean_param
-      USE surface_forcing
-      USE IMEX_constants
+subroutine scalar_H(M, qty, Gvector, Gvector_o, Bmatrix_o, &
+     Hvector)
 
-      IMPLICIT NONE
+  use precision_defs, only: dp
+  use mean_param, only: trivector, prop
+  use IMEX_constants, only: a_IMEX1
 
-      TYPE(gr_d),INTENT(IN)::mm
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN OUT)::Hx  !scalar vector
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::Gx, Gx_o, Gx_o_o
-      TYPE(trivector),INTENT(IN)::Bx_o,Bx_o_o
-      INTEGER,INTENT(IN)::tstep
-      TYPE(prop),INTENT(IN)::scalar  !eg. T
-      
-         
-      INTEGER::index
+  implicit none
 
-      Hx = 0.
+  integer, intent(in) :: M       ! Number of grid points
+  type(prop), intent(in) :: qty  ! Model quantity, e.g. T, S
+  real(kind=dp), dimension(M), intent(in) :: Gvector, Gvector_o
+  type(trivector), intent(in) :: Bmatrix_o
+  real(kind=dp), dimension(M), intent(inout) :: Hvector  ! Scalar vector
 
-      DO index = 1, mm%M
-         Hx(index) = scalar%old(index) + (1.0-a_IMEX1)*(Gx_o(index) + Bx_o%A(index)*scalar%old(index-1)+&
-              Bx_o%B(index)*scalar%old(index) + Bx_o%C(index)*scalar%old(index+1)) + a_IMEX1*Gx(index)
-      END DO
+  integer :: index
 
-    END SUBROUTINE scalar_H
+  Hvector = 0.
 
-
-
-
-
-
+  do index = 1, M
+     Hvector(index) = qty%old(index) &
+          + (1.0 - a_IMEX1) * (Gvector_o(index) &
+          + Bmatrix_o%A(index) * qty%old(index-1) &
+          + Bmatrix_o%B(index) * qty%old(index)                  &
+          + Bmatrix_o%C(index) * qty%old(index+1)) &
+          + a_IMEX1 * Gvector(index)
+  end do
+end subroutine scalar_H
