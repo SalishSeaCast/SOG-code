@@ -22,6 +22,7 @@ program SOG
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
+  use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
@@ -104,7 +105,7 @@ program SOG
   open(10, file=str, status="OLD", action="READ")
   read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o
   cruise_id = getpars("cruise_id", 1)
-
+  call init_fitbottom   ! initialize the bottom data, values in subroutine
 
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
 
@@ -946,18 +947,14 @@ program SOG
 
      !--------bottom boundaries--------------------------
 
-     N%O%new(M+1) = ctd_bottom(day_met-281)%No
-     P%micro%new(M+1) = ctd_bottom(day_met-281)%P
-     P%nano%new(M+1) = ctd_bottom(day_met-281)%P !V.flagella ???
-     S%new(M+1) = ctd_bottom(day_met-281)%sal
-     T%new(M+1) = ctd_bottom(day_met-281)%temp+273.15
-     N%H%new(M+1) = N%H%new(M)
-     Detritus(1)%D%new(M+1)=Detritus(1)%D%new(M)
-     Detritus(2)%D%new(M+1)=Detritus(2)%D%new(M)
-     Detritus(3)%D%new(M+1)=Detritus(3)%D%new(M)
-
-
-     dummy_time = dummy_time +dt
+     ! for those variables that we have data, use the annual fit calculated
+     ! from the data
+     call bot_bound_time (day, day_time, &                            ! in
+          T%new(M+1), S%new(M+1), N%O%new(M+1), Sil%new(M+1), &       ! out
+          P%micro%new(M+1), P%nano%new(M+1))                          ! out
+     ! for those variables that we have no data, assume uniform at
+     ! bottom of domain
+     call bot_bound_uniform (M, N%H%new, Detritus)
 
      ! Increment time, calendar date and clock time, unless this is
      ! the last time through the loop
