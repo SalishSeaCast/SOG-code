@@ -51,17 +51,17 @@ contains
     integer :: index        ! counter through depth
 
     ! Sum the freshwater content.  Note that fwc is defined on the interfaces.
-    fwc(1) = (30.0 - S(1)) * grid%i_space(1) ! 30 is the base salinity
-    ! *** Might be able to vectorize this
-    do index=2,grid%M
+    fwc_new = (30.0 - S(1)) * grid%i_space(1) ! 30 is the base salinity
+    do index = 2, grid%M
        fwc(index)= (30.0 - S(index)) * grid%i_space(index) + fwc(index-1)
     enddo
 
     ! Depth of upwelling layer is defined as a multiple of d, the
     ! depth of 68% fwc (see entrainment.pdf)
     fwc68 = 0.68 * fwc(grid%M)
-    ! *** This can probably be moved to a function in grid module that
-    ! *** finds the depth at which the specified value of a quantity occurs
+    ! *** This could be moved to a function in grid module that
+    ! *** finds the depth at which the specified value of a quantity
+    ! *** occurs, if that functionality is needed elsewhere.
     index = 1
     do while (fwc(index) < fwc68)
        index = index + 1
