@@ -10,22 +10,29 @@ program SOG
   use datetime, only: datetime_, os_datetime, calendar_date, &
        clock_time, datetime_str
 
+  ! Inherited modules
+  ! *** Goal is to make these go away
   use declarations
   use surface_forcing
   use initial_sog
   use pdf
   use IMEX_constants  
 
+  ! Refactored modules
+!!$  use timeseries_output, only: timeseries_output_open, write_timeseries
   use water_properties, only: water_property, alloc_water_props, &
        dalloc_water_props, Cp_profile
+!!$  use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
   use grid_mod, only: init_grid, dalloc_grid, interp_i
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
+
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
+  ! *** Thse should eventually end up in refactored modules
   use find_wind_mod
   use Coriolis_and_pg_mod
   use define_flux_mod
@@ -46,40 +53,54 @@ program SOG
   double precision:: cz, unow, vnow, upwell 
 
   ! Water column physical properties
-  type(water_property) :: Cp    ! Heat capacity in J/kg-K
+  type(water_property) :: &
+       Cp    ! Heat capacity in J/kg-K
 
   ! Interpolated river flows
   real :: Qinter  ! Fraser River
   real :: Einter  ! Englishman River
+
   ! Filename returned by getpars()
   character*80 :: str	
+
   ! Initial month parameter read from run control input file
   ! and passed to new_year()
   integer :: month_o
+
   ! Iteration limit for inner loop that solves KPP turbulence model
   integer :: niter
+
   ! Hour of day index for cloud fraction data
   integer :: j
+
   ! Variables for baroclinic pressure gradient calculations
   double precision :: sumu, sumv, uprev, vprev, delu, delv
   double precision :: sumpbx, sumpby, tol
   integer :: ii       ! loop index
+
   ! Physical model domain parameter (should go elsewhere)
   double precision :: oLx, oLy, gorLx, gorLy
+
   ! Loop index for writing out profile results
   integer :: i_pro
+
   ! sigma-t quantity calculated from density for profile results output
   double precision :: sigma_t
+
   ! Code identification string (maintained by CVS), for output file headers
   character*70 :: &
        codeId = "$Source$"
+
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
   type(datetime_) :: profileDatetime ! Date/time of profile
+  type(datetime_) :: startDatetime   ! Date/time of initial conditions
+
   ! Temporary storage for formated datetime strings.  Needed to work around
   ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
   ! calls in write statements
-  character*19 :: str_runDatetime, str_proDatetime
+  character(len=19) :: str_runDatetime, str_proDatetime
+
   ! *** Temporary flag to turn flagellates model on/off, and the
   ! *** function to read it
   logical :: flagellates
@@ -89,7 +110,6 @@ program SOG
   ! Get the current date/time from operating system to timestamp the
   ! run with
   call os_datetime(runDatetime)
-
   ! *** This needs to be expanded into a real input processor
   ! Initialize the parameter reader to output a report
   ! *** runDatetime and date/time that getpar_init() prints should be same
@@ -97,17 +117,25 @@ program SOG
   ! Read a flag to determine whether or not flagellates are included
   ! in the model
   flagellates = getparl('flagellates_on', 1)
-  ! Open the time series output files
-  CALL write_open
   ! Get the name of the main run parameters file from stdin, open it,
   ! and read them
   str = getpars("inputfile", 1)
   open(10, file=str, status="OLD", action="READ")
   read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o
-  cruise_id = getpars("cruise_id", 1)
-  call init_fitbottom   ! initialize the bottom data, values in subroutine
 
+  ! Calculate the number of time steps for the run (note that int()
+  ! rounds down)
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
+  ! Calculate the month number and month day for time series file headers
+  startDatetime%yr = year_o
+  startDatetime%yr_day = day_o
+  startDatetime%day_sec = 0
+  call calendar_date(startDatetime)
+  call clock_time(startDatetime)
+  ! Open the time series output files
+  CALL write_open
+!!$  call timeseries_output_open(codeId, datetime_str(runDatetime), &
+!!$       datetime_str(startDatetime))
 
   ! *** Why not read M & D directly into grid?
   ! *** D has an implicit type conversion problem too
@@ -161,7 +189,11 @@ program SOG
         STOP
      END IF
   END DO
+  ! Allocate memory for water property arrays
   call alloc_water_props(grid%M, Cp)
+  ! Read the cruise id from stdin to use to build the file name for
+  ! nutrient initial conditions data file
+  cruise_id = getpars("cruise_id", 1)
   CALL read_sog
   CALL coefficients(alph, beta, dens, cloud,p_Knox)
   CALL allocate3
@@ -174,6 +206,7 @@ program SOG
   CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
+  call init_fitbottom   ! initialize the bottom data, values in subroutine
 
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
 
@@ -487,21 +520,20 @@ program SOG
         CALL matrix_A (Amatrix%t, Bmatrix%t) ! now have (D9)
         CALL matrix_A (Amatrix%s, Bmatrix%s)
 
-        ! add Xt to H vector (D7)
+        ! Add Xt to H vector (D7)
+        call scalar_H(grid%M, S, Gvector%s, Gvector_o%s, Bmatrix_o%s, &
+             Hvector%s)
+        call scalar_H(grid%M, T, Gvector%t, Gvector_o%t, Bmatrix_o%t, &
+             Hvector%t)
 
-        CALL scalar_H(grid,Hvector%s,Gvector%s,Gvector_o%s,Gvector_o_o%s,Bmatrix_o%s,Bmatrix_o_o%s,&
-             time_step,S)
-        CALL scalar_H(grid,Hvector%t,Gvector%t,Gvector_o%t,Gvector_o_o%t,Bmatrix_o%t,Bmatrix_o_o%t,&
-             time_step,T)
-
-        ! add in Coriolis term (Gvector_c) and previous value to H vector (D7)
-        CALL U_H(M, U%old, Gvector%u, Gvector_o%u, Gvector_c%u, &    ! in
+        ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
+        call U_H(M, U%old, Gvector%u, Gvector_o%u, Gvector_c%u, &    ! in
              Gvector_co%u, Bmatrix_o%u, &                            ! in
              Hvector%u)                                              ! out
-        CALL U_H(M, V%old, Gvector%v, Gvector_o%v, Gvector_c%v, &    ! in
+        call U_H(M, V%old, Gvector%v, Gvector_o%v, Gvector_c%v, &    ! in
              Gvector_co%v, Bmatrix_o%u, &                            ! in
              Hvector%v)                                              ! out
-        ! solves tridiagonal system
+        ! Solves tridiagonal system
         CALL TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%u,U_p,M)
         CALL TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%v,V_p,M)
         CALL TRIDAG(Amatrix%s%A,Amatrix%s%B,Amatrix%s%C,Hvector%s,S_p,M)
@@ -955,6 +987,18 @@ program SOG
      ! for those variables that we have no data, assume uniform at
      ! bottom of domain
      call bot_bound_uniform (M, N%H%new, Detritus)
+
+!!$     ! Write time series results
+!!$     call write_timeseries(time / 3600., &
+!!$       ! Variables for standard physical model output
+!!$       h%new, T%new, S%new, count, &
+!!$       ! User-defined physical model output variables
+!!$!!$       &
+!!$       ! Variables for standard biological model output
+!!$       N%O%new , N%H%new, P%micro%new, P%nano%new &
+!!$!!$, D_bins, detritus, &
+!!$       ! User-defined biological model output variables
+!!$       )
 
      ! Increment time, calendar date and clock time, unless this is
      ! the last time through the loop
