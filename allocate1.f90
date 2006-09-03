@@ -101,7 +101,7 @@ subroutine allocate1(STAT)
            zmicro%growth%new(M), zmicro%mort%new(M),&
            zmicro%graze(zprey,M),zmicro%q(zprey-1), waste%small(M),waste%medium(M), &
            waste%large(M),waste%s%destiny(0:D_bins),waste%m%destiny(0:D_bins),waste%l%destiny(0:D_bins), &
-           P_no(M),P_nh(M),P_di(M),P_na(M),P_mi(M),P_d1(M),P_d2(M),P_sa(M),P_u(M),P_v(M),P_ta(M),wupwell(M+1), &
+           wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
 !Copepod allocations and plot allocations
