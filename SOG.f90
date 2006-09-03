@@ -521,23 +521,27 @@ program SOG
         CALL matrix_A (Amatrix%s, Bmatrix%s)
 
         ! Add Xt to H vector (D7)
-        call scalar_H(grid%M, S, Gvector%s, Gvector_o%s, Bmatrix_o%s, &
-             Hvector%s)
-        call scalar_H(grid%M, T, Gvector%t, Gvector_o%t, Bmatrix_o%t, &
+        call phys_Hvector(grid%M, S%old, Gvector%s, Gvector_o%s, &  ! in
+             null_vector, null_vector, Bmatrix_o%s,              &  ! in
+             ! null_vector because no Coriolis or pressure gradients terms
+             Hvector%s)                                             ! out
+        call phys_Hvector(grid%M, T%old, Gvector%t, Gvector_o%t, &  ! in
+             null_vector, null_vector, Bmatrix_o%t,              &  ! in
+             ! null_vector because no Coriolis or pressure gradients terms
              Hvector%t)
-
         ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
-        call U_H(M, U%old, Gvector%u, Gvector_o%u, Gvector_c%u, &    ! in
-             Gvector_co%u, Bmatrix_o%u, &                            ! in
-             Hvector%u)                                              ! out
-        call U_H(M, V%old, Gvector%v, Gvector_o%v, Gvector_c%v, &    ! in
-             Gvector_co%v, Bmatrix_o%u, &                            ! in
-             Hvector%v)                                              ! out
+        call phys_Hvector(grid%M, U%old, Gvector%u, Gvector_o%u, &  ! in
+             Gvector_c%u, Gvector_co%u, Bmatrix_o%u,             &  ! in
+             Hvector%u)                                             ! out
+        call phys_Hvector(grid%M, V%old, Gvector%v, Gvector_o%v, &  ! in
+             Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
+             Hvector%v)                                             ! out
+
         ! Solves tridiagonal system
-        CALL TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%u,U_p,M)
-        CALL TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%v,V_p,M)
-        CALL TRIDAG(Amatrix%s%A,Amatrix%s%B,Amatrix%s%C,Hvector%s,S_p,M)
-        CALL TRIDAG(Amatrix%t%A,Amatrix%t%B,Amatrix%t%C,Hvector%t,T_p,M)
+        call TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%u,U_p,M)
+        call TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%v,V_p,M)
+        call TRIDAG(Amatrix%s%A,Amatrix%s%B,Amatrix%s%C,Hvector%s,S_p,M)
+        call TRIDAG(Amatrix%t%A,Amatrix%t%B,Amatrix%t%C,Hvector%t,T_p,M)
 
         DO yy = 1, M   !remove diffusion!!!!!!!!!!  ? not sure
            U%new(yy) = U_p(yy)
