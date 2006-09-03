@@ -3,10 +3,9 @@ SUBROUTINE define_sog(timestep)
   !!store previous time_steps in old (n)
   
   USE declarations, only: D_bins, U, V, S, T, h, P, N, Sil, &
-       B, density, K, Bmatrix, Bmatrix_o, Bmatrix_o_o, & 
-       Gvector, &
-       Gvector_o, Gvector_o_o, Gvector_c, &
-       Gvector_co, Gvector_co_o, Detritus, PON, ut, vt
+       B, density, K, Bmatrix, Bmatrix_o, & 
+       Gvector, Gvector_o, Gvector_c, Gvector_co, &
+       Detritus, PON, ut, vt
 
       IMPLICIT NONE
 
@@ -21,37 +20,6 @@ SUBROUTINE define_sog(timestep)
          K%t%old = K%t%all
          K%s%old = K%s%all
          K%u%old = K%u%all
-
-         Bmatrix_o_o%u%A = Bmatrix_o%u%A
-         Bmatrix_o_o%u%B = Bmatrix_o%u%B
-         Bmatrix_o_o%u%C = Bmatrix_o%u%C         
-         Bmatrix_o_o%t%A = Bmatrix_o%t%A
-         Bmatrix_o_o%t%B = Bmatrix_o%t%B      !check
-         Bmatrix_o_o%t%C = Bmatrix_o%t%C         
-         Bmatrix_o_o%s%A = Bmatrix_o%s%A
-         Bmatrix_o_o%s%B = Bmatrix_o%s%B
-         Bmatrix_o_o%s%C = Bmatrix_o%s%C
-
-                 
-         Bmatrix_o_o%bio%A = Bmatrix_o%bio%A
-         Bmatrix_o_o%bio%B = Bmatrix_o%bio%B
-         Bmatrix_o_o%bio%C = Bmatrix_o%bio%C               
-         Bmatrix_o_o%no%A = Bmatrix_o%no%A
-         Bmatrix_o_o%no%B = Bmatrix_o%no%B
-         Bmatrix_o_o%no%C = Bmatrix_o%no%C 
-
-         Gvector_o_o%u = Gvector_o%u
-         Gvector_o_o%v = Gvector_o%v
-         Gvector_o_o%s = Gvector_o%s        !check
-         Gvector_o_o%t = Gvector_o%t
-
-         Gvector_o_o%p%micro = Gvector_o%p%micro
-         Gvector_o_o%p%nano = Gvector_o%p%nano
-         Gvector_o_o%n%o = Gvector_o%n%o
-         Gvector_o_o%n%h = Gvector_o%n%h
-
-         Gvector_co_o%u = Gvector_co%u
-         Gvector_co_o%v = Gvector_co%v           !check
 
          Bmatrix_o%u%A = Bmatrix%u%A
          Bmatrix_o%u%B = Bmatrix%u%B
@@ -86,7 +54,6 @@ SUBROUTINE define_sog(timestep)
 
          DO kk = 1, D_bins
             Detritus(kk)%D%old_old = Detritus(kk)%D%old
-            Gvector_o_o%d(kk)%bin = Gvector_o%d(kk)%bin
             Gvector_o%d(kk)%bin = Gvector%d(kk)%bin 
          END DO
          

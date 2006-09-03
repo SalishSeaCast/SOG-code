@@ -26,8 +26,8 @@ subroutine allocate1(STAT)
                STAT = alloc_stat(1))
 
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
-              Gvector_o_o%d(D_bins),Gvector_ro%d(D_bins),Gvector_ro_o%d(D_bins),&
-              Gvector_ao%d(D_bins),Gvector_ao_o%d(D_bins),Detritus1_p(D_bins,M),&
+              Gvector_ro%d(D_bins),&
+              Gvector_ao%d(D_bins),Detritus1_p(D_bins,M),&
               STAT = alloc_stat(3))
 
       ALLOCATE(alph%g(0:M+1), alph%i(0:M), alph%idiv(M), &
@@ -40,19 +40,15 @@ subroutine allocate1(STAT)
                Bmatrix%u%C(M),Bmatrix%t%A(M),Bmatrix%t%B(M),Bmatrix%t%C(M),Bmatrix%s%A(M),Bmatrix%s%B(M),&
                Bmatrix%s%C(M),Bmatrix_o%u%A(M),Bmatrix_o%u%B(M),&
                Bmatrix_o%u%C(M),Bmatrix_o%t%A(M),Bmatrix_o%t%B(M),Bmatrix_o%t%C(M),Bmatrix_o%s%A(M),&
-               Bmatrix_o%s%B(M),Bmatrix_o%s%C(M),Bmatrix_o_o%u%A(M),Bmatrix_o_o%u%B(M),&
-               Bmatrix_o_o%u%C(M),Bmatrix_o_o%t%A(M),Bmatrix_o_o%t%B(M),Bmatrix_o_o%t%C(M),&
-               Bmatrix_o_o%s%A(M),Bmatrix_o_o%s%B(M),Bmatrix_o_o%s%C(M),&
+               Bmatrix_o%s%B(M),Bmatrix_o%s%C(M),&
                Amatrix%bio%A(M),Amatrix%bio%B(M),Amatrix%bio%C(M),&
                Bmatrix%bio%A(M),Bmatrix%bio%B(M),Bmatrix%bio%C(M),&
                Bmatrix%null%A(M),Bmatrix%null%B(M),Bmatrix%null%C(M),&
                Amatrix%null%A(M),Amatrix%null%B(M),&
                Bmatrix_o%bio%A(M),Bmatrix_o%bio%B(M),Bmatrix_o%bio%C(M),&
-               Bmatrix_o_o%bio%A(M),Bmatrix_o_o%bio%B(M),Bmatrix_o_o%bio%C(M),&
                Amatrix%no%A(M),Amatrix%no%B(M),Amatrix%no%C(M),&
                Bmatrix%no%A(M),Bmatrix%no%B(M),Bmatrix%no%C(M),&
                Bmatrix_o%no%A(M),Bmatrix_o%no%B(M),Bmatrix_o%no%C(M),&
-               Bmatrix_o_o%no%A(M),Bmatrix_o_o%no%B(M),Bmatrix_o_o%no%C(M),&
                STAT = alloc_stat(4)) !**&
 
       ALLOCATE(T%div_g(M),U%div_g(M),V%div_g(M),S%div_g(M),B%div_g(M),density%div_g(M),T%div_i(M),&
@@ -76,20 +72,19 @@ subroutine allocate1(STAT)
       ALLOCATE(Hvector%s(M),Hvector%t(M),Hvector%u(M),Hvector%v(M),Hvector%p%micro(M),Hvector%p%nano(M),&
                Hvector%z%micro(M),&
                Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),Gvector_o%s(M),Gvector_o%t(M),&
-               Gvector_o%u(M),Gvector_o%v(M),Gvector_o_o%s(M),Gvector_o_o%t(M),&
-               Gvector_o_o%u(M),Gvector_o_o%v(M),Gvector_c%u(M),Gvector_c%v(M),Gvector_co%u(M),&
-               Gvector_co%v(M),Gvector_co_o%u(M),Gvector_co_o%v(M),&
-               Gvector%p%micro(M),Gvector_o%p%micro(M),Gvector_o_o%p%micro(M),&
-               Gvector%p%nano(M),Gvector_o%p%nano(M),Gvector_o_o%p%nano(M),Gvector%z%micro(M),&
-               Gvector_o%z%micro(M),Gvector_o_o%z%micro(M), Gvector_ao%p%micro(M), &
-               Gvector_ao_o%p%micro(M), Gvector_ro%p%micro(M),Gvector_ro_o%p%micro(M),&
-               Gvector_ro%p%nano(M),Gvector_ro_o%p%nano(M),&
-               Gvector_ro%z%micro(M),Gvector_ro_o%z%micro(M), Gvector_ao%z%micro(M), &
-               Gvector_ao_o%z%micro(M), &
+               Gvector_o%u(M),Gvector_o%v(M),&
+               Gvector_c%u(M),Gvector_c%v(M),Gvector_co%u(M),&
+               Gvector_co%v(M),&
+               Gvector%p%micro(M),Gvector_o%p%micro(M),&
+               Gvector%p%nano(M),Gvector_o%p%nano(M),Gvector%z%micro(M),&
+               Gvector_o%z%micro(M), Gvector_ao%p%micro(M), &
+               Gvector_ro%p%micro(M),&
+               Gvector_ro%p%nano(M),&
+               Gvector_ro%z%micro(M),Gvector_ao%z%micro(M), &
                Hvector%n%o(M), Hvector%n%h(M), Hvector%sil(M), Gvector%n%o(M), Gvector%n%h(M), &
                Gvector%sil(M), &
-               Gvector_o%n%o(M), Gvector_o%n%h(M), Gvector_o%sil(M), Gvector_o_o%n%o(M), Gvector_o_o%n%h(M),&
-               Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%sil(M), Gvector_ro_o%n%o(M), Gvector_ro_o%n%h(M),&
+               Gvector_o%n%o(M), Gvector_o%n%h(M), Gvector_o%sil(M), &
+               Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%sil(M), &
                null_vector(M),STAT = alloc_stat(8)) !**&
                
       ALLOCATE(U_p(M),V_p(M),S_p(M),T_p(M),P1_p(M),Pnano1_p(M),Z1_p(M),NO1_p(M),NH1_p(M), SIL1_p(M), & 

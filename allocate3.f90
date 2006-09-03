@@ -6,8 +6,7 @@ subroutine allocate3
 
   use malloc, only: alloc_check
   use declarations, only: M, M2, D_bins, PZ, Gvector, Gvector_o, &
-       Gvector_o_o, Gvector_ao, Gvector_ao_o, Gvector_ro,        &
-       Gvector_ro_o, Hvector, Detritus
+       Gvector_ao, Gvector_ro, Hvector, Detritus
 
   implicit none
 
@@ -22,10 +21,9 @@ subroutine allocate3
 
   do y_y = 1, D_bins
      msg = "Biology model Gvector bin components arrays"
-     allocate(Gvector%d(y_y)%bin(M), Gvector_o%d(y_y)%bin(M),     &
-          Gvector_o_o%d(y_y)%bin(M), Gvector_ao%d(y_y)%bin(M),    &
-          Gvector_ao_o%d(y_y)%bin(M), Gvector_ro%d(y_y)%bin(M),   &
-          Gvector_ro_o%d(y_y)%bin(M), stat=allocstat)
+     allocate(Gvector%d(y_y)%bin(M), Gvector_o%d(y_y)%bin(M), &
+          Gvector_ao%d(y_y)%bin(M), Gvector_ro%d(y_y)%bin(M), &
+          stat=allocstat)
      call alloc_check(allocstat, msg)
      msg = "Biology model Hvector bin component array"
      allocate(Hvector%d(y_y)%bin(M), stat=allocstat)
