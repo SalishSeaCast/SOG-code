@@ -51,7 +51,7 @@ contains
     integer :: index        ! counter through depth
 
     ! Sum the freshwater content.  Note that fwc is defined on the interfaces.
-    fwc_new = (30.0 - S(1)) * grid%i_space(1) ! 30 is the base salinity
+    fwc = (30.0 - S(1)) * grid%i_space(1) ! 30 is the base salinity
     do index = 2, grid%M
        fwc(index)= (30.0 - S(index)) * grid%i_space(index) + fwc(index-1)
     enddo
