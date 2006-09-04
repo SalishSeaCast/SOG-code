@@ -2,8 +2,7 @@
      *derivs_sog,rkqs,check,Ti)
       INTEGER nbad,nok,lup,nvar,KMAXX,MAXSTP,NMAX
       DOUBLE PRECISION eps,h1,hmin,x1,x2,ystart(nvar),TINY,Ti(1:81)
-      ! *** Temporaily added derivs_noflag until flagellates code works
-      EXTERNAL derivs_sog, derivs_noflag, rkqs
+      EXTERNAL derivs_sog, rkqs
       PARAMETER (MAXSTP=1000,NMAX=1000,KMAXX=200,TINY=1.e-20) !KMAXX = 200,TINY=1.e-30
 !      PARAMETER (MAXSTP=1000,NMAX=400,KMAXX=200,TINY=1.e-20) !KMAXX = 200,TINY=1.e-30
       INTEGER i,kmax,kount,nstp,check,isusan
