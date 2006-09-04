@@ -1,21 +1,23 @@
 ! $Id$
 ! $Source$
 
-subroutine find_new
+subroutine find_new(M)
   ! Copies results from tridiagonal solver into real variable names,
   !removing any negative values.  Applies upper boundary conditions
 
   use surface_forcing, only: zero
   use declarations, only: P1_p, Pnano1_p, NO1_p, NH1_p, SIL1_p, Detritus1_p,&
-       P, N, Sil, Detritus, D_bins, neg_count, M
+       P, N, Sil, Detritus, D_bins, neg_count
 
   implicit none
+
+  ! Argument:
+  integer :: M  ! Number of grid points
 
   ! Local variables:
   INTEGER:: xx, yy
 
   DO yy = 1, M
-
      IF (P1_p(yy) < zero) THEN
         P1_p(yy) = zero
         neg_count = neg_count + 1
@@ -37,7 +39,7 @@ subroutine find_new
         neg_count = neg_count + 1
      END IF
 
-     DO xx = 1,D_bins
+     DO xx = 1, D_bins
         IF (Detritus1_p(xx,yy) < zero) THEN
            Detritus1_p(xx,yy) = zero
            neg_count = neg_count + 1
