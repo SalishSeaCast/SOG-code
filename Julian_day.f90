@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE Julian_day(leap,month,day,Jday,size)
 
   USE mean_param
