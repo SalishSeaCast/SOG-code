@@ -39,7 +39,7 @@ program SOG
 
   implicit none
 
-  external derivs_noflag, derivs_sog, rkqs
+  external derivs_sog, rkqs
 
   ! Local variables:
   integer :: icheck
@@ -817,15 +817,9 @@ program SOG
 
      next_time = time+dt ! note, biology is calculated for the NEXT step
 
-     ! *** Temporary code to allow flagellates model to be turned on/off
      !*** Size of T in odeint is hard-coded to 81
-     if (flagellates) then
         call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
              N_ok, N_bad, derivs_sog, rkqs, icheck, T%new(0:M))
-     else
-        call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
-             N_ok, N_bad, derivs_noflag, rkqs, icheck, T%new(0:M))
-     endif
 
      ! check for negative NH values and then for negative Micro phyto values
      !*** add nanos and move into a subroutine in bio module 
