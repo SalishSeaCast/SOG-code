@@ -44,7 +44,7 @@ datetime.o grid.o \
 mean_param.o declarations.o surface_forcing.o IMEX_constants.o \
 \
 water_properties.o find_upwell.o diffusion.o fitbottom.o \
-rungekutta.o \
+rungekutta.o profile_mod.o\
 getpar.o \
 \
 define_flux.o phys_Hvector.o \
