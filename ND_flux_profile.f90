@@ -1,4 +1,11 @@
+! $Id$
+! $Source$
+
 SUBROUTINE ND_flux_profile(mm,L,phi1)
+  ! Calculate the nondimensional flux profiles per Large, etal (1994),
+  ! App. B
+  ! *** Cleanup needed.  Constants should be declared here instead of
+  ! *** in surface forcing, etc.
      
       USE mean_param
       USE surface_forcing
