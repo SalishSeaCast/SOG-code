@@ -27,6 +27,7 @@ program SOG
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
+  use rungekutta, only: odeint
 
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
@@ -41,7 +42,6 @@ program SOG
   external derivs_sog, rkqs
 
   ! Local variables:
-  integer :: icheck
   integer :: ecmapp, day_met
 
   type(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
@@ -173,11 +173,6 @@ program SOG
   else if (year_o==2006) then
      ecmapp = 43825
   endif
-
-  !print*,day,ecmapp,year_o,'sog 2'
-  !pause
-
-  icheck=346
 
   CALL allocate1(grid%M, alloc_stat) 
   DO xx = 1,12
@@ -819,9 +814,10 @@ program SOG
 
      next_time = time+dt ! note, biology is calculated for the NEXT step
 
-     !*** Size of T in odeint is hard-coded to 81
-        call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
-             N_ok, N_bad, derivs_sog, rkqs, icheck, T%new(0:grid%M))
+     ! not passing in all of T%new --- can be changed when derivs_sog modulized
+        call odeint(PZ, grid%M, M2, time, next_time, precision, &
+             step_guess, step_min, &
+             N_ok, N_bad, T%new(0:grid%M), I_par)
 
      ! check for negative NH values and then for negative Micro phyto values
      !*** add nanos and move into a subroutine in bio module 
