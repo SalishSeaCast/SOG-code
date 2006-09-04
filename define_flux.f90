@@ -59,7 +59,7 @@ contains
        END IF
     END DO
 
-    DO xx = h%i, M
+    DO xx = h%i, grid%M
        IF (grid%d_i(xx) > h%new) THEN
           w%t(xx) = -K%t%total(xx)*T%div_i(xx)
           w%s(xx) = -K%s%total(xx)*S%div_i(xx)
