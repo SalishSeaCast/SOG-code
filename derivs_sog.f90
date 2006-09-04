@@ -1,27 +1,26 @@
 ! $Id$
 ! $Source$
 
-subroutine derivs_sog(time, M2, PZ, dPZdt, Temp)
+subroutine derivs_sog(time, M, M2, PZ, dPZdt, Temp, I_par)
   ! Calculate the derivatives of the biological model for odeint to
   ! use to advance the biology to the next time step.
 
   use precision_defs, only: dp
-  ! *** Temporary hack until grid%M comes in as an argument
-  use grid_mod, only: grid
   use mean_param, only: bins, losses, plankton2, nutrient, snow
   use declarations, only: D_bins, N, micro, nano, &
-       f_ratio, waste, Detritus, I_par
+       f_ratio, waste, Detritus
   use reaction, only: p_growth
 
   implicit none
 
   ! Arguments:
   real(kind=dp), INTENT(IN):: time ! not used
+  INTEGER, INTENT(IN):: M ! size of grid
   INTEGER, INTENT(IN):: M2 ! size of PZ
   real(kind=dp), DIMENSION(M2), INTENT(IN):: PZ  ! values
   real(kind=dp), DIMENSION(M2), INTENT(OUT)::dPZdt ! derivatives
-  ! *** Temporary hack until grid%M comes in as an argument
-  real(kind=dp), dimension(0:grid%M), INTENT(IN):: Temp ! temperature
+  real(kind=dp), dimension(0:M), INTENT(IN):: Temp ! temperature
+  real(kind=dp), dimension(0:M), INTENT(IN):: I_par ! light
 
   type (bins) :: PZ_bins
   common /derivs/  PZ_bins
@@ -32,17 +31,12 @@ subroutine derivs_sog(time, M2, PZ, dPZdt, Temp)
   integer :: jj ! counter through PZ
   integer :: kk ! counter through detritus
 
-  ! *** Temporary hack until grid%M comes in as an argument
-  real(kind=dp), DIMENSION(grid%M):: Resp_micro, Mort_micro! respiration & mortality
-  real(kind=dp), DIMENSION(grid%M):: Resp_nano, Mort_nano  ! respiration & mortality
+  real(kind=dp), DIMENSION(M):: Resp_micro, Mort_micro! respiration & mortality
+  real(kind=dp), DIMENSION(M):: Resp_nano, Mort_nano  ! respiration & mortality
 
-  real(kind=dp), dimension (grid%M) :: Pmicro, Pnano ! micro/nano plankton conc.
-  real(kind=dp), dimension (grid%M) :: NO, NH ! nitrate and ammonium conc.
-  real(kind=dp), dimension (D_bins, grid%M) :: detr ! detritus
-
-  ! *** Temporary hack until grid%M comes in as an argument
-  integer :: M
-  M = grid%M
+  real(kind=dp), dimension (M) :: Pmicro, Pnano ! micro/nano plankton conc.
+  real(kind=dp), dimension (M) :: NO, NH ! nitrate and ammonium conc.
+  real(kind=dp), dimension (D_bins, M) :: detr ! detritus
 
   ! Put PZ micro values into Pmicro variable, removing any negative values
   do ii = 1,M                        ! counter through grid
