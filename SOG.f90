@@ -26,7 +26,7 @@ program SOG
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
-  use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
+  use fitbottom, only: bot_bound_time, bot_bound_uniform
   use rungekutta, only: odeint
   use profile_mod, only: init_profiles, profile, profile_close
 
@@ -39,8 +39,6 @@ program SOG
   use define_flux_mod
 
   implicit none
-
-  external derivs_sog, rkqs
 
   ! Local variables:
   integer :: ecmapp, day_met
@@ -193,13 +191,11 @@ program SOG
   CALL allocate3(grid%M)
 
   CALL initialize ! initializes everything (biology too)
-!!$  CALL define_grid(grid, D, lambda) ! sets up the grid
-  ! Set up grid interpolation factor arrays
-  ! *** Eventually, define_grid will be refactored into init_grid
+
   CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
-  call init_fitbottom   ! initialize the bottom data, values in subroutine
+
   call init_profiles() ! initialize profile writing code
 
 
