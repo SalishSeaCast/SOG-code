@@ -23,11 +23,10 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
            wt_r, upwell
 
-      DOUBLE PRECISION::Ft, Fs,C_D, UU, rho_atm, St,efficiency,Sa,S_riv,d
-      double precision:: r, Ce, sigma, epsilon, lw_in, lw_out, lw_net
-      double precision:: Cs, h_sens, h_latent, h_flux, Cp, plume_stress
+      DOUBLE PRECISION::Ft, C_D, UU, rho_atm, Sa, S_riv
+      double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
+      double precision:: Cs, h_sens, h_latent, h_flux, Cp
       REAL:: epsilon_w,a,b,c,ea,es,cl,le
-      INTEGER::kk
 
 !           U_ten, V_ten used to find UU for drag coefficient calculation
 !           U_ten, V_ten used to find wind stress (with drag coefficient)
@@ -35,7 +34,6 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 !           fresh water flux is F_tot
 
 !           Q_t depends on Q_tot and Q_sol
-!           Fs is zero
 
 !           w%u is wind stress/ro
 !           w%v is wind stress/ro
@@ -124,14 +122,13 @@ if (h_latent.lt.0) then
    h_latent=0
 endif
 
-!----Total fluxes  heat (Q_t) and freshwater (Fs)
-!----------------------------------------------
+!----Total heat flux (Q_t)
+!-------------------------
       
 h_flux = lw_net+h_sens+h_latent    
 
       Q_t = h_flux ! W/m2
 
-      Fs = 0.0  ! no ice conditions
       
 !-----Surface fluxes---------------------  equations A2a-d
 
@@ -141,9 +138,6 @@ h_flux = lw_net+h_sens+h_latent
       w%t(0) = -Q_t/(ro(0)*Cp_o)  
 
 
-!      w%s(0) = Ft*salinity_o/rho_fresh_o + Fs*(salinity_o - &
-!                    S_ice)/rho_ice
-!      w%s(0) = Ft*salinity_o
       w%s(0) = Ft*Sa
       w%b(0) = g*(alp*w%t(0)-bet*w%s(0))
 
