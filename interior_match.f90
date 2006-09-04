@@ -1,4 +1,7 @@
-SUBROUTINE interior_match(mm,hh, X, X_min)
+! $Id$
+! $Source$
+
+SUBROUTINE interior_match(mm, hh, X, X_min)
 
       USE mean_param
       USE surface_forcing
@@ -10,7 +13,6 @@ SUBROUTINE interior_match(mm,hh, X, X_min)
       TYPE(height), INTENT(IN)::hh
       DOUBLE PRECISION, INTENT(IN)::X_min
 
-      CHARACTER::ignored_input
       DOUBLE PRECISION::R
 
       !!!!!Case (1) h%g-1 == h%i and n = h%g - 1 or h%i
