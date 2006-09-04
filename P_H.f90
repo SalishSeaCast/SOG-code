@@ -1,5 +1,9 @@
+! $Id$
+! $Source$
+
 SUBROUTINE P_H (M, PropOld, Gvector, Gvector_o, Gvector_ro, Gvector_ao, &
-               Bmatrix_o, Hvector) 
+               Bmatrix_o, Hvector)
+  ! *** Should be renamed to bio_Hvector, by analogy to phys_Hvector.
       
       USE mean_param, only: trivector
       USE IMEX_constants, only: a_IMEX1
