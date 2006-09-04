@@ -124,8 +124,6 @@ program SOG
 
   ! Initialize the grid
   call init_grid
-  ! *** M can go away once derivs_sog takes grid%M as an argument
-  M = grid%M
 
   ! Calculate the number of time steps for the run (note that int()
   ! rounds down)
