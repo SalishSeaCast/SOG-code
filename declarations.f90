@@ -5,14 +5,15 @@ module declarations
 ! *** What's in here?
 
   use precision_defs, only: dp
+  use grid_mod, only: grid, lambda
+
   use mean_param
 
   implicit NONE
 
   ! Run parameters read from file specified as 'inputfile' in infile
-  real(kind=dp) :: D        ! depth of model domain [m]
+  ! *** Declaration of M can go away once derivs_sog takes grid%M as an arg
   integer :: M              ! # of grid points in model domain
-  real(kind=dp) :: lambda   ! grid spacing parameter ???
   integer :: year_o         ! year in which run starts [yr]
   ! *** Why is month_o not declared here; rather it's local in SOG.f90
   integer :: day_o          ! year-day on which run starts [1-Jan = 1]
@@ -23,7 +24,6 @@ module declarations
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   TYPE(constant)::alph, beta, dens
-  TYPE(gr_d)::grid
   TYPE(prop)::T, S, U, V, B, density, P_temp, vt, ut
   type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
