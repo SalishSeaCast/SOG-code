@@ -84,86 +84,86 @@ subroutine write_physical_sog(unow, vnow, euphotic)
      WRITE(155,100)REAL(time)
   END IF
 
-  IF (year == 1972 .AND.  time_step  /= steps ) THEN  !.OR. year == 1962 
-     IF (month == 3) THEN  !March  
-        cntp_mar = cntp_mar + 1
-        T_mar(1:M) = T_mar(1:M) + T%new(1:M)
-        S_mar(1:M) = S_mar(1:M) + S%new(1:M)
-        U_mar(1:M) = U_mar(1:M) + U%new(1:M)
-        V_mar(1:M) = V_mar(1:M) + V%new(1:M)
-        Ku_mar(1:M) = Ku_mar(1:M) + K%u%all(1:M)
-        Ks_mar(1:M) = Ks_mar(1:M) + K%s%all(1:M)
-        Kt_mar(1:M) = Kt_mar(1:M) + K%t%all(1:M)
-     ELSE IF (month == 6) THEN !June
-        cntp_jun = cntp_jun + 1
-        T_jun(1:M) = T_jun(1:M) + T%new(1:M)
-        S_jun(1:M) = S_jun(1:M) + S%new(1:M)
-        U_jun(1:M) = U_jun(1:M) + U%new(1:M)
-        V_jun(1:M) = V_jun(1:M) + V%new(1:M)
-        Ku_jun(1:M) = Ku_jun(1:M) + K%u%all(1:M)
-        Ks_jun(1:M) = Ks_jun(1:M) + K%s%all(1:M)
-        Kt_jun(1:M) = Kt_jun(1:M) + K%t%all(1:M)
-     ELSE IF (month == 9) THEN !Sept
-        cntp_sep = cntp_sep + 1
-        T_sep(1:M) = T_sep(1:M) + T%new(1:M)
-        S_sep(1:M) = S_sep(1:M) + S%new(1:M)
-        U_sep(1:M) = U_sep(1:M) + U%new(1:M)
-        V_sep(1:M) = V_sep(1:M) + V%new(1:M)
-        Ku_sep(1:M) = Ku_sep(1:M) + K%u%all(1:M)
-        Ks_sep(1:M) = Ks_sep(1:M) + K%s%all(1:M)
-        Kt_sep(1:M) = Kt_sep(1:M) + K%t%all(1:M)
-     ELSE IF (month == 12) THEN !Dec
-        cntp_dec = cntp_dec + 1
-        T_dec(1:M) = T_dec(1:M) + T%new(1:M)
-        S_dec(1:M) = S_dec(1:M) + S%new(1:M)
-        U_dec(1:M) = U_dec(1:M) + U%new(1:M)
-        V_dec(1:M) = V_dec(1:M) + V%new(1:M)
-        Ku_dec(1:M) = Ku_dec(1:M) + K%u%all(1:M)
-        Ks_dec(1:M) = Ks_dec(1:M) + K%s%all(1:M)
-        Kt_dec(1:M) = Kt_dec(1:M) + K%t%all(1:M)
-     END IF
-  ELSE IF ( time_step == steps) THEN
-     T_mar = T_mar/DBLE(cntp_mar) 
-     S_mar = S_mar/DBLE(cntp_mar) 
-     U_mar = U_mar/DBLE(cntp_mar) 
-     V_mar = V_mar/DBLE(cntp_mar) 
-     Ku_mar = Ku_mar/DBLE(cntp_mar) 
-     Ks_mar = Ks_mar/DBLE(cntp_mar) 
-     Kt_mar = Kt_mar/DBLE(cntp_mar) 
-     T_jun = T_jun/DBLE(cntp_jun) 
-     S_jun = S_jun/DBLE(cntp_jun) 
-     U_jun = U_jun/DBLE(cntp_jun) 
-     V_jun = V_jun/DBLE(cntp_jun) 
-     Ku_jun = Ku_jun/DBLE(cntp_jun) 
-     Ks_jun = Ks_jun/DBLE(cntp_jun) 
-     Kt_jun = Kt_jun/DBLE(cntp_jun) 
-     T_sep = T_sep/DBLE(cntp_sep) 
-     S_sep = S_sep/DBLE(cntp_sep) 
-     U_sep = U_sep/DBLE(cntp_sep) 
-     V_sep = V_sep/DBLE(cntp_sep) 
-     Ku_sep = Ku_sep/DBLE(cntp_sep) 
-     Ks_sep = Ks_sep/DBLE(cntp_sep) 
-     Kt_sep = Kt_sep/DBLE(cntp_sep) 
-     T_dec = T_dec/DBLE(cntp_dec) 
-     S_dec = S_dec/DBLE(cntp_dec) 
-     U_dec = U_dec/DBLE(cntp_dec) 
-     V_dec = V_dec/DBLE(cntp_dec) 
-     Ku_dec = Ku_dec/DBLE(cntp_dec) 
-     Ks_dec = Ks_dec/DBLE(cntp_dec) 
-     Kt_dec = Kt_dec/DBLE(cntp_dec) 
-     !  OPEN(UNIT = 156, FILE = "output/phys_mar_20res.dat",STATUS = "REPLACE", &
-     !       ACTION = "WRITE")
-     !  OPEN(UNIT = 157, FILE = "output/phys_jun_20res.dat",STATUS = "REPLACE", &
-     !       ACTION = "WRITE") 
-     !  OPEN(UNIT = 158, FILE = "output/phys_sep_20res.dat",STATUS = "REPLACE", &
-     !       ACTION = "WRITE")
-     !  OPEN(UNIT = 159, FILE = "output/phys_dec_20res.dat",STATUS = "REPLACE", &
-     !       ACTION = "WRITE")
-     WRITE(156,100)REAL(T_mar),REAL(S_mar),REAL(U_mar),REAL(V_mar),REAL(Ku_mar),REAL(Ks_mar),REAL(Kt_mar)
-     WRITE(157,100)REAL(T_jun),REAL(S_jun),REAL(U_jun),REAL(V_jun),REAL(Ku_jun),REAL(Ks_jun),REAL(Kt_jun)
-     WRITE(158, 100)REAL(T_sep),REAL(S_sep),REAL(U_sep),REAL(V_sep),REAL(Ku_sep),REAL(Ks_sep),REAL(Kt_sep)
-     WRITE(159,100)REAL(T_dec),REAL(S_dec),REAL(U_dec),REAL(V_dec),REAL(Ku_dec),REAL(Ks_dec),REAL(Kt_dec)
-  END IF
+!!$  IF (year == 1972 .AND.  time_step  /= steps ) THEN  !.OR. year == 1962 
+!!$     IF (month == 3) THEN  !March  
+!!$        cntp_mar = cntp_mar + 1
+!!$        T_mar(1:M) = T_mar(1:M) + T%new(1:M)
+!!$        S_mar(1:M) = S_mar(1:M) + S%new(1:M)
+!!$        U_mar(1:M) = U_mar(1:M) + U%new(1:M)
+!!$        V_mar(1:M) = V_mar(1:M) + V%new(1:M)
+!!$        Ku_mar(1:M) = Ku_mar(1:M) + K%u%all(1:M)
+!!$        Ks_mar(1:M) = Ks_mar(1:M) + K%s%all(1:M)
+!!$        Kt_mar(1:M) = Kt_mar(1:M) + K%t%all(1:M)
+!!$     ELSE IF (month == 6) THEN !June
+!!$        cntp_jun = cntp_jun + 1
+!!$        T_jun(1:M) = T_jun(1:M) + T%new(1:M)
+!!$        S_jun(1:M) = S_jun(1:M) + S%new(1:M)
+!!$        U_jun(1:M) = U_jun(1:M) + U%new(1:M)
+!!$        V_jun(1:M) = V_jun(1:M) + V%new(1:M)
+!!$        Ku_jun(1:M) = Ku_jun(1:M) + K%u%all(1:M)
+!!$        Ks_jun(1:M) = Ks_jun(1:M) + K%s%all(1:M)
+!!$        Kt_jun(1:M) = Kt_jun(1:M) + K%t%all(1:M)
+!!$     ELSE IF (month == 9) THEN !Sept
+!!$        cntp_sep = cntp_sep + 1
+!!$        T_sep(1:M) = T_sep(1:M) + T%new(1:M)
+!!$        S_sep(1:M) = S_sep(1:M) + S%new(1:M)
+!!$        U_sep(1:M) = U_sep(1:M) + U%new(1:M)
+!!$        V_sep(1:M) = V_sep(1:M) + V%new(1:M)
+!!$        Ku_sep(1:M) = Ku_sep(1:M) + K%u%all(1:M)
+!!$        Ks_sep(1:M) = Ks_sep(1:M) + K%s%all(1:M)
+!!$        Kt_sep(1:M) = Kt_sep(1:M) + K%t%all(1:M)
+!!$     ELSE IF (month == 12) THEN !Dec
+!!$        cntp_dec = cntp_dec + 1
+!!$        T_dec(1:M) = T_dec(1:M) + T%new(1:M)
+!!$        S_dec(1:M) = S_dec(1:M) + S%new(1:M)
+!!$        U_dec(1:M) = U_dec(1:M) + U%new(1:M)
+!!$        V_dec(1:M) = V_dec(1:M) + V%new(1:M)
+!!$        Ku_dec(1:M) = Ku_dec(1:M) + K%u%all(1:M)
+!!$        Ks_dec(1:M) = Ks_dec(1:M) + K%s%all(1:M)
+!!$        Kt_dec(1:M) = Kt_dec(1:M) + K%t%all(1:M)
+!!$     END IF
+!!$  ELSE IF ( time_step == steps) THEN
+!!$     T_mar = T_mar/DBLE(cntp_mar) 
+!!$     S_mar = S_mar/DBLE(cntp_mar) 
+!!$     U_mar = U_mar/DBLE(cntp_mar) 
+!!$     V_mar = V_mar/DBLE(cntp_mar) 
+!!$     Ku_mar = Ku_mar/DBLE(cntp_mar) 
+!!$     Ks_mar = Ks_mar/DBLE(cntp_mar) 
+!!$     Kt_mar = Kt_mar/DBLE(cntp_mar) 
+!!$     T_jun = T_jun/DBLE(cntp_jun) 
+!!$     S_jun = S_jun/DBLE(cntp_jun) 
+!!$     U_jun = U_jun/DBLE(cntp_jun) 
+!!$     V_jun = V_jun/DBLE(cntp_jun) 
+!!$     Ku_jun = Ku_jun/DBLE(cntp_jun) 
+!!$     Ks_jun = Ks_jun/DBLE(cntp_jun) 
+!!$     Kt_jun = Kt_jun/DBLE(cntp_jun) 
+!!$     T_sep = T_sep/DBLE(cntp_sep) 
+!!$     S_sep = S_sep/DBLE(cntp_sep) 
+!!$     U_sep = U_sep/DBLE(cntp_sep) 
+!!$     V_sep = V_sep/DBLE(cntp_sep) 
+!!$     Ku_sep = Ku_sep/DBLE(cntp_sep) 
+!!$     Ks_sep = Ks_sep/DBLE(cntp_sep) 
+!!$     Kt_sep = Kt_sep/DBLE(cntp_sep) 
+!!$     T_dec = T_dec/DBLE(cntp_dec) 
+!!$     S_dec = S_dec/DBLE(cntp_dec) 
+!!$     U_dec = U_dec/DBLE(cntp_dec) 
+!!$     V_dec = V_dec/DBLE(cntp_dec) 
+!!$     Ku_dec = Ku_dec/DBLE(cntp_dec) 
+!!$     Ks_dec = Ks_dec/DBLE(cntp_dec) 
+!!$     Kt_dec = Kt_dec/DBLE(cntp_dec) 
+!!$     !  OPEN(UNIT = 156, FILE = "output/phys_mar_20res.dat",STATUS = "REPLACE", &
+!!$     !       ACTION = "WRITE")
+!!$     !  OPEN(UNIT = 157, FILE = "output/phys_jun_20res.dat",STATUS = "REPLACE", &
+!!$     !       ACTION = "WRITE") 
+!!$     !  OPEN(UNIT = 158, FILE = "output/phys_sep_20res.dat",STATUS = "REPLACE", &
+!!$     !       ACTION = "WRITE")
+!!$     !  OPEN(UNIT = 159, FILE = "output/phys_dec_20res.dat",STATUS = "REPLACE", &
+!!$     !       ACTION = "WRITE")
+!!$     WRITE(156,100)REAL(T_mar),REAL(S_mar),REAL(U_mar),REAL(V_mar),REAL(Ku_mar),REAL(Ks_mar),REAL(Kt_mar)
+!!$     WRITE(157,100)REAL(T_jun),REAL(S_jun),REAL(U_jun),REAL(V_jun),REAL(Ku_jun),REAL(Ks_jun),REAL(Kt_jun)
+!!$     WRITE(158, 100)REAL(T_sep),REAL(S_sep),REAL(U_sep),REAL(V_sep),REAL(Ku_sep),REAL(Ks_sep),REAL(Kt_sep)
+!!$     WRITE(159,100)REAL(T_dec),REAL(S_dec),REAL(U_dec),REAL(V_dec),REAL(Ku_dec),REAL(Ks_dec),REAL(Kt_dec)
+!!$  END IF
 
   IF (year >= 1967   .AND. year < 1968 .AND.   time_step /= steps  .AND. jj_day /= 0) THEN
      p_cnt(day_count) = p_cnt(day_count)+1
