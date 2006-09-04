@@ -22,8 +22,7 @@ program SOG
 !!$  use timeseries_output, only: timeseries_output_open, write_timeseries
   use water_properties, only: water_property, alloc_water_props, &
        dalloc_water_props, Cp_profile
-!!$  use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
-  use grid_mod, only: init_grid, dalloc_grid, interp_i
+  use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
@@ -32,7 +31,7 @@ program SOG
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
-  ! *** Thse should eventually end up in refactored modules
+  ! *** These should eventually end up in refactored modules
   use find_wind_mod
   use Coriolis_and_pg_mod
   use define_flux_mod
@@ -121,7 +120,12 @@ program SOG
   ! and read them
   str = getpars("inputfile", 1)
   open(10, file=str, status="OLD", action="READ")
-  read(10, *) M, D, lambda , t_o, t_f, dt, day_o, year_o, month_o
+  read(10, *) grid%M, grid%D, lambda , t_o, t_f, dt, day_o, year_o, month_o
+
+  ! Initialize the grid
+  call init_grid
+  ! *** M can go away once derivs_sog takes grid%M as an argument
+  M = grid%M
 
   ! Calculate the number of time steps for the run (note that int()
   ! rounds down)
@@ -137,10 +141,6 @@ program SOG
 !!$  call timeseries_output_open(codeId, datetime_str(runDatetime), &
 !!$       datetime_str(startDatetime))
 
-  ! *** Why not read M & D directly into grid?
-  ! *** D has an implicit type conversion problem too
-  grid%M = M
-  grid%D = D
   ! *** These constants should be set as parameter somewhere else, or read
   ! *** from the main run parameters file
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
@@ -160,7 +160,7 @@ program SOG
   PZ_bins%det = 5
   ! Number of detritus bins, dissolved, slow sink and fast sink
   D_bins = 3
-  M2 = (PZ_bins%Quant+D_bins)*M   !size of PZ in biology: 
+  M2 = (PZ_bins%Quant+D_bins) * grid%M   !size of PZ in biology: 
 
   IF (year_o==2001) then
      ecmapp = 1
@@ -181,7 +181,7 @@ program SOG
 
   icheck=346
 
-  CALL allocate1(alloc_stat) 
+  CALL allocate1(grid%M, alloc_stat) 
   DO xx = 1,12
      IF (alloc_stat(xx) /= 0) THEN
         PRINT "(A)","ALLOCATION failed.  KPP.f  xx:"
@@ -196,13 +196,12 @@ program SOG
   cruise_id = getpars("cruise_id", 1)
   CALL read_sog
   CALL coefficients(alph, beta, dens, cloud,p_Knox)
-  CALL allocate3
+  CALL allocate3(grid%M)
 
   CALL initialize ! initializes everything (biology too)
-  CALL define_grid(grid, D, lambda) ! sets up the grid
+!!$  CALL define_grid(grid, D, lambda) ! sets up the grid
   ! Set up grid interpolation factor arrays
   ! *** Eventually, define_grid will be refactored into init_grid
-  call init_grid(M, grid)
   CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
@@ -229,7 +228,7 @@ program SOG
   Cp%g = Cp_profile(T%new, S%new)
   Cp%i = interp_i(Cp%g)
   ! Density with depth and density of fresh water
-  CALL density_sub(T, S, density%new, M,rho_fresh_o) 
+  CALL density_sub(T, S, density%new, grid%M, rho_fresh_o) 
   
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store previous time_steps in old (n) and old_old (n-1)
@@ -309,9 +308,12 @@ program SOG
         ! *** Identical statement to this above - why???
         j = day_time / 3600.0 + 1
 
-        CALL surface_flux_sog(grid%M,density%new,w,wt_r,S%old(1),S%new(h%i),S%new(M),T%new(0),j_gamma, &
-             I, Q_t(0), alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10., atemp(day_met,j), humid(day_met,j), &
-             Qinter,stress, rho_fresh_o,day,dt/grid%i_space(1),h,upwell,Einter,u%new(1), dt) 
+        ! *** Confirm that all of these arguments are necessary
+        CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%old(1),        &
+             S%new(h%i), S%new(grid%M), T%new(0), j_gamma, I, Q_t(0),        &
+             alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10.,    &
+             atemp(day_met,j), humid(day_met,j), Qinter,stress, rho_fresh_o, &
+             day, dt/grid%i_space(1), h, upwell, Einter, u%new(1), dt) 
 
         Bf%b(0) = -w%b(0)+Br   !surface buoyancy forcing *nonturbulent heat flux beta*F_n would also go here  Br is radiative contribution
 
@@ -344,21 +346,19 @@ program SOG
 
         CALL shear_diff(grid,U,V,density,K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
 
-        CALL double_diff(grid,T,S,K,alph%i,beta%i)  !test conv
-        ! calculates interior double diffusion    
+        ! Calculates interior double diffusion    
+        call double_diff(grid,T,S,K,alph%i,beta%i)  !test conv
 
-        !Define interior diffusivity K%x%total, nu_w_m and nu_w_s constant internal wave mixing
-
+        ! Define interior diffusivity K%x%total, nu_w_m and nu_w_s
+        ! constant internal wave mixing
         K%u%total = 0.0
         K%s%total = 0.0
         K%t%total = 0.0          
-
-        DO xx = 1,M
-
+        do xx = 1, grid%M
            K%u%total(xx) = K%u%shear(xx) + nu_w_m + K%s%dd(xx) !test conv
            K%s%total(xx) = K%u%shear(xx) + nu_w_s + K%s%dd(xx) !test conv
-           K%t%total(xx) = K%u%shear(xx) + nu_w_s + K%t%dd(xx) !test conv          
-        END DO
+           K%t%total(xx) = K%u%shear(xx) + nu_w_s + K%t%dd(xx) !test conv
+        enddo
 
         CALL interior_match(grid, h, K%t, nu_w_s)  ! calculate nu (D5)
         CALL interior_match(grid, h, K%u, nu_w_m)
@@ -538,12 +538,16 @@ program SOG
              Hvector%v)                                             ! out
 
         ! Solves tridiagonal system
-        call TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%u,U_p,M)
-        call TRIDAG(Amatrix%u%A,Amatrix%u%B,Amatrix%u%C,Hvector%v,V_p,M)
-        call TRIDAG(Amatrix%s%A,Amatrix%s%B,Amatrix%s%C,Hvector%s,S_p,M)
-        call TRIDAG(Amatrix%t%A,Amatrix%t%B,Amatrix%t%C,Hvector%t,T_p,M)
+        call TRIDAG(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
+             U_p, grid%M)
+        call TRIDAG(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%v, &
+             V_p, grid%M)
+        call TRIDAG(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
+             S_p, grid%M)
+        call TRIDAG(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%t, &
+             T_p, grid%M)
 
-        DO yy = 1, M   !remove diffusion!!!!!!!!!!  ? not sure
+        DO yy = 1, grid%M   !remove diffusion!!!!!!!!!!  ? not sure
            U%new(yy) = U_p(yy)
            V%new(yy) = V_p(yy)
            S%new(yy) = S_p(yy)
@@ -555,10 +559,10 @@ program SOG
         S%new(0) = S%new(1)   
         T%new(0) = T%new(1)
 
-        U%new(M+1) = U%new(M) 
-        V%new(M+1) = V%new(M) 
-        T%new(M+1) = T%old(M+1)
-        S%new(M+1) = S%old(M+1)
+        U%new(grid%M+1) = U%new(grid%M) 
+        V%new(grid%M+1) = V%new(grid%M) 
+        T%new(grid%M+1) = T%old(grid%M+1)
+        S%new(grid%M+1) = S%old(grid%M+1)
 
         ! Update the profiles of the water column properties
         ! Thermal and salinity expansion and their gradients
@@ -569,7 +573,7 @@ program SOG
         Cp%i = interp_i(Cp%g)
         
         ! Density with depth and density of fresh water
-        CALL density_sub(T, S, dens_i, M,rho_fresh_o)
+        CALL density_sub(T, S, dens_i, grid%M, rho_fresh_o)
         density%new = dens_i
 
         CALL div_i_param(grid,alph)
@@ -593,7 +597,7 @@ program SOG
 
         w%b_err(0) = 0.
 
-        DO xx = 1, M           !uses K%old and T%new
+        DO xx = 1, grid%M           !uses K%old and T%new
            w%t(xx) = -K%t%all(xx)*(T%div_i(xx) - gamma%t(xx))
            w%s(xx) = -K%s%all(xx)*(S%div_i(xx) - gamma%s(xx))
            w%b(xx) = g*(alph%i(xx)*w%t(xx)-beta%i(xx)*w%s(xx))   
@@ -689,14 +693,14 @@ program SOG
 
         sumu = 0.
         sumv = 0.
-        DO yy = 1, M   !remove barotropic mode
+        DO yy = 1, grid%M   !remove barotropic mode
            sumu = sumu+U%new(yy)
            sumv = sumv+V%new(yy)
         END DO
-        sumu = sumu/M
-        sumv = sumv/M
+        sumu = sumu/grid%M
+        sumv = sumv/grid%M
 
-        DO yy = 1, M   !remove barotropic mode
+        DO yy = 1, grid%M   !remove barotropic mode
            U%new(yy) = U%new(yy)-sumu
            V%new(yy) = V%new(yy)-sumv
         END DO
@@ -719,7 +723,7 @@ program SOG
 
         sumu = 0
         sumv = 0
-        do yy=1,M
+        do yy=1,grid%M
            ut%new(yy) = ut%old(yy)+U%new(yy)*dt*oLx
            vt%new(yy) = vt%old(yy)+V%new(yy)*dt*oLy 
         enddo
@@ -727,7 +731,7 @@ program SOG
         dzx(1) = ut%new(1)+1
         dzy(1) = vt%new(1)+1
 
-        do yy=2,M
+        do yy=2,grid%M
            dzx(yy) = dzx(yy-1) + (ut%new(yy)+1)
            dzy(yy) = dzy(yy-1) + (vt%new(yy)+1)
         enddo
@@ -738,13 +742,13 @@ program SOG
         sumpbx = 0.
         cz = 0.
         ii=1
-        do yy=1,M
+        do yy=1,grid%M
            if (yy == 1) then
               pbx(yy) = -density%new(yy)
            else
               pbx(yy) = pbx(yy-1)-density%new(yy)
            endif
-           do while ((dzx(ii)-yy) < -tol .and. ii < M)
+           do while ((dzx(ii)-yy) < -tol .and. ii < grid%M)
               pbx(yy) = pbx(yy) + density%new(ii)*(dzx(ii)-cz)
               cz = dzx(ii)
               ii = ii + 1
@@ -757,13 +761,13 @@ program SOG
         sumpby = 0.
         cz = 0.
         ii=1
-        do yy=1,M
+        do yy=1,grid%M
            if (yy == 1) then
               pby(yy) = -density%new(yy)
            else
               pby(yy) = pby(yy-1)-density%new(yy)
            endif
-           do while ((dzy(ii)- yy) <-tol .and. ii < M)
+           do while ((dzy(ii)- yy) <-tol .and. ii < grid%M)
               pby(yy) = pby(yy) + density%new(ii)*(dzy(ii)-cz)
               cz = dzy(ii)
               ii = ii + 1
@@ -773,14 +777,14 @@ program SOG
            cz = yy
         enddo
 
-        sumpbx = sumpbx/M
-        sumpby = sumpby/M
+        sumpbx = sumpbx/grid%M
+        sumpby = sumpby/grid%M
 
-        do yy = 1, M
+        do yy = 1, grid%M
            pbx(yy) = (pbx(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                + stress%u%new / (1025. * M * grid%i_space(yy))
+                + stress%u%new / (1025. * grid%M * grid%i_space(yy))
            pby(yy) = (pby(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                + stress%v%new / (1025. * M * grid%i_space(yy))     
+                + stress%v%new / (1025. * grid%M * grid%i_space(yy))     
         enddo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
@@ -804,7 +808,7 @@ program SOG
 
 
 ! load the PZ vector with all the biological quantities
-     call define_PZ(M, PZ_bins, D_bins, M2, &                    !in
+     call define_PZ(grid%M, PZ_bins, D_bins, M2, &                    !in
           P%micro%new, P%nano%new, N%O%new, N%H%new, Detritus, & !in
           PZ)                                                    !out
 
@@ -819,12 +823,12 @@ program SOG
 
      !*** Size of T in odeint is hard-coded to 81
         call odeint(PZ, M2, time, next_time, precision, step_guess, step_min, &
-             N_ok, N_bad, derivs_sog, rkqs, icheck, T%new(0:M))
+             N_ok, N_bad, derivs_sog, rkqs, icheck, T%new(0:grid%M))
 
      ! check for negative NH values and then for negative Micro phyto values
      !*** add nanos and move into a subroutine in bio module 
-     bPZ = (PZ_bins%NH - 1) * M + 1
-     ePZ = PZ_bins%NH * M
+     bPZ = (PZ_bins%NH - 1) * grid%M + 1
+     ePZ = PZ_bins%NH * grid%M
      IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
         DO xx = bPZ,ePZ
            IF (PZ(xx) < 0.) THEN
@@ -835,8 +839,8 @@ program SOG
            END IF
         END DO
      END IF
-     bPZ = (PZ_bins%micro - 1) * M + 1
-     ePZ = PZ_bins%micro * M
+     bPZ = (PZ_bins%micro - 1) * grid%M + 1
+     ePZ = PZ_bins%micro * grid%M
      IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
         PRINT "(A)","PZ < 0. After odeint.f see SOG.f90"
         PRINT "(A)","time,day"
@@ -897,8 +901,8 @@ program SOG
         CALL advection(grid,Detritus(2)%v,Detritus(2)%D%old,dt,Gvector_ao%d(2)%bin)
      END DO
      
-     CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*M), & !in
-          PZ((PZ_bins%det-1)*M+1:M2), P%micro%old, P%nano%old, N%O%old, &   !in
+     CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*grid%M), & !in
+          PZ((PZ_bins%det-1)*grid%M+1:M2), P%micro%old, P%nano%old, N%O%old, &   !in
           N%H%old, Detritus, &                                              !in
           Gvector_ro)                                       ! out
      Gvector_ro%Sil = 0 ! for now
@@ -930,48 +934,48 @@ program SOG
 
      END IF ! time_step == 1
 
-     CALL P_H (M, P%micro%old, Gvector%p%micro, Gvector_o%p%micro, &
+     CALL P_H (grid%M, P%micro%old, Gvector%p%micro, Gvector_o%p%micro, &
           Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix_o%bio, &
           Hvector%p%micro)
-     CALL P_H(M, P%nano%old, Gvector%p%nano, Gvector_o%p%nano, &
+     CALL P_H(grid%M, P%nano%old, Gvector%p%nano, Gvector_o%p%nano, &
           Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
      DO xx = 1,D_bins-1
-        CALL P_H (M, Detritus(xx)%D%old, Gvector%d(xx)%bin, &
+        CALL P_H (grid%M, Detritus(xx)%D%old, Gvector%d(xx)%bin, &
              Gvector_o%d(xx)%bin, Gvector_ro%d(xx)%bin, &
              Gvector_ao%d(xx)%bin, Bmatrix_o%bio, &
              Hvector%d(xx)%bin)
      END DO
-     CALL P_H(M, Detritus(D_bins)%D%old, Gvector%d(D_bins)%bin, &
+     CALL P_H(grid%M, Detritus(D_bins)%D%old, Gvector%d(D_bins)%bin, &
           Gvector_o%d(D_bins)%bin, Gvector_ro%d(D_bins)%bin, &
           null_vector, Bmatrix%null, Hvector%d(D_bins)%bin) 
-     CALL P_H(M, N%O%old, Gvector%n%o, Gvector_o%n%o, &
+     CALL P_H(grid%M, N%O%old, Gvector%n%o, Gvector_o%n%o, &
           Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
           Hvector%n%o)  ! null_vector 'cause no sinking
-     CALL P_H(M,  N%H%old, Gvector%n%h, Gvector_o%n%h, &
+     CALL P_H(grid%M,  N%H%old, Gvector%n%h, Gvector_o%n%h, &
           Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
           Hvector%n%h)  ! null_vector 'cause no sinking
-     CALL P_H(M,  Sil%old, Gvector%sil, Gvector_o%sil, &
+     CALL P_H(grid%M,  Sil%old, Gvector%sil, Gvector_o%sil, &
           Gvector_ro%sil, null_vector, Bmatrix_o%no, &
           Hvector%sil)  ! null_vector 'cause no sinking
 
      CALL TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%micro,&
-          P1_p, M)
+          P1_p, grid%M)
      CALL TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%nano, &
-          Pnano1_p, M)
+          Pnano1_p, grid%M)
      CALL TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
-          NO1_p, M) 
+          NO1_p, grid%M) 
      CALL TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
-          NH1_p, M) 
+          NH1_p, grid%M) 
      call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%sil, &
-          SIL1_p, M)
+          SIL1_p, grid%M)
 
      DO xx = 1,D_bins-1
-        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%d(xx)%bin,Detritus1_p(xx,:),M)
+        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%d(xx)%bin,Detritus1_p(xx,:),grid%M)
      END DO
-     CALL TRIDAG(Amatrix%null%A,Amatrix%null%B,Amatrix%null%A,Hvector%d(D_bins)%bin,Detritus1_p(D_bins,:),M)
+     CALL TRIDAG(Amatrix%null%A,Amatrix%null%B,Amatrix%null%A,Hvector%d(D_bins)%bin,Detritus1_p(D_bins,:),grid%M)
 
-     CALL find_new
+     CALL find_new(grid%M)
 
      !-----END BIOLOGY------------------------------------------------
 
@@ -980,11 +984,11 @@ program SOG
      ! for those variables that we have data, use the annual fit calculated
      ! from the data
      call bot_bound_time (day, day_time, &                            ! in
-          T%new(M+1), S%new(M+1), N%O%new(M+1), Sil%new(M+1), &       ! out
-          P%micro%new(M+1), P%nano%new(M+1))                          ! out
+          T%new(grid%M+1), S%new(grid%M+1), N%O%new(grid%M+1), Sil%new(grid%M+1), &       ! out
+          P%micro%new(grid%M+1), P%nano%new(grid%M+1))                          ! out
      ! for those variables that we have no data, assume uniform at
      ! bottom of domain
-     call bot_bound_uniform (M, N%H%new, Detritus)
+     call bot_bound_uniform (grid%M, N%H%new, Detritus)
 
 !!$     ! Write time series results
 !!$     call write_timeseries(time / 3600., &
@@ -1045,7 +1049,7 @@ program SOG
   ! Write the profile values at the surface, and at all grid points
   ! *** Change this index to i when we know common block effects have been
   ! *** cleaned up and i is safe to use as a local index
-  do i_pro = 0, M
+  do i_pro = 0, grid%M
      sigma_t = density%new(i_pro) - 1000.
      write(profiles, 201) grid%d_g(i_pro), KtoC(T%new(i_pro)),          &
           S%new(i_pro), sigma_t, P%micro%new(i_pro), N%O%new(i_pro),    & 
@@ -1056,13 +1060,13 @@ program SOG
   end do
   ! Write the values at the bottom grid boundary.  Some quantities are
   ! not defined there, so use their values at the Mth grid point.
-  sigma_t = density%new(M+1) - 1000.
-  write(profiles, 201) grid%d_g(M+1), KtoC(T%new(M+1)),        &
-          S%new(M+1), sigma_t, P%micro%new(M+1), N%O%new(M+1), &
-          N%H%new(M+1), Sil%new(M+1), Detritus(1)%D%new(M+1),  &
-          Detritus(2)%D%new(M+1), Detritus(3)%D%new(M+1),      &
-          K%u%all(M), K%t%all(M), K%s%all(M), I_par(M),        &
-          U%new(M+1), V%new(M+1)
+  sigma_t = density%new(grid%M+1) - 1000.
+  write(profiles, 201) grid%d_g(grid%M+1), KtoC(T%new(grid%M+1)),             &
+          S%new(grid%M+1), sigma_t, P%micro%new(grid%M+1), N%O%new(grid%M+1), &
+          N%H%new(grid%M+1), Sil%new(grid%M+1), Detritus(1)%D%new(grid%M+1),  &
+          Detritus(2)%D%new(grid%M+1), Detritus(3)%D%new(grid%M+1),           &
+          K%u%all(grid%M), K%t%all(grid%M), K%s%all(grid%M), I_par(grid%M),   &
+          U%new(grid%M+1), V%new(grid%M+1)
 201 format(f7.3, 16(2x, f8.4))
   close(unit=profiles)
 
