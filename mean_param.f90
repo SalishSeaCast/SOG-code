@@ -7,12 +7,9 @@ module mean_param
   ! It would also be good to re-organize somehow so that they types
   ! hierarchy is more evident.
 
-  implicit none
+  use grid_mod, only: gr_d => grid_
 
-  TYPE :: gr_d              !Grid and  interface points and spacing
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: d_i, d_g, g_space, i_space
-     INTEGER :: M, D
-  END TYPE gr_d
+  implicit none
 
   TYPE :: alpha             !Interpolation data
      DOUBLE PRECISION :: value, TT, SS, dS
@@ -33,7 +30,7 @@ module mean_param
      INTEGER :: micro, nano, NO, NH, det, Quant
   END TYPE bins
 
-  ! expansion coefficients, heat capacity, surface density
+  ! expansion coefficients, surface density
   TYPE :: constant          
      TYPE(alpha), DIMENSION(13) :: data
      DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
