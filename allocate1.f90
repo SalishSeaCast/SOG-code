@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-subroutine allocate1(STAT)
+subroutine allocate1(M, STAT)
 
       use mean_param
       use declarations
@@ -9,8 +9,9 @@ subroutine allocate1(STAT)
 
       implicit none
      
-      ! Argument:
-      integer, dimension(20), intent(OUT)::STAT
+      ! Arguments:
+      integer, intent(in) :: M  ! Number of grid points
+      integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
       ALLOCATE(U%new(0:M+1),U%old(0:M+1),U%old_old(0:M+1),U%last(0:M+1),V%new(0:M+1),V%old(0:M+1),&
                V%old_old(0:M+1),V%last(0:M+1),&
@@ -58,8 +59,7 @@ subroutine allocate1(STAT)
 
       ALLOCATE(ref_T(0:M+1), &
            avg_12(0:M+1), tot_avg(0:M+1), Q_t(0:M), T_To(0:M+1), &
-           I(0:M), I_par(0:M), Q_n(0:M), F_n(0:M),  grid%d_g(0:M+1), &
-           grid%d_i(0:M), grid%i_space(M), grid%g_space(0:M), &
+           I(0:M), I_par(0:M), Q_n(0:M), F_n(0:M), &
            phi%m%value(0:M), phi%s%value(0:M), Ri_b(M), &
            N_2_i(M), N_2_g(M), N_2_dens_g(M), &
            Q_test(M), V_t_square(M), omega%s%value(0:M), omega%m%value(0:M), &
