@@ -52,7 +52,7 @@ allocate1.o read_sog.o find_wind.o 	\
 stability.o \
 \
 allocate2.o Julian_day.o initialize.o	\
-smoothdata.o coefficients.o define_grid.o define_sog.o	\
+smoothdata.o coefficients.o define_sog.o	\
 alpha_sub.o density_sub.o irradiance_sog.o 	\
 buoyancy.o surface_flux_sog.o fun_constants.o		\
 ND_flux_profile.o vel_scales.o convection_scales.o		\
@@ -64,7 +64,7 @@ define_Ri_b_sog.o ML_height_sog.o define_hm_sog.o pdf.o 		\
 write_physical_sog.o new_year.o SOG.o define_PZ.o		\
 odeint.o reaction_p_sog.o P_H.o find_new.o			\
 fit.o polint.o gammq.o gser.o gcf.o	\
-gammln.o allocate3.o reaction.o derivs_noflag.o derivs_sog.o rkqs.o     \
+gammln.o allocate3.o reaction.o derivs_sog.o rkqs.o     \
 rkck.o advection.o
 
 # The executable is the default target that is built by "make"
