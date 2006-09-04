@@ -12,8 +12,6 @@ module declarations
   implicit NONE
 
   ! Run parameters read from file specified as 'inputfile' in infile
-  ! *** Declaration of M can go away once derivs_sog takes grid%M as an arg
-  integer :: M              ! # of grid points in model domain
   integer :: year_o         ! year in which run starts [yr]
   ! *** Why is month_o not declared here; rather it's local in SOG.f90
   integer :: day_o          ! year-day on which run starts [1-Jan = 1]
