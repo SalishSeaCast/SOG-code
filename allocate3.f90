@@ -1,15 +1,17 @@
 ! $Id$
 ! $Source$
 
-subroutine allocate3
+subroutine allocate3(M)
   ! Allocate memory for biological model arrays (at least some of them...)
 
   use malloc, only: alloc_check
-  use declarations, only: M, M2, D_bins, PZ, Gvector, Gvector_o, &
+  use declarations, only: M2, D_bins, PZ, Gvector, Gvector_o, &
        Gvector_ao, Gvector_ro, Hvector, Detritus
 
   implicit none
 
+  ! Argument:
+  integer, intent(in)  :: M          ! Number of grid points
   ! Local variables:
   integer              :: allocstat  ! Allocation return status
   character(len=80)    :: msg        ! Allocation failure message prefix
