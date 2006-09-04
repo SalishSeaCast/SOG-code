@@ -2,11 +2,27 @@
 ! $Source$
 
 module grid_mod
-  ! Type definitions, functions, and subroutines related to the grid.
-  ! *** For the moment, just grid interpolation factors and function,
-  ! *** but eventually all of the grid definition code will reside here.
+  ! Type definitions, variables, functions, and subroutines related to
+  ! the grid.
   !
-  ! Public Function:
+  ! Public Type:
+  !
+  ! grid_ -- Grid parameters:
+  !            D -- depth of bottom of grid [m]
+  !            M -- number of grid points
+  !            d_g -- array of depths of grid points [m]
+  !            d_i -- array of depths of grid cell interfaces [m]
+  !            g_space -- array of depths of grid point spacings [m]
+  !            i_space -- array of depths of grid cell interface spacings [m]
+  !
+  ! Public Variables:
+  !
+  ! grid   -- Grid point and interface depth and spacing arrays.
+  ! lambda -- Grid spacing parameter (<0 concentrates resolution near
+  !           surface, =0 produced uniform grid, >0 concentrates resolution 
+  !           near bottom of grid).  See Large, et al (1994), App. D.
+  !
+  ! Public Functions:
   !
   ! interp_d(qty, d) -- Return the interpolated value of a quantity
   !                     stored at the grid points at the specified depth.
@@ -28,10 +44,34 @@ module grid_mod
 
   private
   public :: &
+       ! Types:
+       grid_, &
+       ! Variables:
+       grid, lambda, &
        ! Functions:
        interp_d, interp_i, &
        ! Subroutines:
        init_grid, dalloc_grid
+
+  ! Public type definition:
+  !
+  ! Grid parameters
+  type :: grid_
+     ! *** I think D should be real
+     integer :: M               ! Number of grid points
+     real(kind=dp) :: D         ! Depth of bottom of grid [m]
+     real(kind=dp), dimension(:), pointer :: d_g  ! Grid point depths [m]
+     real(kind=dp), dimension(:), pointer :: d_i  ! Grid interface depths [m]
+     real(kind=dp), dimension(:), pointer :: g_space  ! Grid point spacing [m]
+     real(kind=dp), dimension(:), pointer :: i_space  ! Grid i'face spacing [m]
+  end type grid_
+
+  ! Public variable declarations:
+  !
+  ! Grid point and interface depth and spacing arrays
+  type(grid_) :: grid
+  ! Grid spacing factor
+  real(kind=dp) :: lambda
 
   ! Private type definition:
   !
@@ -49,43 +89,38 @@ module grid_mod
 
 contains
 
-  subroutine init_grid(M, grid)
-    ! Initialize grid interpolation factor values
-    ! *** Eventually this will absorb define_grid() and do all grid
-    ! *** initialization.
+  subroutine alloc_grid(grid)
+    ! Allocate memory for grid arrays.
     use malloc, only: alloc_check
-    ! *** This is temporary, but we need the grid type-def
-    use mean_param, only: gr_d
     implicit none
-    ! Argument:
-    integer, intent(in)    :: M     ! Number of grid points
-    type(gr_d), intent(in) :: grid  ! Grid depths & spacings
+    type(grid_), intent(inout) :: grid
     ! Local variables:
-    integer              :: allocstat  ! Allocation return status
-    character(len=80)    :: msg        ! Allocation failure message prefix
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
 
-    ! Allocate memory for grid interface interpolation factor arrays
-    msg = "Grid interface interpolation factor arrays"
-    allocate(above_g%factor(1:M+1), below_g%factor(0:M), stat=allocstat)
+    msg = "Grid point and interface depth and spacing arrays"
+    allocate(grid%d_g(0:grid%M+1), grid%d_i(0:grid%M), &
+         grid%g_space(0:grid%M), grid%i_space(1:grid%M), stat=allocstat)
     call alloc_check(allocstat, msg)
-    ! Calculate the grid interface interpolation factors
-    above_g%factor(1:M) = abs(grid%d_i(0:M-1) - grid%d_g(1:M)) &
-         / grid%g_space(0:M-1)
-    above_g%factor(M+1) = 0.
-    below_g%factor(0) = 0.
-    below_g%factor(1:M) = abs(grid%d_g(1:M) - grid%d_i(1:M)) &
-         / grid%g_space(1:M)
-  end subroutine init_grid
+
+    msg = "Grid interface interpolation factor arrays"
+    allocate(above_g%factor(1:grid%M+1), below_g%factor(0:grid%M), stat=allocstat)
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_grid
 
 
   subroutine dalloc_grid
-    ! Deallocate memory for grid interface interpolation factors
-    ! *** and eventually the rest of the grid
+    ! Deallocate memory for grid arrays.
     use malloc, only: dalloc_check
     implicit none
     ! Local variables:
-    integer              :: dallocstat  ! Allocation return status
-    character(len=80)    :: msg         ! Allocation failure message prefix
+    integer           :: dallocstat  ! Allocation return status
+    character(len=80) :: msg         ! Allocation failure message prefix
+
+    msg = "Grid point and interface depth and spacing arrays"
+    deallocate(grid%d_g, grid%d_i, grid%g_space, grid%i_space, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
 
     msg = "Grid interface interpolation factor arrays"
     deallocate(above_g%factor, below_g%factor, stat=dallocstat)
@@ -93,18 +128,72 @@ contains
   end subroutine dalloc_grid
 
 
-  function interp_d(qty_g, d, grid) result(d_value)
+  subroutine init_grid
+    ! Initialize grid interpolation factor values
+    ! *** Eventually this will absorb define_grid() and do all grid
+    ! *** initialization.
+    use precision_defs, only: dp, sp
+    use io_unit_defs, only: stderr
+    implicit none
+    ! Local variables:
+    integer :: j  ! Loop index over depth of grid
+    real(kind=dp), dimension(0:grid%M)   :: xsi_i  ! Interface indices
+    real(kind=dp), dimension(0:grid%M+1) :: xsi_g  ! Grid point indices
+
+    ! Allocate memory for grid arrays
+    call alloc_grid(grid)
+
+    ! Calculate the grid point and interface indices per Large, et al
+    ! (1994) Appendix D (expressions are defined in the paragraph
+    ! following the one containing eq'n D1)
+    do j = 0, grid%M
+       xsi_i(j) = dble(j) / dble(grid%M)
+    enddo
+    xsi_g(0) = 0.
+    do j = 1, grid%M
+       xsi_g(j) = (dble(j) - 0.5) / dble(grid%M)
+    enddo
+    xsi_g(grid%M + 1) = xsi_i(grid%M)
+
+    ! Calculate the grid point and interface depths (Large, etal 1994 eq'n D1)
+    if (abs(lambda) < epsilon(lambda)) then
+       ! Uniform grid (lambda == 0)
+       grid%d_g = grid%D * xsi_g
+       grid%d_i = grid%D * xsi_i
+    else
+       ! Non-uniform grid (lambda < 0 concentrates resolution near
+       ! surface, lambda > 0 concentrates resolution near D)
+       ! *** Note that implementation of non-uniform grid is not
+       ! *** consistent throughout the code
+       write(stderr, *) "Non-uniform grid is not fully implemented, ", &
+            "lambda = ", lambda
+       stop
+       grid%d_g = (grid%D / lambda) * log(1. * xsi_g * (1. - exp(lambda)))
+       grid%d_i = (grid%D / lambda) * log(1. * xsi_i * (1. - exp(lambda)))
+    endif
+
+    ! Calculate the grid point and interface spacings
+    grid%g_space = grid%d_g(1:) - grid%d_g(0:grid%M)
+    grid%i_space = grid%d_i(1:) - grid%d_i(0:grid%M-1)
+
+    ! Calculate the grid interface interpolation factors
+    above_g%factor(1:grid%M) = abs(grid%d_i(0:grid%M-1) - grid%d_g(1:grid%M)) &
+         / grid%g_space(0:grid%M-1)
+    above_g%factor(grid%M+1) = 0.
+    below_g%factor(0) = 0.
+    below_g%factor(1:grid%M) = abs(grid%d_g(1:grid%M) - grid%d_i(1:grid%M)) &
+         / grid%g_space(1:grid%M)
+  end subroutine init_grid
+
+
+  function interp_d(qty_g, d) result(d_value)
     ! Return the interpolated value of a quantity stored at the grid
     ! points at the specified depth.
-    ! *** use of mean_param can be removed when grid comes into this
-    ! *** module
-    use mean_param, only: gr_d
     use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(in) :: qty_g
     real(kind=dp), intent(in) :: d
-    type(gr_d), intent(in) :: grid
     ! Result:
     real(kind=dp) :: d_value
     ! Local variables:
@@ -139,9 +228,8 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: qty_g
     ! Result:
     ! Quantity values at grid interface depths
-    real(kind=dp), dimension(0:size(qty_g) - 2) :: qty_i
-    ! *** size(qty_g) - 2) can be replaced by grid%M when grid comes
-    ! *** into this module
+    real(kind=dp), dimension(0:grid%M) :: qty_i
+
     qty_i = qty_g(0:size(qty_g) - 2) * above_g%factor &
          + qty_g(1:) * below_g%factor
   end function interp_i
