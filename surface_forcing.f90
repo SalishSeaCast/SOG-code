@@ -4,7 +4,7 @@
 module surface_forcing
   ! *** This is a very poorly named module!
 
-  use precision_defs
+  use precision_defs, only: dp
   use mean_param
 
   implicit none
@@ -18,17 +18,22 @@ module surface_forcing
 !*** real(kind=dp), parameter :: f = 2. * (2. * PI / 86400.) * &
 !***    sin(PI * latitude / 180.)
   real(kind=dp), parameter :: f = 1.1d-4
+  ! Acceleration due to gravity
+  real(kind=dp), parameter :: g = 9.81  ! m/s^2
+  ! Critical value of Richardson number for mixed layer depth
+  ! determination
+  ! *** Susan was surprised that this value was not 0.25
+  real(kind=dp), parameter :: Ri_c = 0.3
 
-  DOUBLE PRECISION, PARAMETER::g = 9.81, & !m/s^2
+  DOUBLE PRECISION, PARAMETER:: &
        small = 1.D-15, &
        small2 = 0.001, &  !smallest number of copepods out
        min_out = 2.5D-04, &   !1.D-05, &
        cutoff = 10.0, &
        var_c = 5.0, &   !***  !11.0
        zero =  0.
-  DOUBLE PRECISION, PARAMETER:: Cv = 1.5, & !1.99 !set to keep beta_t = -0.2
+  DOUBLE PRECISION, PARAMETER:: Cv = 1.5  !1.99 !set to keep beta_t = -0.2
        !beta_t = -0.2 only for convection
-  Ri_c = 0.3
   DOUBLE PRECISION, PARAMETER::S_ice = 0.0, & !ice salinity. unknown
        rho_ice = 1000.0, & !density ice, unknown
        kapa = 0.4 !Von Karman constant
