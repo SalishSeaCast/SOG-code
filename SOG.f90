@@ -28,6 +28,7 @@ program SOG
        diffusion_bot_surf_flux
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   use rungekutta, only: odeint
+  use profile_mod, only: init_profiles, profile, profile_close
 
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
@@ -199,6 +200,8 @@ program SOG
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
   call init_fitbottom   ! initialize the bottom data, values in subroutine
+  call init_profiles() ! initialize profile writing code
+
 
   max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
 
@@ -797,6 +800,8 @@ program SOG
 
      ENDDO
 
+     call profile (day, day_time, dt, grid%d_g, S%new, grid%M+1)
+
 !------BIOLOGICAL MODEL--------------------------------------------
 
 
@@ -1063,6 +1068,8 @@ program SOG
           U%new(grid%M+1), V%new(grid%M+1)
 201 format(f7.3, 16(2x, f8.4))
   close(unit=profiles)
+
+  call profile_close
 
   ! Deallocate memory
   call dalloc_water_props(Cp)
