@@ -32,10 +32,6 @@ subroutine write_physical_sog(unow, vnow, euphotic)
        Detritus(1)%D%new(0), Detritus(2)%D%new(0), Detritus(3)%D%new(0), &
        f_ratio(1)
 
-
-  open(294,file="output/PON_flux.dat")
-  write(294,*) NHflux_200,NOflux_200,PONflux_200
-
   jj_day = 0
 
   DO jj = 1,27

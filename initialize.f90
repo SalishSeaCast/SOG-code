@@ -88,15 +88,6 @@ SUBROUTINE initialize
       Thalfdiatom_ml = 0.
       T2zmicro_ml = 0.
       Thalfzmicro_ml = 0.
-      PONflux200 = 0.
-      PONflux100 = 0.
-      PONfluxml = 0.
-      NOflux200 = 0.
-      NOfluxml = 0.
-      NOflux100 = 0.
-      NHflux200 = 0.
-      NHfluxml = 0.
-      NHflux100 = 0.
       feacalml = 0.
       D3_ml = 0.
       D3_200 = 0.

@@ -24,7 +24,7 @@ module declarations
 
   TYPE(constant)::alph, beta, dens
   TYPE(gr_d)::grid
-  TYPE(prop)::T, S, U, V, B, density, P_temp, PON, vt, ut
+  TYPE(prop)::T, S, U, V, B, density, P_temp, vt, ut
   type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
   TYPE(zplankton):: Z
@@ -140,10 +140,8 @@ module declarations
        NOup_e,NHup_e,fratio_e, NPP_e,NPP_ml,NPP_80,ngrow_o,ngrow_e,ngrow_ml,dgrow_o,dgrow_e,dgrow_ml,&
        species_b,species_mwt,species_mwt_o,zgrazen_ml,cgrazed_ml,cgrazez_ml,cgrazed2_ml,SPN_ml,&
        T2nano_ml,Thalfnano_ml,T2diatom_ml,Thalfdiatom_ml,T2zmicro_ml,&
-       Thalfzmicro_ml,PONflux200,PONfluxml,PONflux100,feacalml,ureaf,ureac,migrateflux,NOflux200,&
-       NOfluxml,&
-       NOflux100,NOup_ml,NHup_ml,fratio_ml,hm_new,euph_new,species_avgwt,D3_ml,D3_200,NHflux200,&
-       NHfluxml,NHflux100,PN_200,NH_200,NO_200
+       Thalfzmicro_ml,feacalml,ureaf,ureac,migrateflux,NOup_ml,NHup_ml,&
+       fratio_ml,hm_new,euph_new,species_avgwt,D3_ml,D3_200,PN_200,NH_200,NO_200
   DOUBLE PRECISION, DIMENSION(0:50)::bin_logwt,bin_cnt     
   DOUBLE PRECISION, DIMENSION(1:27,0:50)::bin_cnt_year
   INTEGER, DIMENSION(:),ALLOCATABLE::daybins
@@ -188,10 +186,8 @@ module declarations
        Ks_mar,Ks_dec,Ks_sep,Ks_jun,Kt_mar,Kt_dec,Kt_sep,Kt_jun
   INTEGER::cntp_mar,cntp_sep,cntp_jun,cntp_dec
 
-  !!variables for finding PON flux
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::null_vector
-  DOUBLE PRECISION::PONflux_200,PONflux_100,PONflux_ml,NOflux_200,NOflux_ml,NOflux_100,NHflux_200,&
-       NHflux_ml,NHflux_100  !due to physical processes
+  ! An empty vector
+  real(kind=dp), dimension(:), allocatable :: null_vector
 
 !!!!!!!variables from KPP used in shift_vector.f90
 

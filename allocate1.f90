@@ -16,7 +16,6 @@ subroutine allocate1(STAT)
                V%old_old(0:M+1),V%last(0:M+1),&
                T%new(0:M+1),T%old(0:M+1),T%old_old(0:M+1), S%new(0:M+1),&
                S%old(0:M+1),S%old_old(0:M+1),B%new(0:M+1),B%old(0:M+1),P%micro%old(0:M+1),&
-               PON%new(0:M+1),PON%old(0:M+1),&
                P%micro%new(0:M+1),Z%micro%new(0:M+1),Z%micro%old(0:M+1),P%micro%old_old(0:M+1),&
                Z%micro%old_old(0:M+1), P%nano%new(0:M+1),P%nano%old(0:M+1),P%nano%old_old(0:M+1),&
                N%O%new(0:M+1),N%O%old(0:M+1),N%O%old_old(0:M+1),&

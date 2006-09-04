@@ -5,7 +5,7 @@ SUBROUTINE define_sog(timestep)
   USE declarations, only: D_bins, U, V, S, T, h, P, N, Sil, &
        B, density, K, Bmatrix, Bmatrix_o, & 
        Gvector, Gvector_o, Gvector_c, Gvector_co, &
-       Detritus, PON, ut, vt
+       Detritus, ut, vt
 
       IMPLICIT NONE
 
@@ -69,7 +69,6 @@ SUBROUTINE define_sog(timestep)
          N%O%old = N%O%new
          N%H%old = N%H%new
          Sil%old = Sil%new
-         PON%old = PON%new
 
          ut%old = ut%new
          vt%old = vt%new
