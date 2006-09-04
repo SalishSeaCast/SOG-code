@@ -1,48 +1,48 @@
-SUBROUTINE ML_height_sog(mm,Rib, new_h, kmax)
+! $Id$
+! $Source$
 
-      USE mean_param
-      USE surface_forcing
+subroutine ML_height_sog(grid, Ri_b, new_h, kmax)
+  ! Find the mixed layer depth.
 
-      IMPLICIT NONE
+  use precision_defs, only: dp
+  use io_unit_defs, only: stderr
+  use grid_mod, only: grid_
+  use surface_forcing, only: Ri_c
 
-      TYPE(gr_d), INTENT(IN)::mm 
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::Rib !Ri_b
-      DOUBLE PRECISION, INTENT(OUT)::new_h
-      INTEGER, INTENT(OUT)::kmax
-      
-      INTEGER::k
+  implicit none
 
-      kmax = mm%M             
-      new_h =mm%d_g(kmax)    
-!PRINT*,'1.new-h',new_h,kmax
+  ! Arguments:
+  type(grid_), intent(in) :: grid 
+  real(kind=dp), dimension(grid%M), intent(in) :: Ri_b
+  real(kind=dp), intent(out) :: new_h
+  integer, intent(out) :: kmax
+  ! Local variable:
+  integer :: k
 
-      DO k = 1, mm%M-2
-         IF  (Rib(k) > Ri_c) THEN
-          !PRINT*,'Rib(k)',Rib
-            kmax = k 
-            EXIT
-         END IF
-      END DO
+  ! Find the grid point at which the Richardson number exceeds the
+  ! critical value
+  kmax = grid%M             
+  new_h =grid%d_g(kmax)    
+  do k = 1, grid%M-2
+     if (Ri_b(k) > Ri_c) then
+        kmax = k 
+        exit
+     end if
+  end do
 
-      IF (kmax == 1) THEN
-         new_h = mm%d_g(kmax)*Ri_c/(Rib(kmax)+1.0D-30) !##
-!PRINT*,'2.newh',new_h
-      ELSE  IF (kmax >= mm%M - 2) THEN
-         PRINT "(A)","**ERROR** Mixing too deep!  j_max_g:"
-!PRINT*,'kmax',kmax
-         kmax = mm%M-3
-         new_h = mm%d_g(kmax) - mm%g_space(kmax)/4.0 !#
-         PRINT "(A)","Set Kmax = mm%M-3"
-!PRINT*,'3.new_h',new_h
-      ELSE
-!PRINT*,'yes'
-         new_h = mm%d_g(kmax) +(Ri_c - Rib(kmax))/(Rib(kmax)-Rib(kmax-1) + &
-             1.0D-30)*mm%g_space(kmax-1) ! interpolate
-
-!PRINT*,'4.new-h',new_h,mm%d_g(kmax),Rib(kmax),Ri_c,Rib(kmax-1)
-!pause
-      END IF
-
-END SUBROUTINE ML_height_sog
-
-      
+  if (kmax == 1) then
+     new_h = grid%d_g(kmax) * Ri_c / (Ri_b(kmax) + epsilon(Ri_b(kmax)))
+  else if (kmax >= grid%M - 2) then
+     ! Mixing deeper than bottom of grid
+     kmax = grid%M-3
+     new_h = grid%d_g(kmax) - grid%g_space(kmax) / 4.0 !#
+     write(stderr, *) "ML_height_sog: Mixing too deep. ", &
+          "Set kmax = ", kmax, " and new_h = ", new_h
+  else
+     ! Interpolate to find mixed layer depth
+     new_h = grid%d_g(kmax) &
+          + (Ri_c - Ri_b(kmax)) / (Ri_b(kmax) - Ri_b(kmax-1) &
+          + epsilon(Ri_b(kmax) - Ri_b(kmax-1))) &
+          * grid%g_space(kmax-1)
+  end if
+end subroutine ML_height_sog
