@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE define_sog(timestep)
   
   !!store previous time_steps in old (n)
@@ -53,7 +56,6 @@ SUBROUTINE define_sog(timestep)
          Gvector_co%v = Gvector_c%v
 
          DO kk = 1, D_bins
-            Detritus(kk)%D%old_old = Detritus(kk)%D%old
             Gvector_o%d(kk)%bin = Gvector%d(kk)%bin 
          END DO
          

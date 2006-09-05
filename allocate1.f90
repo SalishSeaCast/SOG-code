@@ -13,16 +13,17 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(U%new(0:M+1),U%old(0:M+1),U%old_old(0:M+1),U%last(0:M+1),V%new(0:M+1),V%old(0:M+1),&
-               V%old_old(0:M+1),V%last(0:M+1),&
-               T%new(0:M+1),T%old(0:M+1),T%old_old(0:M+1), S%new(0:M+1),&
-               S%old(0:M+1),S%old_old(0:M+1),B%new(0:M+1),B%old(0:M+1),P%micro%old(0:M+1),&
-               P%micro%new(0:M+1),Z%micro%new(0:M+1),Z%micro%old(0:M+1),P%micro%old_old(0:M+1),&
-               Z%micro%old_old(0:M+1), P%nano%new(0:M+1),P%nano%old(0:M+1),P%nano%old_old(0:M+1),&
-               N%O%new(0:M+1),N%O%old(0:M+1),N%O%old_old(0:M+1),&
-               N%H%new(0:M+1),N%H%old(0:M+1),N%H%old_old(0:M+1),&
+      ALLOCATE(U%new(0:M+1),U%old(0:M+1),&
+           V%new(0:M+1),V%old(0:M+1),&
+           T%new(0:M+1),T%old(0:M+1),&
+           S%new(0:M+1),S%old(0:M+1),&
+           B%new(0:M+1),B%old(0:M+1), &
+           P%micro%old(0:M+1),P%micro%new(0:M+1), &
+           P%nano%new(0:M+1),P%nano%old(0:M+1), &
+               N%O%new(0:M+1),N%O%old(0:M+1),&
+               N%H%new(0:M+1),N%H%old(0:M+1),&
                Sil%new(0:M+1), Sil%old(0:M+1), &            ! silicon
-               P_temp%new(0:M+1),density%old(0:M+1),density%new(0:M+1),dens_i(0:M+1),&
+               density%old(0:M+1),density%new(0:M+1),dens_i(0:M+1),&
                STAT = alloc_stat(1))
 
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&

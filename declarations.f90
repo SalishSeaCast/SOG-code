@@ -22,10 +22,9 @@ module declarations
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   TYPE(constant)::alph, beta, dens
-  TYPE(prop)::T, S, U, V, B, density, P_temp, vt, ut
+  TYPE(prop)::T, S, U, V, B, density, vt, ut
   type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
-  TYPE(zplankton):: Z
   TYPE(nutrient):: N
   TYPE(Knu)::K 
   TYPE(flux)::w,Bf  
@@ -100,7 +99,6 @@ module declarations
   !Variables for printing test functions !
 
   DOUBLE PRECISION :: avg_T, read_var 
-  INTEGER :: counter, count_two, count_tot, count_no
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::ref_T, avg_12, tot_avg
 
   !Variable for odeint.f,  rkqs.f and derivs.f

@@ -7,9 +7,23 @@ module mean_param
   ! It would also be good to re-organize somehow so that they types
   ! hierarchy is more evident.
 
+  use precision_defs, only: dp
   use grid_mod, only: gr_d => grid_
 
   implicit none
+
+  ! Properties (U, V, S, ...)
+  ! *** Might better be called quantities...
+  type :: prop
+     real(kind=dp), dimension(:), pointer :: new, old, div_i, div_g
+     ! *** Not sure we need avg
+     real(kind=dp) :: avg      !surface layer average 
+  end type prop
+
+  ! Phytoplankton
+  type :: plankton                  
+     type(prop) :: micro, nano
+  end type plankton
 
   TYPE :: alpha             !Interpolation data
      DOUBLE PRECISION :: value, TT, SS, dS
@@ -39,23 +53,6 @@ module mean_param
      DOUBLE PRECISION, DIMENSION(:), POINTER :: new   !**&
   END TYPE grazing
 
-
-  TYPE :: prop              !Properties (U, V, S...
-     DOUBLE PRECISION,DIMENSION(:), POINTER :: new, old, old_old, div_i, div_g, last
-     DOUBLE PRECISION :: avg      !surface layer average 
-  END TYPE prop
-
-  TYPE :: plankton                  
-     TYPE(prop) :: micro, nano  !%new, old, old_old (0:M+1)
-  END TYPE plankton
-
-  TYPE :: zplankton
-     TYPE(prop) :: micro, meso  !**&
-  END TYPE zplankton
-
-  !       TYPE :: Nconstants
-  !        !  DOUBLE PRECISION::Vm, K, Ki
-  !       END TYPE Nconstants
 
   TYPE :: plankton2                   
      ! TYPE(Nconstants)::NO,NH
