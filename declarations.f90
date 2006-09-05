@@ -65,7 +65,6 @@ module declarations
        rho_fresh_o !surface density of pure water at SST 
   INTEGER::j_gamma !interface point corresponding to depth at which Radiation contributes to turbulent
   !surface heat flux
-  INTEGER::max_length
   DOUBLE PRECISION::Q_sol  !See irradiance.f90
   DOUBLE PRECISION::Br
   CHARACTER::ignored_input
