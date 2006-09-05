@@ -29,6 +29,8 @@ program SOG
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use rungekutta, only: odeint
   use profile_mod, only: init_profiles, profile, profile_close
+  use do_biology_mod, only: do_biology
+  use biological_mod, only: init_biology
 
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
@@ -42,11 +44,6 @@ program SOG
 
   ! Local variables:
   integer :: ecmapp, day_met
-
-  type(bins) :: PZ_bins  ! where quantities (eg. phyto, nitrate) are in PZ
-  common /derivs/ PZ_bins
-  integer :: bPZ, ePZ ! start position and end position in PZ array
-
 
   double precision:: cz, unow, vnow, upwell 
 
@@ -143,21 +140,7 @@ program SOG
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
 
-  ! Size of the biology we are using (Quantities and Detritus)
-  PZ_bins%Quant = 4
-  ! Position of Diatoms (micro plankton)
-  PZ_bins%micro = 1
-  ! Position of Flagellates (nano plankton)
-  PZ_bins%nano = 2
-  ! Position of Nitrate
-  PZ_bins%NO = 3
-  ! Position of Ammonium
-  PZ_bins%NH = 4
-  ! Start of detritus
-  PZ_bins%det = 5
-  ! Number of detritus bins, dissolved, slow sink and fast sink
-  D_bins = 3
-  M2 = (PZ_bins%Quant+D_bins) * grid%M   !size of PZ in biology: 
+  call init_biology(grid%M)
 
   IF (year_o==2001) then
      ecmapp = 1
@@ -198,10 +181,6 @@ program SOG
 
   call init_profiles() ! initialize profile writing code
 
-
-  max_length = M2   !      max_length = MAXVAL(Cevent%length) Amatrix...
-
-  !---End Biology from KPP--------------------------------------
 
   IF(h%new < grid%d_g(1))THEN 
      h%new = grid%d_g(1)
@@ -800,48 +779,10 @@ program SOG
 
 !------BIOLOGICAL MODEL--------------------------------------------
 
-
-! load the PZ vector with all the biological quantities
-     call define_PZ(grid%M, PZ_bins, D_bins, M2, &                    !in
-          P%micro%new, P%nano%new, N%O%new, N%H%new, Detritus, & !in
-          PZ)                                                    !out
-
-     IF (MINVAL(PZ) < 0.) THEN
-        PRINT "(A)","PZ < 0. see SOG.f90"
-        PRINT "(A)","time,day"
-        PRINT *,time,day
-        STOP
-     END IF
-
-     next_time = time+dt ! note, biology is calculated for the NEXT step
-
-     ! not passing in all of T%new --- can be changed when derivs_sog modulized
-        call odeint(PZ, grid%M, M2, time, next_time, precision, &
-             step_guess, step_min, &
-             N_ok, N_bad, T%new(0:grid%M), I_par)
-
-     ! check for negative NH values and then for negative Micro phyto values
-     !*** add nanos and move into a subroutine in bio module 
-     bPZ = (PZ_bins%NH - 1) * grid%M + 1
-     ePZ = PZ_bins%NH * grid%M
-     IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
-        DO xx = bPZ,ePZ
-           IF (PZ(xx) < 0.) THEN
-              PRINT "(A)","N%H%new(xx-4*M) < 0."
-              PRINT *,PZ(xx)
-              PRINT "(A)","set equal to zero"
-              PZ(xx) = 0.
-           END IF
-        END DO
-     END IF
-     bPZ = (PZ_bins%micro - 1) * grid%M + 1
-     ePZ = PZ_bins%micro * grid%M
-     IF (MINVAL(PZ(bPZ:ePZ)) < 0.) THEN
-        PRINT "(A)","PZ < 0. After odeint.f see SOG.f90"
-        PRINT "(A)","time,day"
-        PRINT *,time,day,PZ(bPZ:ePZ)
-        STOP
-     END IF
+     call do_biology (time, day, dt, grid%M, precision, step_guess, step_min, &
+          T%new(0:grid%M), I_Par, P, N, Detritus, &
+          Gvector_ro)
+!*** more of the below can be moved into the do_biology module
 
      ! Calculate diffusion matrix Bmatrix
      call diffusion_coeff (grid, dt, K%s%all, &
@@ -896,11 +837,6 @@ program SOG
         CALL advection(grid,Detritus(2)%v,Detritus(2)%D%old,dt,Gvector_ao%d(2)%bin)
      END DO
      
-     CALL reaction_p_sog (grid%M, PZ_bins, D_bins, PZ(1:PZ_bins%Quant*grid%M), & !in
-          PZ((PZ_bins%det-1)*grid%M+1:M2), P%micro%old, P%nano%old, N%O%old, &   !in
-          N%H%old, Detritus, &                                              !in
-          Gvector_ro)                                       ! out
-     Gvector_ro%Sil = 0 ! for now
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
      CALL matrix_A (Amatrix%no, Bmatrix%no)
