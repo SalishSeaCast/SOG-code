@@ -760,22 +760,11 @@ program SOG
                 + stress%v%new / (1025. * grid%M * grid%i_space(yy))     
         enddo
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-
-
-        IF (count >= 2 .AND. del < del_o) THEN
-           IF (count == 2) THEN
-              count_two = count_two + 1         
-           END IF
-           count_tot = count_tot + 1
-           CALL write_physical_sog(unow,vnow,euph)
-           EXIT
-        ELSE IF (count == niter .AND. del >= del_o) THEN
-           count_no =  count_no + 1 
-           CALL write_physical_sog (unow,vnow,euph)
-        END IF
-
-     ENDDO
+        ! Test for convergence of implicit solver
+        if (count >= 2 .and. del < del_o) then
+           exit
+        endif
+     enddo  !---------- End of the implicit solver loop ----------
 
      call profile (day, day_time, dt, grid%d_g, S%new, grid%M+1)
 
