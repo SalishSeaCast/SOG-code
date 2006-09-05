@@ -293,7 +293,7 @@ contains
   
 END SUBROUTINE p_growth
 
-subroutine derivs_sog(time, M, M2a, PZ, dPZdt, Temp, I_par)
+subroutine derivs_sog(M, PZ, dPZdt, Temp, I_par)
   ! Calculate the derivatives of the biological model for odeint to
   ! use to advance the biology to the next time step.
 
@@ -305,9 +305,7 @@ subroutine derivs_sog(time, M, M2a, PZ, dPZdt, Temp, I_par)
   implicit none
 
   ! Arguments:
-  real(kind=dp), INTENT(IN):: time ! not used
   integer, intent(in) :: M ! grid size
-  integer, intent(in) :: M2a ! need to get rid of this
   real(kind=dp), DIMENSION(M2), INTENT(IN):: PZ  ! values
   real(kind=dp), DIMENSION(M2), INTENT(OUT)::dPZdt ! derivatives
   real(kind=dp), dimension(0:M), INTENT(IN):: Temp ! temperature

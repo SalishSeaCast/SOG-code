@@ -62,7 +62,7 @@ contains
 
     do istp = 1, maxstp
 
-       call derivs_sog (time, M, M2, PZ, dPZdt, Temp, I_par)
+       call derivs_sog (M, PZ, dPZdt, Temp, I_par)
 
        PZscal(:) = abs(PZ(:)) + abs(step * dPZdt(:)) + tiny
 
@@ -204,25 +204,25 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     PZtemp(:) = PZ(:) + B21 * step * dPZdt(:)
 
-    call derivs_sog(time + A2*step, M, M2, PZtemp, AK2, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK2, Temp, I_par)
 
     PZtemp(:) = PZ(:) + step * (B31 * dPZdt(:) + B32 * AK2(:))
 
-    call derivs_sog(time + A3*step, M, M2, PZtemp, AK3, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK3, Temp, I_par)
 
     PZtemp(:) = PZ(:) + step * (B41 * dPZdt(:) + B42 * AK2(:) + B43 * AK3(:))
 
-    call derivs_sog(time + A4*step, M ,M2, PZtemp, AK4, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK4, Temp, I_par)
 
     PZtemp(:) = PZ(:) + step * (B51 * dPZdt(:) + B52 * AK2(:) + B53 * AK3(:) &
          + B54 * AK4(:))
 
-    call derivs_sog(time + A5*step, M, M2, PZtemp, AK5, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK5, Temp, I_par)
 
     PZtemp(:) = PZ(:) + step * (B61 * dPZdt(:) + B62 * AK2(:) + B63 * AK3(:) &
          + B64 * AK4(:) + B65*AK5(:))
 
-    call derivs_sog(time + A6*step, M, M2, PZtemp, AK6, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK6, Temp, I_par)
 
     PZout(:) = PZ(:) + step * (C1 * dPZdt(:) + C3 * AK3(:) + C4 * AK4(:) &
          + C6 * AK6(:))
