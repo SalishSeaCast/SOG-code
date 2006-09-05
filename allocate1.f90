@@ -69,18 +69,17 @@ subroutine allocate1(M, STAT)
       ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), T_mar(M),T_jun(M),T_sep(M),T_dec(M),&
            S_mar(M),S_jun(M),S_sep(M),S_dec(M),STAT = alloc_stat(7))
 
-      ALLOCATE(Hvector%s(M),Hvector%t(M),Hvector%u(M),Hvector%v(M),Hvector%p%micro(M),Hvector%p%nano(M),&
-               Hvector%z%micro(M),&
+      ALLOCATE(Hvector%s(M),Hvector%t(M),Hvector%u(M),Hvector%v(M),&
+           Hvector%p%micro(M),Hvector%p%nano(M),&
                Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),Gvector_o%s(M),Gvector_o%t(M),&
                Gvector_o%u(M),Gvector_o%v(M),&
                Gvector_c%u(M),Gvector_c%v(M),Gvector_co%u(M),&
                Gvector_co%v(M),&
                Gvector%p%micro(M),Gvector_o%p%micro(M),&
-               Gvector%p%nano(M),Gvector_o%p%nano(M),Gvector%z%micro(M),&
-               Gvector_o%z%micro(M), Gvector_ao%p%micro(M), &
+               Gvector%p%nano(M),Gvector_o%p%nano(M),&
+               Gvector_ao%p%micro(M), &
                Gvector_ro%p%micro(M),&
                Gvector_ro%p%nano(M),&
-               Gvector_ro%z%micro(M),Gvector_ao%z%micro(M), &
                Hvector%n%o(M), Hvector%n%h(M), Hvector%sil(M), Gvector%n%o(M), Gvector%n%h(M), &
                Gvector%sil(M), &
                Gvector_o%n%o(M), Gvector_o%n%h(M), Gvector_o%sil(M), &

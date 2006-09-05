@@ -25,6 +25,29 @@ module mean_param
      type(prop) :: micro, nano
   end type plankton
 
+  ! Phytoplankton component of UVST type
+  type :: phyto                     
+     real(kind=dp), dimension(:), pointer :: micro, nano
+  end type phyto
+
+  ! Nitrogen compounds component of UVST type
+  type :: nut
+     real(kind=dp), dimension(:), pointer :: o, h
+  end type nut
+
+  ! Detritus component of UVST type
+  type :: det
+     real(kind=dp), dimension(:), pointer :: bin  !bin(M)
+  end type det
+
+  type :: UVST              
+     real(kind=dp), dimension(:), pointer :: u, v, s, t, sil
+     type(phyto) :: p 
+     type(nut) :: n
+     type(det), dimension(:), pointer :: d !d(D_bins)
+  END TYPE UVST
+
+
   TYPE :: alpha             !Interpolation data
      DOUBLE PRECISION :: value, TT, SS, dS
   END TYPE alpha
@@ -55,7 +78,6 @@ module mean_param
 
 
   TYPE :: plankton2                   
-     ! TYPE(Nconstants)::NO,NH
      TYPE(grow)::growth
      TYPE(grazing):: mort   !**&
 !!!phytoplankton constants!!!!!!!!!!!!!!!!!!
@@ -74,28 +96,6 @@ module mean_param
      DOUBLE PRECISION, DIMENSION(:,:),POINTER::graze !graze(1+d_prey,mm%M)
      !used in p_growth.dat
   END TYPE plankton2
-
-  TYPE :: phyto                     
-     DOUBLE PRECISION, DIMENSION(:), POINTER::micro, nano
-     DOUBLE PRECISION, DIMENSION(1)::micro_q,nano_q
-  END TYPE phyto
-
-  TYPE :: macro_zoo
-     DOUBLE PRECISION, DIMENSION(:), POINTER::macro, wt !macro(M), wt(bin)
-  END TYPE macro_zoo
-
-  TYPE :: zooplank
-     DOUBLE PRECISION, DIMENSION(:), POINTER::micro
-     TYPE(macro_zoo), DIMENSION(:), POINTER::c
-  END TYPE zooplank
-
-  TYPE :: nut
-     DOUBLE PRECISION, DIMENSION(:), POINTER::o, h
-  END TYPE nut
-
-  TYPE :: det
-     DOUBLE PRECISION, DIMENSION(:), POINTER::bin  !bin(M)
-  END TYPE det
 
   TYPE :: nutrient
      TYPE(prop)::O,H
@@ -137,14 +137,6 @@ module mean_param
   TYPE :: MST               ! Momentum, Salinity and Temp component vectors
      DOUBLE PRECISION, DIMENSION(:), POINTER::m,s,t    
   END TYPE MST
-
-  TYPE :: UVST              
-     DOUBLE PRECISION, DIMENSION(:), POINTER::u, v, s, t, sil
-     TYPE(phyto)::p 
-     TYPE(zooplank)::z
-     TYPE(nut)::n
-     TYPE(det), DIMENSION(:), POINTER::d !d(D_bins)
-  END TYPE UVST
 
   TYPE :: trivector
      DOUBLE PRECISION, DIMENSION(:), POINTER::A,B,C
