@@ -5,7 +5,7 @@ subroutine allocate3(M)
   ! Allocate memory for biological model arrays (at least some of them...)
 
   use malloc, only: alloc_check
-  use declarations, only: M2, D_bins, PZ, Gvector, Gvector_o, &
+  use declarations, only: D_bins, Gvector, Gvector_o, &
        Gvector_ao, Gvector_ro, Hvector, Detritus
 
   implicit none
@@ -16,10 +16,6 @@ subroutine allocate3(M)
   integer              :: allocstat  ! Allocation return status
   character(len=80)    :: msg        ! Allocation failure message prefix
   integer              :: y_y        ! Loop index
-
-  msg = "PZ vector (biology model timestep initial conditions) array"
-  allocate(PZ(M2), stat=allocstat)
-  call alloc_check(allocstat, msg)
 
   do y_y = 1, D_bins
      msg = "Biology model Gvector bin components arrays"
