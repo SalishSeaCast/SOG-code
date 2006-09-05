@@ -37,14 +37,16 @@ CVS2CL = ../cvs2cl/cvs2cl.pl
 CLFLAGS = -rt
 
 # List of objects (order matters)
-# timeseries_output.o
 OBJS = precision_defs.o io_unit_defs.o malloc.o unit_conversions.o \
 datetime.o grid.o \
 \
 mean_param.o declarations.o surface_forcing.o IMEX_constants.o \
 \
+timeseries_output.o profile_mod.o \
+\
 water_properties.o find_upwell.o diffusion.o fitbottom.o \
-biological_mod.o rungekutta.o do_biology_mod.o profile_mod.o \
+biological_mod.o rungekutta.o do_biology_mod.o \
+\
 getpar.o \
 \
 define_flux.o phys_Hvector.o \
