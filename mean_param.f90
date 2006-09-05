@@ -25,11 +25,6 @@ module mean_param
      DOUBLE PRECISION :: actual, clear_sky, ratio
   END TYPE insol_daily
 
-  TYPE :: bins
-     sequence
-     INTEGER :: micro, nano, NO, NH, det, Quant
-  END TYPE bins
-
   ! expansion coefficients, surface density
   TYPE :: constant          
      TYPE(alpha), DIMENSION(13) :: data
