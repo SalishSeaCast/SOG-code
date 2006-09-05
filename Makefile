@@ -41,6 +41,7 @@ OBJS = precision_defs.o io_unit_defs.o malloc.o unit_conversions.o \
 datetime.o grid.o \
 \
 mean_param.o declarations.o surface_forcing.o IMEX_constants.o \
+initial_sog.o \
 \
 timeseries_output.o profile_mod.o \
 \
@@ -50,7 +51,7 @@ biological_mod.o rungekutta.o do_biology_mod.o \
 getpar.o \
 \
 define_flux.o phys_Hvector.o \
-initial_sog.o write_open.o           \
+write_open.o           \
 allocate1.o read_sog.o find_wind.o 	\
 stability.o \
 \
