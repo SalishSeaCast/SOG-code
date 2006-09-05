@@ -44,7 +44,7 @@ datetime.o grid.o \
 mean_param.o declarations.o surface_forcing.o IMEX_constants.o \
 \
 water_properties.o find_upwell.o diffusion.o fitbottom.o \
-rungekutta.o profile_mod.o\
+biological_mod.o rungekutta.o do_biology_mod.o profile_mod.o \
 getpar.o \
 \
 define_flux.o phys_Hvector.o \
@@ -62,10 +62,10 @@ shape_parameters.o modify_K.o def_gamma.o 	\
 Coriolis_and_pg.o 		\
 matrix_A.o def_v_t_sog.o TRIDAG.o	\
 define_Ri_b_sog.o ML_height_sog.o define_hm_sog.o pdf.o 		\
-write_physical_sog.o new_year.o SOG.o define_PZ.o		\
-reaction_p_sog.o P_H.o find_new.o			\
+write_physical_sog.o new_year.o SOG.o		\
+P_H.o find_new.o			\
 fit.o polint.o gammq.o gser.o gcf.o	\
-gammln.o allocate3.o reaction.o derivs_sog.o     \
+gammln.o allocate3.o     \
 advection.o
 
 # The executable is the default target that is built by "make"
