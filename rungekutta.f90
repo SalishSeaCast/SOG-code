@@ -18,7 +18,8 @@ contains
        step_min, N_ok, N_bad, Temp, I_par)
 
     use precision_defs, only: dp
-    
+    use biological_mod, only: derivs_sog
+
     implicit none
 
     real(kind=dp), dimension(:), intent(in out) :: &
@@ -51,10 +52,6 @@ contains
     real(kind=dp) :: step_done  ! completed step size
     real(kind=dp) :: step_next ! suggested next step size
     real(kind=dp) :: time ! time
-
-    ! external functions?
-    external derivs_sog         ! subroutine containing derivative code
-
 
     PZ = PZstart
     time = start_time
@@ -173,6 +170,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
   subroutine rkck (PZ, dPZdt, M, M2, time, step, PZout, PZerr, Temp, I_par)
 
     use precision_defs, only: dp
+    use biological_mod, only: derivs_sog
     
     implicit none
 
@@ -203,11 +201,6 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
     real(kind=dp), dimension(1:M2) :: AK2, AK3, AK4, AK5, &
                                       AK6  ! intermediate values of dPZdt
     real(kind=dp), dimension(1:M2) :: PZtemp ! intermediate values of PZ  
-
-    ! external functions
-    external derivs_sog
-
-
 
     PZtemp(:) = PZ(:) + B21 * step * dPZdt(:)
 
