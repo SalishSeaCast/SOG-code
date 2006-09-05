@@ -19,7 +19,10 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-!!$  use timeseries_output, only: timeseries_output_open, write_timeseries
+  use timeseries_output, only: timeseries_output_open, write_timeseries, &
+       timeseries_output_close
+  ! *** Rename to profile_output ???
+  use profile_mod, only: init_profiles, profile, profile_close
   use water_properties, only: water_property, alloc_water_props, &
        dalloc_water_props, Cp_profile
   use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
@@ -28,7 +31,6 @@ program SOG
        diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use rungekutta, only: odeint
-  use profile_mod, only: init_profiles, profile, profile_close
   use do_biology_mod, only: do_biology
   use biological_mod, only: init_biology
 
@@ -124,6 +126,7 @@ program SOG
   ! Calculate the number of time steps for the run (note that int()
   ! rounds down)
   steps = 1 + int((t_f - t_o) / dt) !INT rounds down
+
   ! Calculate the month number and month day for time series file headers
   startDatetime%yr = year_o
   startDatetime%yr_day = day_o
@@ -131,9 +134,8 @@ program SOG
   call calendar_date(startDatetime)
   call clock_time(startDatetime)
   ! Open the time series output files
-  CALL write_open
-!!$  call timeseries_output_open(codeId, datetime_str(runDatetime), &
-!!$       datetime_str(startDatetime))
+  call timeseries_output_open(codeId, datetime_str(runDatetime), &
+       datetime_str(startDatetime))
 
   ! *** These constants should be set as parameter somewhere else, or read
   ! *** from the main run parameters file
@@ -865,13 +867,14 @@ program SOG
 
      END IF ! time_step == 1
 
+     ! Build the H vectors for the biological quantities
      CALL P_H (grid%M, P%micro%old, Gvector%p%micro, Gvector_o%p%micro, &
           Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix_o%bio, &
           Hvector%p%micro)
      CALL P_H(grid%M, P%nano%old, Gvector%p%nano, Gvector_o%p%nano, &
           Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
-     DO xx = 1,D_bins-1
+     DO xx = 1, D_bins - 1
         CALL P_H (grid%M, Detritus(xx)%D%old, Gvector%d(xx)%bin, &
              Gvector_o%d(xx)%bin, Gvector_ro%d(xx)%bin, &
              Gvector_ao%d(xx)%bin, Bmatrix_o%bio, &
@@ -890,48 +893,52 @@ program SOG
           Gvector_ro%sil, null_vector, Bmatrix_o%no, &
           Hvector%sil)  ! null_vector 'cause no sinking
 
-     CALL TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%micro,&
+     ! Solve the tridiagonal system for the biological quantities
+     call TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%micro,&
           P1_p, grid%M)
-     CALL TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%nano, &
+     call TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%nano, &
           Pnano1_p, grid%M)
-     CALL TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
+     call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
           NO1_p, grid%M) 
-     CALL TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
+     call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
           NH1_p, grid%M) 
      call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%sil, &
-          SIL1_p, grid%M)
-
-     DO xx = 1,D_bins-1
-        CALL TRIDAG(Amatrix%bio%A,Amatrix%bio%B,Amatrix%bio%C,Hvector%d(xx)%bin,Detritus1_p(xx,:),grid%M)
-     END DO
-     CALL TRIDAG(Amatrix%null%A,Amatrix%null%B,Amatrix%null%A,Hvector%d(D_bins)%bin,Detritus1_p(D_bins,:),grid%M)
+          Sil1_p, grid%M)
+     do xx = 1,D_bins-1
+        call TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+             Hvector%d(xx)%bin, Detritus1_p(xx,:), grid%M)
+     enddo
+     call TRIDAG(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
+          Hvector%d(D_bins)%bin, Detritus1_p(D_bins,:), grid%M)
 
      CALL find_new(grid%M)
 
      !-----END BIOLOGY------------------------------------------------
 
      !--------bottom boundaries--------------------------
-
-     ! for those variables that we have data, use the annual fit calculated
-     ! from the data
-     call bot_bound_time (day, day_time, &                            ! in
-          T%new(grid%M+1), S%new(grid%M+1), N%O%new(grid%M+1), Sil%new(grid%M+1), &       ! out
-          P%micro%new(grid%M+1), P%nano%new(grid%M+1))                          ! out
-     ! for those variables that we have no data, assume uniform at
+     ! Update boundary conditions at bottom of grid
+     !
+     ! For those variables that we have data, use the annual fit
+     ! calculated from the data
+     call bot_bound_time (day, day_time, &                                ! in
+          T%new(grid%M+1), S%new(grid%M+1), N%O%new(grid%M+1), &          ! out
+          Sil%new(grid%M+1), P%micro%new(grid%M+1), P%nano%new(grid%M+1)) ! out
+     ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform (grid%M, N%H%new, Detritus)
 
-!!$     ! Write time series results
-!!$     call write_timeseries(time / 3600., &
-!!$       ! Variables for standard physical model output
-!!$       h%new, T%new, S%new, count, &
-!!$       ! User-defined physical model output variables
-!!$!!$       &
-!!$       ! Variables for standard biological model output
-!!$       N%O%new , N%H%new, P%micro%new, P%nano%new &
-!!$!!$, D_bins, detritus, &
-!!$       ! User-defined biological model output variables
-!!$       )
+     ! Write time series results
+     call write_timeseries(time / 3600., &
+       ! Variables for standard physical model output
+       count, h%new, T%new, S%new, &
+       ! User-defined physical model output variables
+!!$       &
+       ! Variables for standard biological model output
+       N%O%new , N%H%new, Sil%new, P%micro%new, P%nano%new, &
+       Detritus(1)%D%new, Detritus(2)%D%new, Detritus(3)%D%new &
+       ! User-defined biological model output variables
+!!$       &
+       )
 
      ! Increment time, calendar date and clock time, unless this is
      ! the last time through the loop
@@ -1001,6 +1008,8 @@ program SOG
 201 format(f7.3, 16(2x, f8.4))
   close(unit=profiles)
 
+  ! Close output files
+  call timeseries_output_close
   call profile_close
 
   ! Deallocate memory
