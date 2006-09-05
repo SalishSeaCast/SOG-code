@@ -51,7 +51,6 @@ biological_mod.o rungekutta.o do_biology_mod.o \
 getpar.o \
 \
 define_flux.o phys_Hvector.o \
-write_open.o           \
 allocate1.o read_sog.o find_wind.o 	\
 stability.o \
 \
