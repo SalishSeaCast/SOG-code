@@ -17,5 +17,9 @@ module io_unit_defs
 
   ! Results output file units
   integer, parameter :: profiles = 200
+  integer, parameter :: std_phys_timeseries = 300
+  integer, parameter :: user_phys_timeseries = 301
+  integer, parameter :: std_bio_timeseries = 400
+  integer, parameter :: user_bio_timeseries = 401
 
 end module io_unit_defs
