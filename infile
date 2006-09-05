@@ -1,82 +1,37 @@
-"flagellates_on" .true.                        "include flagellates in model?"
-"writefile1"	"output/phys_nov04-test.out"	"physics model time series"
-"writefile2"	"output/bio_nov04-test.out"	"biology model time series"
-"inputfile"	"input/nov04-test.dat"		"run parameters"
-"cruise_id"	"0414"	                        "Cruise id number"
-"ctd_in"	"input/ctd_in/SG0414004.str"	"initialization CTD file"
-"profile_out"	"profiles/phys_nov04-test.out"	"profiles"
+"flagellates_on"
+	.true.
+	"include flagellates in model?"
+
+"inputfile"
+	"input/nov04-test.dat"
+	"run parameters"
+
+"std_phys_ts_out"  
+	"timeseries/std_phys_nov04-test.out"  
+	"standard physics timeseries"
+"user_phys_ts_out" 
+	"timeseries/user_phys_nov04-test.out" 
+	"user-defined physics timeseries"
+"std_bio_ts_out"   
+	"timeseries/std_bio_nov04-test.out"   
+	"standard biology timeseries"
+"user_bio_ts_out"
+	"timeseries/user_bio_nov04-test.out"  
+	"user-defined biology timeseries"
+
+"cruise_id"
+	"0414"
+	"Cruise id number"
+"ctd_in"
+	"input/ctd_in/SG0414004.str"	     
+	"initial conditions CTD file"
+"noprof"	
+	0
+	"no. of profiles to print"
+"profile_out"
+	"profiles/nov04-test.out"
+	"profiles"
 
 # information below this line is ignored
 
-
-"writefile1"	"output/phys0315.dat"		"write file"
-"writefile2" 	"output/bio0315.dat"		"write file"
-"inputfile"	"input/input1.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0314004.str"	"ctd file"	
-"profile_out1"	"profiles/KI_pro0315"		"profile"
-"profile_out2"	"profiles/profile0315"		"profile"
-
-
-
-
-
-"writefile1"	"output/phys0305_nh4.dat"	"write file"
-"writefile2"	"output/bio0305_u3.dat"	"write file"
-"inputfile"	"input/nov02-03.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0208004.str"	"ctd file"	
-"profile_out1"	"profiles/KI_pro0305_nh4"	"profile"
-"profile_out2"	"profiles/profile0305_u3"	"profile"
-
-"writefile1"	"output/phys0406_nh4.dat"	"write file"
-"writefile2"	"output/bio0406_u3.dat"	"write file"
-"inputfile"	"input/nov03-04.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0320004.str"	"ctd file"	
-"profile_out1"	"profiles/KI_pro0406_nh4"	"profile"
-"profile_out2"	"profiles/profile0406_u3"	"profile"
-
-
-
-"writefile1" 	"output/phys0201_nh4.dat"	"write file"
-"writefile2" 	"output/bio0201_nh4.dat"	"write file"
-"inputfile"	"input/nov01-02.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0101004.str"	"ctd file"	
-"profile_out1"	"profiles/KI_pro0201_nh4"	"profile"
-"profile_out2"	"profiles/profile0201_nh4"	"profile"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"writefile" 	"output/daily0209_long.dat"	"write file"
-"inputfile"	"input/long.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0101004.str"	"ctd file"	
-"profile_out"	"profiles/profile0209_long"	"profile"
-
-"writefile"	"output/daily1996.dat"		"write file"
-"inputfile"	"input/nov02-03.dat"		"input file"
-"ctd_in"	"input/ctd_in/SG0208004.str"	"ctd file"	
-"profile_out"	"profiles/profile1996"		"profile"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# end of file
