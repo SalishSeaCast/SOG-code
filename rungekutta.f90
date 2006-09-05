@@ -135,7 +135,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     step = step_try
 
-0001 call rkck (PZ, dPZdt, M, M2, time, step, PZtemp, PZerr, Temp, I_par)
+    call rkck (PZ, dPZdt, M, M2, step, PZtemp, PZerr, Temp, I_par)
 
     errmax = 0.
 
@@ -167,7 +167,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
   end subroutine rkqs
 
-  subroutine rkck (PZ, dPZdt, M, M2, time, step, PZout, PZerr, Temp, I_par)
+  subroutine rkck (PZ, dPZdt, M, M2, step, PZout, PZerr, Temp, I_par)
 
     use precision_defs, only: dp
     use biological_mod, only: derivs_sog
@@ -179,8 +179,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
                                    dPZdt ! biological derivatives vector
     integer, intent(in) :: M, &    ! size of the grid
                            M2    ! total size of PZ
-    real(kind=dp), intent(in) :: time, & ! time
-                                 step ! suggested step size
+    real(kind=dp), intent(in) :: step ! suggested step size
     real(kind=dp), dimension(:), intent(out) :: PZout ! calculated PZ value   
     real(kind=dp), dimension(:), intent(out) :: PZerr ! error (delta) in PZ
     real(kind=dp), dimension(0:), intent(in):: Temp  ! current temp field
