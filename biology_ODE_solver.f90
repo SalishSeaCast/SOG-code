@@ -35,7 +35,6 @@ contains
     ! local variables
     real(kind=dp), dimension(M2) :: PZ
     integer :: N_ok, N_bad    ! counts bad and good steps in odeint
-    external derivs_sog
     real(kind=dp) :: next_time
 
     call define_PZ(M, &                    !in
