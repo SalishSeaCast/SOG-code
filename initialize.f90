@@ -26,9 +26,6 @@ SUBROUTINE initialize
       time_step = 1
 
       j_gamma = 0  !h_gamma = 0 or wt_r contribution to gamma%t vanishes
-      count_two = 0         !counts convergence at iteration 2
-      count_tot = 0        !counts total convergences
-      count_no = 0           ! counts no convergence
 
       neg_count = 0  ! counts number of times scheme biology becomes negative
 
