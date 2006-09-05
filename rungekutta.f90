@@ -135,7 +135,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     step = step_try
 
-    call rkck (PZ, dPZdt, M, M2, step, PZtemp, PZerr, Temp, I_par)
+0001 call rkck (PZ, dPZdt, M, M2, step, PZtemp, PZerr, Temp, I_par)
 
     errmax = 0.
 
