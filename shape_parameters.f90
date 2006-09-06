@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE shape_parameters(X, omeg_x, hh, a2, a3)
 
       USE mean_param
