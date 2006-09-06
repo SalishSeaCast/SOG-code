@@ -75,13 +75,8 @@ contains
     ! *** be set to zero without recompiling
     double precision :: P_nano
 
-    ! *** Temporary code to allow flagellates biomass to be initialized to zero
-    if (flagellates) then
        !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
        P_nano = 2.6D-3
-    else
-       P_nano = 0.
-    endif
 
     Ui%new(1) = Uo
     Vi%new(1) = Vo
