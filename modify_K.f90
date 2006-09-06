@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE modify_K(mm, hh, X)
 
       USE mean_param
