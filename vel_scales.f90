@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE vel_scales(mm,omeg,phig,u_st,L,hh)
 
       USE mean_param
