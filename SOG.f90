@@ -21,8 +21,7 @@ program SOG
   ! Refactored modules
   use timeseries_output, only: timeseries_output_open, write_timeseries, &
        timeseries_output_close
-  ! *** Rename to profile_output ???
-  use profile_mod, only: init_profiles, profile, profile_close
+  use profiles_output, only: init_profiles, profile, profile_close
   use water_properties, only: water_property, alloc_water_props, &
        dalloc_water_props, Cp_profile
   use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
