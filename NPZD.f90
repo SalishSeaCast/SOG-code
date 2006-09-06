@@ -11,8 +11,7 @@ module biological_mod
 
   private
 
-  public :: PZ_bins, & ! temporary
-       derivs_sog, &
+  public :: derivs_sog, &
        define_PZ, & ! temporary
        reaction_p_sog, &
        init_biology
@@ -35,12 +34,13 @@ module biological_mod
   data PZ_bins%NO    /3/  ! Position of Nitrate
   data PZ_bins%NH    /4/  ! Position of Ammonium
   data PZ_bins%det   /5/  ! Start of detritus
-  ! Number of detritus bins, dissolved, slow sink and fast sink
-  !  data D_bins  /3/ 
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
-
+  ! Biological model logicals (turned parts of the model on or off)
+  logical :: getparl ! until getpar is a module
+  logical :: flagellates  ! whether flagellates can influence other biology
+  logical :: remineralization !whether there is a remineralization loop
 
 contains
 
@@ -66,10 +66,15 @@ contains
 
     ! Number of detritus bins, dissolved, slow sink and fast sink
     D_bins = 3
+
     ! Size of the PZ vector for biological model
-    M2 = (PZ_bins%Quant + D_bins) * M
+    M2 = (PZ_bins%Quant + D_bins) * M   !size of PZ in biology: 
     ! Allocate memory for PZ
     call alloc_biology
+
+    flagellates = getparl('flagellates_on',1)
+    remineralization = getparl('remineralization',1)
+
   end subroutine init_biology
 
 
@@ -369,7 +374,7 @@ contains
     do ii = 1,M                        ! counter through grid
        jj = (PZ_bins%nano-1) * M + ii ! counter into PZ
 
-       if (PZ(jj)>0) then
+       if (PZ(jj)>0 .and. flagellates) then
           Pnano(ii) = PZ(jj)
        else
           Pnano(ii) = 0
@@ -394,7 +399,7 @@ contains
     do ii = 1,M                        ! counter through grid
        jj = (PZ_bins%NH-1) * M + ii    ! counter into PZ
 
-       if (PZ(jj)>0) then
+       if (PZ(jj)>0 .and. remineralization) then
           NH(ii) = PZ(jj)
        else
           NH(ii) = 0
@@ -407,7 +412,7 @@ contains
        do ii = 1,M                                 ! counter through grid
           jj = (PZ_bins%Quant + (kk-1)) * M + ii   ! counter through PZ
 
-          if (PZ(jj)>0) then
+          if (PZ(jj)>0 .and. remineralization) then
              detr(kk,ii) = PZ(jj)
           else
              detr(kk,ii) = 0
@@ -486,9 +491,6 @@ contains
        if (Pmicro(ii) > 0.) then 
           dPZdt(jj) = (micro%growth%new(ii) - Resp_micro(ii) &
                - Mort_micro(ii)) * Pmicro(ii)
-          ! *** problem here, Resp and Mort are multiplied by Pmicro here but not in NH
-          ! *** or detritus derivatives
-          ! okay here, problem is below.
        endif
     enddo
 
@@ -520,7 +522,8 @@ contains
        jj = (PZ_bins%NH-1) * M + ii ! index for PZ, derivatives etc
 
        if (NH(ii) > 0.) then  
-          dPZdt(jj) = -N%H_uptake%new(ii) + Resp_micro(ii) + Resp_nano(ii) &
+          dPZdt(jj) = -N%H_uptake%new(ii) &
+               + Resp_micro(ii)*Pmicro(ii) + Resp_nano(ii)*Pnano(ii)       & 
                + waste%medium(ii) * waste%m%destiny(0)                     &
                + waste%small(ii) * waste%s%destiny(0)                      &
                + N%remin(ii) - N%bacteria(ii)
