@@ -105,15 +105,16 @@ contains
 
   function datetime_str(datetime, separator) result(str)
     ! Return the datetime value as a string formatted as in ISO
-    ! date/time with a space separating date and time
+    ! date/time with a character separating date and time.  Separator
+    ! defaults to a space.
     implicit none
     ! Arguments:
     type(datetime_), intent(in) :: datetime
-    character(len=*), intent(in), optional :: separator
+    character(len=1), intent(in), optional :: separator
     ! Result:
-    character(len=18 + len(separator)) :: str
+    character(len=19) :: str
     ! Local variable:
-    character(len=len(separator)) :: sep
+    character(len=1) :: sep
 
     ! Establish what characters will separate date and time
     if (present(separator)) then
