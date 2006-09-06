@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE define_hm_sog(grid,S,h_m)
 
 ! define based on salinity rather than temperature

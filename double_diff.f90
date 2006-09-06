@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE double_diff(mm,temp,sal,nus,alp_i, betai)
 
       USE mean_param

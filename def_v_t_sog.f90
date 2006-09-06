@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
 
       USE mean_param

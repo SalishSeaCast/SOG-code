@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE fun_constants(u_st,w_st,L_mo,ww,Bf,hh)
 
       USE mean_param
