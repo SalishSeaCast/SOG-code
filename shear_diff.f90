@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE shear_diff(mm,u_vel,v_vel,dens,nu_s)
 
       USE mean_param
