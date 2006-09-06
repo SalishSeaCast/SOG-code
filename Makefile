@@ -62,7 +62,7 @@ ND_flux_profile.o vel_scales.o convection_scales.o		\
 shear_diff.o double_diff.o interior_match.o interior_match2.o		\
 shape_parameters.o modify_K.o def_gamma.o 	\
 Coriolis_and_pg.o 		\
-matrix_A.o def_v_t_sog.o TRIDAG.o	\
+matrix_A.o def_v_t_sog.o tridiag.o	\
 define_Ri_b_sog.o ML_height_sog.o define_hm_sog.o pdf.o 		\
 write_physical_sog.o new_year.o SOG.o		\
 P_H.o find_new.o			\
@@ -80,7 +80,7 @@ $(EXEC): $(OBJS)
 # are stored in a file called TAGS
 .PHONY: tags
 tags:
-	$(ETAGS) $(ETFLAGS) *.f90 *.f
+	$(ETAGS) $(ETFLAGS) *.f90
 
 # "make clean" deletes all object, and module files,
 # any core dump file, and the executable
@@ -96,11 +96,9 @@ changelog:
 
 # Suffix-based compilation rules
 .SUFFIXES: 		# Delete built-in implicit suffix-based rules
-.SUFFIXES: .f90 .f .o
+.SUFFIXES: .f90 .o
 
 .f90.o:
-	$(F90) -c $(FFLAGS) $<
-.f.o: 
 	$(F90) -c $(FFLAGS) $<
 
 # end of file
