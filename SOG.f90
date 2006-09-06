@@ -53,6 +53,16 @@ program SOG
   type(water_property) :: &
        Cp    ! Heat capacity in J/kg-K
 
+  ! Upwelling constant (tuned parameter)
+  !*** read by read_sog used by surface_flux_sog : eventually should be local
+  ! to the surface_forcing module (not be be confused with current 
+  ! surface_forcing module
+  real(kind=dp) :: upwell_const
+
+  ! Internal wave breaking eddy viscosity for momentum and scalars
+  ! (tuned parameters)
+  real(kind=dp) :: nu_w_m, nu_w_s
+
   ! Interpolated river flows
   real :: Qinter  ! Fraser River
   real :: Einter  ! Englishman River
@@ -103,6 +113,7 @@ program SOG
   logical :: flagellates
   logical :: getparl
   external getparl
+  real(kind=dp) getpard
 
   ! Get the current date/time from operating system to timestamp the
   ! run with
@@ -168,15 +179,18 @@ program SOG
   END DO
   ! Allocate memory for water property arrays
   call alloc_water_props(grid%M, Cp)
-  ! Read the cruise id from stdin to use to build the file name for
-  ! nutrient initial conditions data file
-  cruise_id = getpars("cruise_id", 1)
-  CALL read_sog
+
+  CALL read_sog (upwell_const)
+  nu_w_m = getpard('nu_w_m',1)   ! internal wave mixing momentum
+  nu_w_s = getpard('nu_w_s',1)   ! internal wave mixing scalar
   CALL coefficients(alph, beta, dens, cloud,p_Knox)
   CALL allocate3(grid%M)
 
   CALL initialize ! initializes everything (biology too)
 
+  ! Read the cruise id from stdin to use to build the file name for
+  ! nutrient initial conditions data file
+  cruise_id = getpars("cruise_id", 1)
   CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id, flagellates)
@@ -286,7 +300,8 @@ program SOG
              S%new(h%i), S%new(grid%M), T%new(0), j_gamma, I, Q_t(0),        &
              alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10.,    &
              atemp(day_met,j), humid(day_met,j), Qinter,stress, rho_fresh_o, &
-             day, dt/grid%i_space(1), h, upwell, Einter, u%new(1), dt) 
+             day, dt/grid%i_space(1), h, upwell_const, upwell, Einter,       &
+             u%new(1), dt) 
 
         Bf%b(0) = -w%b(0)+Br   !surface buoyancy forcing *nonturbulent heat flux beta*F_n would also go here  Br is radiative contribution
 
