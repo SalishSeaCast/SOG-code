@@ -1,5 +1,3 @@
-"flagellates_on"	.true.	"include flagellates in model?"
-
 "inputfile"
 	"input/nov04-test.dat"
 	"run parameters"
@@ -16,6 +14,10 @@
 "user_bio_ts_out"
 	"timeseries/user_bio_nov04-test.out"  
 	"user-defined biology timeseries"
+
+"flagellates_on"	.true.	"include flagellates in model?"
+"remineralization"	.true.	"include remineralization loop in model?"
+
 
 "upwell_const"  1.04e-7         "upwelling constant (tuned)"
 "nu_w_m"        1.0e-4          "internal wave breaking momentum mixing"
