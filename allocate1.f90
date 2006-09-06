@@ -86,7 +86,8 @@ subroutine allocate1(M, STAT)
                Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%sil(M), &
                null_vector(M),STAT = alloc_stat(8)) !**&
                
-      ALLOCATE(U_p(M),V_p(M),S_p(M),T_p(M),P1_p(M),Pnano1_p(M),Z1_p(M),NO1_p(M),NH1_p(M), SIL1_p(M), & 
+      ALLOCATE(U_p(M), V_p(M), S_p(M), T_p(M), P1_p(M), Pnano1_p(M), &
+           NO1_p(M), NH1_p(M), Sil1_p(M), & 
            wind(wind_n), insol(insol_n), STAT = alloc_stat(9))
 
       ALLOCATE(micro%growth%light(M),micro%growth%new(M),nano%growth%light(M),nano%growth%new(M),&
