@@ -44,10 +44,8 @@ module surface_forcing
   DOUBLE PRECISION, PARAMETER::Ri_o = 0.7, & !critical grad Richardson #
        nu_o = 0.001, & !0.0050 !m^2/s interior diff constant
        p_1 = 3.0, & ! shear diff power constant
-       !           nu_w_m = 5.0D-04, & !winter m^2/s Wave breaking momentum
-  nu_w_m = 1.0D-04, & !summer m^2/s Wave breaking momentum
-       nu_w_s = 1.0D-05, & !summer 5.0D-05, &   !and scalar interior diff
-       !           nu_w_s = 0.5D-05, & !winter 5.0D-05, &   !and scalar interior diff
+       !  nu_w_m, internal wave mixing, momentum, now read in
+       !  nu_w_s, internal wave mixing, scalar, now read in
   nu_f = 0.001, & ! m^2/s salt fingering constant 
        Ri_rho_o = 1.9, &
        p_2 = 3.0, & !salt finger diff power constant
