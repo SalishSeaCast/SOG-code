@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
                          salinity_o,salinity_m,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
@@ -70,12 +73,24 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
 !----------Salinity------------------------------------
 
-     S_riv = 29.1166 - Qriver*(0.0019) - Eriver*(0.0392)  !june 16 2005    
-     Sa=salinity_o + (S_riv-salinity_o)*dt/(0.5*24*3600) 
+     ! Parameterized fit of the surface salinity of the Strait of
+     ! Georgia at station S3 based on the river flows.  (Derived by
+     ! Kate Collins 16-Jun-2005)
+     S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
+     ! Smear the change in salinity over a half day
+     Sa = salinity_o + (S_riv - salinity_o) * dt / (0.5 * 24 * 3600) 
+     ! Calculate the fresh water flux necessary to get Sa in the top
+     ! layer
+     Ft = (salinity_o - Sa) / (Sa * dtdz)
+     ! ...but the rivers can't add salinity
+     if (Ft < 0.) then
+        Ft = 0.
+     endif
 
-     Ft = (salinity_o-Sa)/(Sa*dtdz)
-
-     upwell = upwell_const*(Qriver**(0.45)) !u1 20% less than u2
+     ! Calculate the entrainment of deep water into the bottom of the
+     ! grid based on the parameterization derived by Susan Allen in
+     ! Jun-2006 (See entrainment.pdf).
+     upwell = upwell_const * (Qriver ** 0.45)
 
 
 !net longwave radiation.
