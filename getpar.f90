@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 	subroutine getpar_init(flag)
 	implicit	none
 	integer		flag
