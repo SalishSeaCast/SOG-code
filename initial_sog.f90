@@ -45,7 +45,7 @@ contains
 
   subroutine initial_mean (Ui, Vi, Ti, Si, Pi, NO, NH, Sil, Detritus, &
        hi, ut, vt, &
-       pbx, pby, d, D_bins, cruise_id, flagellates)       
+       pbx, pby, d, D_bins, cruise_id)       
 
     ! Arguments:
     type(prop), intent(out) :: Ui, Vi, Ti, Si
@@ -60,8 +60,6 @@ contains
     type(gr_d), intent(in) :: d
     double precision, dimension(d%M), intent(out) :: pbx, pby
     character*4  cruise_id           ! cruise_id
-    ! *** Temporary flag to turn flagellates model on/off
-    logical :: flagellates
 
     ! Local variables:
     integer :: i, j      ! loop index
