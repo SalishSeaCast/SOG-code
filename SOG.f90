@@ -5,7 +5,6 @@ program SOG
   ! Coupled physical and biological model of the Strait of Georgia
 
   ! Utility modules:
-  use io_unit_defs, only: profiles
   use unit_conversions, only: KtoC
   use datetime, only: datetime_, os_datetime, calendar_date, &
        clock_time, datetime_str
@@ -21,7 +20,8 @@ program SOG
   ! Refactored modules
   use timeseries_output, only: timeseries_output_open, write_timeseries, &
        timeseries_output_close
-  use profiles_output, only: init_profiles, profile, profile_close
+  use profiles_output, only: init_profiles_output, write_profiles, &
+       profiles_output_close
   use water_properties, only: water_property, alloc_water_props, &
        dalloc_water_props, Cp_profile
   use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
@@ -87,25 +87,13 @@ program SOG
   ! Physical model domain parameter (should go elsewhere)
   double precision :: oLx, oLy, gorLx, gorLy
 
-  ! Loop index for writing out profile results
-  integer :: i_pro
-
-  ! sigma-t quantity calculated from density for profile results output
-  double precision :: sigma_t
-
   ! Code identification string (maintained by CVS), for output file headers
   character*70 :: &
        codeId = "$Source$"
 
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
-  type(datetime_) :: profileDatetime ! Date/time of profile
   type(datetime_) :: startDatetime   ! Date/time of initial conditions
-
-  ! Temporary storage for formated datetime strings.  Needed to work around
-  ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
-  ! calls in write statements
-  character(len=19) :: str_runDatetime, str_proDatetime
 
   ! temporary until getpar is a module
   real(kind=dp) getpard
@@ -187,8 +175,8 @@ program SOG
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
 
-  call init_profiles() ! initialize profile writing code
-
+  ! Initialize profiles writing code
+  call init_profiles_output(codeId, datetime_str(runDatetime))
 
   IF(h%new < grid%d_g(1))THEN 
      h%new = grid%d_g(1)
@@ -773,7 +761,11 @@ program SOG
         endif
      enddo  !---------- End of the implicit solver loop ----------
 
-     call profile (day, day_time, dt, grid%d_g, S%new, grid%M+1)
+     call write_profiles(codeId, datetime_str(runDatetime), year, day, &
+          day_time, dt, grid, T%new, S%new, density%new, P%micro%new,  &
+          P%nano%new, N%O%new, N%H%new, Sil%new, Detritus(1)%D%new,    &
+          Detritus(2)%D%new, Detritus(3)%D%new, K%u%all, K%t%all,      &
+          K%s%all, I_par, U%new, V%new)
 
 !------BIOLOGICAL MODEL--------------------------------------------
 
@@ -936,77 +928,14 @@ program SOG
 !!$       &
        )
 
-     ! Increment time, calendar date and clock time, unless this is
-     ! the last time through the loop
-     if(time_step < steps) then
-        call new_year(day_time, day, year, time, dt, month_o)
-     endif
-  end do  !--------- End of time loop ----------
+     ! Increment time, calendar date and clock time
+     call new_year(day_time, day, year, time, dt, month_o)
 
-  ! Write profiles
-  ! Calculate the month number and month day for profile headers
-  profileDatetime%yr = year
-  profileDatetime%yr_day = day
-  profileDatetime%day_sec = day_time
-  call calendar_date(profileDatetime)
-  call clock_time(profileDatetime)
-  ! Get the profile results file name, and open it
-  ! *** Reading the file name should be done much earlier
-  str = getpars("profile_out", 1)
-  open(unit=profiles, file=str)
-  ! Write the profile results file header
-  ! Avoid a pgf90 idiocyncracy by getting datetimes formatted into
-  ! string here rather than in the write statement
-  str_runDatetime = datetime_str(runDatetime)
-  str_proDatetime = datetime_str(profileDatetime)
-  write(profiles, 200) trim(codeId), str_runDatetime, time, &
-       str_proDatetime
-200 format("! Profiles of Temperature, Salinity, Density, ",         &
-       "Phytoplankton, Nitrate, Ammonium, Silcion"/,                 &
-       "! and Detritus (remineralized, sinking, and mortality)"/,    &
-       "*FromCode: ", a/,                                            &
-       "*RunDateTime: ", a/,                                         &
-       "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
-       "phytoplankton, nitrate, ammonium, silicon, ",                &
-       "remineralized detritus, ",                                   &
-       "sinking detritus, mortality detritus, ",                     &
-       "total momentum eddy diffusivity, ",                          &
-       "total temperature eddy diffusivity, ",                       &
-       "total salinity eddy diffusivity, ",                          &
-       "photosynthetic available radiation, ",                       &
-       "u velocity, v velocity"/,                                    &
-       "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM, ",  &
-       "uM N, uM N, uM N, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s"/,    &
-       "*ProfileTime: ", f9.0/                                       &
-       "*ProfileDateTime: ", a/,                                     &
-       "*EndOfHeader")
-  ! Write the profile values at the surface, and at all grid points
-  ! *** Change this index to i when we know common block effects have been
-  ! *** cleaned up and i is safe to use as a local index
-  do i_pro = 0, grid%M
-     sigma_t = density%new(i_pro) - 1000.
-     write(profiles, 201) grid%d_g(i_pro), KtoC(T%new(i_pro)),          &
-          S%new(i_pro), sigma_t, P%micro%new(i_pro), N%O%new(i_pro),    & 
-          N%H%new(i_pro), Sil%new(i_pro), Detritus(1)%D%new(i_pro),     &
-          Detritus(2)%D%new(i_pro), Detritus(3)%D%new(i_pro),           &
-          K%u%all(i_pro), K%t%all(i_pro), K%s%all(i_pro), I_par(i_pro), &
-          U%new(i_pro), V%new(i_pro)
-  end do
-  ! Write the values at the bottom grid boundary.  Some quantities are
-  ! not defined there, so use their values at the Mth grid point.
-  sigma_t = density%new(grid%M+1) - 1000.
-  write(profiles, 201) grid%d_g(grid%M+1), KtoC(T%new(grid%M+1)),             &
-          S%new(grid%M+1), sigma_t, P%micro%new(grid%M+1), N%O%new(grid%M+1), &
-          N%H%new(grid%M+1), Sil%new(grid%M+1), Detritus(1)%D%new(grid%M+1),  &
-          Detritus(2)%D%new(grid%M+1), Detritus(3)%D%new(grid%M+1),           &
-          K%u%all(grid%M), K%t%all(grid%M), K%s%all(grid%M), I_par(grid%M),   &
-          U%new(grid%M+1), V%new(grid%M+1)
-201 format(f7.3, 16(2x, f8.4))
-  close(unit=profiles)
+  end do  !--------- End of time loop ----------
 
   ! Close output files
   call timeseries_output_close
-  call profile_close
+  call profiles_output_close
 
   ! Deallocate memory
   call dalloc_water_props(Cp)
