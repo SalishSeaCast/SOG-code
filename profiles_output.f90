@@ -162,7 +162,7 @@ contains
   double precision :: sigma_t
 
     ! Check the day and the time
-    if (iprof < noprof .and. day == profday(iprof)) then
+    if (iprof <= noprof .and. day == profday(iprof)) then
        if (abs(day_time - proftime(iprof)) < 0.5 * dt) then
           ! Calculate the month number and month day for profile headers
           profileDatetime(iprof)%yr = year
