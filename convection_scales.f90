@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE convection_scales(mm,omeg,hh,w_st)
 
       USE mean_param
