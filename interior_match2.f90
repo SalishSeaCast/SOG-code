@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE interior_match2(omeg, L, u_st, hh, mm)
 
       USE mean_param

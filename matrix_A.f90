@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE matrix_A(Amatrix, Bmatrix)
 
       USE mean_param, only: trivector
