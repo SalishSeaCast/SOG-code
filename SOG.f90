@@ -107,11 +107,7 @@ program SOG
   ! calls in write statements
   character(len=19) :: str_runDatetime, str_proDatetime
 
-  ! *** Temporary flag to turn flagellates model on/off, and the
-  ! *** function to read it
-  logical :: flagellates
-  logical :: getparl
-  external getparl
+  ! temporary until getpar is a module
   real(kind=dp) getpard
 
   ! Get the current date/time from operating system to timestamp the
@@ -121,9 +117,6 @@ program SOG
   ! Initialize the parameter reader to output a report
   ! *** runDatetime and date/time that getpar_init() prints should be same
   call getpar_init(1)
-  ! Read a flag to determine whether or not flagellates are included
-  ! in the model
-  flagellates = getparl('flagellates_on', 1)
   ! Get the name of the main run parameters file from stdin, open it,
   ! and read them
   str = getpars("inputfile", 1)
@@ -192,7 +185,7 @@ program SOG
   cruise_id = getpars("cruise_id", 1)
   CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
        h%new, ut, vt, pbx, pby, &
-       grid, D_bins, cruise_id, flagellates)
+       grid, D_bins, cruise_id)
 
   call init_profiles() ! initialize profile writing code
 
