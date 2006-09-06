@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE stability
 
       USE mean_param

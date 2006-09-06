@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE smoothdata(old, size, smooth)
 
   USE mean_param
