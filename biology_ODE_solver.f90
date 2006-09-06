@@ -36,8 +36,8 @@ contains
     integer, intent(in) :: M           ! Number of grid points
     ! Passed through to ODE solver:
     real(kind=dp), intent(in) :: precision, step_guess, step_min
-    real(kind=dp), dimension(:), intent(in) :: Temp   ! Temperature
-    real(kind=dp), dimension(:), intent(in) :: I_par  ! Photosynth avail rad
+    real(kind=dp), dimension(0:), intent(in) :: Temp   ! Temperature
+    real(kind=dp), dimension(0:), intent(in) :: I_par  ! Photosynth avail rad
     type(plankton), intent(in) :: P                   ! Plankton
     type(nutrient), intent(in) :: N                   ! Nitrogen
     type(snow), dimension(D_bins), intent(in) :: Detritus
