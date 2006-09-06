@@ -153,7 +153,7 @@ contains
     real(kind=dp) :: &
          delS, &  ! delta S between two depth points
          dep,  &  ! depth half way between them
-         derS ,   ! -dS/dz
+         derS     ! -dS/dz
   ! Temporary storage for formated datetime string.  Needed to work around
   ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
   ! calls in write statements

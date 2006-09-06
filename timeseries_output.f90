@@ -96,7 +96,7 @@ contains
     write(user_phys_timeseries, 101) trim(codeId), runDatetime, &
          startDatetime
 101 format("! User-defined time series output from physics model"/,    &
-         "! Time series of ..." &
+         "! Time series of ...", &
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
          "*FieldNames: time"/, &
@@ -153,7 +153,7 @@ contains
     write(user_bio_timeseries, 103) trim(codeId), runDatetime, &
          startDatetime
 103 format("! User-defined time series output from biology model"/,    &
-         "! Time series of ..." &
+         "! Time series of ...", &
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
          "*FieldNames: time"/, &
