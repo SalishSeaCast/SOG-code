@@ -1,3 +1,6 @@
+! $Id$
+! $Source$
+
 SUBROUTINE def_gamma( L,  mm, ww, wtr, hh, gamm, Bf, omeg)
 
       USE mean_param
