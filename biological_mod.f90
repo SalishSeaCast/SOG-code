@@ -39,6 +39,7 @@ module biological_mod
   real(kind=dp), dimension(:), allocatable :: PZ
   ! Biological model logicals (turned parts of the model on or off)
   logical :: getparl ! until getpar is a module
+  external getparl
   logical :: flagellates  ! whether flagellates can influence other biology
   logical :: remineralization !whether there is a remineralization loop
 
