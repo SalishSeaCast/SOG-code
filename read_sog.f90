@@ -4,7 +4,7 @@
 ! *** This is a collection of subroutines that should maybe be broken out
 ! *** into separate files ???
 
-subroutine read_sog
+subroutine read_sog (upwell_const)
   ! Read in data from various files to initialize the run.
   ! Forcing data: wind, cloud fraction, air temperature, air humidity,
   !               Fraser River flow, Englishman River flow,
@@ -12,10 +12,15 @@ subroutine read_sog
   ! *** And some other stuff that I need to figure out.
   ! *** Need to get rid of explicit file name references here.
 
+  use precision_defs, only: dp
   use declarations
   use surface_forcing
 
   implicit none
+
+  ! arguments
+  real(kind=dp), intent(out) :: upwell_const 
+                               ! tuned parameter for the strength of upwelling 
 
   ! Local variables:
   integer :: ndays, ic, j, para, stn, yr
@@ -23,6 +28,10 @@ subroutine read_sog
   ! *** Should be able to replace this external statment with uses of
   ! corresponding modules **
   external Julian_day  
+  real(kind=dp) getpard
+
+  ! read the upwelling constant
+  upwell_const = getpard("upwell_const",1)
 
   ! Read the wind data
   ! Preserve the value of year_o so the actual year does not change 
@@ -104,7 +113,7 @@ subroutine read_sog
   open(12, file="../sog-forcing/rivers/Fraser_2001_2005.dat", &
        status = "OLD", action = "READ")
   ! *** Another hard-coded constant to get rid of **
-  do ic = 1, 1640
+  do ic = 1, 1826
      read(12, *) year, month, day, Qriver(ic)
   enddo
   close(12)
