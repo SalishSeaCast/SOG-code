@@ -1,7 +1,7 @@
 SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
                          salinity_o,salinity_m,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
-                         stress,rho_fresh_o,day,dtdz,h,upwell,Eriver,u,dt)
+                         stress,rho_fresh_o,day,dtdz,h,upwell_const,upwell,Eriver,u,dt)
 
       USE mean_param
       USE surface_forcing
@@ -20,6 +20,8 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
       TYPE(windstress), INTENT(IN OUT)::stress
       TYPE(flux), INTENT(OUT)::w
+      real(kind=dp), intent(in) :: upwell_const 
+                                 ! upwelling constant, tuned parameter
       DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
            wt_r, upwell
 
@@ -73,7 +75,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
      Ft = (salinity_o-Sa)/(Sa*dtdz)
 
-     upwell = 1.04e-7*(Qriver**(0.45)) !u1 20% less than u2
+     upwell = upwell_const*(Qriver**(0.45)) !u1 20% less than u2
 
 
 !net longwave radiation.
