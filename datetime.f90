@@ -103,17 +103,27 @@ contains
   end function day_sec
 
 
-  character*19 function datetime_str(datetime) result(str)
+  character*19 function datetime_str(datetime, separator) result(str)
     ! Return the datetime value as a string formatted as in ISO
     ! date/time with a space separating date and time
     ! *** Add an option arg to spec the separator like python isoformat()
     implicit none
-    ! Argument:
+    ! Arguments:
     type(datetime_), intent(in) :: datetime
+    character(len=*), intent(in), optional :: separator
+    ! Local variable:
+    character(len=len(separator)) :: sep
 
+    ! Establish what characters will separate date and time
+    if (present(separator)) then
+       sep = separator
+    else
+       sep = ' '
+    endif
+    ! Write the date/time to a string
     write(str, 100) datetime%yr, datetime%mo, datetime%day, &
-         datetime%hr, datetime%min, datetime%sec
-100 format(i4, 2('-', i2.2), ' ', i2.2, 2(':', i2.2))
+         sep, datetime%hr, datetime%min, datetime%sec
+100 format(i4, 2('-', i2.2), a, i2.2, 2(':', i2.2))
   end function datetime_str
 
 
