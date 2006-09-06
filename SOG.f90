@@ -40,6 +40,7 @@ program SOG
   use find_wind_mod
   use Coriolis_and_pg_mod
   use define_flux_mod
+  use tridiag_mod
 
   implicit none
 
@@ -506,14 +507,15 @@ program SOG
              Hvector%v)                                             ! out
 
         ! Solves tridiagonal system
-        call TRIDAG(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
-             U_p, grid%M)
-        call TRIDAG(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%v, &
-             V_p, grid%M)
-        call TRIDAG(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
-             S_p, grid%M)
-        call TRIDAG(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%t, &
-             T_p, grid%M)
+        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
+             U_p)
+print *, 'here'
+        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%v, &
+             V_p)
+        call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
+             S_p)
+        call tridiag(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%t, &
+             T_p)
 
         DO yy = 1, grid%M   !remove diffusion!!!!!!!!!!  ? not sure
            U%new(yy) = U_p(yy)
@@ -882,22 +884,22 @@ program SOG
           Hvector%sil)  ! null_vector 'cause no sinking
 
      ! Solve the tridiagonal system for the biological quantities
-     call TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%micro,&
-          P1_p, grid%M)
-     call TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%p%nano, &
-          Pnano1_p, grid%M)
-     call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
-          NO1_p, grid%M) 
-     call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
-          NH1_p, grid%M) 
-     call TRIDAG(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%sil, &
-          Sil1_p, grid%M)
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+          Hvector%p%micro, P1_p)
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+          Hvector%p%nano, Pnano1_p)
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
+          NO1_p) 
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
+          NH1_p) 
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%sil, &
+          Sil1_p)
      do xx = 1,D_bins-1
-        call TRIDAG(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-             Hvector%d(xx)%bin, Detritus1_p(xx,:), grid%M)
+        call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+             Hvector%d(xx)%bin, Detritus1_p(xx,:))
      enddo
-     call TRIDAG(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
-          Hvector%d(D_bins)%bin, Detritus1_p(D_bins,:), grid%M)
+     call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
+          Hvector%d(D_bins)%bin, Detritus1_p(D_bins,:))
 
      CALL find_new(grid%M)
 
