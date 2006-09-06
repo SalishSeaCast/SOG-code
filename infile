@@ -1,6 +1,4 @@
-"flagellates_on"
-	.true.
-	"include flagellates in model?"
+"flagellates_on"	.true.	"include flagellates in model?"
 
 "inputfile"
 	"input/nov04-test.dat"
@@ -19,15 +17,16 @@
 	"timeseries/user_bio_nov04-test.out"  
 	"user-defined biology timeseries"
 
-"cruise_id"
-	"0414"
-	"Cruise id number"
+"upwell_const"  1.04e-7         "upwelling constant (tuned)"
+"nu_w_m"        1.0e-4          "internal wave breaking momentum mixing"
+"nu_w_s"        1.0e-5          "internal wave breaking scalar mixing"
+
+"cruise_id"	"0414"		"Cruise id number"
 "ctd_in"
 	"input/ctd_in/SG0414004.str"	     
 	"initial conditions CTD file"
-"noprof"	
-	0
-	"no. of profiles to print"
+
+"noprof"	0		"no. of profiles to print"
 "profile_out"
 	"profiles/nov04-test.out"
 	"profiles"
