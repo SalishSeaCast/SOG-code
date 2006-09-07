@@ -138,18 +138,6 @@ subroutine read_sog (upwell_const)
   end do
   close(16)
 
-  !--biology-----------------------
-  OPEN(UNIT = 7,FILE = "input/biology_sog.dat", STATUS = "OLD", &  
-       ACTION = "READ")
-  OPEN(UNIT = 11,FILE = "input/nutrient.dat",STATUS = "OLD", &
-       ACTION = "READ")
-
-  read(7, *) micro%R, micro%sigma, micro%gamma, micro%Rm, micro%M_z,   &
-       micro%inhib, nano%R, nano%sigma, nano%gamma, nano%Rm, nano%M_z, &
-       nano%inhib
-  read(11, *) nano%k, nano%kapa, nano%N_o, nano%N_x, nano%gamma_o, &
-       micro%k, micro%kapa, micro%N_o, micro%N_x, micro%gamma_o, N%r
-
 
   ! Read detritus model parameters
   ! *** Name of the detritus parameters file should be moved to the 
