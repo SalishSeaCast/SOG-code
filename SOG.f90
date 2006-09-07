@@ -509,7 +509,6 @@ program SOG
         ! Solves tridiagonal system
         call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
              U_p)
-print *, 'here'
         call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%v, &
              V_p)
         call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
