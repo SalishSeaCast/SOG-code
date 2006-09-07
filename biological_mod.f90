@@ -2,7 +2,7 @@
 ! $Source$
 
 module biological_mod
-  ! Type definitiions, and subroutines for the biological model.
+  ! Type definitions, and subroutines for the biological model.
 
   use precision_defs, only: dp
   use declarations, only: D_bins, M2 ! hopefully can get these out of everything else
@@ -20,10 +20,31 @@ module biological_mod
   !
   ! Indices for quantities in PZ vector
   TYPE :: bins
-     !     sequence
      INTEGER :: micro, nano, NO, NH, det, Quant
   END TYPE bins
 
+  !
+  ! Rate parameters for phytoplankton
+  type :: rate_para_phyto
+     real(kind=dp) :: R, &  ! max growth rate for light limitation
+          sigma, & ! parameter in light limitation
+          gamma, & ! loss parameter under light limitation
+          inhib, & ! light inhibition
+          k, & ! NO3 half saturation constant
+          ! preference for NO3 over NH (always less than 1 as NH is preferred)
+          kapa, & 
+          gamma_o, & ! exp strength of NH inhit of NO3 uptake
+          N_o, & ! overall half saturation constant????
+          N_x, & ! exponent in inhibition equation
+          Rm, & ! respiration rate
+          M_z ! mortality rate
+  end type rate_para_phyto
+
+  ! rate parameters for nutrients !*** temporary for old N%r which got orphaned
+  type :: rate_para_nutrient
+     real(kind=dp) r ! reminerialization rate NH to NO3
+  end type rate_para_nutrient
+  
   ! Private variable declarations:
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
@@ -39,9 +60,13 @@ module biological_mod
   real(kind=dp), dimension(:), allocatable :: PZ
   ! Biological model logicals (turned parts of the model on or off)
   logical :: getparl ! until getpar is a module
-  external getparl
+  real(kind=dp) :: getpard ! until getpar is a module
+  external getparl, getpard
   logical :: flagellates  ! whether flagellates can influence other biology
   logical :: remineralization !whether there is a remineralization loop
+  ! Biological rate parameters
+  type(rate_para_phyto) :: rate_micro, rate_nano
+  type(rate_para_nutrient) :: rate_N
 
 contains
 
@@ -75,6 +100,43 @@ contains
 
     flagellates = getparl('flagellates_on',1)
     remineralization = getparl('remineralization',1)
+
+    ! Biological rate parameters
+    ! max growth rate for light limitation
+    rate_micro%R = getpard ('Micro, max growth',1)
+    rate_nano%R = getpard ('Nano, max growth',1)
+    ! parameter in light limitation 
+    rate_micro%sigma = getpard ('Micro, sigma', 1)
+    rate_nano%sigma = getpard ('Nano, sigma', 1)
+    ! loss parameter under light limitation
+    rate_micro%gamma = getpard ('Micro, gamma loss',1)
+    rate_nano%gamma = getpard ('Nano, gamma loss',1)
+    ! light inhibition
+    rate_micro%inhib = getpard('Micro, light inhib',1) 
+    rate_nano%inhib = getpard('Nano, light inhib',1) 
+    ! NO3 half saturation constant
+    rate_micro%k = getpard('Micro, NO3 k',1)
+    rate_nano%k = getpard('Nano, NO3 k',1)
+    ! preference for NO3 over NH 
+    rate_micro%kapa = getpard('Micro, kapa',1)
+    rate_nano%kapa = getpard('Nano, kapa',1)
+    ! exp strength of NH inhit of NO3 uptake
+    rate_micro%gamma_o = getpard('Micro, NH inhib',1)
+    rate_nano%gamma_o = getpard('Nano, NH inhib',1)
+    ! overall half saturation constant????
+    rate_micro%N_o = getpard('Micro, N_o',1)
+    rate_nano%N_o = getpard('Nano, N_o',1)
+    ! exponent in inhibition equation
+    rate_micro%N_x = getpard('Micro, N_x',1)
+    rate_nano%N_x = getpard('Nano, N_x',1)
+    ! respiration rate
+    rate_micro%Rm = getpard('Micro, resp',1)
+    rate_nano%Rm = getpard('Nano, resp',1)
+    ! mortality rate
+    rate_micro%M_z = getpard('Micro, mort',1)
+    rate_nano%M_z = getpard('Nano, mort',1)
+    ! nitrate remineralization rate
+    rate_N%r = getpard('Nitrate, remineral',1)
 
   end subroutine init_biology
 
@@ -182,7 +244,7 @@ contains
 
   END SUBROUTINE reaction_p_sog
 
-  SUBROUTINE p_growth(M, NO, NH, P, I_par, Temp, N, plank, Resp, Mort) 
+  SUBROUTINE p_growth(M, NO, NH, P, I_par, Temp, N, rate, plank, Resp, Mort) 
 
     ! this subroutine calculates the growth, respiration and mortality
     ! (light limited or nutrient limited) of either phytoplankton class.
@@ -203,8 +265,10 @@ contains
     DOUBLE PRECISION, DIMENSION(0:M), INTENT(IN):: Temp  ! temperature
 
 
-    ! in are the parameters of the growth equations, out are the growth values
-    TYPE(plankton2), INTENT(IN OUT):: plank ! either micro or nano 
+    ! parameters of the growth equations
+    type(rate_para_phyto), intent(in) :: rate
+    ! out are the growth values
+    TYPE(plankton2), INTENT(OUT):: plank ! either micro or nano 
 
     ! nutrient uptake values (incremented)
     TYPE(nutrient), INTENT(IN OUT):: N
@@ -239,35 +303,35 @@ contains
        temp_effect = 1.88**(0.1*(Temp(j)-273.15-20.)) 
 
        ! maximum growth rate (before light/nutrient limitation)
-       Rmax(j)=plank%R*temp_effect 
+       Rmax(j)=rate%R*temp_effect 
 
-       Resp(j)=(plank%Rm)*temp_effect 
-       Mort(j)=(plank%M_z)*temp_effect
+       Resp(j)=(rate%Rm)*temp_effect 
+       Mort(j)=(rate%M_z)*temp_effect
 
-       plank%growth%light(j) = Rmax(j)*(1.0-EXP(-plank%sigma*I_par(j)/Rmax(j)))
+       plank%growth%light(j) = Rmax(j)*(1.0-EXP(-rate%sigma*I_par(j)/Rmax(j)))
 
-       Uc(j) = (1.0-plank%gamma)*plank%growth%light(j)* &
-            (1/(1+plank%inhib*I_par(j)))
+       Uc(j) = (1.0-rate%gamma)*plank%growth%light(j)* &
+            (1/(1+rate%inhib*I_par(j)))
     END DO
 
 !!!!!!!!!!!!!!!Define growth due to nutrients!!!!!!!!!!!!!!!!!!!!!!!!!
 
     DO j = 1,M
 
-       NH_effect = exp(-plank%gamma_o * NH(j))
+       NH_effect = exp(-rate%gamma_o * NH(j))
        IF (NO(j) > small) THEN
-          Oup_cell(j) = Rmax(j) * NO(j) * plank%kapa * NH_effect / &
-               (plank%k + NO(j) * plank%kapa * NH_effect + NH(j)) * &
-               (NO(j) + NH(j))**plank%N_x / &
-               (plank%N_o + (NO(j) + NH(j))**plank%N_x)
+          Oup_cell(j) = Rmax(j) * NO(j) * rate%kapa * NH_effect / &
+               (rate%k + NO(j) * rate%kapa * NH_effect + NH(j)) * &
+               (NO(j) + NH(j))**rate%N_x / &
+               (rate%N_o + (NO(j) + NH(j))**rate%N_x)
        ELSE
           Oup_cell(j) = 0.
        END IF
        IF (NH(j) > small) THEN
           Hup_cell(j) = Rmax(j) * NH(j) / &
-               (plank%k + NO(j) * plank%kapa * NH_effect + NH(j))* &
-               (NO(j) + NH(j))**plank%N_x / &
-               (plank%N_o + (NO(j) + NH(j))**plank%N_x)
+               (rate%k + NO(j) * rate%kapa * NH_effect + NH(j))* &
+               (NO(j) + NH(j))**rate%N_x / &
+               (rate%N_o + (NO(j) + NH(j))**rate%N_x)
        ELSE
           Hup_cell(j) = 0.
        END IF
@@ -436,7 +500,7 @@ contains
     ! Resp is respiration, Mort is mortality
 
     call p_growth(M, NO, NH, Pmicro, I_par, Temp, & ! in
-         N, micro, &                                ! in and out
+         N, rate_micro, micro, &                    ! in and out, in, out
          Resp_micro, Mort_micro)                    ! out
 
     ! put microplankton mortality into the medium detritus flux
@@ -450,13 +514,13 @@ contains
     ! Resp_nano is respiration, Mort_nano is mortality
 
     call p_growth(M, NO, NH, Pnano, I_par, Temp, & ! in
-         N, nano, &                                ! in and out
+         N, rate_nano, nano, &                     ! in and out, in, out
          Resp_nano, Mort_nano)                     ! out
 
     waste%small = waste%small + Mort_nano*Pnano
 
 !!!New quantity, bacterial 0xidation of NH to NO pool ==> NH^2
-    N%bacteria(1:M) = N%r * NH**2
+    N%bacteria(1:M) = rate_N%r * NH**2
 
     ! remineralization of detritus groups 1 and 2 (not last one)
     do kk = 1,D_bins-1
