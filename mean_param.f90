@@ -81,9 +81,7 @@ module mean_param
      TYPE(grow)::growth
      TYPE(grazing):: mort   !**&
 !!!phytoplankton constants!!!!!!!!!!!!!!!!!!
-     DOUBLE PRECISION :: sink, R, sigma, &  !sink = sinking vel, R = max growth rate for light
-          gamma, Rm, inhib, Rmax    ! sigma, attenuation coeff for light growth
-     DOUBLE PRECISION :: k, kapa, gamma_o, N_o, N_x  !@@@
+     DOUBLE PRECISION :: sink   !sink = sinking vel
      DOUBLE PRECISION :: Q_cn, Q_old, Q_old_old, dlnQ_dt 
      !CN ratio (old copies) and 1/Q*dQ/dt
      !gamma = photorespiration param , Rm = maintenance respiration 
@@ -91,7 +89,7 @@ module mean_param
      DOUBLE PRECISION :: delta, eta, G, ks, nn !delta = assim efficiency, eta = excretion
      !G = max grazing rate, lambda = slope of linear grazing at small [prey]
      !ks and nn holling type nn+1 grazing function param.
-     DOUBLE PRECISION :: M_z, beta     !M_z = specific mortality, and beta = mortality time constant
+     DOUBLE PRECISION :: beta     ! beta = mortality time constant
      DOUBLE PRECISION, DIMENSION(:), POINTER::q  !preference q(1+d_prey)
      DOUBLE PRECISION, DIMENSION(:,:),POINTER::graze !graze(1+d_prey,mm%M)
      !used in p_growth.dat
@@ -101,7 +99,6 @@ module mean_param
      TYPE(prop)::O,H
      TYPE(grazing)::O_uptake, H_uptake, urea
      DOUBLE PRECISION, DIMENSION(:), POINTER :: remin,bacteria  
-     DOUBLE PRECISION::r 
   END TYPE nutrient
 
   TYPE :: diff
