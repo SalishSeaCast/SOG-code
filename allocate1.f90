@@ -66,8 +66,8 @@ subroutine allocate1(M, STAT)
            Q_test(M), V_t_square(M), omega%s%value(0:M), omega%m%value(0:M), &
            STAT = alloc_stat(6)) 
                      
-      ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), T_mar(M),T_jun(M),T_sep(M),T_dec(M),&
-           S_mar(M),S_jun(M),S_sep(M),S_dec(M),STAT = alloc_stat(7))
+      ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), &
+           STAT = alloc_stat(7))
 
       ALLOCATE(Hvector%s(M),Hvector%t(M),Hvector%u(M),Hvector%v(M),&
            Hvector%p%micro(M),Hvector%p%nano(M),&
@@ -99,29 +99,8 @@ subroutine allocate1(M, STAT)
            wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
-!Copepod allocations and plot allocations
-
       ALLOCATE(f_ratio(M), &
-           nano_pro(84,M),diatom_pro(84,M), zmicro_pro(84,M), copepod_pro(84,M), &
-           NO_pro(84,M), NH_pro(84,M), fratio_pro(84,M), T_pro(84,M), S_pro(84,M), &
-           U_pro(84,M), V_pro(84,M), PON_pro(84,M), &
-           nano_mar(M),nano_jun(M),nano_sep(M),nano_dec(M),diatom_mar(M),&
-           diatom_jun(M),diatom_sep(M),diatom_dec(M),zmicro_mar(M),zmicro_sep(M),zmicro_jun(M),&
-           zmicro_dec(M),copepod_mar(M),copepod_sep(M),copepod_jun(M),copepod_dec(M),NO_mar(M),&
-           NO_jun(M),NO_sep(M),NO_dec(M),NH_mar(M),NH_jun(M),NH_sep(M),NH_dec(M),don_jun(M),don_mar(M),&
-           don_sep(M),don_dec(M),pon_jun(M),pon_mar(M),pon_sep(M),pon_dec(M),&
-           NPPn_mar(M),NPPn_jun(M),NPPn_dec(M),&
-          NPPn_sep(M),NPPd_mar(M),NPPd_jun(M),NPPd_dec(M),NPPd_sep(M),ngrow_mar(M),ngrow_jun(M),&
-          ngrow_sep(M),ngrow_dec(M),dgrow_mar(M),&
-          dgrow_jun(M),dgrow_sep(M),dgrow_dec(M),ngraz_mar(M),ngraz_jun(M),ngraz_sep(M),ngraz_dec(M),&
-          dgraz_mar(M),dgraz_jun(M),&
-          dgraz_dec(M),dgraz_sep(M),NOup_mar(M),NOup_sep(M),NOup_jun(M),NOup_dec(M),NHup_mar(M),&
-          NHup_jun(M),NHup_sep(M),NHup_dec(M),&
-          fratio_mar(M),fratio_jun(M),fratio_dec(M),fratio_sep(M),&
-          U_mar(M),U_dec(M),U_sep(M),U_jun(M),V_mar(M),V_jun(M),V_sep(M),V_dec(M),&
-          Ku_mar(M),Ku_jun(M),Ku_sep(M),Ku_dec(M),&
-          Ks_mar(M),Ks_dec(M),Ks_sep(M),Ks_jun(M),Kt_mar(M),Kt_dec(M),Kt_sep(M),&
-          Kt_jun(M),STAT = alloc_stat(11))
+           STAT = alloc_stat(11))
 
 ! sea add
       ALLOCATE (ut%new(M),vt%new(M),pbx(M),pby(M),&
