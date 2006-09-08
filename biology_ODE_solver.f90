@@ -19,11 +19,11 @@ module do_biology_mod
 contains
 
   subroutine do_biology(time, day, dt, M, precision, step_guess, step_min, &
-       Temp, I_par, P, N, Detritus, Gvector)
+       Temp, I_par, P, N, Sil, Detritus, Gvector)
     ! A wrapper around a bunch of subroutine calls that advance the
     ! biological quantities to the next time step.
     use precision_defs, only: dp
-    use mean_param, only: plankton, snow, nutrient, UVST
+    use mean_param, only: plankton, snow, nutrient, UVST, prop
     use declarations, only: D_bins, M2   ! need to get rid of these
     use rungekutta, only: odeint
     use biological_mod, only: reaction_p_sog, define_PZ
@@ -40,6 +40,7 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: I_par  ! Photosynth avail rad
     type(plankton), intent(in) :: P                   ! Plankton
     type(nutrient), intent(in) :: N                   ! Nitrogen
+    type(prop), intent(in) :: Sil                     ! Silicon
     type(snow), dimension(D_bins), intent(in) :: Detritus
     type(UVST), intent(in out) :: Gvector
 
@@ -51,7 +52,7 @@ contains
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on
     call define_PZ(M, P%micro%new, P%nano%new, N%O%new, N%H%new, & ! in
-         Detritus,                                               & ! in
+         Sil%new, Detritus,                                      & ! in
          PZ)                                                       ! out
     call check_negative(PZ, 'after define_PZ', time, day)
 
@@ -66,10 +67,9 @@ contains
     ! appropriate components of Gvector
     ! *** This subroutine could have a more meaningful name...
     call reaction_p_sog (M, PZ, P%micro%old, P%nano%old, N%O%old, & ! in
-         N%H%old, Detritus,                                       & ! in
+         N%H%old, Sil%new, Detritus,                              & ! in
          Gvector)                                                   ! out
 
-    Gvector%Sil = 0 ! for now
   end subroutine do_biology
 
 
