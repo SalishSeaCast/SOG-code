@@ -64,7 +64,7 @@ shape_parameters.o modify_K.o def_gamma.o 	\
 Coriolis_and_pg.o 		\
 matrix_A.o def_v_t_sog.o tridiag.o	\
 define_Ri_b_sog.o ML_height_sog.o define_hm_sog.o pdf.o 		\
-write_physical_sog.o new_year.o SOG.o		\
+new_year.o SOG.o		\
 P_H.o find_new.o			\
 allocate3.o     \
 advection.o
