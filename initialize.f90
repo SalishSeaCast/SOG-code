@@ -277,7 +277,6 @@ SUBROUTINE initialize
       KsML = 0.
       IparML = 0.
       null_vector = 0.
-      cntp_mar = 0
       T_mar = 0.
       S_mar = 0.
       U_mar =  0.
@@ -285,7 +284,6 @@ SUBROUTINE initialize
       Ku_mar =  0.
       Ks_mar =  0.
       Kt_mar =  0.
-      cntp_jun = 0
       T_jun = 0.
       S_jun = 0.
       U_jun =  0.
@@ -293,7 +291,6 @@ SUBROUTINE initialize
       Ku_jun =  0.
       Ks_jun =  0.
       Kt_jun =  0.
-      cntp_sep = 0
       T_sep = 0.
       S_sep = 0.
       U_sep =  0.
@@ -301,7 +298,6 @@ SUBROUTINE initialize
       Ku_sep =  0.
       Ks_sep =  0.
       Kt_sep =  0.
-      cntp_dec = 0
       T_dec = 0.
       S_dec = 0.
       U_dec =  0.

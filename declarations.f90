@@ -176,7 +176,6 @@ module declarations
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::T_mar,T_jun,T_sep,T_dec,S_mar,S_jun,S_sep,S_dec,&
        U_mar,U_dec,U_sep,U_jun,V_mar,V_jun,V_sep,V_dec,Ku_mar,Ku_jun,Ku_sep,Ku_dec,&
        Ks_mar,Ks_dec,Ks_sep,Ks_jun,Kt_mar,Kt_dec,Kt_sep,Kt_jun
-  INTEGER::cntp_mar,cntp_sep,cntp_jun,cntp_dec
 
   ! An empty vector
   real(kind=dp), dimension(:), allocatable :: null_vector
