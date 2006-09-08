@@ -771,7 +771,7 @@ program SOG
 !------BIOLOGICAL MODEL--------------------------------------------
 
      call do_biology (time, day, dt, grid%M, precision, step_guess, step_min, &
-          T%new(0:grid%M), I_Par, P, N, Detritus, &
+          T%new(0:grid%M), I_Par, P, N, Sil, Detritus, &
           Gvector_ro)
 !*** more of the below can be moved into the do_biology module
 
