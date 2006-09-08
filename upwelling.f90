@@ -66,9 +66,9 @@ contains
     do while (fwc(index) < fwc68)
        index = index + 1
     end do
-    ! Depth wanted is between index and index-1
-    d = (fwc68 - fwc(index-1)) / (fwc(index) - fwc(index-1)) * &
-         grid%i_space(index) + grid%d_i(index-1)
+    ! Depth wanted is between index and index+1
+    d = (fwc68 - fwc(index)) / (fwc(index+1) - fwc(index)) * &
+         grid%i_space(index+1) + grid%d_i(index)
 
     ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5*d
