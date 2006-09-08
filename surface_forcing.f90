@@ -119,44 +119,6 @@ CONTAINS
   END SUBROUTINE average
 
 
-  SUBROUTINE average3(mm,Xnew,bottom,avg_X)
-
-    TYPE(gr_d), INTENT(IN)::mm 
-    DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::Xnew   !K%new(mm%M)
-    DOUBLE PRECISION, INTENT(IN)::bottom  !bottom depth
-    DOUBLE PRECISION, INTENT(OUT)::avg_X 
-
-    DOUBLE PRECISION::X_sl,X_h 
-    INTEGER::k,bottom_g
-
-    DO k = 1,mm%M
-       IF (mm%d_i(k) > bottom) THEN
-          bottom_g = k
-          EXIT
-       ELSE
-          bottom_g = k+1
-       END IF
-    END DO
-
-    avg_X = 0.
-
-    IF (bottom_g <= 1) THEN
-       avg_X = Xnew(1)
-    ELSE
-       X_h = Xnew(1)*mm%i_space(0)
-       IF (bottom_g > 2) THEN
-          DO k = 2, bottom_g - 1
-             X_h = X_h + (Xnew(k-1) + Xnew(k))*mm%i_space(k-1)/2.0 
-          END DO
-       END IF
-       X_sl = Xnew(bottom_g-1) + (bottom-mm%d_i(bottom_g-1))*&
-            (Xnew(bottom_g)-Xnew(bottom_g-1))/mm%i_space(bottom_g-1)
-       avg_X = (X_h + (Xnew(bottom_g-1) + X_sl)*(bottom-mm%d_i(bottom_g-1))/2.0)/&
-            bottom
-    end if
-  end subroutine average3
-
-
   subroutine sum_g(mm, Xnew, bottom, sum_X)
     ! *** What's it do?
 
