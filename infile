@@ -35,6 +35,8 @@
 "Nano, N_o"		0.           "Nano, N_o"
 "Micro, N_x"		0.           "Micro, N_x"
 "Nano, N_x"		0.           "Nano, N_x"
+"Micro, Sil ratio"	1.	     "Micro, ratio Sil/nitrogen"
+"Nano, Sil ratio"	0.	     "Nano, ratio Sil/nitrogen"
 "Micro, resp"		2.7e-06      "Micro, resp"
 "Nano, resp" 		1.45e-07     "Nano, resp"
 "Micro, mort"		2.1e-06      "Micro, mort"
