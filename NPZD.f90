@@ -20,7 +20,7 @@ module biological_mod
   !
   ! Indices for quantities in PZ vector
   TYPE :: bins
-     INTEGER :: micro, nano, NO, NH, det, Quant
+     INTEGER :: micro, nano, NO, NH, Sil, det, Quant
   END TYPE bins
 
   !
@@ -36,6 +36,7 @@ module biological_mod
           gamma_o, & ! exp strength of NH inhit of NO3 uptake
           N_o, & ! overall half saturation constant????
           N_x, & ! exponent in inhibition equation
+          Sil_rat, & ! silicon to nitrogen ratio in phyto     
           Rm, & ! respiration rate
           M_z ! mortality rate
   end type rate_para_phyto
@@ -49,12 +50,13 @@ module biological_mod
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
   type(bins):: PZ_bins
-  data PZ_bins%Quant /4/  ! Size of the biology (Quantities and Detritus)
+  data PZ_bins%Quant /5/  ! Size of the biology (Quantities and Detritus)
   data PZ_bins%micro /1/  ! Position of Diatoms (micro plankton)
   data PZ_bins%nano  /2/  ! Position of Flagellates (nano plankton)
   data PZ_bins%NO    /3/  ! Position of Nitrate
   data PZ_bins%NH    /4/  ! Position of Ammonium
-  data PZ_bins%det   /5/  ! Start of detritus
+  data PZ_bins%Sil   /5/  ! Position of Silicon
+  data PZ_bins%det   /6/  ! Start of detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
@@ -129,6 +131,9 @@ contains
     ! exponent in inhibition equation
     rate_micro%N_x = getpard('Micro, N_x',1)
     rate_nano%N_x = getpard('Nano, N_x',1)
+    ! silicon to nitrogen ratio in phyto
+    rate_micro%Sil_rat = getpard('Micro, Sil ratio',1)
+    rate_nano%Sil_rat = getpard('Nano, Sil ratio',1)
     ! respiration rate
     rate_micro%Rm = getpard('Micro, resp',1)
     rate_nano%Rm = getpard('Nano, resp',1)
@@ -141,7 +146,7 @@ contains
   end subroutine init_biology
 
 
-  SUBROUTINE define_PZ(M, Pmicro, Pnano, NO, NH, Detritus, &
+  SUBROUTINE define_PZ(M, Pmicro, Pnano, NO, NH, Sil, Detritus, &
        PZ)
 
     ! This subroutine takes all the separate variables (microplankton,
@@ -154,7 +159,7 @@ contains
     IMPLICIT NONE
 
     integer, intent(in):: M
-    DOUBLE PRECISION, DIMENSION(0:), INTENT(IN)::Pmicro, Pnano, NO, NH
+    DOUBLE PRECISION, DIMENSION(0:), INTENT(IN)::Pmicro, Pnano, NO, NH, Sil
     TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
     DOUBLE PRECISION, DIMENSION (M2), INTENT (OUT) :: PZ
 
@@ -189,6 +194,12 @@ contains
     ePZ = PZ_bins%NH * M
     PZ(bPZ:ePZ) = NH(1:M)
 
+    ! Silicon
+
+    bPz = (PZ_bins%Sil-1) * M + 1
+    ePZ = PZ_bins%Sil * M
+    PZ(bPZ:ePZ) = Sil(1:M)
+
     ! Detritus
     do j=1,D_bins
        bPz = (PZ_bins%Quant + (j-1) ) * M + 1
@@ -199,7 +210,7 @@ contains
   END SUBROUTINE define_PZ
 
   SUBROUTINE reaction_p_sog(M, PZ, Pmicro, Pnano, NO, &
-       NH, Detritus, Gvector)
+       NH, Sil, Detritus, Gvector)
 
     USE mean_param, only: snow, UVST
 
@@ -207,7 +218,7 @@ contains
 
     integer, intent(in):: M
     DOUBLE PRECISION, DIMENSION(M2), INTENT(IN)::PZ
-    DOUBLE PRECISION, DIMENSION(0:M+1), INTENT(IN)::Pmicro,Pnano, NO, NH
+    DOUBLE PRECISION, DIMENSION(0:M+1), INTENT(IN)::Pmicro,Pnano, NO, NH, Sil
     TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
     TYPE(UVST), INTENT(IN OUT)::Gvector  ! IN only 'cause not setting all
 
@@ -235,6 +246,11 @@ contains
     ePZ = PZ_bins%NH * M
     Gvector%N%H = PZ(bPZ:ePZ) - NH(1:M)
 
+    ! Silicon
+    bPZ = (PZ_bins%Sil-1) * M + 1
+    ePZ = PZ_bins%Sil * M
+    Gvector%Sil = PZ(bPZ:ePZ) - Sil(1:M)
+
     ! Detritus
     DO j = 1,D_bins
        bPz = (PZ_bins%Quant + (j-1) ) * M + 1
@@ -244,7 +260,8 @@ contains
 
   END SUBROUTINE reaction_p_sog
 
-  SUBROUTINE p_growth(M, NO, NH, P, I_par, Temp, N, rate, plank, Resp, Mort) 
+  SUBROUTINE p_growth(M, NO, NH, Sil, P, I_par, Temp, N, rate, plank, & 
+       Resp, Mort) 
 
     ! this subroutine calculates the growth, respiration and mortality
     ! (light limited or nutrient limited) of either phytoplankton class.
@@ -257,7 +274,7 @@ contains
 
     integer, intent(in) :: M
     ! Nitrate and ammonium concentrations
-    double precision, dimension(M), intent(in) :: NO, NH 
+    double precision, dimension(M), intent(in) :: NO, NH, Sil 
     ! plankton concentraton (either Pmicro or Pnano)
     DOUBLE PRECISION, DIMENSION(M), INTENT(IN)::P !V.flagella.01 note: either Pmicro or Pnano
 
@@ -420,7 +437,7 @@ contains
     real(kind=dp), DIMENSION(M):: Resp_nano, Mort_nano  ! respiration & mortality
 
     real(kind=dp), dimension (M) :: Pmicro, Pnano ! micro/nano plankton conc.
-    real(kind=dp), dimension (M) :: NO, NH ! nitrate and ammonium conc.
+    real(kind=dp), dimension (M) :: NO, NH,Sil ! nitrate and ammonium conc.
     real(kind=dp), dimension (D_bins, M) :: detr ! detritus
 
     ! Put PZ micro values into Pmicro variable, removing any negative values
@@ -471,6 +488,19 @@ contains
        endif
     enddo
 
+    ! put PZ silicon values into Sil variable, removing any negative values
+
+    do ii = 1,M                        ! counter through grid
+       jj = (PZ_bins%Sil-1) * M + ii    ! counter into PZ
+
+       if (PZ(jj) > 0) then
+          Sil(ii) = PZ(jj)
+       else
+          Sil(ii) = 0
+       endif
+    enddo
+
+
     ! put PZ detritus values into detr  variable, removing any negative values
 
     do kk = 1,D_bins
@@ -499,8 +529,8 @@ contains
     ! (OUT)
     ! Resp is respiration, Mort is mortality
 
-    call p_growth(M, NO, NH, Pmicro, I_par, Temp, & ! in
-         N, rate_micro, micro, &                    ! in and out, in, out
+    call p_growth(M, NO, NH, Sil, Pmicro, I_par, Temp, & ! in
+         N, rate_micro, micro, &         ! in and out, in, out
          Resp_micro, Mort_micro)                    ! out
 
     ! put microplankton mortality into the medium detritus flux
@@ -513,8 +543,8 @@ contains
     ! (OUT)
     ! Resp_nano is respiration, Mort_nano is mortality
 
-    call p_growth(M, NO, NH, Pnano, I_par, Temp, & ! in
-         N, rate_nano, nano, &                     ! in and out, in, out
+    call p_growth(M, NO, NH, Sil, Pnano, I_par, Temp, & ! in
+         N, rate_nano, nano, &             ! in and out, in, out
          Resp_nano, Mort_nano)                     ! out
 
     waste%small = waste%small + Mort_nano*Pnano
@@ -592,6 +622,19 @@ contains
                + waste%medium(ii) * waste%m%destiny(0)                     &
                + waste%small(ii) * waste%s%destiny(0)                      &
                + N%remin(ii) - N%bacteria(ii)
+       endif
+    enddo
+
+    ! silicon
+
+    do ii = 1, M
+       jj = (PZ_bins%Sil-1) * M + ii ! index for PZ, derivatives etc
+
+       if (Sil(ii) > 0.) then
+          dPZdt(jj) = - (micro%growth%new(ii) * Pmicro(ii) * &
+                             rate_micro%Sil_rat &
+                         + nano%growth%new(ii) * Pnano(ii) * &
+                             rate_nano%Sil_rat)
        endif
     enddo
 
