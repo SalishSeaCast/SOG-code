@@ -138,44 +138,7 @@ module declarations
   DOUBLE PRECISION, DIMENSION(1:27,0:50)::bin_cnt_year
   INTEGER, DIMENSION(:),ALLOCATABLE::daybins
   TYPE(write_bio)::mixlay, depth150, ezone, depth80, total, depth100,doubleT,halfT,depth200
-  INTEGER,DIMENSION(27)::j_day !1,15,29,...,365  every 14 days
-  DOUBLE PRECISION,DIMENSION(365)::c_biomass
-  DOUBLE PRECISION::c_biomass_150
-  INTEGER,DIMENSION(365)::c_cnt
-  !   INTEGER, DIMENSION(365)::o_cnt !12*5
-  !   DOUBLE PRECISION, DIMENSION(365)::nano_o, diatom_o, zmicro_o,copepod_o,don_o,pon_o,&
-  !     out_o,NH_o,stage1_f,stage2_f,stage3_f,stage4_f,stage5_f,stage1_n,stage2_n,stage3_n,&
-  !     stage4_n,stage5_n,stage6_n,nano_avg,diatom_avg,zmicro_avg,copepod_avg,don_avg,pon_avg,&
-  !     out_avg,NO_avg,NH_avg,Ntot_avg,n_loss,nano_gML,micro_gML,nano_g50,micro_g50,nano_go,micro_go,&
-  !     nano_zML,micro_zML,nano_zo,micro_zo,NPPd,NPPn,NPPd_o,NPPn_o
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::nano_mar,nano_jun,nano_sep,nano_dec,diatom_mar,&
-       diatom_jun,diatom_sep,diatom_dec,zmicro_mar,zmicro_sep,zmicro_jun,zmicro_dec,copepod_mar,&
-       copepod_sep,copepod_jun,copepod_dec,NO_mar,NO_jun,NO_sep,NO_dec,NH_mar,NH_jun,NH_sep,NH_dec,&
-       don_jun,don_mar,don_sep,don_dec,pon_jun,pon_mar,pon_sep,pon_dec,NPPn_mar,NPPn_jun,NPPn_dec,&
-       NPPn_sep,NPPd_mar,NPPd_jun,NPPd_dec,NPPd_sep,ngrow_mar,ngrow_jun,ngrow_sep,ngrow_dec,dgrow_mar,&
-       dgrow_jun,dgrow_sep,dgrow_dec,ngraz_mar,ngraz_jun,ngraz_sep,ngraz_dec,dgraz_mar,dgraz_jun,&
-       dgraz_dec,dgraz_sep,NOup_mar,NOup_sep,NOup_jun,NOup_dec,NHup_mar,NHup_jun,NHup_sep,NHup_dec,&
-       fratio_mar,fratio_jun,fratio_dec,fratio_sep
-  DOUBLE PRECISION, DIMENSION(:,:),ALLOCATABLE::nano_pro,diatom_pro,zmicro_pro,&
-       copepod_pro,NO_pro,NH_pro,fratio_pro,T_pro,S_pro,U_pro,V_pro,PON_pro  !60,M
-  INTEGER, DIMENSION(84)::pro_cnt 
-  INTEGER::cnt_mar,cnt_sep,cnt_jun,cnt_dec
-  !  DOUBLE PRECISION, DIMENSION(365)::wt_stage1,wt_stage2,wt_stage3,wt_stage4,wt_stage5,molt_wt,avg_wt
-  !  INTEGER, DIMENSION(365)::cnt_wt,cnt_avg_wt
-  !  DOUBLE PRECISION, DIMENSION(365)::urea_cop,urea_fla,NO_flux,PO_flux, fratio
-  DOUBLE PRECISION::urea_c, urea_f   !daily urea production rate 
-  DOUBLE PRECISION::NO50_rate,PO50_rate,feacal50_rate,NO100_rate,PO100_rate,feacal100_rate,&
-       new_NO,old_NO,new_PO,old_PO,feacalml_rate  
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
-  !nitrate and Particulate organics integrated over upper 50m
-
-  !!variables for plotting: see write_physical.f90
-  INTEGER, DIMENSION(243)::p_cnt
-  DOUBLE PRECISION, DIMENSION(243)::SST,SSS,hm_avg,Ipar_o,Uten_o,Vten_o,UVten_o,Qflux,Fflux,&
-       stage1_no,stage2_no,stage3_no,stage4_no,stage5_no,out_no,KsML,IparML
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::T_mar,T_jun,T_sep,T_dec,S_mar,S_jun,S_sep,S_dec,&
-       U_mar,U_dec,U_sep,U_jun,V_mar,V_jun,V_sep,V_dec,Ku_mar,Ku_jun,Ku_sep,Ku_dec,&
-       Ks_mar,Ks_dec,Ks_sep,Ks_jun,Kt_mar,Kt_dec,Kt_sep,Kt_jun
 
   ! An empty vector
   real(kind=dp), dimension(:), allocatable :: null_vector
