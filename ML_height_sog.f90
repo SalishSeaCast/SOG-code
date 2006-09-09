@@ -1,8 +1,8 @@
 ! $Id$
 ! $Source$
 
-subroutine ML_height_sog(grid, Ri_b, new_h, kmax)
-  ! Find the mixed layer depth.
+subroutine ML_height_sog(grid, Ri_b, year, day, day_time, count, hnew, jmaxg)
+  ! Find the mixing layer depth.  See Large, etal (1994) pp 371-372.
 
   use precision_defs, only: dp
   use io_unit_defs, only: stderr
@@ -13,36 +13,41 @@ subroutine ML_height_sog(grid, Ri_b, new_h, kmax)
 
   ! Arguments:
   type(grid_), intent(in) :: grid 
-  real(kind=dp), dimension(grid%M), intent(in) :: Ri_b
-  real(kind=dp), intent(out) :: new_h
-  integer, intent(out) :: kmax
+  real(kind=dp), dimension(grid%M), intent(in) :: Ri_b  ! Bulk Richardson no.
+  ! *** Temporary arguments for debugging
+  integer, intent(in) :: year, day, count
+  real(kind=dp), intent(in) :: day_time
+  real(kind=dp), intent(out) :: hnew  ! Mixing layer depth [m]
+  integer, intent(out) :: jmaxg       ! Index of grid point below mixing depth
   ! Local variable:
-  integer :: k
+  integer :: j  ! Index over grid depth
 
   ! Find the grid point at which the Richardson number exceeds the
   ! critical value
-  kmax = grid%M             
-  new_h =grid%d_g(kmax)    
-  do k = 1, grid%M-2
-     if (Ri_b(k) > Ri_c) then
-        kmax = k 
+  jmaxg = grid%M             
+  do j = 1, grid%M - 2
+     if (Ri_b(j) > Ri_c) then
+        jmaxg = j 
         exit
      end if
   end do
 
-  if (kmax == 1) then
-     new_h = grid%d_g(kmax) * Ri_c / (Ri_b(kmax) + epsilon(Ri_b(kmax)))
-  else if (kmax >= grid%M - 2) then
-     ! Mixing deeper than bottom of grid
-     kmax = grid%M-3
-     new_h = grid%d_g(kmax) - grid%g_space(kmax) / 4.0 !#
+  if (jmaxg == 1) then
+     ! Mixing layer is < 1 grid layer deep
+     hnew = grid%d_g(1) * Ri_c / (Ri_b(1) + epsilon(Ri_b(1)))
+  else if (jmaxg >= grid%M - 2) then
+     ! Mixing layer extends nearly to bottom of grid
+     jmaxg = grid%M - 3
+     hnew = grid%d_g(jmaxg) - grid%g_space(jmaxg) / 4.0 !#
      write(stderr, *) "ML_height_sog: Mixing too deep. ", &
-          "Set kmax = ", kmax, " and new_h = ", new_h
+          "Set jmaxg = ", jmaxg, " and h%new = ", hnew
+     write(stderr, *) "Iteration count = ", count, " Time: yr = ", &
+          year, " day = ", day, " day_time = ", day_time
   else
-     ! Interpolate to find mixed layer depth
-     new_h = grid%d_g(kmax) &
-          + (Ri_c - Ri_b(kmax)) / (Ri_b(kmax) - Ri_b(kmax-1) &
-          + epsilon(Ri_b(kmax) - Ri_b(kmax-1))) &
-          * grid%g_space(kmax-1)
+     ! Interpolate to find mixing layer depth
+     hnew = grid%d_g(jmaxg) &
+          + (Ri_c - Ri_b(jmaxg)) / (Ri_b(jmaxg) - Ri_b(jmaxg-1) &
+          + epsilon(Ri_b(jmaxg) - Ri_b(jmaxg-1))) &
+          * grid%g_space(jmaxg-1)
   end if
 end subroutine ML_height_sog
