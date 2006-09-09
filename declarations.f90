@@ -53,15 +53,14 @@ module declarations
   REAL, DIMENSION(1919)::Qriver
   REAL, DIMENSION(1919)::Eriver
   DOUBLE PRECISION::begin_hour,end_hour  ! used in interpolate_dt
-  DOUBLE PRECISION :: time, h_i, del, dummy_time, density_test, del_p 
+  DOUBLE PRECISION :: time, h_i, del, dummy_time, del_p 
 
 !!!!For surface fluxes (surface_flux.f90): 
   DOUBLE PRECISION::U_ten,V_ten, & ! U and V velocities (m/s) at standard height (10m or 22m)
        T_atm,& !air temperature at standard height (17m) (K)
        Q_st,Q_atm, & !specific humidity of air in contact with salt water and at standard height (17m)
        Q_tot, F_tot, & !Total turbulent surface heat flux (W/m^2) and freshwater flux
-       wt_r, &  !Radiative contribution to surface heat flux
-       rho_fresh_o !surface density of pure water at SST 
+       wt_r
   INTEGER::j_gamma !interface point corresponding to depth at which Radiation contributes to turbulent
   !surface heat flux
   DOUBLE PRECISION::Q_sol  !See irradiance.f90
