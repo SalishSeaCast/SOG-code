@@ -6,7 +6,7 @@ SUBROUTINE define_sog(timestep)
   !!store previous time_steps in old (n)
   
   USE declarations, only: D_bins, U, V, S, T, h, P, N, Sil, &
-       B, density, K, Bmatrix, Bmatrix_o, & 
+       B, density, Bmatrix, Bmatrix_o, & 
        Gvector, Gvector_o, Gvector_c, Gvector_co, &
        Detritus, ut, vt
 
@@ -20,9 +20,6 @@ SUBROUTINE define_sog(timestep)
 
          B%old = B%new   
          density%old = density%new
-         K%t%old = K%t%all
-         K%s%old = K%s%all
-         K%u%old = K%u%all
 
          Bmatrix_o%u%A = Bmatrix%u%A
          Bmatrix_o%u%B = Bmatrix%u%B
