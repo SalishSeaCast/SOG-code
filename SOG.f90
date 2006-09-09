@@ -286,13 +286,6 @@ program SOG
 
         Bf%b(0) = -w%b(0)+Br   !surface buoyancy forcing *nonturbulent heat flux beta*F_n would also go here  Br is radiative contribution
 
-        IF (time_step == 1 .AND. count == 1) THEN 
-           !!Stores previous time_step for initial loop
-           B%old = B%new   
-           density%old = density%new
-
-        END IF
-
         CALL fun_constants(u_star, w_star, L_star,w, Bf%b(0), h%new)   !test conv
 
         CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
@@ -590,11 +583,14 @@ program SOG
            ! V_t_square, the turbulent velocity shear, (23)
         END IF
 
-        CALL define_Ri_b_sog(grid, h, surface_h, B, U, V, density, Ri_b, V_t_square, N_2_g)
-        ! (21)
-        CALL ML_height_sog(grid, Ri_b, h_i, jmaxg) !test conv
-        ! (21) tested for minimum value of d at which Ri_b = Ri_c
-
+        ! Calculate the profile of bulk Richardson number (Large, etal
+        ! (1994) eq'n(21))
+        CALL define_Ri_b_sog(grid, h, surface_h, B, U, V, density, Ri_b, &
+             V_t_square, N_2_g)
+        ! Find the mixing layer depth by comparing Ri_b to Ri_c
+        CALL ML_height_sog(grid, Ri_b, year, day, day_time, count, h_i, jmaxg)
+        ! *** This block of code is never executed because
+        ! *** ML_height_sog doesn't allow jamxg to exceed grid%M-3
         IF (jmaxg >= grid%M-2) THEN ! mixing down to bottom of grid
            PRINT "(A)","jmaxg >= grid%M-2. OR. h_i >= grid%d_g(grid%M-2) in KPP"
            PRINT "(A)","jmaxg,h_i"
@@ -630,9 +626,10 @@ program SOG
            PRINT *,h%old
            STOP
         END IF
-
+        !  Apply the Ekman depth criterion to the mixing layer depth
+        ! when stable forcing exists
+        ! *** This code could probably go into ML_height_sog.
         h_i = (h_i + h%new)/2.0 !use the average value!!!!!!!!##
-
         IF (stable == 1) THEN          !Stability criteria 
            h_Ekman = 0.7*u_star/f         ! see (24) and surrounding
            IF (h_Ekman < L_star) THEN
