@@ -23,7 +23,7 @@ subroutine allocate1(M, STAT)
            N%O%new(0:M+1),N%O%old(0:M+1),&
            N%H%new(0:M+1),N%H%old(0:M+1),&
            Sil%new(0:M+1), Sil%old(0:M+1), &            ! silicon
-           density%new(0:M+1),dens_i(0:M+1),&
+           density%new(0:M+1),&
            STAT = alloc_stat(1))
 
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
