@@ -3,9 +3,10 @@
 
 subroutine define_Ri_b_sog(d, hh, surf_h, Bb, Uu, Vv, dens, Rib, &
      Vt_sq, N2)
-
-! Calculate the profile of the bulk Richardson number, which is
-! (probably) used to find the bottom of the mixed layer
+  ! Calculate the profile of the bulk Richardson number, which is
+  ! used to find the mixing layer depth.  See Large, etal (1994) pp
+  ! 371-372, in particular, eq'n (21)
+  ! *** Argument order needs to be standardized
 
   USE mean_param
   USE surface_forcing
