@@ -83,7 +83,7 @@ module declarations
   !I = intensity, Q_n is the
   !non_turbulent heat flux  (i.e. I)
   !F_n is freshwater flux (0 no ice)
-  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, T_To, Q_t, dens_i
+  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, T_To, Q_t
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
   ! Temporary vectors U_i , U_p... to hold results from tridiagonal solver
