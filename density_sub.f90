@@ -1,4 +1,4 @@
-SUBROUTINE density_sub(Ti,Si,ro,mm,rho_fresh_o)
+SUBROUTINE density_sub(Ti,Si,ro,mm)
 
       USE mean_param
       USE surface_forcing
@@ -8,7 +8,6 @@ SUBROUTINE density_sub(Ti,Si,ro,mm,rho_fresh_o)
       INTEGER, INTENT(IN)::mm  !M
       TYPE(prop), INTENT(IN)::Ti, Si
       DOUBLE PRECISION, DIMENSION(0:mm+1), INTENT(OUT)::ro  !density of salt water
-      DOUBLE PRECISION, INTENT(OUT)::rho_fresh_o  !density of pure water
       DOUBLE PRECISION::ro_w
       INTEGER::x
 
@@ -19,9 +18,6 @@ SUBROUTINE density_sub(Ti,Si,ro,mm,rho_fresh_o)
          273.15)*(-9.095290E-03 + &
                 (Ti%new(x)-273.15)*(1.001685E-04 + (Ti%new(x)-273.15)*(-1.120083E-06 + &
                 (Ti%new(x)-273.15)*6.536332E-09))))
-         IF (x == 1) THEN 
-            rho_fresh_o = ro_w
-         END IF 
          ro(x) = ro_w + Si%new(x)*(0.824493 + (Ti%new(x)-273.15)*(-4.0899E-03 + &
                  (Ti%new(x)-273.15)*(7.6438E-05 + &
                  (Ti%new(x)-273.15)*(-8.2467E-07 + (Ti%new(x)-273.15)*5.3875E-09)))) + &
