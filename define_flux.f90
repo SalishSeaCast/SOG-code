@@ -76,12 +76,6 @@ contains
        END IF
     END DO
 
-    IF (time_step == 1 .AND. count == 1) THEN
-       K%t%old = K%t%all
-       K%s%old = K%s%all
-       K%u%old = K%u%all
-    END IF
-
 !!!!!!!!!!!!!!!!!!!!!freshwater flux, F_n!!!!!!!!!!!!!!!!!!!!!!
 
     F_n = 0.0
