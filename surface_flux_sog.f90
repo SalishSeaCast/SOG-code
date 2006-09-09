@@ -2,9 +2,9 @@
 ! $Source$
 
 SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
-                         salinity_o,salinity_m,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
+                         salinity_n,salinity_o,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
-                         stress,rho_fresh_o,day,dtdz,h,upwell_const,upwell,Eriver,u,dt)
+                         stress,rho_fresh_o,day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Ft,count)
 
       USE mean_param
       USE surface_forcing
@@ -14,21 +14,27 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       INTEGER, INTENT(IN)::mm,day
       DOUBLE PRECISION,DIMENSION(0:mm+1), INTENT(IN)::ro ! density%new
       DOUBLE PRECISION, INTENT(IN):: alp, Cp_o, bet !alph%i(0), Cp%i(0), beta%i(0)
-      DOUBLE PRECISION, INTENT(IN)::salinity_o, salinity_m, salinity_d,temp_o, & 
+      DOUBLE PRECISION, INTENT(IN)::salinity_n, & ! current upper level Sal
+           salinity_o, &  ! previous time step upper level Sal
+           salinity_d,temp_o, & 
            U_ten, V_ten, &
-           rho_fresh_o, dtdz, u, dt
+           rho_fresh_o, &
+           dtdz, &  ! time step divided by mixing layer depth
+           u, dt
            !Q_tot,F_tot, Q_sol,  !U_ten, V_ten are unow, vnow
       REAL, INTENT(IN):: cf,atemp,humid, Qriver, Eriver
       INTEGER, INTENT(IN)::j_gamma
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
       TYPE(windstress), INTENT(IN OUT)::stress
       TYPE(flux), INTENT(OUT)::w
+      real(kind=dp), intent(in out):: Ft  ! fresh water flux
+      integer, intent(in) :: count ! iteration count used to stabilize Ft
       real(kind=dp), intent(in) :: upwell_const 
                                  ! upwelling constant, tuned parameter
       DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
            wt_r, upwell
 
-      DOUBLE PRECISION::Ft, C_D, UU, rho_atm, Sa, S_riv
+      DOUBLE PRECISION::C_D, UU, rho_atm, Sa, S_riv
       double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
       double precision:: Cs, h_sens, h_latent, h_flux, Cp
       REAL:: epsilon_w,a,b,c,ea,es,cl,le
@@ -77,14 +83,21 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
      ! Georgia at station S3 based on the river flows.  (Derived by
      ! Kate Collins 16-Jun-2005)
      S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
-     ! Smear the change in salinity over a half day
+     ! Smear the change in salinity over a half day (goal for salinity
+     ! is based on old salinity so that it is not a moving target)
      Sa = salinity_o + (S_riv - salinity_o) * dt / (0.5 * 24 * 3600) 
      ! Calculate the fresh water flux necessary to get Sa in the top
      ! layer
-     Ft = (salinity_o - Sa) / (Sa * dtdz)
-     ! ...but the rivers can't add salinity
-     if (Ft < 0.) then
-        Ft = 0.
+
+     ! if count=1, use last value as a best estimate
+     if (count.gt.1) then 
+        ! adjust flux to get closer to goal, divide by count to 
+        ! reduce oscillations
+        Ft = Ft + (salinity_n - Sa) / (Sa * dtdz) / count
+        ! ...but the rivers can't add salinity
+        if (Ft < 0.) then
+           Ft = 0.
+        endif
      endif
 
      ! Calculate the entrainment of deep water into the bottom of the
