@@ -57,7 +57,7 @@ program SOG
   !*** read by read_sog used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
   ! surface_forcing module
-  real(kind=dp) :: upwell_const
+  real(kind=dp) :: upwell_const, Ft=0
 
   ! Internal wave breaking eddy viscosity for momentum and scalars
   ! (tuned parameters)
@@ -277,12 +277,12 @@ program SOG
         j = day_time / 3600.0 + 1
 
         ! *** Confirm that all of these arguments are necessary
-        CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%old(1),        &
-             S%new(h%i), S%new(grid%M), T%new(0), j_gamma, I, Q_t(0),        &
+        CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%new(1),        &
+             S%old(1), S%new(grid%M), T%new(0), j_gamma, I, Q_t(0),        &
              alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10.,    &
              atemp(day_met,j), humid(day_met,j), Qinter,stress, rho_fresh_o, &
-             day, dt/grid%i_space(1), h, upwell_const, upwell, Einter,       &
-             u%new(1), dt) 
+             day, dt/h%new, h, upwell_const, upwell, Einter,       &
+             u%new(1), dt, Ft, count) 
 
         Bf%b(0) = -w%b(0)+Br   !surface buoyancy forcing *nonturbulent heat flux beta*F_n would also go here  Br is radiative contribution
 
