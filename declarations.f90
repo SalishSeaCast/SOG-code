@@ -125,19 +125,19 @@ module declarations
   TYPE(snow), DIMENSION(:), ALLOCATABLE::Detritus  
 
   !!Variables for plotting:  see write_biological.f90
-  INTEGER, DIMENSION(243)::o_cnt,hm_g,euph_g,species_cnt, species_cnt2
-  INTEGER::nobins,bin_no
-  DOUBLE PRECISION, DIMENSION(243)::NO_o,nano_ml,diatom_ml,zmicro_ml,copepod_ml,NO_ml,NH_ml,PN_ml,DN_ml,&
-       copepod_150,NH_150,NO_150,PN_150,DN_150,PN_100,DN_100,nano_e,diatom_e,NO_e,NH_e,PN_e,DN_e, &
-       NOup_e,NHup_e,fratio_e, NPP_e,NPP_ml,NPP_80,ngrow_o,ngrow_e,ngrow_ml,dgrow_o,dgrow_e,dgrow_ml,&
-       species_b,species_mwt,species_mwt_o,zgrazen_ml,cgrazed_ml,cgrazez_ml,cgrazed2_ml,SPN_ml,&
-       T2nano_ml,Thalfnano_ml,T2diatom_ml,Thalfdiatom_ml,T2zmicro_ml,&
-       Thalfzmicro_ml,feacalml,ureaf,ureac,migrateflux,NOup_ml,NHup_ml,&
-       fratio_ml,hm_new,euph_new,species_avgwt,D3_ml,D3_200,PN_200,NH_200,NO_200
-  DOUBLE PRECISION, DIMENSION(0:50)::bin_logwt,bin_cnt     
-  DOUBLE PRECISION, DIMENSION(1:27,0:50)::bin_cnt_year
-  INTEGER, DIMENSION(:),ALLOCATABLE::daybins
-  TYPE(write_bio)::mixlay, depth150, ezone, depth80, total, depth100,doubleT,halfT,depth200
+!!$  INTEGER, DIMENSION(243)::o_cnt,hm_g,euph_g,species_cnt, species_cnt2
+!!$  INTEGER::nobins,bin_no
+!!$  DOUBLE PRECISION, DIMENSION(243)::NO_o,nano_ml,diatom_ml,zmicro_ml,copepod_ml,NO_ml,NH_ml,PN_ml,DN_ml,&
+!!$       copepod_150,NH_150,NO_150,PN_150,DN_150,PN_100,DN_100,nano_e,diatom_e,NO_e,NH_e,PN_e,DN_e, &
+!!$       NOup_e,NHup_e,fratio_e, NPP_e,NPP_ml,NPP_80,ngrow_o,ngrow_e,ngrow_ml,dgrow_o,dgrow_e,dgrow_ml,&
+!!$       species_b,species_mwt,species_mwt_o,zgrazen_ml,cgrazed_ml,cgrazez_ml,cgrazed2_ml,SPN_ml,&
+!!$       T2nano_ml,Thalfnano_ml,T2diatom_ml,Thalfdiatom_ml,T2zmicro_ml,&
+!!$       Thalfzmicro_ml,feacalml,ureaf,ureac,migrateflux,NOup_ml,NHup_ml,&
+!!$       fratio_ml,hm_new,euph_new,species_avgwt,D3_ml,D3_200,PN_200,NH_200,NO_200
+!!$  DOUBLE PRECISION, DIMENSION(0:50)::bin_logwt,bin_cnt     
+!!$  DOUBLE PRECISION, DIMENSION(1:27,0:50)::bin_cnt_year
+!!$  INTEGER, DIMENSION(:),ALLOCATABLE::daybins
+!!$  TYPE(write_bio)::mixlay, depth150, ezone, depth80, total, depth100,doubleT,halfT,depth200
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
 
   ! An empty vector
@@ -145,7 +145,7 @@ module declarations
 
 !!!!!!!variables from KPP used in shift_vector.f90
 
-  DOUBLE PRECISION::smooth_avg_u,smooth_avg_v,smooth_var_u,smooth_var_v,test_avg,test_var
+!!$  DOUBLE PRECISION::smooth_avg_u,smooth_avg_v,smooth_var_u,smooth_var_v,test_avg,test_var
 
   TYPE(bottom_fit), DIMENSION(1659):: ctd_bottom
 
