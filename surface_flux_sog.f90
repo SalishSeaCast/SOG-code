@@ -4,7 +4,8 @@
 SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
                          salinity_n,salinity_o,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
-                         stress,rho_fresh_o,day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Ft,count)
+                         stress,&
+                         day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Ft,count)
 
       USE mean_param
       USE surface_forcing
@@ -18,7 +19,6 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
            salinity_o, &  ! previous time step upper level Sal
            salinity_d,temp_o, & 
            U_ten, V_ten, &
-           rho_fresh_o, &
            dtdz, &  ! time step divided by mixing layer depth
            u, dt
            !Q_tot,F_tot, Q_sol,  !U_ten, V_ten are unow, vnow
