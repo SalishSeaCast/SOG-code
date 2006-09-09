@@ -185,13 +185,15 @@ contains
           ! Open the profile results file
           open(unit=profiles, &
                file=trim(profilesBase_fn) // '-' &
-               // datetime_str(profileDatetime(iprof), 'T'), &
+               // datetime_str(profileDatetime(iprof), datetime_sep='T', &
+               time_sep='q'), &
                status='replace', action='write')
           ! Write the profile results file header
           ! Avoid a pgf90 idiocyncracy by getting datetimes formatted into
           ! string here rather than in the write statement
           str_proDatetime = datetime_str(profileDatetime(iprof))
-          write(profiles, 200) trim(codeId), runDatetime, str_proDatetime
+          write(profiles, 200) trim(codeId), runDatetime, str_proDatetime, &
+               dep, derS
 200       format("! Profiles of Temperature, Salinity, Density, ",           &
                "Phytoplankton (micro & nano),"/,                             &
                "! Nitrate, Ammonium, Silcion and Detritus (dissolved, ",     &
@@ -211,9 +213,11 @@ contains
                "total salinity eddy diffusivity, ",                          &
                "photosynthetic available radiation, ",                       &
                "u velocity, v velocity"/,                                    &
-               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N,", &
+               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
                "uM, uM N, uM N, uM N, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s"/,&
                "*ProfileDateTime: ", a/,                                     &
+               "*HaloclineMagnitude: ", f6.3, " m^-1"/,                      &
+               "*HaloclineDepth: ", f6.2, " m"/,                             &
                "*EndOfHeader")
           ! Write the profile values at the surface, and at all grid points
           do i = 0, grid%M
