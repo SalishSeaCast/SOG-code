@@ -196,7 +196,7 @@ program SOG
   Cp%g = Cp_profile(T%new, S%new)
   Cp%i = interp_i(Cp%g)
   ! Density with depth and density of fresh water
-  CALL density_sub(T, S, density%new, grid%M, rho_fresh_o) 
+  CALL density_sub(T, S, density%new, grid%M) 
   
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store previous time_steps in old (n) and old_old (n-1)
@@ -280,7 +280,7 @@ program SOG
         CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%new(1),        &
              S%old(1), S%new(grid%M), T%new(0), j_gamma, I, Q_t(0),        &
              alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10.,    &
-             atemp(day_met,j), humid(day_met,j), Qinter,stress, rho_fresh_o, &
+             atemp(day_met,j), humid(day_met,j), Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Ft, count) 
 
@@ -535,7 +535,7 @@ program SOG
         Cp%i = interp_i(Cp%g)
         
         ! Density with depth and density of fresh water
-        CALL density_sub(T, S, dens_i, grid%M, rho_fresh_o)
+        CALL density_sub(T, S, dens_i, grid%M)
         density%new = dens_i
 
         CALL div_i_param(grid,alph)
