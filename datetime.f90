@@ -103,29 +103,63 @@ contains
   end function day_sec
 
 
-  function datetime_str(datetime, separator) result(str)
-    ! Return the datetime value as a string formatted as in ISO
-    ! date/time with a character separating date and time.  Separator
-    ! defaults to a space.
+  function datetime_str(datetime, date_sep, datetime_sep, time_sep) result(str)
+    ! Return the datetime value as a string.  Order of components is
+    ! yr mo day, hr min s.  Date components are separated by the
+    ! optional date_sep (defaults to '-'.  Date and time parts are
+    ! separated by the optional datetime_sep (defaults to a space).
+    ! Time components are separated by the optional time_sep
+    ! (defaults to ':').  To get an ISO formatted date/time string use
+    ! datetime_str(datetime, datetime_sep='T').  Use 'q' to get an
+    ! empty separator, and no, there's no way to get q as a separator,
+    ! because text processing in Fortran really sucks... :-)
     implicit none
     ! Arguments:
     type(datetime_), intent(in) :: datetime
-    character(len=1), intent(in), optional :: separator
+    character(len=1), intent(in), optional :: date_sep, datetime_sep, time_sep
     ! Result:
     character(len=19) :: str
     ! Local variable:
-    character(len=1) :: sep
+    character(len=1)  :: dsep, dtsep, tsep
+    character(len=10) :: date_str
+    character(len=8)  :: time_str
 
-    ! Establish what characters will separate date and time
-    if (present(separator)) then
-       sep = separator
+    ! Establish what the separator characters are
+    if (present(date_sep)) then
+       dsep = date_sep
     else
-       sep = ' '
+       dsep = '-'
+    endif
+    if (present(datetime_sep)) then
+       dtsep = datetime_sep
+    else
+       dtsep = ' '
+    endif
+    if (present(time_sep)) then
+       tsep = time_sep
+    else
+       tsep = ':'
     endif
     ! Write the date/time to a string
-    write(str, 100) datetime%yr, datetime%mo, datetime%day, &
-         sep, datetime%hr, datetime%min, datetime%sec
-100 format(i4, 2('-', i2.2), a, i2.2, 2(':', i2.2))
+    if (dsep /= 'q') then
+       write(date_str, 100) datetime%yr, dsep, datetime%mo, dsep, datetime%day
+100    format(i4, 2(a1,i2.2))
+    else
+       write(date_str, 101) datetime%yr, datetime%mo, datetime%day
+101    format(i4, 2i2.2)
+    endif
+    if (tsep /= 'q') then
+       write(time_str, 102) datetime%hr, tsep, datetime%min, tsep, datetime%sec
+102    format(i2.2, 2(a1, i2.2))
+    else
+       write(time_str, 103) datetime%hr, datetime%min, datetime%sec
+103    format(3i2.2)
+    endif
+    if (dtsep /= 'q') then
+       str = trim(date_str) // dtsep // trim(time_str)
+    else
+       str = trim(date_str) // trim(time_str)
+    endif
   end function datetime_str
 
 
