@@ -53,10 +53,11 @@
 	"input/ctd_in/SG0414004.str"	     
 	"initial conditions CTD file"
 
-"noprof"	0		"no. of profiles to print"
-"profile_out"
-	"profiles/nov04-test.out"
-	"profiles"
+"noprof"	1		"no. of profiles to print"
+"profday"	303		"yr-day for profile"
+"proftime"	43200.		"day-sec for profile"
+"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
+"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
 
 # information below this line is ignored
 
