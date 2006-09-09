@@ -20,11 +20,11 @@ subroutine allocate1(M, STAT)
            B%new(0:M+1),B%old(0:M+1), &
            P%micro%old(0:M+1),P%micro%new(0:M+1), &
            P%nano%new(0:M+1),P%nano%old(0:M+1), &
-               N%O%new(0:M+1),N%O%old(0:M+1),&
-               N%H%new(0:M+1),N%H%old(0:M+1),&
-               Sil%new(0:M+1), Sil%old(0:M+1), &            ! silicon
-               density%old(0:M+1),density%new(0:M+1),dens_i(0:M+1),&
-               STAT = alloc_stat(1))
+           N%O%new(0:M+1),N%O%old(0:M+1),&
+           N%H%new(0:M+1),N%H%old(0:M+1),&
+           Sil%new(0:M+1), Sil%old(0:M+1), &            ! silicon
+           density%old(0:M+1),density%new(0:M+1),dens_i(0:M+1),&
+           STAT = alloc_stat(1))
 
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
               Gvector_ro%d(D_bins),&
@@ -52,11 +52,18 @@ subroutine allocate1(M, STAT)
                Bmatrix_o%no%A(M),Bmatrix_o%no%B(M),Bmatrix_o%no%C(M),&
                STAT = alloc_stat(4)) !**&
 
-      ALLOCATE(T%div_g(M),U%div_g(M),V%div_g(M),S%div_g(M),B%div_g(M),density%div_g(M),T%div_i(M),&
-               U%div_i(M),V%div_i(M),S%div_i(M),density%div_i(M),B%div_i(M),P%micro%div_i(M), &
-               K%u%shear(0:M),K%s%dd(0:M),K%t%dd(0:M),&
-               K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
-               K%t%old(0:M),K%s%old(0:M),K%u%old(0:M),STAT = alloc_stat(5))
+      ALLOCATE(&
+           &T%div_g(M),&
+           &U%div_g(M),V%div_g(M),&
+           &S%div_g(M),&
+           &B%div_g(M),&
+           density%div_g(M),&
+           T%div_i(M),&
+           U%div_i(M), V%div_i(M), S%div_i(M), density%div_i(M),&
+           K%u%shear(0:M),K%s%dd(0:M),K%t%dd(0:M),&
+           K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
+           K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
+           STAT = alloc_stat(5))
 
       ALLOCATE(ref_T(0:M+1), &
            avg_12(0:M+1), tot_avg(0:M+1), Q_t(0:M), T_To(0:M+1), &
