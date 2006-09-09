@@ -535,8 +535,7 @@ program SOG
         Cp%i = interp_i(Cp%g)
         
         ! Density with depth and density of fresh water
-        CALL density_sub(T, S, dens_i, grid%M)
-        density%new = dens_i
+        CALL density_sub(T, S, density%new, grid%M)
 
         CALL div_i_param(grid,alph)
         CALL div_i_param(grid,beta)
