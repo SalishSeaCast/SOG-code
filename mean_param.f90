@@ -45,12 +45,18 @@ module mean_param
      type(phyto) :: p 
      type(nut) :: n
      type(det), dimension(:), pointer :: d !d(D_bins)
-  END TYPE UVST
+  end type UVST
 
 
   TYPE :: alpha             !Interpolation data
      DOUBLE PRECISION :: value, TT, SS, dS
   END TYPE alpha
+
+  ! expansion coefficients, surface density
+  TYPE :: constant          
+     TYPE(alpha), DIMENSION(13) :: data
+     DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
+  END TYPE constant
 
   TYPE :: wind_ecmwf
      INTEGER :: day, year, month, Jday, leap
@@ -61,12 +67,6 @@ module mean_param
      INTEGER :: year, month, day, Jday, leap
      DOUBLE PRECISION :: actual, clear_sky, ratio
   END TYPE insol_daily
-
-  ! expansion coefficients, surface density
-  TYPE :: constant          
-     TYPE(alpha), DIMENSION(13) :: data
-     DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
-  END TYPE constant
 
   TYPE :: grow               
      DOUBLE PRECISION, DIMENSION(:), POINTER :: light, new, net !**&    
@@ -105,7 +105,7 @@ module mean_param
      DOUBLE PRECISION, DIMENSION(:), POINTER :: shear, total 
      DOUBLE PRECISION, DIMENSION(:), POINTER :: dd    !double diffusion
      DOUBLE PRECISION, DIMENSION(:), POINTER :: ML    !mixed layer
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: all, old   !total and ML combined
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: all
      DOUBLE PRECISION :: div      !only for interior
      DOUBLE PRECISION :: h        !diffusivities at h
   END TYPE diff
@@ -173,28 +173,7 @@ module mean_param
      TYPE(old_new)::u,v
   END TYPE windstress
 
-
-  !Copepod Types:
-  TYPE :: mat_dist
-     DOUBLE PRECISION::M,sigma_M, f, o_f, pdf_out, o_pdf_out, & 
-          !<M>, (<M^2>-<M>^2)^1/2, number of animals
-     wt_node, wt_avg, o_wt_avg, o_wt_node, day_wt_avg, mwt_avg, M_old, &
-          b, wt_m, norm, cnout  !b = condition number, wt_m = migration weight
-     !in Mixed layer for a given event divided by current Ntot, 
-     !pdf_out=frac in stage 6
-     !o_pdf_out = previous days frac in stage 6 (for each initial
-     !distribution === used to normalize pdf
-     INTEGER::day  !arrival day
-     DOUBLE PRECISION, DIMENSION(:), POINTER::stage_dur  !stage #-1 stage_dur(Zoo%s_number-1) allocated
-  END TYPE mat_dist
-
-  TYPE :: write_bio   !total
-     DOUBLE PRECISION::nano,diatom,zmicro,copepod,out,NO,NH,size,PN,NPP,n_loss,ngrow,dgrow,DN,&
-          zgrazen,cgrazed,cgrazez,cgrazed2
-  END TYPE write_bio
-
-  !Detritus Types
-
+  ! Detritus Types
   TYPE :: snow  !Detritus(D_bins)
      DOUBLE PRECISION::r, & !regeneration rate
           v ! sinking velocity
@@ -323,18 +302,3 @@ CONTAINS
   END SUBROUTINE find_jmax_i
 
 END MODULE mean_param
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
