@@ -22,8 +22,8 @@ program SOG
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_profiles, &
        profiles_output_close
-  use water_properties, only: water_property, alloc_water_props, &
-       dalloc_water_props, Cp_profile
+  use water_properties, only: Cp, calc_rho_alpha_beta_Cp_profiles, &
+       alloc_water_props, dalloc_water_props
   use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
@@ -48,10 +48,6 @@ program SOG
   integer :: ecmapp, day_met
 
   double precision:: cz, unow, vnow, upwell 
-
-  ! Water column physical properties
-  type(water_property) :: &
-       Cp    ! Heat capacity in J/kg-K
 
   ! Upwelling constant (tuned parameter)
   !*** read by read_sog used by surface_flux_sog : eventually should be local
@@ -159,7 +155,7 @@ program SOG
      END IF
   END DO
   ! Allocate memory for water property arrays
-  call alloc_water_props(grid%M, Cp)
+  call alloc_water_props(grid%M)
 
   CALL read_sog (upwell_const)
   nu_w_m = getpard('nu_w_m',1)   ! internal wave mixing momentum
@@ -193,7 +189,7 @@ program SOG
   CALL div_i_param(grid, alph) ! alph%idiv = d alpha /dz
   CALL div_i_param(grid, beta) ! beta%idiv = d beta /dz
   ! Heat capacity
-  Cp%g = Cp_profile(T%new, S%new)
+  call  calc_rho_alpha_beta_Cp_profiles(T%new, S%new, Cp%g)
   Cp%i = interp_i(Cp%g)
   ! Density with depth and density of fresh water
   CALL density_sub(T, S, density%new, grid%M) 
@@ -531,7 +527,7 @@ program SOG
         CALL alpha_sub(T%new, S%new, alph, grid)
         CALL alpha_sub(T%new, S%new, beta, grid)
         ! Heat capacity
-        Cp%g = Cp_profile(T%new, S%new)
+        call  calc_rho_alpha_beta_Cp_profiles(T%new, S%new, Cp%g)
         Cp%i = interp_i(Cp%g)
         
         ! Density with depth and density of fresh water
@@ -935,7 +931,7 @@ program SOG
   call profiles_output_close
 
   ! Deallocate memory
-  call dalloc_water_props(Cp)
+  call dalloc_water_props
   call dalloc_grid
 
 end program SOG
