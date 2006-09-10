@@ -121,8 +121,8 @@ contains
          "concentration, and "/,                                        &
          "! phytoplankton (micro & nano) biomass, at surface, and ",    &
          "averaged over ",                                              &
-         "! top 5 m of water column; and detritus (remineralized, ",    &
-         "sinking, and mortality)"/,                                    &
+         "! top 5 m of water column; and detritus (dissolved, ",        &
+         "sinking, and lost)"/,                                         &
          "! at 20 m depth."/,                                           &
          "*FromCode: ", a/,                                             &
          "*RunDateTime: ", a/,                                          &
@@ -131,10 +131,10 @@ contains
          "surface silcon concentration, ",                              &
          "surface micro phytoplankton biomass, ",                       &
          "surface nano phytoplankton biomass, ",                        &
-         "remineralized detritus at 20 m",                              &
-         "sinking detritus at 20 m",                                    &
-         "mortality detritus at 20 m"/,                                 &
-         "*FieldUnits: hr since ", a, " LST, uM N, uM N, uM Si, uM N, ",&
+         "dissolved detritus at 20 m, ",                                &
+         "sinking detritus at 20 m, ",                                  &
+         "lost detritus at 20 m"/,                                      &
+         "*FieldUnits: hr since ", a, " LST, uM N, uM N, uM, uM N, ",   &
          "uM N, uM N, uM N, uM N"/,                                     &
          "*EndOfHeader")
 
