@@ -39,7 +39,7 @@ module timeseries_output
 
 contains
   
-  subroutine timeseries_output_open(codeId, runDatetime, startDatetime)
+  subroutine timeseries_output_open(codeId, str_runDatetime, CTDdatetime)
     ! Get the names of the time series output files from stdin using
     ! getpars(), open them, and write their headers.
     ! *** Does reading the file names from stdin belong here, or in
@@ -48,13 +48,27 @@ contains
     ! *** getpars should come from the input processor module,
     ! *** eventually
     use initial_sog, only: getpars
+    use datetime, only: datetime_, datetime_str
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId         ! Code identity string
-    character(len=19), intent(in) :: runDatetime    ! Date/time of code run
-    character(len=19), intent(in) :: startDatetime  ! Midnight of start day
+    character(len=70), intent(in) :: codeId             ! Code identity string
+    character(len=19), intent(in) :: str_runDatetime    ! Date/time of code run
+    ! Date/time of CTD profile that initialized the run
+    type(datetime_), intent(in)   :: CTDdatetime      
     ! Local variable:
     character(len=80) :: fn           ! File name to open
+    type(datetime_) :: startDatetime
+    character(len=19) :: str_startDatetime  ! Midnight of start day
+    character(len=19) :: str_CTDdatetime    ! CTD profile date/time
+
+    ! Convert the initial CTD profile date/time to a string
+    str_CTDdatetime = datetime_str(CTDdatetime)
+    ! Midnight of the date of the initial CTD profile is t=0
+    startDatetime = CTDdatetime
+    startDatetime%hr = 0
+    startDatetime%min = 0
+    startDatetime%sec = 0
+    str_startDatetime = datetime_str(startDatetime)
 
     ! Standard physics model time series results
     ! !!! Please don't change this unless you have a good reason to !!!
@@ -66,8 +80,8 @@ contains
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
     fn = getpars("std_phys_ts_out", 1)
     open(unit=std_phys_timeseries, file=fn, status="replace", action="write")
-    write(std_phys_timeseries, 100) trim(codeId), runDatetime, &
-         startDatetime
+    write(std_phys_timeseries, 100) trim(codeId), str_runDatetime, &
+         str_CTDdatetime, str_startDatetime
 100 format("! Standard time series output from physics model"/,         &
          "! Time series of mixing layer depth; temperature, and, ",     &
          "salinity"/,                                                   &
@@ -76,6 +90,7 @@ contains
          "! counts for each time step"/,                                & 
          "*FromCode: ", a/,                                             &
          "*RunDateTime: ", a/,                                          &
+         "*InitialCTDDateTime: ", a/,                                   &
          "*FieldNames: time, iteration count, mixing layer depth, ",    &
          "surface temperature, surface salinity"/,                      &
          "*FieldUnits: hr since ", a, " LST, None, m, deg C, None"/,    &
@@ -93,12 +108,13 @@ contains
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
     fn = getpars("user_phys_ts_out", 1)
     open(unit=user_phys_timeseries, file=fn, status="replace", action="write")
-    write(user_phys_timeseries, 101) trim(codeId), runDatetime, &
-         startDatetime
+    write(user_phys_timeseries, 101) trim(codeId), str_runDatetime, &
+         str_CTDdatetime, str_startDatetime
 101 format("! User-defined time series output from physics model"/,    &
          "! Time series of ...", &
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
+         "*InitialCTDDateTime: ", a/,                                  &
          "*FieldNames: time"/, &
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
@@ -114,8 +130,8 @@ contains
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
     fn = getpars("std_bio_ts_out", 1)
     open(unit=std_bio_timeseries, file=fn, status="replace", action="write")
-    write(std_bio_timeseries, 102) trim(codeId), runDatetime, &
-         startDatetime
+    write(std_bio_timeseries, 102) trim(codeId), str_runDatetime, &
+         str_CTDdatetime, str_startDatetime
 102 format("! Standard time series output from biology model"/,         &
          "! Time series of nitrate, ammonium, and silicon ",            &
          "concentration, and "/,                                        &
@@ -126,6 +142,7 @@ contains
          "! at 20 m depth."/,                                           &
          "*FromCode: ", a/,                                             &
          "*RunDateTime: ", a/,                                          &
+         "*InitialCTDDateTime: ", a/,                                   &
          "*FieldNames: time, surface nitrate concentration, ",          &
          "surface ammonium concentration, ",                            &
          "surface silicon concentration, ",                             &
@@ -150,12 +167,13 @@ contains
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
     fn = getpars("user_bio_ts_out", 1)
     open(unit=user_bio_timeseries, file=fn, status="replace", action="write")
-    write(user_bio_timeseries, 103) trim(codeId), runDatetime, &
-         startDatetime
+    write(user_bio_timeseries, 103) trim(codeId), str_runDatetime, &
+         str_CTDdatetime, str_startDatetime
 103 format("! User-defined time series output from biology model"/,    &
          "! Time series of ...", &
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
+         "*InitialCTDDateTime: ", a/,                                  &
          "*FieldNames: time"/, &
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
