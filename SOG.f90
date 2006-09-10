@@ -118,12 +118,12 @@ program SOG
   ! Calculate the month number and month day for time series file headers
   startDatetime%yr = year_o
   startDatetime%yr_day = day_o
-  startDatetime%day_sec = 0
+  startDatetime%day_sec = t_o
   call calendar_date(startDatetime)
   call clock_time(startDatetime)
   ! Open the time series output files
   call timeseries_output_open(codeId, datetime_str(runDatetime), &
-       datetime_str(startDatetime))
+       startDatetime)
 
   ! *** These constants should be set as parameter somewhere else, or read
   ! *** from the main run parameters file
