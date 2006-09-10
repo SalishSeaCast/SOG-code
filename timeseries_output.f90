@@ -69,14 +69,14 @@ contains
     write(std_phys_timeseries, 100) trim(codeId), runDatetime, &
          startDatetime
 100 format("! Standard time series output from physics model"/,         &
-         "! Time series of mixed layer depth; temperature, and, ",      &
+         "! Time series of mixing layer depth; temperature, and, ",     &
          "salinity"/,                                                   &
          "! at surface, and averaged over top 5 m of water column;  ",  &
          " and interation "/,                                           &
          "! counts for each time step"/,                                & 
          "*FromCode: ", a/,                                             &
          "*RunDateTime: ", a/,                                          &
-         "*FieldNames: time, iteration count, mixed layer depth, ",     &
+         "*FieldNames: time, iteration count, mixing layer depth, ",    &
          "surface temperature, surface salinity"/,                      &
          "*FieldUnits: hr since ", a, " LST, None, m, deg C, None"/,    &
          "*EndOfHeader")
@@ -128,7 +128,7 @@ contains
          "*RunDateTime: ", a/,                                          &
          "*FieldNames: time, surface nitrate concentration, ",          &
          "surface ammonium concentration, ",                            &
-         "surface silcon concentration, ",                              &
+         "surface silicon concentration, ",                             &
          "surface micro phytoplankton biomass, ",                       &
          "surface nano phytoplankton biomass, ",                        &
          "dissolved detritus at 20 m, ",                                &
