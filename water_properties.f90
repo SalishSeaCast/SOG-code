@@ -7,6 +7,11 @@ module water_properties
   ! expansion coefficient (alpha), salinity expansion coefficient
   ! (beta), and density (rho).
   !
+  ! Public type:
+  !
+  ! water_property -- Density, thermal and salinity expansion
+  !                   coefficients, and specific heat capacity profiles.
+  !
   ! Public Variables:
   ! 
   ! Cp -- Specific heat capacity [J/kg.K]
@@ -32,6 +37,8 @@ module water_properties
 
   private
   public :: &
+       ! Type:
+       water_property, &
        ! Variables:
        Cp, rho, &
        ! Subroutines:
@@ -39,7 +46,7 @@ module water_properties
        alloc_water_props, &
        dalloc_water_props
 
-  ! Private type definition:
+  ! Public type definition:
   !
   ! Thermal and salinity expansion coefficients, heat capacity, and
   ! density profiles
