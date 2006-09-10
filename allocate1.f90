@@ -65,12 +65,11 @@ subroutine allocate1(M, STAT)
            K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
            STAT = alloc_stat(5))
 
-      ALLOCATE(ref_T(0:M+1), &
-           avg_12(0:M+1), tot_avg(0:M+1), Q_t(0:M), T_To(0:M+1), &
+      ALLOCATE(Q_t(0:M), &
            I(0:M), I_par(0:M), Q_n(0:M), F_n(0:M), &
            phi%m%value(0:M), phi%s%value(0:M), Ri_b(M), &
-           N_2_i(M), N_2_g(M), N_2_dens_g(M), &
-           Q_test(M), V_t_square(M), omega%s%value(0:M), omega%m%value(0:M), &
+           N_2_g(M), &
+           V_t_square(M), omega%s%value(0:M), omega%m%value(0:M), &
            STAT = alloc_stat(6)) 
                      
       ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), &

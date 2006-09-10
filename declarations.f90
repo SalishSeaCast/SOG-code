@@ -75,15 +75,15 @@ module declarations
   !friction vel, convective vel scale
   !monin_obukov length and julian day
   DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
-  INTEGER, DIMENSION(:), ALLOCATABLE::Q_test
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::V_t_square, &
        Ri_b, Q_n, F_n, &
-       N_2_i, N_2_g, N_2_dens_g
+       &N_2_g
   double precision, dimension(:), allocatable:: pbx,pby,dzx,dzy
   !I = intensity, Q_n is the
   !non_turbulent heat flux  (i.e. I)
   !F_n is freshwater flux (0 no ice)
-  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, T_To, Q_t
+  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, &
+       &Q_t
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
   ! Temporary vectors U_i , U_p... to hold results from tridiagonal solver
@@ -97,7 +97,6 @@ module declarations
   !Variables for printing test functions !
 
   DOUBLE PRECISION :: avg_T, read_var 
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::ref_T, avg_12, tot_avg
 
   !Variable for odeint.f,  rkqs.f and derivs.f
 
