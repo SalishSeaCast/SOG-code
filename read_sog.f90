@@ -13,6 +13,7 @@ subroutine read_sog (upwell_const)
   ! *** Need to get rid of explicit file name references here.
 
   use precision_defs, only: dp
+  use input_processor, only: getpard
   use declarations
   use surface_forcing
 
@@ -28,10 +29,9 @@ subroutine read_sog (upwell_const)
   ! *** Should be able to replace this external statment with uses of
   ! corresponding modules **
   external Julian_day  
-  real(kind=dp) getpard
 
   ! read the upwelling constant
-  upwell_const = getpard("upwell_const",1)
+  upwell_const = getpard("upwell_const")
 
   ! Read the wind data
   ! Preserve the value of year_o so the actual year does not change 
