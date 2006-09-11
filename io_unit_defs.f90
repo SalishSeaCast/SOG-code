@@ -12,6 +12,7 @@ module io_unit_defs
   integer, parameter :: stderr = 0
 
   ! Input data file units
+  integer, parameter :: stripped_infile = 10
   integer, parameter :: met_data = 12
   integer, parameter :: river_data = 12
 
