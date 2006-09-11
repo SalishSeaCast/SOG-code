@@ -180,7 +180,11 @@ contains
 
     bPz = (PZ_bins%nano-1) * M + 1
     ePZ = PZ_bins%nano * M
-    PZ(bPZ:ePZ) = Pnano(1:M)
+    if (flagellates) then
+       PZ(bPZ:ePZ) = Pnano(1:M)
+    else
+       PZ(bPZ:ePZ) = 0
+    endif
 
     ! Nitrate
 
@@ -192,7 +196,11 @@ contains
 
     bPz = (PZ_bins%NH-1) * M + 1
     ePZ = PZ_bins%NH * M
-    PZ(bPZ:ePZ) = NH(1:M)
+    if (remineralization) then
+       PZ(bPZ:ePZ) = NH(1:M)
+    else
+       PZ(bPZ:ePZ) = 0
+    endif
 
     ! Silicon
 
@@ -204,7 +212,11 @@ contains
     do j=1,D_bins
        bPz = (PZ_bins%Quant + (j-1) ) * M + 1
        ePz = (PZ_bins%Quant + j) * M
-       PZ(bPz:ePz) = Detritus(j)%D%new(1:M)
+       if (remineralization) then
+          PZ(bPz:ePz) = Detritus(j)%D%new(1:M)
+       else
+          PZ(bPz:ePz) = 0.
+       endif
     enddo
 
   END SUBROUTINE define_PZ
