@@ -53,57 +53,65 @@ module profiles_output
 
 contains
 
-  subroutine init_profiles_output(codeId, runDatetime)
+  subroutine init_profiles_output(codeId, str_runDatetime, CTDdatetime)
     ! Get the number of profiles output files (different times) to be
     ! written, the base file name, and the times at which they are to
     ! be written from stdin.  Also get the name of the haloclines
     ! output file to be written, open it, and write its header.
     use io_unit_defs, only: haloclines, stderr
+    use datetime, only: datetime_, datetime_str
+    use input_processor, only: getpars, getpari, getpariv, getpardv
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId         ! Code identity string
-    character(len=19), intent(in) :: runDatetime    ! Date/time of code run
+    character(len=70), intent(in) :: codeId           ! Code identity string
+    character(len=19), intent(in) :: str_runDatetime  ! Date/time of code run
+    ! Date/time of CTD profile that initialized the run
+    type(datetime_), intent(in)   :: CTDdatetime      
     ! Local variables:
     character(len=80) :: haloclines_fn  ! halocline results file name
-    ! Functions from getpar
-    ! *** getpar should be a module so we can use these
-    integer :: getpari
-    character(len=80) :: getpars
-    external getpari, getpars
+    ! Temporary storage for formated datetime string.  Needed to work around
+    ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
+    ! calls in write statements
+    character(len=19) :: str_CTDdatetime    ! CTD profile date/time
 
     ! Read the number of profiles results files to be written, and
     ! validate it
-    noprof =  getpari("noprof",1)
+    noprof =  getpari("noprof")
     if (noprof > maxprofiles) then
        write (stderr, *) "init_profiles_output: Limit on number of ", &
             "profiles is ", maxprofiles, ".  ", noprof, " requested."
        stop
     endif
 
-    if (noprof.gt.0) then
+    if (noprof > 0) then
+       ! Convert the initial CTD profile date/time to a string
+       str_CTDdatetime = datetime_str(CTDdatetime)
+
        ! Read the arrays of profile dates/times (year-days, and
        ! day-seconds), and load them into the datetime array
-       call getpariv ("profday", profday, noprof, 1)
-       call getpardv ("proftime", proftime, noprof, 1)
+       call getpariv("profday", noprof, profday)
+       call getpardv("proftime", noprof, proftime)
        profileDatetime%yr_day = profday
        profileDatetime%day_sec = proftime
 
        ! Read the haloclines results file name, open it, and write its
        ! header
-       haloclines_fn = getpars ("haloclinefile", 1)
+       haloclines_fn = getpars("haloclinefile")
        open(unit=haloclines, file=haloclines_fn, status="replace", &
             action="write")
-       write(haloclines, 100) trim(codeId), runDatetime
+       write(haloclines, 100) trim(codeId), str_runDatetime, &
+            str_CTDdatetime
 100    format("! Halocline depths and magnitudes",/                    &
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
+         "*InitialCTDDateTime: ", a/,                                  &
          "*FieldNames: year, month, day, year-day, hour, minute, ",    &
          "second, day-seconds, halocline depth, halocline magnitude"/, &
          "*FieldUnits: yr, mo, d, yrday, hr, min, s, d-s, m, m^-1"/,   &
          "*EndOfHeader")
 
        ! Read the profiles results file base-name
-       profilesBase_fn = getpars("profile_base", 1)
+       profilesBase_fn = getpars("profile_base")
     endif
 
     iprof = 1
@@ -111,9 +119,10 @@ contains
   end subroutine init_profiles_output
 
 
-  subroutine write_profiles(codeId, runDatetime, year, day, day_time, dt, &
-       grid, T, S, rho, Pmicro, Pnano, NO, NH, Sil, dissolved_detritus,   &
-       sinking_detritus, lost_Detritus, Ku, Kt, Ks, I_par, U, V)
+  subroutine write_profiles(codeId, str_runDatetime, str_CTDdatetime,    &
+       year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, NO, NH,  &
+       Sil, dissolved_detritus, sinking_detritus, lost_Detritus, Ku, Kt, &
+       Ks, I_par, U, V)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
     ! close it.  Also write a line of data to the haloclines output
@@ -125,8 +134,9 @@ contains
     use grid_mod, only: grid_
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId         ! Code identity string
-    character(len=19), intent(in) :: runDatetime    ! Date/time of code run
+    character(len=70), intent(in) :: codeId           ! Code identity string
+    character(len=19), intent(in) :: str_runDatetime  ! Date/time of code run
+    character(len=19), intent(in) :: str_CTDdatetime  ! Date/time of CTD init
     integer, intent(in) :: year, day
     real(kind=dp), intent(in) :: day_time, dt ! can't expect exact time match
     type(grid_), intent(in) :: grid
@@ -154,12 +164,12 @@ contains
          delS, &  ! delta S between two depth points
          dep,  &  ! depth half way between them
          derS     ! -dS/dz
-  ! Temporary storage for formated datetime string.  Needed to work around
-  ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
-  ! calls in write statements
-  character(len=19) :: str_proDatetime
-  ! sigma-t quantity calculated from density for profile results output
-  double precision :: sigma_t
+    ! Temporary storage for formated datetime string.  Needed to work around
+    ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
+    ! calls in write statements
+    character(len=19) :: str_proDatetime
+    ! sigma-t quantity calculated from density for profile results output
+    double precision :: sigma_t
 
     ! Check the day and the time
     if (iprof <= noprof .and. day == profday(iprof)) then
@@ -192,8 +202,8 @@ contains
           ! Avoid a pgf90 idiocyncracy by getting datetimes formatted into
           ! string here rather than in the write statement
           str_proDatetime = datetime_str(profileDatetime(iprof))
-          write(profiles, 200) trim(codeId), runDatetime, str_proDatetime, &
-               dep, derS
+          write(profiles, 200) trim(codeId), str_runDatetime, &
+               str_CTDdatetime, str_proDatetime, dep, derS
 200       format("! Profiles of Temperature, Salinity, Density, ",           &
                "Phytoplankton (micro & nano),"/,                             &
                "! Nitrate, Ammonium, Silcion and Detritus (dissolved, ",     &
@@ -203,6 +213,7 @@ contains
                "! Available Radiation, and Mean Velocity Components (u & v)"/,&
                "*FromCode: ", a/,                                            &
                "*RunDateTime: ", a/,                                         &
+               "*InitialCTDDateTime: ", a/,                                  &
                "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
                "micro phytoplankton, nano phytoplankton, nitrate, ",         &
                "ammonium, silicon, ",                                        &
