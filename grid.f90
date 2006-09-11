@@ -47,7 +47,7 @@ module grid_mod
        ! Types:
        grid_, &
        ! Variables:
-       grid, lambda, &
+       grid, &
        ! Functions:
        interp_d, interp_i, &
        ! Subroutines:
@@ -57,7 +57,6 @@ module grid_mod
   !
   ! Grid parameters
   type :: grid_
-     ! *** I think D should be real
      integer :: M               ! Number of grid points
      real(kind=dp) :: D         ! Depth of bottom of grid [m]
      real(kind=dp), dimension(:), pointer :: d_g  ! Grid point depths [m]
@@ -70,8 +69,6 @@ module grid_mod
   !
   ! Grid point and interface depth and spacing arrays
   type(grid_) :: grid
-  ! Grid spacing factor
-  real(kind=dp) :: lambda
 
   ! Private type definition:
   !
@@ -82,6 +79,12 @@ module grid_mod
 
   ! Private module variable declarations:
   !
+  ! Grid spacing parameter (<0 concentrates resolution near
+  ! surface, =0 produced uniform grid, >0 concentrates resolution 
+  ! near bottom of grid).  See Large, et al (1994), App. D.
+  real(kind=dp) :: lambda
+  real(kind=dp), dimension(:), pointer :: xsi_i  ! Interface indices
+  real(kind=dp), dimension(:), pointer :: xsi_g  ! Grid point indices
   ! Fraction of grid point spacing that interface j is above grid point j+1
   type(interp_factor) :: above_g
   ! Fraction of grid point spacing that interface j is below grid point j
@@ -89,14 +92,30 @@ module grid_mod
 
 contains
 
-  subroutine alloc_grid(grid)
+  subroutine read_grid
+    ! Read the grid parameters from the input file
+    use input_processor, only: getpari, getpard
+    implicit none
+
+    ! Read the model depths, the number of grid points, and the grid
+    ! spacing factor values.
+    grid%D = getpard("maxdepth")
+    grid%M = getpari("gridsize")
+    lambda = getpard("lambda")
+  end subroutine read_grid
+
+
+  subroutine alloc_grid
     ! Allocate memory for grid arrays.
     use malloc, only: alloc_check
     implicit none
-    type(grid_), intent(inout) :: grid
     ! Local variables:
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Grid point and interface index arrays"
+    allocate(xsi_g(0:grid%M+1), xsi_i(0:grid%M), stat=allocstat)
+    call alloc_check(allocstat, msg)
 
     msg = "Grid point and interface depth and spacing arrays"
     allocate(grid%d_g(0:grid%M+1), grid%d_i(0:grid%M), &
@@ -104,7 +123,8 @@ contains
     call alloc_check(allocstat, msg)
 
     msg = "Grid interface interpolation factor arrays"
-    allocate(above_g%factor(1:grid%M+1), below_g%factor(0:grid%M), stat=allocstat)
+    allocate(above_g%factor(1:grid%M+1), below_g%factor(0:grid%M), &
+         stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_grid
 
@@ -116,6 +136,10 @@ contains
     ! Local variables:
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg         ! Allocation failure message prefix
+
+    msg = "Grid point and interface index arrays"
+    deallocate(xsi_g, xsi_i, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
 
     msg = "Grid point and interface depth and spacing arrays"
     deallocate(grid%d_g, grid%d_i, grid%g_space, grid%i_space, &
@@ -129,19 +153,17 @@ contains
 
 
   subroutine init_grid
-    ! Initialize grid interpolation factor values
-    ! *** Eventually this will absorb define_grid() and do all grid
-    ! *** initialization.
+    ! Initialize grid.
     use precision_defs, only: dp, sp
     use io_unit_defs, only: stderr
     implicit none
     ! Local variables:
     integer :: j  ! Loop index over depth of grid
-    real(kind=dp), dimension(0:grid%M)   :: xsi_i  ! Interface indices
-    real(kind=dp), dimension(0:grid%M+1) :: xsi_g  ! Grid point indices
 
+    ! Read the grid parameters
+    call read_grid
     ! Allocate memory for grid arrays
-    call alloc_grid(grid)
+    call alloc_grid
 
     ! Calculate the grid point and interface indices per Large, et al
     ! (1994) Appendix D (expressions are defined in the paragraph
