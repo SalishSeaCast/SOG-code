@@ -5,6 +5,7 @@ program SOG
   ! Coupled physical and biological model of the Strait of Georgia
 
   ! Utility modules:
+  use io_unit_defs, only: stripped_infile
   use unit_conversions, only: KtoC
   use datetime, only: datetime_, os_datetime, calendar_date, &
        clock_time, datetime_str
@@ -13,12 +14,13 @@ program SOG
   ! *** Goal is to make these go away
   use declarations
   use surface_forcing
-  use initial_sog
+  use initial_sog, only: initial_mean
   use pdf
   use IMEX_constants  
 
   ! Refactored modules
-  use timeseries_output, only: timeseries_output_open, write_timeseries, &
+  use input_processor, only: init_input_processor, getpars, getpari, getpard
+  use timeseries_output, only: init_timeseries_output, write_timeseries, &
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_profiles, &
        profiles_output_close
@@ -53,7 +55,7 @@ program SOG
   !*** read by read_sog used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
   ! surface_forcing module
-  real(kind=dp) :: upwell_const, Ft=0
+  real(kind=dp) :: upwell_const, Ft = 0
 
   ! Internal wave breaking eddy viscosity for momentum and scalars
   ! (tuned parameters)
@@ -92,46 +94,52 @@ program SOG
   type(datetime_) :: runDatetime     ! Date/time of code run
   type(datetime_) :: startDatetime   ! Date/time of initial conditions
 
-  ! temporary until getpar is a module
-  real(kind=dp) getpard
 
+  ! ---------- Beginning of Initialization Section ----------
   ! Get the current date/time from operating system to timestamp the
   ! run with
   call os_datetime(runDatetime)
-  ! *** This needs to be expanded into a real input processor
-  ! Initialize the parameter reader to output a report
-  ! *** runDatetime and date/time that getpar_init() prints should be same
-  call getpar_init(1)
-  ! Get the name of the main run parameters file from stdin, open it,
-  ! and read them
-  str = getpars("inputfile", 1)
-  open(10, file=str, status="OLD", action="READ")
-  read(10, *) grid%M, grid%D, lambda , t_o, t_f, dt, day_o, year_o, month_o
 
-  ! Initialize the grid
-  call init_grid
+  ! Initialize the input processor, including preparing the infile
+  ! (read from stdin) to be read by the init_* subroutines called
+  ! below.
+  call init_input_processor(datetime_str(runDatetime))
 
+  ! Read the run start date/time, duration, and time step
+  ! *** Not sure where these should go?
+  year_o = getpari("year_o")
+  month_o = getpari("month_o")
+  day_o = getpari("yr_day_o")
+  t_o = getpard("t_o")
+  t_f = getpard("run_dur")
+  dt = getpard("dt")
   ! Calculate the number of time steps for the run (note that int()
   ! rounds down)
-  steps = 1 + int((t_f - t_o) / dt) !INT rounds down
-
-  ! Calculate the month number and month day for time series file headers
+  steps = 1 + int((t_f - t_o) / dt)
+  ! Calculate the month number and month day for output file headers
   startDatetime%yr = year_o
   startDatetime%yr_day = day_o
   startDatetime%day_sec = t_o
   call calendar_date(startDatetime)
   call clock_time(startDatetime)
-  ! Open the time series output files
-  call timeseries_output_open(codeId, datetime_str(runDatetime), &
+
+  ! Initialize time series writing code
+  call init_timeseries_output(codeId, datetime_str(runDatetime), &
        startDatetime)
+  ! Initialize profiles writing code
+  call init_profiles_output(codeId, datetime_str(runDatetime), &
+       startDatetime)
+
+  ! Initialize the grid
+  call init_grid
+
+  ! Initialize the biology model
+  call init_biology(grid%M)
 
   ! *** These constants should be set as parameter somewhere else, or read
   ! *** from the main run parameters file
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   stable = 1
-
-  call init_biology(grid%M)
-
   IF (year_o==2001) then
      ecmapp = 1
   else if (year_o == 2002) then
@@ -158,8 +166,8 @@ program SOG
   call alloc_water_props(grid%M)
 
   CALL read_sog (upwell_const)
-  nu_w_m = getpard('nu_w_m',1)   ! internal wave mixing momentum
-  nu_w_s = getpard('nu_w_s',1)   ! internal wave mixing scalar
+  nu_w_m = getpard('nu_w_m')   ! internal wave mixing momentum
+  nu_w_s = getpard('nu_w_s')   ! internal wave mixing scalar
   CALL coefficients(alph, beta, dens, cloud,p_Knox)
   CALL allocate3(grid%M)
 
@@ -167,13 +175,10 @@ program SOG
 
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
-  cruise_id = getpars("cruise_id", 1)
+  cruise_id = getpars("cruise_id")
   CALL initial_mean(U, V, T, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
-
-  ! Initialize profiles writing code
-  call init_profiles_output(codeId, datetime_str(runDatetime))
 
   IF(h%new < grid%d_g(1))THEN 
      h%new = grid%d_g(1)
@@ -193,7 +198,11 @@ program SOG
   Cp%i = interp_i(Cp%g)
   ! Density with depth and density of fresh water
   CALL density_sub(T, S, density%new, grid%M) 
-  
+
+  ! Close the input parameters file
+  close(stripped_infile)
+  ! ---------- End of Initialization Section ----------
+
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store previous time_steps in old (n) and old_old (n-1)
      CALL define_sog(time_step) 
@@ -754,11 +763,25 @@ program SOG
         endif
      enddo  !---------- End of the implicit solver loop ----------
 
-     call write_profiles(codeId, datetime_str(runDatetime), year, day, &
-          day_time, dt, grid, T%new, S%new, density%new, P%micro%new,  &
-          P%nano%new, N%O%new, N%H%new, Sil%new, Detritus(1)%D%new,    &
-          Detritus(2)%D%new, Detritus(3)%D%new, K%u%all, K%t%all,      &
-          K%s%all, I_par, U%new, V%new)
+     ! Write time series results
+     call write_timeseries(time / 3600., &
+       ! Variables for standard physical model output
+       count, h%new, T%new, S%new, &
+       ! User-defined physical model output variables
+!!$       &
+       ! Variables for standard biological model output
+       N%O%new , N%H%new, Sil%new, P%micro%new, P%nano%new, &
+       Detritus(1)%D%new, Detritus(2)%D%new, Detritus(3)%D%new &
+       ! User-defined biological model output variables
+!!$       &
+       )
+
+     call write_profiles(codeId, datetime_str(runDatetime),            &
+          datetime_str(startDatetime), year, day, day_time, dt, grid,  &
+          T%new, S%new, density%new, P%micro%new, P%nano%new, N%O%new, &
+          N%H%new, Sil%new, Detritus(1)%D%new, Detritus(2)%D%new,      &
+          Detritus(3)%D%new, K%u%all, K%t%all, K%s%all, I_par, U%new,  &
+          V%new)
 
 !------BIOLOGICAL MODEL--------------------------------------------
 
@@ -907,19 +930,6 @@ program SOG
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform (grid%M, N%H%new, Detritus)
-
-     ! Write time series results
-     call write_timeseries(time / 3600., &
-       ! Variables for standard physical model output
-       count, h%new, T%new, S%new, &
-       ! User-defined physical model output variables
-!!$       &
-       ! Variables for standard biological model output
-       N%O%new , N%H%new, Sil%new, P%micro%new, P%nano%new, &
-       Detritus(1)%D%new, Detritus(2)%D%new, Detritus(3)%D%new &
-       ! User-defined biological model output variables
-!!$       &
-       )
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
