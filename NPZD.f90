@@ -61,9 +61,6 @@ module biological_mod
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
   ! Biological model logicals (turned parts of the model on or off)
-  logical :: getparl ! until getpar is a module
-  real(kind=dp) :: getpard ! until getpar is a module
-  external getparl, getpard
   logical :: flagellates  ! whether flagellates can influence other biology
   logical :: remineralization !whether there is a remineralization loop
   ! Biological rate parameters
@@ -89,6 +86,7 @@ contains
   subroutine init_biology (M)
     ! Initialize biological model.
     ! *** Incomplete...
+    use input_processor, only: getpard, getparl
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
 
@@ -100,48 +98,48 @@ contains
     ! Allocate memory for PZ
     call alloc_biology
 
-    flagellates = getparl('flagellates_on',1)
-    remineralization = getparl('remineralization',1)
+    flagellates = getparl('flagellates_on')
+    remineralization = getparl('remineralization')
 
     ! Biological rate parameters
     ! max growth rate for light limitation
-    rate_micro%R = getpard ('Micro, max growth',1)
-    rate_nano%R = getpard ('Nano, max growth',1)
+    rate_micro%R = getpard('Micro, max growth')
+    rate_nano%R = getpard('Nano, max growth')
     ! parameter in light limitation 
-    rate_micro%sigma = getpard ('Micro, sigma', 1)
-    rate_nano%sigma = getpard ('Nano, sigma', 1)
+    rate_micro%sigma = getpard('Micro, sigma')
+    rate_nano%sigma = getpard('Nano, sigma')
     ! loss parameter under light limitation
-    rate_micro%gamma = getpard ('Micro, gamma loss',1)
-    rate_nano%gamma = getpard ('Nano, gamma loss',1)
+    rate_micro%gamma = getpard('Micro, gamma loss')
+    rate_nano%gamma = getpard('Nano, gamma loss')
     ! light inhibition
-    rate_micro%inhib = getpard('Micro, light inhib',1) 
-    rate_nano%inhib = getpard('Nano, light inhib',1) 
+    rate_micro%inhib = getpard('Micro, light inhib') 
+    rate_nano%inhib = getpard('Nano, light inhib') 
     ! NO3 half saturation constant
-    rate_micro%k = getpard('Micro, NO3 k',1)
-    rate_nano%k = getpard('Nano, NO3 k',1)
+    rate_micro%k = getpard('Micro, NO3 k')
+    rate_nano%k = getpard('Nano, NO3 k')
     ! preference for NO3 over NH 
-    rate_micro%kapa = getpard('Micro, kapa',1)
-    rate_nano%kapa = getpard('Nano, kapa',1)
+    rate_micro%kapa = getpard('Micro, kapa')
+    rate_nano%kapa = getpard('Nano, kapa')
     ! exp strength of NH inhit of NO3 uptake
-    rate_micro%gamma_o = getpard('Micro, NH inhib',1)
-    rate_nano%gamma_o = getpard('Nano, NH inhib',1)
+    rate_micro%gamma_o = getpard('Micro, NH inhib')
+    rate_nano%gamma_o = getpard('Nano, NH inhib')
     ! overall half saturation constant????
-    rate_micro%N_o = getpard('Micro, N_o',1)
-    rate_nano%N_o = getpard('Nano, N_o',1)
+    rate_micro%N_o = getpard('Micro, N_o')
+    rate_nano%N_o = getpard('Nano, N_o')
     ! exponent in inhibition equation
-    rate_micro%N_x = getpard('Micro, N_x',1)
-    rate_nano%N_x = getpard('Nano, N_x',1)
+    rate_micro%N_x = getpard('Micro, N_x')
+    rate_nano%N_x = getpard('Nano, N_x')
     ! silicon to nitrogen ratio in phyto
-    rate_micro%Sil_rat = getpard('Micro, Sil ratio',1)
-    rate_nano%Sil_rat = getpard('Nano, Sil ratio',1)
+    rate_micro%Sil_rat = getpard('Micro, Sil ratio')
+    rate_nano%Sil_rat = getpard('Nano, Sil ratio')
     ! respiration rate
-    rate_micro%Rm = getpard('Micro, resp',1)
-    rate_nano%Rm = getpard('Nano, resp',1)
+    rate_micro%Rm = getpard('Micro, resp')
+    rate_nano%Rm = getpard('Nano, resp')
     ! mortality rate
-    rate_micro%M_z = getpard('Micro, mort',1)
-    rate_nano%M_z = getpard('Nano, mort',1)
+    rate_micro%M_z = getpard('Micro, mort')
+    rate_nano%M_z = getpard('Nano, mort')
     ! nitrate remineralization rate
-    rate_N%r = getpard('Nitrate, remineral',1)
+    rate_N%r = getpard('Nitrate, remineral')
 
   end subroutine init_biology
 
