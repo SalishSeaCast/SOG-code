@@ -9,9 +9,9 @@ module timeseries_output
   ! 
   ! Public subroutines:
   !
-  ! timeseries_output_open(codeId, runDatetime, startDatetime)
-  !    -- Get the names of the time series output files from stdin 
-  !       using getpars(), open them, and write their headers.
+  ! init_timeseries_output(codeId, str_runDatetime, CTDdatetime)
+  !   -- Get the names of the time series output files, open them, and
+  !      write their headers.
   !
   ! write_timeseries(time, &
   !    ! Variables for standard physical model output
@@ -34,20 +34,15 @@ module timeseries_output
   implicit none
 
   private
-  public :: timeseries_output_open, write_timeseries, &
+  public :: init_timeseries_output, write_timeseries, &
        timeseries_output_close
 
 contains
   
-  subroutine timeseries_output_open(codeId, str_runDatetime, CTDdatetime)
+  subroutine init_timeseries_output(codeId, str_runDatetime, CTDdatetime)
     ! Get the names of the time series output files from stdin using
-    ! getpars(), open them, and write their headers.
-    ! *** Does reading the file names from stdin belong here, or in
-    ! *** the input processor?
-
-    ! *** getpars should come from the input processor module,
-    ! *** eventually
-    use initial_sog, only: getpars
+    ! getpar(), open them, and write their headers.
+    use input_processor, only: getpars
     use datetime, only: datetime_, datetime_str
     implicit none
     ! Arguments:
@@ -58,6 +53,9 @@ contains
     ! Local variable:
     character(len=80) :: fn           ! File name to open
     type(datetime_) :: startDatetime
+    ! Temporary storage for formated datetime strings.  Needed to work around
+    ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
+    ! calls in write statements
     character(len=19) :: str_startDatetime  ! Midnight of start day
     character(len=19) :: str_CTDdatetime    ! CTD profile date/time
 
@@ -78,7 +76,7 @@ contains
     ! !!! The *FieldNames, and *FieldUnits parts of the header must !!!
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
-    fn = getpars("std_phys_ts_out", 1)
+    fn = getpars("std_phys_ts_out")
     open(unit=std_phys_timeseries, file=fn, status="replace", action="write")
     write(std_phys_timeseries, 100) trim(codeId), str_runDatetime, &
          str_CTDdatetime, str_startDatetime
@@ -95,7 +93,7 @@ contains
          "surface temperature, surface salinity"/,                      &
          "*FieldUnits: hr since ", a, " LST, None, m, deg C, None"/,    &
          "*EndOfHeader")
-    
+
 
     ! User physics model time series results
     ! !!! This is the place to add exploratory, !!!
@@ -106,7 +104,7 @@ contains
     ! !!! The *FieldNames, and *FieldUnits parts of the header must !!!
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
-    fn = getpars("user_phys_ts_out", 1)
+    fn = getpars("user_phys_ts_out")
     open(unit=user_phys_timeseries, file=fn, status="replace", action="write")
     write(user_phys_timeseries, 101) trim(codeId), str_runDatetime, &
          str_CTDdatetime, str_startDatetime
@@ -128,7 +126,7 @@ contains
     ! !!! The *FieldNames, and *FieldUnits parts of the header must !!!
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
-    fn = getpars("std_bio_ts_out", 1)
+    fn = getpars("std_bio_ts_out")
     open(unit=std_bio_timeseries, file=fn, status="replace", action="write")
     write(std_bio_timeseries, 102) trim(codeId), str_runDatetime, &
          str_CTDdatetime, str_startDatetime
@@ -165,7 +163,7 @@ contains
     ! !!! The *FieldNames, and *FieldUnits parts of the header must !!!
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
-    fn = getpars("user_bio_ts_out", 1)
+    fn = getpars("user_bio_ts_out")
     open(unit=user_bio_timeseries, file=fn, status="replace", action="write")
     write(user_bio_timeseries, 103) trim(codeId), str_runDatetime, &
          str_CTDdatetime, str_startDatetime
@@ -178,7 +176,7 @@ contains
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
 
-  end subroutine timeseries_output_open
+  end subroutine init_timeseries_output
 
 
   subroutine write_timeseries(time, &
