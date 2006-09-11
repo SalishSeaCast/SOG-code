@@ -46,7 +46,7 @@ contains
   subroutine initial_mean (Ui, Vi, Ti, Si, Pi, NO, NH, Sil, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
-
+    use input_processor, only: getpars
     ! Arguments:
     type(prop), intent(out) :: Ui, Vi, Ti, Si
     type(plankton), intent(out) :: Pi 
@@ -147,7 +147,7 @@ contains
 
     ! STRATOGEM CTD data from station S3 to initialize temperature,
     ! phytoplacnkton biomass, and salinity in water column
-    fn = getpars("ctd_in", 1)
+    fn = getpars("ctd_in")
     open(unit=46, file=fn, status="old")
     ! *** Maybe rework this so we can read orginal (not stripped) CTD
     ! *** data files?
@@ -199,39 +199,6 @@ contains
        pbx(i) = 0.
        pby(i) = 0.
     enddo
-
   end subroutine initial_mean
-
-
-  character*80 function getpars(name, flag)
-    ! Part of an input processor originated by Joe Tam
-    ! *** Move this into a new, real input processor
-
-    ! Arguments:
-    character*(*) :: name  ! Name of data item to read
-    integer :: flag        ! Echo description and value read if non-zero
-
-    ! Return value:
-    character ::  s*80
-
-    ! Local variables:
-    character :: label*16, desc*50
-
-    ! Read and validate data item
-    read(5, *) label, s, desc
-    if (name /= label) then
-       print *, "!!! Error: getpars(): ", &
-            "Expecting ", name, " but got ", label(1:len_trim(label))
-       stop
-    end if
-
-    ! Echo description and value, if requested
-    if (flag .ne. 0) then
-       write(*,'(a50," = ",a)') desc(1:len_trim(desc)), s(1:len_trim(s))
-       ! *** Value only returned if flag is non-zero ???
-       getpars = s
-       return
-    end if
-  end function getpars
 
 end module initial_sog
