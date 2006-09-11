@@ -1,7 +1,27 @@
-"inputfile"
-	"input/nov04-test.dat"
-	"run parameters"
+! -*- mode: f90 -*-  ! This line must be at the top of the file!
+! $Id$
+! $Source$
 
+! SOG code infile template
+
+! SOG code infile for 300 hr run starting at cruise 04-14 station S3
+! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
+! quick tests during code development and refactoring.
+
+! Run timing parameters:
+! Date/time at which the run starts (must match a CTD profile date/time)
+! *** This should be replaced with a calendar date & clock time, 
+! *** ideally on 1 line
+"year_o"	2004	"year in which the run starts"
+"month_o"	10	"month in which the run starts"
+"yr_day_o"	293	"year-day on which the run starts [1-Jan = 1]"
+"t_o"		44520.	"day-second at which the run starts [midnight = 0]"
+! Duration of run in seconds
+! *** This should be replaced with another date/time
+"run_dur"	1124520. "run duration [s]"
+"dt"		900.	 "time step [s]"
+
+! Time series output files
 "std_phys_ts_out"  
 	"timeseries/std_phys_nov04-test.out"  
 	"standard physics timeseries"
@@ -15,8 +35,25 @@
 	"timeseries/user_bio_nov04-test.out"  
 	"user-defined biology timeseries"
 
+! Profiles output
+"noprof"	1		"no. of profiles to print"
+! *** It would be nice to replace the yr-day and day-sec lists with a list
+! *** of dates/times for profiles output
+"profday"	303		"yr-day for profile"
+"proftime"	43200.		"day-sec for profile"
+"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
+"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
+
+! Grid parameters:
+"maxdepth"	40.	"depth of modelled domain [m]"
+"gridsize"	80	"number of grid points"
+"lambda"	 0.	"grid spacing parameter"
+
+! Biology model parameters:
+! Model complexity flags:
 "flagellates_on"	.true.	"include flagellates in model?"
 "remineralization"	.true.	"include remineralization loop in model?"
+! Phytoplankton values:
 "Micro, max growth"	3.3e-05      "micro maximum growth under light limit"
 "Nano, max growth"      3.5e-05      "nano maximum growth under light limit"
 "Micro, sigma" 		0.95e-06     "Micro, sigma"
@@ -41,24 +78,19 @@
 "Nano, resp" 		1.45e-07     "Nano, resp"
 "Micro, mort"		2.1e-06      "Micro, mort"
 "Nano, mort"		2.3e-07      "Nano, mort"
+! Nutrient values:
 "Nitrate, remineral"	0.	     "NH remineralization to NO rate"
 
-
+! Physics model parameters:
 "upwell_const"  1.04e-7         "upwelling constant (tuned)"
 "nu_w_m"        1.0e-4          "internal wave breaking momentum mixing"
 "nu_w_s"        1.0e-5          "internal wave breaking scalar mixing"
 
+! Initial conditions
+! *** Perhaps these should be moved higher in the file?
 "cruise_id"	"0414"		"Cruise id number"
 "ctd_in"
 	"input/ctd_in/SG0414004.str"	     
 	"initial conditions CTD file"
 
-"noprof"	1		"no. of profiles to print"
-"profday"	303		"yr-day for profile"
-"proftime"	43200.		"day-sec for profile"
-"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
-"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
-
-# information below this line is ignored
-
-# end of file
+! end of file
