@@ -89,12 +89,12 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
      ! plank=P_i%micro%new(1)+P_i%micro%new(2)+P_i%micro%new(3)+P_i%micro%new(4)+P_i%micro%new(5)
      ! plank=plank/5;
 
-      !V.flagella.0
-!!$         KK = 0.0146 * P_i%micro%new(1) + Qriver * 3.6597e-05 &
-!!$              - 0.0110 * hh%new + 0.2697
       !added V.flagella.01
       KK = 0.0146 * (P_i%micro%new(1) + P_i%nano%new(1)) &
-           + Qriver * 3.6597e-05 - 0.0110 * hh%new + 0.2697
+           + Qriver * 3.6597e-05 - 0.0110 * 3 + 0.2697
+      !*** set mixed layer depth in this parameterization to a constant 3 m -- 
+      ! otherwise a shallow mixed layer in winter is actually a disadvantage.
+      ! this parameterization needs to be revisited.
       do k = 1, d%M    
          Ipar(k) = Ipar(0) * exp(-d%d_i(k) * KK)
          Iparmax(k) = Iparmax(0) * exp(-d%d_i(k) * KK)
