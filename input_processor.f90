@@ -58,7 +58,8 @@ contains
     character(len=19), intent(in) :: runDatetime   ! Date/time of code run
     logical, intent(in), optional :: showReport    ! Report to stdout if TRUE
     ! Local variable:
-    character(len=120) :: line  ! A line from the infile
+    integer, parameter :: max_line_len = 240
+    character(len=max_line_len) :: line  ! A line from the infile
 
     ! show_report defaults to TRUE
     if (present(showReport)) then
@@ -76,7 +77,7 @@ contains
     open(stripped_infile, status='scratch', action='readwrite')
     ! Read the infile and write the non-comment lines to the scratch file
     do
-       read(*, '(a120)', end=100) line
+       read(*, '(a240)', end=100) line
        if (line(1:1) /= '!') then
           write(stripped_infile, *) trim(line)
        endif
@@ -202,7 +203,11 @@ contains
        do i = 2, len
           write(str, '(i16)'), vec(i)
           str = trim(adjustl(str))
-          write(stdout,'(46x, " [", i1, "] = ", a)') i, str
+          if (i <= 9) then
+             write(stdout, '(46x, " [", i1, "] = ", a)') i, str
+          else
+             write(stdout, '(45x, " [", i2, "] = ", a)') i, str
+          endif
        enddo
     endif
   end subroutine getpariv
@@ -288,7 +293,11 @@ contains
        do i = 2, len
           write(str, '(1pg16.8)'), vec(i)
           str = trim(adjustl(str))
-          write(stdout,'(46x, " [", i1, "] = ", a)') i, str
+          if (i <= 9) then
+             write(stdout, '(46x, " [", i1, "] = ", a)') i, str
+          else
+             write(stdout, '(45x, " [", i2, "] = ", a)') i, str
+          endif
        enddo
     endif
   end subroutine getpardv
