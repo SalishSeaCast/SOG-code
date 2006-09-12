@@ -55,7 +55,9 @@ program SOG
   !*** read by read_sog used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
   ! surface_forcing module
-  real(kind=dp) :: upwell_const, Ft = 0
+
+  real(kind=dp) :: upwell_const, Ft = 0, S_riv, sumS=0, sumSriv=0
+  integer :: scount=0
 
   ! Internal wave breaking eddy viscosity for momentum and scalars
   ! (tuned parameters)
@@ -283,7 +285,7 @@ program SOG
 
         ! *** Confirm that all of these arguments are necessary
         CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%new(1),        &
-             S%old(1), S%new(grid%M), T%new(0), j_gamma, I, Q_t(0),        &
+             S%old(1), S_riv, T%new(0), j_gamma, I, Q_t(0),        &
              alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10.,    &
              atemp(day_met,j), humid(day_met,j), Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
@@ -694,8 +696,8 @@ program SOG
         sumu = 0
         sumv = 0
         do yy=1,grid%M
-           ut%new(yy) = ut%old(yy)+U%new(yy)*dt*oLx
-           vt%new(yy) = vt%old(yy)+V%new(yy)*dt*oLy 
+           ut%new(yy) = ut%old(yy)*0.95+U%new(yy)*dt*oLx
+           vt%new(yy) = vt%old(yy)*0.95+V%new(yy)*dt*oLy 
         enddo
 
         dzx(1) = ut%new(1)+1
@@ -933,8 +935,15 @@ program SOG
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
+     scount = scount + 1
+     sumS = sumS + S%new(1)
+     sumSriv = sumSriv + S_riv
 
   end do  !--------- End of time loop ----------
+
+  write (*,*) "For Ft tuning"
+  write (*,*) "Average SSS should be", sumSriv/float(scount)
+  write (*,*) "Average SSS was", sumS/float(scount)
 
   ! Close output files
   call timeseries_output_close
