@@ -444,7 +444,7 @@ program SOG
              Gvector%v)                                               ! out
 
         ! Calculate profile of upwelling velocity
-        call upwell_profile(grid, S%new, upwell, wupwell)
+        call upwell_profile(grid, upwell, wupwell)
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
         call vertical_advection (grid, dt, S%new, wupwell, &
