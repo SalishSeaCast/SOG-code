@@ -50,6 +50,7 @@ module profiles_output
   character(len=80) :: profilesBase_fn
 
   integer :: iprof ! counter, current profile
+  real(kind=dp) :: sumHaloDepth, sumHaloStrength ! to calculate average values
 
 contains
 
@@ -73,6 +74,10 @@ contains
     ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
     ! calls in write statements
     character(len=19) :: str_CTDdatetime    ! CTD profile date/time
+
+    ! initialize averaging variables
+    sumHaloDepth = 0
+    sumHaloStrength = 0
 
     ! Read the number of profiles results files to be written, and
     ! validate it
@@ -106,8 +111,9 @@ contains
          "*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a/,                                  &
          "*FieldNames: year, month, day, year-day, hour, minute, ",    &
-         "second, day-seconds, halocline depth, halocline magnitude"/, &
-         "*FieldUnits: yr, mo, d, yrday, hr, min, s, d-s, m, m^-1"/,   &
+         "second, day-seconds, halocline depth, halocline magnitude, ",&
+         "1 m salinity",/,                                             &
+         "*FieldUnits: yr, mo, d, yrday, hr, min, s, d-s, m, m^-1, none"/,   &
          "*EndOfHeader")
 
        ! Read the profiles results file base-name
@@ -190,8 +196,13 @@ contains
              endif
           enddo
           ! Write the halocline results
-          write(haloclines, 100) profileDatetime(iprof), dep, derS
-100       format(i4, 2(1x, i2), 1x, i3, 3(1x, i2), 1x, i5, 2x, f6.2, 2x, f6.3)
+          write(haloclines, 100) profileDatetime(iprof), dep, derS, &
+               0.5*(S(2)+S(3))
+100       format(i4, 2(1x, i2), 1x, i3, 3(1x, i2), 1x, i5, 2x, f6.2, 2x, &
+               f6.3, 2x, f6.2)
+          ! Add to the averaging variables
+          sumHaloDepth = sumHaloDepth + dep
+          sumHaloStrength = sumHaloStrength + derS
           ! Open the profile results file
           open(unit=profiles, &
                file=trim(profilesBase_fn) // '-' &
@@ -261,6 +272,13 @@ contains
     ! Close the haloclines output file
     use io_unit_defs, only: haloclines
     implicit none
+
+    ! write out average values
+    write (*,*) iprof
+    write (*,*) "For w and mixing tuning"
+    write (*,*) "Average halocline depth over profiles", SumHaloDepth/(iprof-1)
+    write (*,*) "Average halocline strength over profiles", &
+         SumHaloStrength/(iprof-1)
 
     close(haloclines)
   end subroutine profiles_output_close
