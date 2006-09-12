@@ -23,7 +23,7 @@ module find_upwell
 
 contains
 
-  subroutine upwell_profile(grid, S, upwell, wupwell)
+  subroutine upwell_profile(grid, upwell, wupwell)
     ! Calculate the vertical profile of the entrainment velocity based
     ! on the salinity profile, and the maximum upwelling velocity.
     ! The latter is a function of the Fraser River flow, and is
@@ -38,37 +38,19 @@ contains
 
     ! Arguments:
     type(gr_d), intent(in) :: grid                 ! Grid properties
-    real(kind=dp), intent(in), dimension(0:) :: S  ! Salinity profile
     real(kind=dp), intent(in) :: upwell            ! Maximum upwelling velocity
     ! Vertical upwelling velocity profile
     real(kind=dp), intent(out), dimension(1:) :: wupwell 
 
     ! Local variables:
-    real(kind=dp), dimension(1:grid%M) :: fwc  ! Fresh water content
-    real(kind=dp) :: fwc68  ! 68% of total fresh water content
     real(kind=dp) :: d      ! depth in m, of 68% fwc
     real(kind=dp) :: d25    ! 2.5 d, depth of upwelling variation
     integer :: index        ! counter through depth
 
-    ! Sum the freshwater content.  Note that fwc is defined on the interfaces.
-    fwc = (30.0 - S(1)) * grid%i_space(1) ! 30 is the base salinity
-    do index = 2, grid%M
-       fwc(index)= (30.0 - S(index)) * grid%i_space(index) + fwc(index-1)
-    enddo
-
-    ! Depth of upwelling layer is defined as a multiple of d, the
-    ! depth of 68% fwc (see entrainment.pdf)
-    fwc68 = 0.68 * fwc(grid%M)
-    ! *** This could be moved to a function in grid module that
-    ! *** finds the depth at which the specified value of a quantity
-    ! *** occurs, if that functionality is needed elsewhere.
-    index = 1
-    do while (fwc(index) < fwc68)
-       index = index + 1
-    end do
-    ! Depth wanted is between index and index+1
-    d = (fwc68 - fwc(index)) / (fwc(index+1) - fwc(index)) * &
-         grid%i_space(index+1) + grid%d_i(index)
+    ! Set the depth of 68% fresh water content to a constant
+    ! using a variable values was less stable.  To go back to
+    ! calculating d from the salinity, see code version 1.8
+    d = 11.7
 
     ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5*d
@@ -76,7 +58,7 @@ contains
     ! Set vertical velocity profile
     do index = 1, grid%M + 1
        if (grid%d_g(index) < d25) then
-          wupwell(index)= upwell * (1. - ( (1.- grid%d_g(index) / d)**2) )
+          wupwell(index)= upwell * (1. - ( (1.- grid%d_g(index) / d25)**2) )
        else
           wupwell(index) = upwell
        endif
