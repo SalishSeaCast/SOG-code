@@ -2,7 +2,7 @@
 ! $Source$
 
 SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
-                         salinity_n,salinity_o,salinity_d,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
+                         salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
                          stress,&
                          day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Ft,count)
@@ -17,7 +17,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION, INTENT(IN):: alp, Cp_o, bet !alph%i(0), Cp%i(0), beta%i(0)
       DOUBLE PRECISION, INTENT(IN)::salinity_n, & ! current upper level Sal
            salinity_o, &  ! previous time step upper level Sal
-           salinity_d,temp_o, & 
+           temp_o, & 
            U_ten, V_ten, &
            dtdz, &  ! time step divided by mixing layer depth
            u, dt
@@ -27,6 +27,8 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
       TYPE(windstress), INTENT(IN OUT)::stress
       TYPE(flux), INTENT(OUT)::w
+      double precision, intent(out):: S_riv ! salinity goal
+
       real(kind=dp), intent(in out):: Ft  ! fresh water flux
       integer, intent(in) :: count ! iteration count used to stabilize Ft
       real(kind=dp), intent(in) :: upwell_const 
@@ -34,7 +36,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
            wt_r, upwell
 
-      DOUBLE PRECISION::C_D, UU, rho_atm, Sa, S_riv
+      DOUBLE PRECISION::C_D, UU, rho_atm, Sa
       double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
       double precision:: Cs, h_sens, h_latent, h_flux, Cp
       REAL:: epsilon_w,a,b,c,ea,es,cl,le
@@ -81,29 +83,20 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
      ! Parameterized fit of the surface salinity of the Strait of
      ! Georgia at station S3 based on the river flows.  (Derived by
-     ! Kate Collins 16-Jun-2005)
+     ! Kate Collins 16-Jun-2005)  This value is not directly used
+     ! in the model but is used to make sure the tuned FT value
+     ! is correct.
      S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
-     ! Smear the change in salinity over a half day (goal for salinity
-     ! is based on old salinity so that it is not a moving target)
-     Sa = salinity_o + (S_riv - salinity_o) * dt / (0.5 * 24 * 3600) 
-     ! Calculate the fresh water flux necessary to get Sa in the top
-     ! layer
 
-     ! if count=1, use last value as a best estimate
-     if (count.gt.1) then 
-        ! adjust flux to get closer to goal, divide by count to 
-        ! reduce oscillations
-        Ft = Ft + (salinity_n - Sa) / (Sa * dtdz) / count
-        ! ...but the rivers can't add salinity
-        if (Ft < 0.) then
-           Ft = 0.
-        endif
-     endif
+     ! tuned fresh water flux value (to give, on average) the parameterized
+     ! value above
+     Ft = 2.3e-7*(0.0019*Qriver + 0.0392*Eriver)
 
-     ! Calculate the entrainment of deep water into the bottom of the
-     ! grid based on the parameterization derived by Susan Allen in
-     ! Jun-2006 (See entrainment.pdf).
-     upwell = upwell_const * (Qriver ** 0.45)
+     ! The entrainment of deep water into the bottom of the
+     ! grid couldbe based on the parameterization derived by Susan Allen in
+     ! Jun-2006 (See entrainment.pdf). but is currently set to a constant
+
+     upwell = upwell_const
 
 
 !net longwave radiation.
@@ -168,7 +161,7 @@ h_flux = lw_net+h_sens+h_latent
       w%t(0) = -Q_t/(ro(0)*Cp_o)  
 
 
-      w%s(0) = Ft*Sa
+      w%s(0) = Ft*salinity_o
       w%b(0) = g*(alp*w%t(0)-bet*w%s(0))
 
 
