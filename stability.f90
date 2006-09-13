@@ -1,22 +1,24 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE stability
+subroutine stability
+!!$(Bf, u_star, stable)
+  ! 
 
       USE mean_param
       USE declarations
 
       IMPLICIT NONE
 
-            IF (Bf%b(0) < 0.) THEN                              !!!unstable
+            IF (Bf < 0.) THEN                              !!!unstable
                stable = 0
-            ELSE IF (Bf%b(0) > 0. .OR.(Bf%b(0) == 0. .AND. u_star /= 0.)) THEN
+            ELSE IF (Bf > 0. .OR.(Bf == 0. .AND. u_star /= 0.)) THEN
                stable = 1                                  !!!stable
-            ELSE IF (Bf%b(0) == 0. .AND. u_star == 0.) THEN      !!!no forcing
+            ELSE IF (Bf == 0. .AND. u_star == 0.) THEN      !!!no forcing
                stable = 2
             ELSE
-               PRINT "(A)","stability case not considered.  See stable.f, Bf%b(0), u_star:"
-               PRINT *,Bf%b(0),u_star
+               PRINT "(A)","stability case not considered.  See stable.f, Bf, u_star:"
+               PRINT *,Bf,u_star
                STOP
             END IF
 
