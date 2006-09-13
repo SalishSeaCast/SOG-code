@@ -214,7 +214,7 @@ contains
           ! string here rather than in the write statement
           str_proDatetime = datetime_str(profileDatetime(iprof))
           write(profiles, 200) trim(codeId), str_runDatetime, &
-               str_CTDdatetime, str_proDatetime, dep, derS
+               str_CTDdatetime, str_proDatetime, derS, dep
 200       format("! Profiles of Temperature, Salinity, Density, ",           &
                "Phytoplankton (micro & nano),"/,                             &
                "! Nitrate, Ammonium, Silcion and Detritus (dissolved, ",     &
