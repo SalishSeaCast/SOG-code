@@ -5,7 +5,10 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
                          salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
                          stress,&
-                         day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Ft,count)
+                         day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Fw_scale, &
+                         Ft,count)
+  ! *** Check whether wt_r is needed
+  
 
       USE mean_param
       USE surface_forcing
@@ -28,8 +31,8 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       TYPE(windstress), INTENT(IN OUT)::stress
       TYPE(flux), INTENT(OUT)::w
       double precision, intent(out):: S_riv ! salinity goal
-
-      real(kind=dp), intent(in out):: Ft  ! fresh water flux
+      real(kind=dp), intent(in) :: Fw_scale  ! Fresh water scale factor for river flows
+      real(kind=dp), intent(out):: Ft  ! fresh water flux
       integer, intent(in) :: count ! iteration count used to stabilize Ft
       real(kind=dp), intent(in) :: upwell_const 
                                  ! upwelling constant, tuned parameter
@@ -90,12 +93,12 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
      ! tuned fresh water flux value (to give, on average) the parameterized
      ! value above
-     Ft = 2.3e-7*(0.0019*Qriver + 0.0392*Eriver)
+     Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver)
 
      ! The entrainment of deep water into the bottom of the
-     ! grid couldbe based on the parameterization derived by Susan Allen in
-     ! Jun-2006 (See entrainment.pdf). but is currently set to a constant
-
+     ! grid could be based on the parameterization derived by Susan Allen in
+     ! Jun-2006 (See entrainment.pdf), but is currently set to a
+     ! constant
      upwell = upwell_const
 
 
@@ -154,15 +157,20 @@ h_flux = lw_net+h_sens+h_latent
 
       
 !-----Surface fluxes---------------------  equations A2a-d
-
-      w%u(0) = -stress%u%new/ro(0) !
-      w%v(0) = -stress%v%new/ro(0) !
-
-      w%t(0) = -Q_t/(ro(0)*Cp_o)  
-
-
-      w%s(0) = Ft*salinity_o
-      w%b(0) = g*(alp*w%t(0)-bet*w%s(0))
+      ! Calculate surface flux components (see Large, etal (1994),
+      ! eq'ns A2 & A3b)
+      !
+      ! Momentum (eq'ns A2a & A2b)
+      w%u(0) = -stress%u%new / ro(0)
+      w%v(0) = -stress%v%new / ro(0)
+      ! Temperature (eq'n A2c)
+      w%t(0) = -Q_t / (ro(0) * Cp_o)
+      ! Salinity (eq'n A2d)
+      ! Note that fresh water flux is added via Bf in buoyancy.f90
+      ! *** Need to check the implications of w%s(0)=0 on def_gamma.f90
+      w%s(0) = 0.
+      ! Buoyancy (eq'n A3b)
+      w%b(0) = g * (alp * w%t(0) - bet * w%s(0))
 
 
    !!!Radiative contribution to surface heat flux!!! this is equal to zero because j_gamma=0 because it is never defined as anything
