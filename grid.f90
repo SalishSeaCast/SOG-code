@@ -24,8 +24,12 @@ module grid_mod
   !
   ! Public Functions:
   !
-  ! interp_d(qty, d) -- Return the interpolated value of a quantity
-  !                     stored at the grid points at the specified depth.
+  ! interp_g_d(qty_g, d) -- Return the interpolated value of a quantity
+  !                         stored at the grid points at the specified depth.
+
+  ! interp_i_d(qty_i, d) -- Return the interpolated value of a quantity
+  !                         stored at the grid interfaces at the specified 
+  !                         depth.
   !
   ! interp_i(qty_g) -- Return the interpolated values of a quantity at
   !                    the grid interface depths from its values at the 
@@ -49,7 +53,7 @@ module grid_mod
        ! Variables:
        grid, &
        ! Functions:
-       interp_d, interp_i, &
+       interp_g_d, interp_i_d, interp_i, &
        ! Subroutines:
        init_grid, dalloc_grid
 
@@ -208,10 +212,10 @@ contains
   end subroutine init_grid
 
 
-  function interp_d(qty_g, d) result(d_value)
+  function interp_g_d(qty_g, d) result(d_value)
     ! Return the interpolated value of a quantity stored at the grid
     ! points at the specified depth.
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(in) :: qty_g
@@ -223,10 +227,11 @@ contains
 
     ! Make sure the requested depth is within the grid
     if (d < grid%d_g(0) .or. d > grid%d_g(grid%M+1)) then
-       write(stderr, *) "Warning: d = ", d, " out of range in interp_d"
+       write(stdout, *) "Warning: d = ", d, " out of range in interp_g_d"
        d_value = 9999999999.
     endif
     ! Find the index of the grid point above the specified depth
+    ! *** Is may be possible to replace this loop with a maxloc() call
     do j = 0, grid%M
        if (d > grid%d_g(j)) then
           j_above = j
@@ -238,7 +243,41 @@ contains
     ! value at the grid points above and below
     d_value = qty_g(j_above) + (qty_g(j_above+1) - qty_g(j_above)) &
          * (d - grid%d_g(j_above)) / grid%g_space(j_above)
-  end function interp_d
+  end function interp_g_d
+
+
+  function interp_i_d(qty_i, d) result(d_value)
+    ! Return the interpolated value of a quantity stored at the grid
+    ! interfacesat the specified depth.
+    use io_unit_defs, only: stdout
+    implicit none
+    ! Arguments:
+    real(kind=dp), dimension(0:), intent(in) :: qty_i
+    real(kind=dp), intent(in) :: d
+    ! Result:
+    real(kind=dp) :: d_value
+    ! Local variables:
+    integer :: j, j_above
+
+    ! Make sure the requested depth is within the grid
+    if (d < grid%d_i(0) .or. d > grid%d_i(grid%M)) then
+       write(stdout, *) "Warning: d = ", d, " out of range in interp_i_d"
+       d_value = 9999999999.
+    endif
+    ! Find the index of the grid point above the specified depth
+    ! *** Is may be possible to replace this loop with a maxloc() call
+    do j = 0, grid%M - 1
+       if (d > grid%d_i(j)) then
+          j_above = j
+       else
+          exit
+       endif
+    enddo
+    ! Interpolate the quantity value at the specified depth from its
+    ! value at the grid interfaces above and below
+    d_value = qty_i(j_above) + (qty_i(j_above+1) - qty_i(j_above)) &
+         * (d - grid%d_i(j_above)) / grid%i_space(j_above)
+  end function interp_i_d
 
 
   function interp_i(qty_g) result(qty_i)
