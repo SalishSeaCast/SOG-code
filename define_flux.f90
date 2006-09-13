@@ -25,10 +25,10 @@ contains
     K%s%all = 0.0
     K%t%all = 0.0
     w%b_err(0) = 0.
-    Bf%b_err(0) = 0.
 
-    DO xx = 1, h%i
-       IF (grid%d_i(xx) > h%new) THEN
+    ! *** Vectorization would probably simplify this
+    do xx = 1, h%i
+       if (grid%d_i(xx) > h%new) then
           K%u%all(xx) = 0.0
           K%s%all(xx) = 0.0
           K%t%all(xx) = 0.0 
@@ -38,50 +38,37 @@ contains
           w%u(xx) = 0.
           w%b(xx) = 0.
           w%b_err(xx) = 0.
-          Bf%b(xx) = 0.
-          Bf%b_err(xx) = 0.
           Q_t(xx) = 0.
-       ELSE
-          w%t(xx) = -K%t%ML(xx)*(T%div_i(xx) - gamma%t(xx)) ! (9)
-          w%s(xx) = -K%s%ML(xx)*(S%div_i(xx) - gamma%s(xx))
-          w%u(xx) = -K%u%ML(xx)*(U%div_i(xx) - gamma%m(xx))
-          w%v(xx) = -K%u%ML(xx)*(V%div_i(xx) - gamma%m(xx))
+       else
+          w%t(xx) = -K%t%ML(xx) * (T%div_i(xx) - gamma%t(xx)) ! (9)
+          w%s(xx) = -K%s%ML(xx) * (S%div_i(xx) - gamma%s(xx))
+          w%u(xx) = -K%u%ML(xx) * (U%div_i(xx) - gamma%m(xx))
+          w%v(xx) = -K%u%ML(xx) * (V%div_i(xx) - gamma%m(xx))
           ! Buoyancy flux by definition given t and s flux
-          w%b(xx) = g*(alph%i(xx)*w%t(xx)-beta%i(xx)*w%s(xx))  
+          w%b(xx) = g * (alph%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))  
           ! Buoyancy flux variation due to error in z
           w%b_err(xx) = g*(alph%idiv(xx)*w%t(xx) -beta%idiv(xx)*w%s(xx)) 
-          Bf%b(xx) = - w%b(xx) - g*alph%i(xx)*Q_n(xx)
-          Bf%b_err(xx) = - w%b_err(xx) - g*alph%idiv(xx)*Q_n(xx)
           K%u%all(xx) = K%u%ML(xx)
           K%s%all(xx) = K%s%ML(xx)
           K%t%all(xx) = K%t%ML(xx)
           Q_t(xx) = -w%t(xx) * density%new(xx) * Cpi(xx)
-       END IF
-    END DO
+       endif
+    enddo
 
-    DO xx = h%i, grid%M
-       IF (grid%d_i(xx) > h%new) THEN
-          w%t(xx) = -K%t%total(xx)*T%div_i(xx)
-          w%s(xx) = -K%s%total(xx)*S%div_i(xx)
-          w%u(xx) = -K%u%total(xx)*U%div_i(xx)
-          w%v(xx) = -K%u%total(xx)*V%div_i(xx)
-          w%b(xx) = g*(alph%i(xx)*w%t(xx)-beta%i(xx)*w%s(xx))
-          w%b_err(xx) = g*(alph%idiv(xx)*w%t(xx) - beta%idiv(xx)*w%s(xx))
-          Bf%b(xx) = -w%b(xx) - g*alph%i(xx)*Q_n(xx)
-          Bf%b_err(xx) = - w%b_err(xx) - g*alph%idiv(xx)*Q_n(xx)
+    do xx = h%i, grid%M
+       if (grid%d_i(xx) > h%new) then
+          w%t(xx) = -K%t%total(xx) * T%div_i(xx)
+          w%s(xx) = -K%s%total(xx) * S%div_i(xx)
+          w%u(xx) = -K%u%total(xx) * U%div_i(xx)
+          w%v(xx) = -K%u%total(xx) * V%div_i(xx)
+          w%b(xx) = g * (alph%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))
+          w%b_err(xx) = g * (alph%idiv(xx) * w%t(xx) - beta%idiv(xx) * w%s(xx))
           K%u%all(xx) = K%u%total(xx)
           K%s%all(xx) = K%s%total(xx)
           K%t%all(xx) = K%t%total(xx)
           Q_t(xx) = -w%t(xx) * density%new(xx) * Cpi(xx)
-       END IF
-    END DO
-
-!!!!!!!!!!!!!!!!!!!!!freshwater flux, F_n!!!!!!!!!!!!!!!!!!!!!!
-
-    F_n = 0.0
-
-    !J = -F_n for salinity ??? and Q_n for temperature/ Defined on interface
-
-  END SUBROUTINE define_flux
+       endif
+    enddo
+  end subroutine define_flux
 
 end module define_flux_mod
