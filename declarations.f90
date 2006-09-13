@@ -27,7 +27,8 @@ module declarations
   TYPE(plankton):: P 
   TYPE(nutrient):: N
   TYPE(Knu)::K 
-  TYPE(flux)::w,Bf  
+  TYPE(flux)::w
+!!$,Bf  
   TYPE(height)::h, surface_h, h_m
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::phi,omega
@@ -53,7 +54,23 @@ module declarations
   REAL, DIMENSION(1919)::Qriver
   REAL, DIMENSION(1919)::Eriver
   DOUBLE PRECISION::begin_hour,end_hour  ! used in interpolate_dt
-  DOUBLE PRECISION :: time, h_i, del, dummy_time, del_p 
+  DOUBLE PRECISION :: time, h_i, del, dummy_time, del_p
+
+  ! Surface buoyancy forcing
+  real(kind=dp) :: Bf
+
+  ! Turbulent friction velocity
+  real(kind=dp) :: u_star
+
+  ! Fresh water flux quantities:
+  ! *** Destined for a module (probably new surface_forcing) eventually
+  real(kind=dp) :: &
+       Ft, &        ! Total fresh water flux
+       Fw_scale, &  ! Fresh water scale factor for river flows
+       Fw_depth     ! Depth to distribute fresh water flux over
+  real(kind=dp), dimension(:), allocatable :: &
+       Fw, &  ! Fresh water flux profile
+       F_n    ! Fresh water contribution to salinity flux
 
 !!!!For surface fluxes (surface_flux.f90): 
   DOUBLE PRECISION::U_ten,V_ten, & ! U and V velocities (m/s) at standard height (10m or 22m)
@@ -71,17 +88,15 @@ module declarations
        count, yy, yy2, gg, jmaxg, cloud_type, day, stable,  &
        water_type, neg_count
   REAL::D_test
-  DOUBLE PRECISION :: u_star, w_star,L_star, day_time, Io, h_Ekman  !depth
+  DOUBLE PRECISION :: w_star,L_star, day_time, Io, h_Ekman  !depth
   !friction vel, convective vel scale
   !monin_obukov length and julian day
   DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::V_t_square, &
-       Ri_b, Q_n, F_n, &
-       &N_2_g
+       Ri_b, Q_n, N_2_g
   double precision, dimension(:), allocatable:: pbx,pby,dzx,dzy
   !I = intensity, Q_n is the
   !non_turbulent heat flux  (i.e. I)
-  !F_n is freshwater flux (0 no ice)
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, &
        &Q_t
 
@@ -122,28 +137,10 @@ module declarations
   INTEGER::D_bins  !number of detrital compartments  see input/biology.dat
   TYPE(snow), DIMENSION(:), ALLOCATABLE::Detritus  
 
-  !!Variables for plotting:  see write_biological.f90
-!!$  INTEGER, DIMENSION(243)::o_cnt,hm_g,euph_g,species_cnt, species_cnt2
-!!$  INTEGER::nobins,bin_no
-!!$  DOUBLE PRECISION, DIMENSION(243)::NO_o,nano_ml,diatom_ml,zmicro_ml,copepod_ml,NO_ml,NH_ml,PN_ml,DN_ml,&
-!!$       copepod_150,NH_150,NO_150,PN_150,DN_150,PN_100,DN_100,nano_e,diatom_e,NO_e,NH_e,PN_e,DN_e, &
-!!$       NOup_e,NHup_e,fratio_e, NPP_e,NPP_ml,NPP_80,ngrow_o,ngrow_e,ngrow_ml,dgrow_o,dgrow_e,dgrow_ml,&
-!!$       species_b,species_mwt,species_mwt_o,zgrazen_ml,cgrazed_ml,cgrazez_ml,cgrazed2_ml,SPN_ml,&
-!!$       T2nano_ml,Thalfnano_ml,T2diatom_ml,Thalfdiatom_ml,T2zmicro_ml,&
-!!$       Thalfzmicro_ml,feacalml,ureaf,ureac,migrateflux,NOup_ml,NHup_ml,&
-!!$       fratio_ml,hm_new,euph_new,species_avgwt,D3_ml,D3_200,PN_200,NH_200,NO_200
-!!$  DOUBLE PRECISION, DIMENSION(0:50)::bin_logwt,bin_cnt     
-!!$  DOUBLE PRECISION, DIMENSION(1:27,0:50)::bin_cnt_year
-!!$  INTEGER, DIMENSION(:),ALLOCATABLE::daybins
-!!$  TYPE(write_bio)::mixlay, depth150, ezone, depth80, total, depth100,doubleT,halfT,depth200
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
 
   ! An empty vector
   real(kind=dp), dimension(:), allocatable :: null_vector
-
-!!!!!!!variables from KPP used in shift_vector.f90
-
-!!$  DOUBLE PRECISION::smooth_avg_u,smooth_avg_v,smooth_var_u,smooth_var_v,test_avg,test_var
 
   TYPE(bottom_fit), DIMENSION(1659):: ctd_bottom
 
