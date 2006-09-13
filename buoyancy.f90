@@ -1,64 +1,70 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE buoyancy(alp, Te, Sa, d, hh, Bu, II, Br, rho, &
-                    Cp, beta, Qn)     
+subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
+     alpha, beta, Cp,                                             &  ! in
+     Bnew, Bf)                                                       ! out
+  ! Calculate the buoyancy profile, and the surface buoyancy forcing.
+  use precision_defs, only: dp
+  use grid_mod, only: grid_, interp_g_d, interp_i_d
+  use mean_param, only: height
+  use surface_forcing, only: g
+  implicit none
+  ! Arguments:
+  type(grid_), intent(in) :: grid  ! Grid depths & spacings arrays
+  real(kind=dp), dimension(0:grid%M+1), intent(in) :: &
+       Tnew, &  ! Temperature profile
+       Snew     ! Salinity profile
+  type(height), intent(in) :: hml  ! Mixing layer depth
+  real(kind=dp), dimension(0:grid%M), intent(in) :: &
+       Itotal, &  ! Irradiance
+       F_n        ! Fresh water contribution to salinity flux
+  real(kind=dp), intent(in) :: wb0  ! Surface buoyance flux
+  real(kind=dp), dimension(0:grid%M+1), intent(in) :: &
+       rho,   &  ! Density
+       alpha, &  ! Thermal expansion coefficient
+       beta,  &  ! Salinity expansion coefficient
+       Cp        ! Specific heat capacity
+  ! Results:
+  real(kind=dp), dimension(0:grid%M+1), intent(out) :: Bnew  ! Buoyance profile
+  real(kind=dp), intent(out) :: Bf  ! Surface buoyancy forcing
 
-      use mean_param
-      use water_properties, only: water_property
-      use surface_forcing
+  ! Local variables:
+  ! Water properties, salinity, irradiance, and fresh water flux at
+  ! mixing layer depth
+  real(kind=dp) :: rho_ml, alpha_ml, beta_ml, Cp_ml, S_ml, I_ml, FN_ml, &
+       ! Contributions to surface buoyancy forcing
+       Br, &  ! Radiative
+       Bfw    ! Fresh water flux
 
-      implicit none
+  ! Buoyancy profile (see Large, etal (1994), eq'n A3a)
+  Bnew = g * (alpha * Tnew - beta * Snew)
 
-      TYPE(gr_d), INTENT(IN)::d
-      TYPE(constant), INTENT(IN)::alp, beta
-      type(water_property), intent(in) :: Cp
-      TYPE(height), INTENT(IN)::hh
-      DOUBLE PRECISION, DIMENSION(0:d%M+1), INTENT(IN)::Te, Sa !T, S
-      DOUBLE PRECISION, DIMENSION(0:d%M+1), INTENT(OUT)::Bu !B
-      DOUBLE PRECISION, DIMENSION(0:d%M), INTENT(IN)::II 
-      DOUBLE PRECISION, DIMENSION(0:d%M), INTENT(OUT)::Qn 
-      DOUBLE PRECISION, INTENT(OUT)::Br !used in forcing
-      DOUBLE PRECISION, DIMENSION(0:d%M+1), INTENT(IN)::rho  !density
-                                                                       
+  ! Interpolate to find water property and flux values at the mixing
+  ! layer depth
+  rho_ml = interp_g_d(rho, hml%new)
+  alpha_ml = interp_g_d(alpha, hml%new)
+  beta_ml = interp_g_d(beta, hml%new)
+  Cp_ml = interp_g_d(Cp, hml%new)
+  S_ml = interp_g_d(Snew, hml%new)
+  ! *** Irradiance and fresh water flux interpolations could be
+  ! replaced with a function analogous to interp_d
+  I_ml = Itotal(hml%i-1) + (Itotal(hml%i) - Itotal(hml%i-1)) &
+       * (hml%new - grid%d_i(hml%i-1)) / grid%i_space(hml%i)
+  Fn_ml = F_n(hml%i-1) + (F_n(hml%i) - F_n(hml%i-1)) &
+       * (hml%new - grid%d_i(hml%i-1)) / grid%i_space(hml%i)
 
-      INTEGER::k
-      DOUBLE PRECISION:: rho_hb, Cp_hb, alp_hb, In_hb
-      TYPE(height)::h_B
-
-      h_B%new =   hh%new  !(0 if no solar heat contributes to surface buoyancy flux)
-      h_B%g =  hh%g
-      h_B%i = hh%i
-
-      Bu = g*(alp%g*Te - beta%g*Sa)    !Large eq.A3a
- 
-      ! *** Investigate this comment:
-!!!Intensity should be defined on the interface levels and not the grid levels!!!
- 
-
-     Qn(0) = II(0) / Cp%i(0) / rho(0)        
-     DO k = 1, d%M       
-         Qn(k) = II(k) / Cp%i(k) / (rho(k) + (d%d_i(k) - d%d_g(k)) &
-              * (rho(k+1) - rho(k)) / d%g_space(k))
-     END DO       
-
-      IF (h_B%g == 1) THEN   !!!Shouldn't make a difference!!!
-         rho_hb = rho(0)
-         Cp_hb = Cp%i(0)
-         alp_hb = alp%i(0)
-         In_hb = II(0)
-      ELSE
-         rho_hb = rho(h_B%g-1)+(rho(h_B%g)-rho(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
-                 d%g_space(h_B%g-1)
-         Cp_hb = Cp%g(h_B%g-1)+(Cp%g(h_B%g)-Cp%g(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
-                 d%g_space(h_B%g-1)
-         alp_hb = alp%g(h_B%g-1)+(alp%g(h_B%g)-alp%g(h_B%g-1))*(h_B%new-d%d_g(h_B%g-1))/&
-                 d%g_space(h_B%g-1)
-         In_hb = II(h_B%i-1) + (h_B%new-d%d_i(h_B%i-1))*(II(h_B%i)-II(h_B%i-1))/&
-                 d%i_space(h_B%i)
-      END IF
-
-      Br = g*(alp%i(0)*II(0)/(Cp%i(0)*rho(0))- &         !!eq. A3c in Large
-                        alp_hb*In_hb/(rho_hb*Cp_hb))
-
-END SUBROUTINE buoyancy
+  ! Contribution of heat and fresh water fluxes to surface buoyancy
+  ! forcing (Surface values less the amount at (and thus below) the
+  ! mixing layer depth)
+  !
+  ! Radiative contribution (see Large, etal (1994) eq'n A3c)
+  Br = g * (alpha(0) * Itotal(0) / (Cp(0) * rho(0)) &
+            - alpha_ml * I_ml / (rho_ml * Cp_ml))
+  ! Fresh water salinity flux contribution
+  Bfw = g * (beta(0) * F_n(0) * Snew(0) &
+       - beta_ml * Fn_ml * S_ml)
+  ! Calculate surface buoyancy forcing (an extension of Large, etal
+  ! (1994) eq'n A3d
+  Bf = -wb0 + Br + Bfw
+end subroutine buoyancy
