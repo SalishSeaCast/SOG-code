@@ -5,7 +5,7 @@ subroutine ML_height_sog(grid, Ri_b, year, day, day_time, count, hnew, jmaxg)
   ! Find the mixing layer depth.  See Large, etal (1994) pp 371-372.
 
   use precision_defs, only: dp
-  use io_unit_defs, only: stderr
+  use io_unit_defs, only: stdout
   use grid_mod, only: grid_
   use surface_forcing, only: Ri_c
 
@@ -39,9 +39,9 @@ subroutine ML_height_sog(grid, Ri_b, year, day, day_time, count, hnew, jmaxg)
      ! Mixing layer extends nearly to bottom of grid
      jmaxg = grid%M - 3
      hnew = grid%d_g(jmaxg) - grid%g_space(jmaxg) / 4.0 !#
-     write(stderr, *) "ML_height_sog: Mixing too deep. ", &
+     write(stdout, *) "ML_height_sog: Mixing too deep. ", &
           "Set jmaxg = ", jmaxg, " and h%new = ", hnew
-     write(stderr, *) "Iteration count = ", count, " Time: yr = ", &
+     write(stdout, *) "Iteration count = ", count, " Time: yr = ", &
           year, " day = ", day, " day_time = ", day_time
   else
      ! Interpolate to find mixing layer depth
