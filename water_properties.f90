@@ -83,7 +83,8 @@ contains
     allocate(Cp%g(0:M+1), Cp%i(0:M), stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Water density profile arrays"
-    allocate(rho%g(0:M+1), rho%div_g(1:M), rho%div_i(1:M), stat=allocstat)
+    allocate(rho%g(0:M+1), rho%i(0:M), rho%div_g(1:M), rho%div_i(1:M), &
+         stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_water_props
 
@@ -100,7 +101,7 @@ contains
     deallocate(Cp%g, Cp%i, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Water density profile arrays"
-    deallocate(rho%g, rho%div_g, rho%div_i, &
+    deallocate(rho%g, rho%i, rho%div_g, rho%div_i, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_water_props
