@@ -24,9 +24,9 @@ program SOG
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_profiles, &
        profiles_output_close
-  use water_properties, only: Cp, calc_rho_alpha_beta_Cp_profiles, &
+  use water_properties, only: rho, Cp, calc_rho_alpha_beta_Cp_profiles, &
        alloc_water_props, dalloc_water_props
-  use grid_mod, only: init_grid, dalloc_grid, interp_d, interp_i
+  use grid_mod, only: init_grid, dalloc_grid, interp_g_d, interp_i
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
@@ -55,8 +55,7 @@ program SOG
   !*** read by read_sog used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
   ! surface_forcing module
-
-  real(kind=dp) :: upwell_const, Ft = 0, S_riv, sumS=0, sumSriv=0
+  real(kind=dp) :: upwell_const, S_riv, sumS=0, sumSriv=0
   integer :: scount=0
 
   ! Internal wave breaking eddy viscosity for momentum and scalars
@@ -168,9 +167,11 @@ program SOG
   call alloc_water_props(grid%M)
 
   CALL read_sog (upwell_const)
-  nu_w_m = getpard('nu_w_m')   ! internal wave mixing momentum
-  nu_w_s = getpard('nu_w_s')   ! internal wave mixing scalar
-  CALL coefficients(alph, beta, dens, cloud,p_Knox)
+  nu_w_m = getpard('nu_w_m')        ! Internal wave mixing momentum
+  nu_w_s = getpard('nu_w_s')        ! Internal wave mixing scalar
+  Fw_scale = getpard('Fw_scale')  ! Fresh water scale factor for river flows
+  Fw_depth = getpard('Fw_depth')  ! Depth to distribute fresh water flux over
+
   CALL allocate3(grid%M)
 
   CALL initialize ! initializes everything (biology too)
@@ -182,6 +183,11 @@ program SOG
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
 
+  ! Read the iteration count limit for the physics model implicit
+  ! solver
+  ! *** This should go somewhere else - maybe init_physics() (yet to come)
+  niter = getpari("niter")
+
   IF(h%new < grid%d_g(1))THEN 
      h%new = grid%d_g(1)
   END IF
@@ -191,6 +197,7 @@ program SOG
 
   ! Initialize the profiles of the water column properties
   ! Thermal and salinity expansion and their gradients
+  CALL coefficients(alph, beta, dens, cloud,p_Knox)
   CALL alpha_sub(T%new, S%new, alph, grid) 
   CALL alpha_sub(T%new, S%new, beta, grid)
   CALL div_i_param(grid, alph) ! alph%idiv = d alpha /dz
@@ -198,20 +205,49 @@ program SOG
   ! Heat capacity
   call  calc_rho_alpha_beta_Cp_profiles(T%new, S%new, Cp%g)
   Cp%i = interp_i(Cp%g)
-  ! Density with depth and density of fresh water
+  ! Density with depth
   CALL density_sub(T, S, density%new, grid%M) 
+  rho%i = interp_i(density%new)
 
   ! Close the input parameters file
   close(stripped_infile)
   ! ---------- End of Initialization Section ----------
 
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
-     ! Store previous time_steps in old (n) and old_old (n-1)
+     ! Store previous time_steps in %old components
      CALL define_sog(time_step) 
 
-     ! Iteration limit for implicit solver that calculates physics
-     ! *** This should be read from the run parameters data file
-     niter = 30
+     ! Search and interpolate the wind data for the u and v components
+     ! of the wind at the current time step
+     call find_wind(year, day, time, ecmapp, wind_n, wind, unow, vnow)
+
+     ! *** Implicit type conversion problem
+     j = day_time / 3600.0 + 1
+     ! *** There has to be a better way...
+     if (year == 2001) then
+        day_met = day
+     else if (year == 2002) then
+        day_met=day + 365
+     else if (year == 2003) then
+        day_met=day + 730
+     else if (year == 2004) then
+        day_met=day + 1095
+     else if (year == 2005) then
+        day_met=day + 1461
+     else if (year == 2006) then
+        day_met=day + 1826
+     endif
+
+     ! Interpolate river flows for the second we're at
+     ! *** Implicit type conversion problem here!!!
+     Qinter = (day_time * Qriver(day_met) &
+          + (86400. - day_time) * Qriver(day_met-1)) / 86400.
+     Einter = (day_time * Eriver(day_met) &
+          + (86400. - day_time) * Eriver(day_met-1)) / 86400.
+
+     CALL irradiance_sog(cloud, cf(day_met, j), day_time, day, &
+          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, h, P)
+
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
         ! *** I think this is finding the depths of the grid point
         ! *** and grid interface that bound the mixed layer depth
@@ -231,69 +267,34 @@ program SOG
            END IF
         END DO
 
-        ! Initialization of the implicit loop
-        IF (count == 1) THEN
-           ! *** What do these comments mean?
-           !only starts with zooplankton!! <- no idea what this means 
-           !        
-           ! fixed cloud_type
-
-           ! *** Implicit type conversion problem
-           j = day_time / 3600.0 + 1
-           ! *** There has to be a better way...
-           IF (year==2001) then
-              day_met=day
-           else if (year==2002) then
-              day_met=day+365
-           else if (year==2003) then
-              day_met=day+730
-           else if (year==2004) then
-              day_met=day+1095
-           else if (year==2005) then
-              day_met=day+1461
-           else if (year==2006) then
-              day_met=day+1826
-           endif
-
-           ! Interpolate river flows for the second we're at
-           ! *** Implicit type conversion problem here!!!
-           Qinter = (day_time * Qriver(day_met) &
-                + (86400. - day_time) * Qriver(day_met-1)) / 86400.
-           Einter = (day_time * Eriver(day_met) &
-                + (86400. - day_time) * Eriver(day_met-1)) / 86400.
-
-           CALL irradiance_sog(cloud, cf(day_met, j), day_time, day, &
-                I, I_par, grid, jmax_i, Q_sol, euph, Qinter, h, P)
-        endif  !------ End of implicit loop initialization ------
-
-        ! Br radiative contribution to the surface buoyancy forcing
-        ! B%new buoyancy profile B(d)
-        ! Q_n nonturbulent heat flux profile
-        CALL buoyancy(alph, T%new, S%new, grid, h, B%new, I, Br, &
-             density%new, Cp, beta, Q_n)
-
-        CALL div_grid(grid, density)
-        ! take density from grid points to interface or vice-versa
-
-        ! Search and interpolate the wind data for the u and v components
-        ! of the wind at the current time step
-        call find_wind(year, day, time, ecmapp, wind_n, wind, unow, vnow)
-
-        ! *** Implicit type conversion problem
-        ! *** Identical statement to this above - why???
-        j = day_time / 3600.0 + 1
-
+        ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
         CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t(0),        &
-             alph%i(0), Cp%i(0), beta%i(0),unow, vnow, cf(day_met,j)/10.,    &
+             alph%i(0), Cp%i(0), beta%i(0), unow, vnow, cf(day_met,j)/10.,    &
              atemp(day_met,j), humid(day_met,j), Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
-             u%new(1), dt, Ft, count) 
+             u%new(1), dt, Fw_scale, Ft, count) 
 
-        Bf%b(0) = -w%b(0)+Br   !surface buoyancy forcing *nonturbulent heat flux beta*F_n would also go here  Br is radiative contribution
+        ! Calculate nonturbulent heat flux profile
+        ! *** Vectorize this and move it into a subroutine
+        Q_n(0) = I(0) / (Cp%i(0) * density%new(0))        
+        do ii = 1, grid%M       
+           Q_n(ii) = I(ii) / (Cp%i(ii) * rho%i(ii))
+        enddo
 
-        CALL fun_constants(u_star, w_star, L_star,w, Bf%b(0), h%new)   !test conv
+        ! Calculate the nonturbulent fresh water flux profile, and its
+        ! contribution to the salinity profile
+        ! *** Move to a subroutine
+        Fw = Ft * exp(-grid%d_i / Fw_depth)
+        F_n = S%new * Fw
+
+        ! Calculate buoyancy profile, and surface buoyancy forcing
+        CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
+             density%new, alph%g, beta%g, Cp%g,              &  ! in
+             B%new, Bf)                                         ! out
+
+        CALL fun_constants(u_star, w_star, L_star,w, Bf, h%new)   !test conv
 
         CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
 
@@ -301,10 +302,10 @@ program SOG
            CALL ND_flux_profile(grid,L_star,phi)   ! define flux profiles aka (B1)
            CALL vel_scales(grid, omega, phi, u_star,L_star,h)
            ! calculates wx (13) as omega (not Omega's)
-        ELSE IF (u_star == 0. .AND. Bf%b(0) < 0.) THEN        !Convective unstable limit
+        ELSE IF (u_star == 0. .AND. Bf < 0.) THEN        !Convective unstable limit
            CALL convection_scales(grid,omega,h, w_star)   !test conv
            ! calculates wx (15) as omega (not Omega's)
-        ELSE                !  No surface forcing or Bf%b(0) > 0. 
+        ELSE                !  No surface forcing or Bf > 0. 
            omega%m%value = 0.
            omega%s%value = 0.
            omega%m%div = 0.
@@ -334,13 +335,13 @@ program SOG
         CALL interior_match(grid, h, K%s, nu_w_s)   
         !test conv
 
-        IF (u_star /= 0. .OR. Bf%b(0) < 0.) THEN
+        IF (u_star /= 0. .OR. Bf < 0.) THEN
            CALL interior_match2(omega, L_star, u_star, h, grid) !test conv
         END IF
 
         !Define shape functions G_shape%x
 
-        IF (u_star /= 0. .OR. Bf%b(0) < 0.) THEN
+        IF (u_star /= 0. .OR. Bf < 0.) THEN
            CALL shape_parameters(K%u,omega%m, h%new, a2%m, a3%m)
            CALL shape_parameters(K%s,omega%s, h%new, a2%s, a3%s)
            CALL shape_parameters(K%t,omega%s, h%new, a2%t, a3%t) !test conv
@@ -404,8 +405,8 @@ program SOG
 
         !!Define flux profiles, w,  and Q_t (vertical heat flux)!!
         !!Don-t need for running of the model!!  (not sure what this means)
-        IF (u_star /= 0. .OR. Bf%b(0) /= 0.) THEN
-           CALL def_gamma(L_star, grid, w,  wt_r, h, gamma, Bf%b(0), omega) 
+        IF (u_star /= 0. .OR. Bf /= 0.) THEN
+           CALL def_gamma(L_star, grid, w,  wt_r, h, gamma, Bf, omega) 
            ! calculates non-local transport (20)
         ELSE
            gamma%t = 0.
@@ -537,19 +538,18 @@ program SOG
         ! Thermal and salinity expansion and their gradients
         CALL alpha_sub(T%new, S%new, alph, grid)
         CALL alpha_sub(T%new, S%new, beta, grid)
+        CALL div_i_param(grid,alph)
+        CALL div_i_param(grid,beta)
         ! Heat capacity
         call  calc_rho_alpha_beta_Cp_profiles(T%new, S%new, Cp%g)
         Cp%i = interp_i(Cp%g)
-        
-        ! Density with depth and density of fresh water
+        ! Density with depth
         CALL density_sub(T, S, density%new, grid%M)
-
-        CALL div_i_param(grid,alph)
-        CALL div_i_param(grid,beta)
-
-        B%new = g*(alph%g*T%new - beta%g*S%new) ! update buoyancy gradient
-
+        rho%i = interp_i(density%new)
         CALL div_grid(grid,density)
+
+        ! Update buoyancy profile
+        B%new = g*(alph%g*T%new - beta%g*S%new)
         CALL div_grid(grid,B)
 
         DO xx = 1,grid%M
