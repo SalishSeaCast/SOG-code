@@ -33,8 +33,9 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(alph%g(0:M+1), alph%i(0:M), alph%idiv(M), &
            beta%idiv(M), beta%g(0:M+1), beta%i(0:M),     &
-           w%b(0:M),w%b_err(0:M),Bf%b(0:M),&
-               Bf%b_err(0:M),w%t(0:M),w%s(0:M),w%u(0:M),&
+           w%b(0:M),w%b_err(0:M),&
+!!$           &Bf%b(0:M), Bf%b_err(0:M),&
+           w%t(0:M),w%s(0:M),w%u(0:M),&
                w%v(0:M),w%p%micro(0:M),Amatrix%u%A(M),Amatrix%u%B(M),&
                Amatrix%u%C(M),Amatrix%t%A(M),Amatrix%t%B(M),Amatrix%t%C(M),Amatrix%s%A(M),Amatrix%s%B(M),&
                Amatrix%s%C(M),Bmatrix%u%A(M),Bmatrix%u%B(M),&
@@ -52,8 +53,7 @@ subroutine allocate1(M, STAT)
                Bmatrix_o%no%A(M),Bmatrix_o%no%B(M),Bmatrix_o%no%C(M),&
                STAT = alloc_stat(4)) !**&
 
-      ALLOCATE(&
-           &T%div_g(M),&
+      ALLOCATE(T%div_g(M),&
            &U%div_g(M),V%div_g(M),&
            &S%div_g(M),&
            &B%div_g(M),&
@@ -65,11 +65,12 @@ subroutine allocate1(M, STAT)
            K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
            STAT = alloc_stat(5))
 
-      ALLOCATE(Q_t(0:M), &
-           I(0:M), I_par(0:M), Q_n(0:M), F_n(0:M), &
-           phi%m%value(0:M), phi%s%value(0:M), Ri_b(M), &
-           N_2_g(M), &
-           V_t_square(M), omega%s%value(0:M), omega%m%value(0:M), &
+      ALLOCATE(Fw(0:M), F_n(0:M), &
+           Q_t(0:M), Q_n(0:M), &
+           I(0:M), I_par(0:M), &
+           phi%m%value(0:M), phi%s%value(0:M), &
+           Ri_b(M), N_2_g(M), V_t_square(M), &
+           omega%s%value(0:M), omega%m%value(0:M), &
            STAT = alloc_stat(6)) 
                      
       ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), &
