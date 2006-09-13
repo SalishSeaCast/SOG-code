@@ -82,9 +82,11 @@
 "Nitrate, remineral"	0.	     "NH remineralization to NO rate"
 
 ! Physics model parameters:
-"upwell_const"  1.04e-7         "upwelling constant (tuned)"
+"upwell_const"  1.25e-5         "maximum upwelling velocity [m/s]"
 "nu_w_m"        1.0e-4          "internal wave breaking momentum mixing"
 "nu_w_s"        1.0e-5          "internal wave breaking scalar mixing"
+"Fw_scale"	2.3e-7		"fresh water scale factor for river flows"
+"Fw_depth"	2.0		"depth to distribute fresh water flux over [m]"
 
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
@@ -92,5 +94,8 @@
 "ctd_in"
 	"input/ctd_in/SG0414004.str"	     
 	"initial conditions CTD file"
+
+! Physic model implicit solver iteration limit
+"niter"		30	"implicit solver max iterations"
 
 ! end of file
