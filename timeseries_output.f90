@@ -195,7 +195,7 @@ contains
 
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
-    use grid_mod, only: interp_d
+    use grid_mod, only: interp_g_d
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: time                ! [hr aftr start midnight]
@@ -263,8 +263,8 @@ contains
     ! surface biomass of micro and nano phytoplankton,
     ! biomasses of detritus at 20 m depth
     write(std_bio_timeseries, 102) time, NO(0), NH(0), Sil(0), &
-         Pmicro(0), Pnano(0), interp_d(remin_Detritus, 20.0d0),   &
-         interp_d(sink_Detritus, 20.0d0), interp_d(mort_Detritus, 20.0d0)
+         Pmicro(0), Pnano(0), interp_g_d(remin_Detritus, 20.0d0),   &
+         interp_g_d(sink_Detritus, 20.0d0), interp_g_d(mort_Detritus, 20.0d0)
 102 format(f10.4, 80(2x, f8.4))
 
 
