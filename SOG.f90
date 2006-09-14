@@ -35,22 +35,19 @@ program SOG
   use rungekutta, only: odeint
   use do_biology_mod, only: do_biology
   use biological_mod, only: init_biology
+  use forcing, only: read_variation, read_forcing, get_forcing
 
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
   ! *** These should eventually end up in refactored modules
-  use find_wind_mod
   use Coriolis_and_pg_mod
   use define_flux_mod
   use tridiag_mod
 
   implicit none
 
-  ! Local variables:
-  integer :: ecmapp, day_met
-
-  double precision:: cz, unow, vnow, upwell 
+  double precision:: cz, upwell 
 
   ! Upwelling constant (tuned parameter)
   !*** read by read_sog used by surface_flux_sog : eventually should be local
@@ -64,11 +61,14 @@ program SOG
   real(kind=dp) :: nu_w_m, nu_w_s
 
   ! Interpolated river flows
-  real :: Qinter  ! Fraser River
-  real :: Einter  ! Englishman River
+  real(kind=sp) :: Qinter  ! Fraser River
+  real(kind=sp) :: Einter  ! Englishman River
+  ! Current time met data
+  real(kind=sp) :: cf_value, atemp_value, humid_value
+  ! Wind data
+  real(kind=dp) unow, vnow
 
-  ! Filename returned by getpars()
-  character*80 :: str	
+  integer :: wind_n, met_n, river_n ! length of various forcing files
 
   ! Initial month parameter read from run control input file
   ! and passed to new_year()
@@ -76,9 +76,6 @@ program SOG
 
   ! Iteration limit for inner loop that solves KPP turbulence model
   integer :: niter
-
-  ! Hour of day index for cloud fraction data
-  integer :: j
 
   ! Variables for baroclinic pressure gradient calculations
   double precision :: sumu, sumv, uprev, vprev, delu, delv
@@ -138,23 +135,8 @@ program SOG
   ! Initialize the biology model
   call init_biology(grid%M)
 
-  ! *** These constants should be set as parameter somewhere else, or read
-  ! *** from the main run parameters file
-  wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
+  ! initialize stability
   stable = 1
-  IF (year_o==2001) then
-     ecmapp = 1
-  else if (year_o == 2002) then
-     ecmapp = 8761
-  else if (year_o == 2003) then
-     ecmapp= 17521
-  else if (year_o==2004) then
-     ecmapp = 26281
-  else if (year_o==2005) then
-     ecmapp = 35065
-  else if (year_o==2006) then
-     ecmapp = 43825
-  endif
 
   CALL allocate1(grid%M, alloc_stat) 
   DO xx = 1,12
@@ -167,6 +149,12 @@ program SOG
   ! Allocate memory for water property arrays
   call alloc_water_props(grid%M)
 
+  ! Length of forcing data files (move to be read in)
+  wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
+  met_n = 1918
+  river_n = 1826
+  call read_forcing (wind_n, met_n, river_n)
+  call read_variation
   CALL read_sog (upwell_const)
 
   ! Read the physic model parameter values
@@ -223,35 +211,12 @@ program SOG
      ! Store previous time_steps in %old components
      CALL define_sog(time_step) 
 
-     ! Search and interpolate the wind data for the u and v components
-     ! of the wind at the current time step
-     call find_wind(year, day, time, ecmapp, wind_n, wind, unow, vnow)
+     ! get forcing data
+     call get_forcing (year, day, day_time, &
+          Qinter, Einter, cf_value, atemp_value, humid_value, &
+          unow, vnow)
 
-     ! *** Implicit type conversion problem
-     j = day_time / 3600.0 + 1
-     ! *** There has to be a better way...
-     if (year == 2001) then
-        day_met = day
-     else if (year == 2002) then
-        day_met=day + 365
-     else if (year == 2003) then
-        day_met=day + 730
-     else if (year == 2004) then
-        day_met=day + 1095
-     else if (year == 2005) then
-        day_met=day + 1461
-     else if (year == 2006) then
-        day_met=day + 1826
-     endif
-
-     ! Interpolate river flows for the second we're at
-     ! *** Implicit type conversion problem here!!!
-     Qinter = (day_time * Qriver(day_met) &
-          + (86400. - day_time) * Qriver(day_met-1)) / 86400.
-     Einter = (day_time * Eriver(day_met) &
-          + (86400. - day_time) * Eriver(day_met-1)) / 86400.
-
-     CALL irradiance_sog(cloud, cf(day_met, j), day_time, day, &
+     CALL irradiance_sog(cloud, cf_value, day_time, day, &
           I, I_par, grid, jmax_i, Q_sol, euph, Qinter, h, P)
 
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
@@ -277,8 +242,8 @@ program SOG
         ! *** Confirm that all of these arguments are necessary
         CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t(0),        &
-             alph%i(0), Cp%i(0), beta%i(0), unow, vnow, cf(day_met,j)/10.,    &
-             atemp(day_met,j), humid(day_met,j), Qinter,stress, &
+             alph%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
+             atemp_value, humid_value, Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
 
