@@ -8,7 +8,7 @@ SUBROUTINE def_gamma( L,  mm, ww, wtr, hh, gamm, Bf, omeg)
 
       IMPLICIT NONE
 
-      DOUBLE PRECISION, INTENT(IN)::L,  wtr, Bf !L_star, w_star, wt_r
+      DOUBLE PRECISION, INTENT(IN)::L,  wtr, Bf !L_star, wt_r, Bf
       TYPE(flux), INTENT(IN)::ww            !w
       TYPE(gr_d), INTENT(IN)::mm            !grid
       TYPE(height), INTENT(IN)::hh          !h 
