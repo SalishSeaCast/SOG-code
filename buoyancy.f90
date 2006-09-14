@@ -2,7 +2,7 @@
 ! $Source$
 
 subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
-     alpha, beta, Cp,                                             &  ! in
+     alpha, beta, Cp, Fw_surface,                                 &  ! in
      Bnew, Bf)                                                       ! out
   ! Calculate the buoyancy profile, and the surface buoyancy forcing.
   use precision_defs, only: dp
@@ -25,14 +25,15 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
        alpha, &  ! Thermal expansion coefficient
        beta,  &  ! Salinity expansion coefficient
        Cp        ! Specific heat capacity
+  logical, intent(in) :: Fw_surface
   ! Results:
   real(kind=dp), dimension(0:grid%M+1), intent(out) :: Bnew  ! Buoyance profile
   real(kind=dp), intent(out) :: Bf  ! Surface buoyancy forcing
 
   ! Local variables:
-  ! Water properties, salinity, irradiance, and fresh water flux at
-  ! mixing layer depth
-  real(kind=dp) :: rho_ml, alpha_ml, beta_ml, Cp_ml, S_ml, I_ml, FN_ml, &
+  ! Water properties, irradiance, and fresh water flux at mixing layer
+  ! depth
+  real(kind=dp) :: rho_ml, alpha_ml, beta_ml, Cp_ml, I_ml, FN_ml, &
        ! Contributions to surface buoyancy forcing
        Br, &  ! Radiative
        Bfw    ! Fresh water flux
@@ -46,7 +47,6 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
   alpha_ml = interp_g_d(alpha, hml%new)
   beta_ml = interp_g_d(beta, hml%new)
   Cp_ml = interp_g_d(Cp, hml%new)
-  S_ml = interp_g_d(Snew, hml%new)
   ! *** Irradiance and fresh water flux interpolations could be
   ! replaced with a function analogous to interp_d
   I_ml = Itotal(hml%i-1) + (Itotal(hml%i) - Itotal(hml%i-1)) &
@@ -62,8 +62,11 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
   Br = g * (alpha(0) * Itotal(0) / (Cp(0) * rho(0)) &
             - alpha_ml * I_ml / (rho_ml * Cp_ml))
   ! Fresh water salinity flux contribution
-  Bfw = g * (beta(0) * F_n(0) * Snew(0) &
-       - beta_ml * Fn_ml * S_ml)
+  if (Fw_surface) then
+     Bfw = 0.
+  else
+     Bfw = g * (beta(0) * F_n(0) - beta_ml * Fn_ml)
+  endif
   ! Calculate surface buoyancy forcing (an extension of Large, etal
   ! (1994) eq'n A3d
   Bf = -wb0 + Br + Bfw
