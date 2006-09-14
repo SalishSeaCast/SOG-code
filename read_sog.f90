@@ -14,7 +14,6 @@ subroutine read_sog (upwell_const)
   use precision_defs, only: dp
   use input_processor, only: getpard
   use declarations
-  use surface_forcing
 
   implicit none
 

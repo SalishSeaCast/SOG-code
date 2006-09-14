@@ -4,7 +4,6 @@
 SUBROUTINE shape_parameters(X, omeg_x, hh, a2, a3)
 
       USE mean_param
-      USE surface_forcing
 
       IMPLICIT NONE
 

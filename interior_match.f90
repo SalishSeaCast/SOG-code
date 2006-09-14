@@ -4,7 +4,6 @@
 SUBROUTINE interior_match(mm, hh, X, X_min)
 
       USE mean_param
-      USE surface_forcing
 
       IMPLICIT NONE
 
