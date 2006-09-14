@@ -58,16 +58,6 @@ module mean_param
      DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
   END TYPE constant
 
-  TYPE :: wind_ecmwf
-     INTEGER :: day, year, month, Jday, leap
-     DOUBLE PRECISION :: time, numb, zonal, meridional
-  END TYPE wind_ecmwf
-
-  TYPE :: insol_daily
-     INTEGER :: year, month, day, Jday, leap
-     DOUBLE PRECISION :: actual, clear_sky, ratio
-  END TYPE insol_daily
-
   TYPE :: grow               
      DOUBLE PRECISION, DIMENSION(:), POINTER :: light, new, net !**&    
   END TYPE grow
