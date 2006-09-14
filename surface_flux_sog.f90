@@ -5,8 +5,9 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
                          salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
                          stress,&
-                         day,dtdz,h,upwell_const,upwell,Eriver,u,dt,Fw_scale, &
-                         Ft,count)
+                         day,dtdz,h,upwell_const,upwell,Eriver,u,dt, &
+                         Fw_surface, Fw_scale, Ft, &
+                         count)
   ! *** Check whether wt_r is needed
   
 
@@ -31,6 +32,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       TYPE(windstress), INTENT(IN OUT)::stress
       TYPE(flux), INTENT(OUT)::w
       double precision, intent(out):: S_riv ! salinity goal
+      logical, intent(in) :: Fw_surface
       real(kind=dp), intent(in) :: Fw_scale  ! Fresh water scale factor for river flows
       real(kind=dp), intent(out):: Ft  ! fresh water flux
       integer, intent(in) :: count ! iteration count used to stabilize Ft
@@ -168,7 +170,11 @@ h_flux = lw_net+h_sens+h_latent
       ! Salinity (eq'n A2d)
       ! Note that fresh water flux is added via Bf in buoyancy.f90
       ! *** Need to check the implications of w%s(0)=0 on def_gamma.f90
-      w%s(0) = 0.
+      if (Fw_surface) then
+         w%s(0) = Ft * salinity_o
+      else
+         w%s(0) = 0.
+      endif
       ! Buoyancy (eq'n A3b)
       w%b(0) = g * (alp * w%t(0) - bet * w%s(0))
 
