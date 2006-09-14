@@ -46,14 +46,14 @@ initial_sog.o \
 timeseries_output.o profiles_output.o \
 \
 water_properties.o find_upwell.o diffusion.o fitbottom.o \
-biological_mod.o rungekutta.o do_biology_mod.o \
+biological_mod.o rungekutta.o do_biology_mod.o forcing.o\
 \
 define_flux.o phys_Hvector.o \
-allocate1.o read_sog.o find_wind.o 	\
+allocate1.o read_sog.o 	\
 stability.o \
 \
-allocate2.o Julian_day.o initialize.o	\
-smoothdata.o coefficients.o define_sog.o	\
+allocate2.o initialize.o	\
+coefficients.o define_sog.o	\
 alpha_sub.o density_sub.o irradiance_sog.o 	\
 buoyancy.o surface_flux_sog.o fun_constants.o		\
 ND_flux_profile.o vel_scales.o convection_scales.o		\
