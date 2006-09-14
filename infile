@@ -80,6 +80,11 @@
 "Nano, mort"		2.3e-07      "Nano, mort"
 ! Nutrient values:
 "Nitrate, remineral"	0.	     "NH remineralization to NO rate"
+! Vary parameters
+"vary%wind%enabled"    .false.       "Variation of wind data?"
+"vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
+"vary%rivers%enabled"  .false.       "Variation of river flow?"
+
 
 ! Physics model parameters:
 "upwell_const"  1.25e-5         "maximum upwelling velocity [m/s]"
@@ -87,7 +92,6 @@
 "nu_w_s"        2.5e-5          "internal wave breaking scalar mixing"
 "Fw_scale"	2.3e-7		"fresh water scale factor for river flows"
 "Fw_surface"	.true.		"add all of the fresh water on the surface?"
-"Fw_depth"	2.0		"depth to distribute fresh water flux over [m]"
 
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
