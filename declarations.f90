@@ -43,16 +43,11 @@ module declarations
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano, zmicro
   TYPE(losses)::waste
-  TYPE(wind_ecmwf), DIMENSION(:), ALLOCATABLE::wind  
-  TYPE(insol_daily), DIMENSION(:), ALLOCATABLE::insol   !2922 data points, about 3 years worth  some of 83, 84, 85, 86
   TYPE(entrain)::euph
 
   DOUBLE PRECISION, DIMENSION(365)::insol_avg, insol_actual_avg, insol_smooth, insol_actual_smooth
   !                                        avgdata_u, avgdata_v
   DOUBLE PRECISION, DIMENSION(0:366)::smooth_u, smooth_v
-  REAL, DIMENSION(1919,24)::cf,atemp,humid
-  REAL, DIMENSION(1919)::Qriver
-  REAL, DIMENSION(1919)::Eriver
   DOUBLE PRECISION::begin_hour,end_hour  ! used in interpolate_dt
   DOUBLE PRECISION :: time, h_i, del, dummy_time, del_p
 
@@ -73,12 +68,8 @@ module declarations
        Fw, &  ! Fresh water flux profile
        F_n    ! Fresh water contribution to salinity flux
 
-!!!!For surface fluxes (surface_flux.f90): 
-  DOUBLE PRECISION::U_ten,V_ten, & ! U and V velocities (m/s) at standard height (10m or 22m)
-       T_atm,& !air temperature at standard height (17m) (K)
-       Q_st,Q_atm, & !specific humidity of air in contact with salt water and at standard height (17m)
-       Q_tot, F_tot, & !Total turbulent surface heat flux (W/m^2) and freshwater flux
-       wt_r
+  double precision :: wt_r
+
   INTEGER::j_gamma !interface point corresponding to depth at which Radiation contributes to turbulent
   !surface heat flux
   DOUBLE PRECISION::Q_sol  !See irradiance.f90
@@ -119,12 +110,6 @@ module declarations
   DOUBLE PRECISION::next_time  !see Read_data.f90 and input file 
   ! input/forcing.dat
   INTEGER::M2, M3, N_ok, N_bad      
-
-  !Variable for wind and insol data
-  DOUBLE PRECISION::last_wind_u, last_wind_v
-  INTEGER::data_point_insol,data_point_ecmwf
-  integer :: wind_n
-  integer :: insol_n, smooth_x
 
   DOUBLE PRECISION::vapour_pressure, prain ! (atmosphere at 17m) and current value for &
   !precipitation from p_Knox (Large_param.f90) !
