@@ -19,7 +19,8 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-  use input_processor, only: init_input_processor, getpars, getpari, getpard
+  use input_processor, only: init_input_processor, getpars, getpari, &
+       getpard, getparl
   use timeseries_output, only: init_timeseries_output, write_timeseries, &
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_profiles, &
@@ -167,10 +168,15 @@ program SOG
   call alloc_water_props(grid%M)
 
   CALL read_sog (upwell_const)
-  nu_w_m = getpard('nu_w_m')        ! Internal wave mixing momentum
-  nu_w_s = getpard('nu_w_s')        ! Internal wave mixing scalar
-  Fw_scale = getpard('Fw_scale')  ! Fresh water scale factor for river flows
-  Fw_depth = getpard('Fw_depth')  ! Depth to distribute fresh water flux over
+
+  ! Read the physic model parameter values
+  nu_w_m = getpard('nu_w_m')         ! Internal wave mixing momentum
+  nu_w_s = getpard('nu_w_s')         ! Internal wave mixing scalar
+  Fw_scale = getpard('Fw_scale')     ! Fresh water scale factor for river flows
+  Fw_surface = getparl('Fw_surface') ! Add all fresh water on surfaec?
+  if (.not. Fw_surface) then
+     Fw_depth = getpard('Fw_depth')  ! Depth to distribute freshwater flux over
+  endif
 
   CALL allocate3(grid%M)
 
@@ -274,7 +280,7 @@ program SOG
              alph%i(0), Cp%i(0), beta%i(0), unow, vnow, cf(day_met,j)/10.,    &
              atemp(day_met,j), humid(day_met,j), Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
-             u%new(1), dt, Fw_scale, Ft, count) 
+             u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
 
         ! Calculate nonturbulent heat flux profile
         ! *** Vectorize this and move it into a subroutine
@@ -286,12 +292,16 @@ program SOG
         ! Calculate the nonturbulent fresh water flux profile, and its
         ! contribution to the salinity profile
         ! *** Move to a subroutine
-        Fw = Ft * exp(-grid%d_i / Fw_depth)
-        F_n = S%new * Fw
+        if (Fw_surface) then
+           F_n = 0.
+        else
+           Fw = Ft * exp(-grid%d_i / Fw_depth)
+           F_n = S%new * Fw
+        endif
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
-             density%new, alph%g, beta%g, Cp%g,              &  ! in
+             density%new, alph%g, beta%g, Cp%g, Fw_surface,  &  ! in
              B%new, Bf)                                         ! out
 
         CALL fun_constants(u_star, w_star, L_star,w, Bf, h%new)   !test conv

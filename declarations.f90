@@ -64,6 +64,7 @@ module declarations
 
   ! Fresh water flux quantities:
   ! *** Destined for a module (probably new surface_forcing) eventually
+  logical :: Fw_surface  ! Add all of the fresh water on the surface?
   real(kind=dp) :: &
        Ft, &        ! Total fresh water flux
        Fw_scale, &  ! Fresh water scale factor for river flows
