@@ -34,7 +34,6 @@ subroutine allocate1(M, STAT)
       ALLOCATE(alph%g(0:M+1), alph%i(0:M), alph%idiv(M), &
            beta%idiv(M), beta%g(0:M+1), beta%i(0:M),     &
            w%b(0:M),w%b_err(0:M),&
-!!$           &Bf%b(0:M), Bf%b_err(0:M),&
            w%t(0:M),w%s(0:M),w%u(0:M),&
                w%v(0:M),w%p%micro(0:M),Amatrix%u%A(M),Amatrix%u%B(M),&
                Amatrix%u%C(M),Amatrix%t%A(M),Amatrix%t%B(M),Amatrix%t%C(M),Amatrix%s%A(M),Amatrix%s%B(M),&
