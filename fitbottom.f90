@@ -41,10 +41,10 @@ module fitbottom
           9.34995751, -0.27245442, -0.90151197, 0.17933473, -0.05590939, &
           ! Phytoplankton from fluor (constant and seasonal)
           0.58316137, -0.11206845, 0.26241523, 0., 0., &
-          ! Nitrate (constant)
-          25.7263829787, 0., 0., 0., 0., &
-          ! Silicon (constant)
-          46.5530851064, 0., 0., 0., 0., &
+          ! Nitrate (constant) !*** not from fit... what SEA thinks
+          30.0, 0., 0., 0., 0., & 
+          ! Silicon (constant) !*** not from fit... what SEA thinks
+          50.0, 0., 0., 0., 0., &
           ! Ratio of pico/micro plankton (constant and biseasonal)
           1.25948868, 0., 0., 0.97697686, 0.46289294 &
          ], [5, NQ])
