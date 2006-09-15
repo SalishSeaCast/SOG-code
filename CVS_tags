@@ -1,3 +1,4 @@
+-*- mode: text -*-
 $Id$
 
 List of tags in this project's repository and their meaning:
@@ -29,5 +30,13 @@ after_FLAGELLA_merge - immediately after completing merge of code from
                        code
 
 SOG_created - project name changed to SOG from dlatornell_NH4
+
+EPOC_2006 - immediately before code was branched to do the runs for
+            the paper presented at the EPOC 2006 conference
+            (TImberline Lodge, Mt. Hood, OR)
+
+EPOC_2006_branch - code was branched to do EPOC 2006 conference paper
+                   runs so that refactoring and development could
+                   continue on the trunk
 
 # end of file
