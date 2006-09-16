@@ -86,79 +86,40 @@ module surface_forcing
 
 CONTAINS
 
-  SUBROUTINE average(mm,X,surf_h)
+  SUBROUTINE average(mm, X, surf_h)
+    ! *** This is only used in define_Ri_b_sog, and should move into it's
+    ! *** module.  It needs to be refactored to unhook the %avg component
+    ! *** of X so that it works with water_property rho instead of
+    ! *** prop density.
+
+    use precision_defs, only: dp
 
     TYPE(gr_d), INTENT(IN)::mm 
-    TYPE(prop), INTENT(IN OUT)::X   !U, V, T ...
-    TYPE(height), INTENT(IN OUT)::surf_h  !surface_height   
+    TYPE(prop), INTENT(INout)::X   !U, V, T ...
+    TYPE(height), INTENT(INout)::surf_h  !surface_height   
 
     DOUBLE PRECISION::X_sl,X_h 
     INTEGER::k
 
-    CALL find_jmax_g(surf_h,mm)
+    CALL find_jmax_g(surf_h, mm)
 
     X%avg = 0.
-
 
     IF (surf_h%g <= 1) THEN
        X%avg = X%new(1)
     ELSE
-       X_h = X%new(1)*mm%g_space(0)
+       X_h = X%new(1) * mm%g_space(0)
        IF (surf_h%g > 2) THEN
           DO k = 2, surf_h%g - 1
-             X_h = X_h + (X%new(k-1) + X%new(k))*mm%g_space(k-1)/2.0 
+             X_h = X_h + (X%new(k-1) + X%new(k)) * mm%g_space(k-1) / 2.0 
           END DO
        END IF
-       X_sl = X%new(surf_h%g-1) + (surf_h%new-mm%d_g(surf_h%g-1))*&
-            (X%new(surf_h%g)-X%new(surf_h%g-1))/mm%g_space(surf_h%g-1)
-       X%avg = (X_h + (X%new(surf_h%g-1) + X_sl)*(surf_h%new-mm%d_g(surf_h%g-1))/2.0)/&
-            surf_h%new
+       X_sl = X%new(surf_h%g-1) + (surf_h%new - mm%d_g(surf_h%g-1)) &
+            * (X%new(surf_h%g) - X%new(surf_h%g-1)) / mm%g_space(surf_h%g-1)
+       X%avg = (X_h + (X%new(surf_h%g-1) + X_sl) &
+            * (surf_h%new - mm%d_g(surf_h%g-1)) / 2.0) / surf_h%new
     END IF
-
-
-  END SUBROUTINE average
-
-
-  subroutine sum_g(mm, Xnew, bottom, sum_X)
-    ! *** What's it do?
-
-    ! Arguments:
-    type(gr_d), intent(in) :: mm 
-    double precision, dimension(mm%M), intent(in) :: Xnew   ! U%new(mm%M)
-    double precision, intent(in) :: bottom                  ! bottom depth
-    double precision, intent(out) :: sum_X 
-
-    ! Local variables:
-    double precision :: X_sl, X_h 
-    integer :: k, bottom_g
-
-    do k = 1, mm%M
-       if (mm%d_g(k) > bottom) then
-          bottom_g = k
-          exit
-       else
-          bottom_g = k+1
-       end if
-    end do
-
-    sum_X = 0.
-
-    if (bottom_g <= 1) then
-       sum_X = Xnew(1) * bottom
-    else
-       X_h = Xnew(1) * mm%g_space(0)
-       if (bottom_g > 2) then
-          do k = 2, bottom_g - 1
-             X_h = X_h + (Xnew(k-1) + Xnew(k)) * mm%g_space(k-1) / 2.0 
-          end do
-       end if
-       X_sl = Xnew(bottom_g - 1) + (bottom - mm%d_g(bottom_g - 1)) &
-            * (Xnew(bottom_g) - Xnew(bottom_g - 1))                &
-            / mm%g_space(bottom_g - 1)
-       sum_X = (X_h + (Xnew(bottom_g - 1) + X_sl) &
-            * (bottom - mm%d_g(bottom_g - 1)) / 2.0)
-    end if
-  end subroutine sum_g
+  end subroutine average
 
 end module surface_forcing
 
