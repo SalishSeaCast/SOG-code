@@ -15,13 +15,16 @@ module declarations
   integer :: year_o         ! year in which run starts [yr]
   ! *** Why is month_o not declared here; rather it's local in SOG.f90
   integer :: day_o          ! year-day on which run starts [1-Jan = 1]
-  real(kind=dp) :: t_o      ! start of run time on day_o [s]
+  integer :: t_o            ! start of run time on day_o [s]
                             ! *** t_o should match CTD profile time of day
   real(kind=dp) :: t_f      ! end of run time [s]
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(constant)::alph, beta, dens
+!!$  TYPE(constant):: &
+!!$       &alph, &
+!!$       &beta, &
+!!$       &dens
   TYPE(prop)::T, S, U, V, B, density, vt, ut
   type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
@@ -39,7 +42,7 @@ module declarations
   type(UVST):: Gvector_ao             ! Sinking of particles
   type(UVST):: Gvector_ro             ! Contains effect of biol. model
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o
-  TYPE(okta)::cloud
+!!$  TYPE(okta)::cloud
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano, zmicro
   TYPE(losses)::waste
@@ -52,7 +55,9 @@ module declarations
   DOUBLE PRECISION :: time, h_i, del, dummy_time, del_p
 
   ! Surface buoyancy forcing
-  real(kind=dp) :: Bf
+  real(kind=dp) :: &
+       Bf, &   ! Current iteration step value
+       Bf_old  ! Previous iteration step value
 
   ! Turbulent friction velocity
   real(kind=dp) :: u_star
@@ -112,9 +117,9 @@ module declarations
   INTEGER::M2, M3, N_ok, N_bad      
 
   DOUBLE PRECISION::vapour_pressure, prain ! (atmosphere at 17m) and current value for &
-  !precipitation from p_Knox (Large_param.f90) !
-  DOUBLE PRECISION, DIMENSION(23)::p_Knox  !Piecewise linear function for precipitation
-  !defined in coefficients.f90 !
+!!$  !precipitation from p_Knox (Large_param.f90) !
+!!$  DOUBLE PRECISION, DIMENSION(23)::p_Knox  !Piecewise linear function for precipitation
+!!$  !defined in coefficients.f90 !
 
   ! Vertical profile of the entrainment velocity
   real(kind=dp), dimension(:), allocatable :: wupwell
