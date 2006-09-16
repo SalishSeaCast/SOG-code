@@ -16,7 +16,7 @@ module mean_param
   ! *** Might better be called quantities...
   type :: prop
      real(kind=dp), dimension(:), pointer :: new, old, div_i, div_g
-     ! *** Not sure we need avg
+     ! *** avg is only used in define_Ri_b_sog; calculate it locally?
      real(kind=dp) :: avg      !surface layer average 
   end type prop
 
@@ -48,16 +48,6 @@ module mean_param
   end type UVST
 
 
-  TYPE :: alpha             !Interpolation data
-     DOUBLE PRECISION :: value, TT, SS, dS
-  END TYPE alpha
-
-  ! expansion coefficients, surface density
-  TYPE :: constant          
-     TYPE(alpha), DIMENSION(13) :: data
-     DOUBLE PRECISION, DIMENSION(:), POINTER:: i, g, idiv, gdiv
-  END TYPE constant
-
   TYPE :: grow               
      DOUBLE PRECISION, DIMENSION(:), POINTER :: light, new, net !**&    
   END TYPE grow
@@ -72,7 +62,7 @@ module mean_param
      TYPE(grazing):: mort   !**&
 !!!phytoplankton constants!!!!!!!!!!!!!!!!!!
      DOUBLE PRECISION :: sink   !sink = sinking vel
-     DOUBLE PRECISION :: Q_cn, Q_old, Q_old_old, dlnQ_dt 
+     DOUBLE PRECISION :: Q_cn, Q_old, dlnQ_dt 
      !CN ratio (old copies) and 1/Q*dQ/dt
      !gamma = photorespiration param , Rm = maintenance respiration 
 !!!zooplankton constants!!!!!!!!!!!!!!!!!
@@ -105,8 +95,7 @@ module mean_param
   END TYPE Knu
 
   TYPE :: flux              !Reynolds fluxes
-     DOUBLE PRECISION, DIMENSION(:), POINTER::u, v,s,t,b,b_old, &
-          b_err,b_err_old            
+     DOUBLE PRECISION, DIMENSION(:), POINTER::u, v, s, t, b, b_err
      TYPE(phyto)::p                                         
   END TYPE flux
 
@@ -116,7 +105,7 @@ module mean_param
   END TYPE entrain
 
   TYPE :: height            !boundary layer depth 
-     DOUBLE PRECISION :: old, old_old, new
+     DOUBLE PRECISION :: old, new
      INTEGER :: i, g        !interface and grid index
      TYPE(entrain)::e, ml   !entrainment depth or mixed layer depth
   END TYPE height
@@ -130,7 +119,7 @@ module mean_param
   END TYPE trivector
 
   TYPE :: UVSTmatrix
-     TYPE(trivector)::u,s,t,bio,no,null
+     TYPE(trivector)::u, s, t, bio, no, null
      DOUBLE PRECISION, DIMENSION(1)::QA,QB
   END TYPE UVSTmatrix
 
@@ -147,14 +136,6 @@ module mean_param
      TYPE(boundary)::m, s
   END TYPE MS
 
-  TYPE :: cloudy
-     DOUBLE PRECISION :: A, B, fraction   !Regression coefficients
-  END TYPE cloudy
-
-  TYPE :: okta
-     TYPE(cloudy), DIMENSION(0:9) :: type
-  END TYPE okta
-
   TYPE :: old_new
      DOUBLE PRECISION::old,new
   END TYPE old_new
@@ -167,7 +148,7 @@ module mean_param
   TYPE :: snow  !Detritus(D_bins)
      DOUBLE PRECISION::r, & !regeneration rate
           v ! sinking velocity
-     TYPE(prop)::D !%new, old, old_old (0:M+1)
+     TYPE(prop)::D !%new, old (0:M+1)
   END TYPE snow
 
   TYPE :: loss_param
@@ -190,6 +171,7 @@ CONTAINS
 
 
   SUBROUTINE div_grid (dm, X)
+    ! *** can be replaced by gradient_g() in grid module if %div_g -> %grad_g
 
     TYPE(gr_d), INTENT(IN)::dm 
     TYPE(prop), INTENT(IN OUT)::X
@@ -204,32 +186,9 @@ CONTAINS
 
   END SUBROUTINE div_grid
 
-  SUBROUTINE div_g_param (mm, alp)
-
-    TYPE(gr_d), INTENT(IN)::mm
-    TYPE(constant), INTENT(IN OUT)::alp  
-    INTEGER::ii
-
-    DO ii = 1,mm%M
-       alp%gdiv(ii) = (alp%i(ii-1) - alp%i(ii))/mm%i_space(ii)
-    END DO
-
-  END SUBROUTINE div_g_param
-
-  SUBROUTINE div_i_param (gr, bet)
-
-    TYPE(gr_d), INTENT(IN)::gr
-    TYPE(constant), INTENT(IN OUT)::bet  
-    INTEGER::jj
-
-    DO jj = 1,gr%M
-       bet%idiv(jj) = (bet%g(jj) - bet%g(jj+1))/gr%g_space(jj)
-    END DO
-
-  END SUBROUTINE div_i_param
-
 
   SUBROUTINE div_interface(dm1, X1)
+    ! *** Can be replaced by gradient_i() if %div_i -> %grad_i
 
     TYPE(gr_d), INTENT(IN)::dm1         
     TYPE(prop), INTENT(IN OUT)::X1    !U, V...
