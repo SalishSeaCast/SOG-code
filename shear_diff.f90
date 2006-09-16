@@ -1,36 +1,34 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE shear_diff(mm,u_vel,v_vel,dens,nu_s)
+SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
 
+  use water_properties, only: water_property
       USE mean_param
       USE surface_forcing
 
       IMPLICIT NONE
 
       TYPE(gr_d), INTENT(IN)::mm  !
-      TYPE(prop), INTENT(IN OUT)::u_vel,v_vel, &
-                                             dens !U, V
+      TYPE(prop), INTENT(IN OUT)::u_vel, v_vel  !U, V
+      type(water_property), intent(in) :: rho 
       DOUBLE PRECISION, DIMENSION(0:mm%M),INTENT(OUT)::nu_s
+
       DOUBLE PRECISION, DIMENSION(0:mm%M)::Rig
-      DOUBLE PRECISION, DIMENSION(mm%M)::N_2, dens_i   !buoyancy freq squared and interface
-                                !density  or linear B
-     DOUBLE PRECISION, DIMENSION(mm%M)::V_grad_sq
+      DOUBLE PRECISION, DIMENSION(mm%M)::N_2  !buoyancy freq squared 
+      DOUBLE PRECISION, DIMENSION(mm%M)::V_grad_sq
       INTEGER::k
  
       CALL div_interface(mm, u_vel) ! calculate du/dz in u%div_i
       CALL div_interface(mm, v_vel) ! calculate dv/dz in v%div_i
-      CALL div_interface(mm, dens)  ! calculate dro/dz in dens%div_i
       CALL div_grid(mm, u_vel) ! cclculate 1/2 grid point off
       CALL div_grid(mm, v_vel) ! calculate 1/2 grid point off
 
       Rig = 0.0
       nu_s = 0.0
+      ! *** Vectorizable
       DO k = 1, mm%M
-         dens_i(k) = dens%new(k+1) - ((mm%d_g(k+1)-mm%d_i(k))/mm%g_space(k))*&
-                     (dens%new(k+1)-dens%new(k))
-! interpolate density
-         N_2(k) = -g/dens_i(k)*dens%div_i(k) ! calculate N2
+         N_2(k) = -g / (rho%i(k) * rho%grad_i(k)) ! calculate N2
 
          V_grad_sq(k) = u_vel%div_i(k)**2.0+v_vel%div_i(k)**2.0
          Rig(k) = N_2(k)/(V_grad_sq(k) + 1.0D-30) ! grad Ri number for interior (27)
