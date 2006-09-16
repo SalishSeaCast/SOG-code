@@ -18,9 +18,6 @@ module grid_mod
   ! Public Variables:
   !
   ! grid   -- Grid point and interface depth and spacing arrays.
-  ! lambda -- Grid spacing parameter (<0 concentrates resolution near
-  !           surface, =0 produced uniform grid, >0 concentrates resolution 
-  !           near bottom of grid).  See Large, et al (1994), App. D.
   !
   ! Public Functions:
   !
@@ -34,6 +31,14 @@ module grid_mod
   ! interp_i(qty_g) -- Return the interpolated values of a quantity at
   !                    the grid interface depths from its values at the 
   !                    grid point depths.
+  !
+  ! gradient_i(qty_g) -- Return the values of the gradients at the
+  !                      grid layer interface depths of a quantity stored
+  !                      at the grid point depths.
+  !
+  ! gradient_g(qty_g) -- Return the values of the gradients at the
+  !                      grid point depths of a quantity stored
+  !                      at the grid point depths.
   ! 
   ! Public Subroutines:
   !
@@ -53,7 +58,7 @@ module grid_mod
        ! Variables:
        grid, &
        ! Functions:
-       interp_g_d, interp_i_d, interp_i, &
+       interp_g_d, interp_i_d, interp_i, gradient_i, gradient_g, &
        ! Subroutines:
        init_grid, dalloc_grid
 
@@ -191,8 +196,8 @@ contains
        ! surface, lambda > 0 concentrates resolution near D)
        ! *** Note that implementation of non-uniform grid is not
        ! *** consistent throughout the code
-       write(stderr, *) "Non-uniform grid is not fully implemented, ", &
-            "lambda = ", lambda
+       write(stderr, *) "init_grid: Non-uniform grid is not ", &
+            "fully implemented, lambda = ", lambda
        stop
        grid%d_g = (grid%D / lambda) * log(1. * xsi_g * (1. - exp(lambda)))
        grid%d_i = (grid%D / lambda) * log(1. * xsi_i * (1. - exp(lambda)))
@@ -294,5 +299,38 @@ contains
     qty_i = qty_g(0:size(qty_g) - 2) * above_g%factor &
          + qty_g(1:) * below_g%factor
   end function interp_i
+
+
+  function gradient_i(qty_g) result(grad_i)
+    ! Return the values of the gradients at the grid layer interface
+    ! depths of a quantity stored at the grid point depths.
+    ! *** This function does work for an unevenly spaced grid
+    implicit none
+    ! Argument:
+    ! Quantity values at grid point depths
+    real(kind=dp), dimension(0:), intent(in) :: qty_g
+    ! Result:
+    ! Values of the gradients at grid interface depths
+    real(kind=dp), dimension(1:grid%M) :: grad_i
+
+    grad_i = (qty_g(1:grid%M) - qty_g(2:grid%M+1)) / grid%g_space(1:grid%M)
+  end function gradient_i
+
+
+  function gradient_g(qty_g) result(grad_g)
+    ! Return the values of the gradients at the grid point
+    ! depths of a quantity stored at the grid point depths.
+    ! *** This function does work for an unevenly spaced grid
+    implicit none
+    ! Argument:
+    ! Quantity values at grid point depths
+    real(kind=dp), dimension(0:), intent(in) :: qty_g
+    ! Result:
+    ! Values of the gradients at grid point depths
+    real(kind=dp), dimension(1:grid%M) :: grad_g
+
+    grad_g = (qty_g(0:grid%M-1) - qty_g(2:grid%M+1)) &
+         / (grid%g_space(0:grid%M-1) + grid%g_space(1:))
+  end function gradient_g
 
 end module grid_mod
