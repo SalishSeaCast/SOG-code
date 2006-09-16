@@ -3,13 +3,16 @@
 
 module define_flux_mod
   ! *** Temporary module wrapping to allow use of assumed-shape array for
-  ! *** Cpi argument
+  ! *** Cp_i argument
 
 contains
 
-  SUBROUTINE define_flux(Cpi)
+  SUBROUTINE define_flux(rho_g, alpha, beta, Cp_i)
+    ! *** rho_g should probably be rho_i
+    ! *** Would it be more consistent to bring in all of rho & Cp too?
 
     use precision_defs, only: dp
+    use water_properties, only: water_property
 
     USE mean_param
     USE declarations
@@ -17,9 +20,13 @@ contains
 
     implicit none
 
-    ! Argument:
-    ! Heat capacity of water in J/kg-K at grid interface depths (i.e. Cp%i)
-    real(kind=dp), dimension(0:), intent(in) :: Cpi
+    ! Arguments:
+    type(water_property), intent(in) :: &
+         alpha, &  ! Thermal expansion coefficient profile arrays
+         beta      ! Saline contraction coefficient profile arrays
+    real(kind=dp), dimension(0:), intent(in) :: &
+         rho_g, &  ! Denisty profile at grid point depths
+         Cp_i      ! Specific heat capacity profile at interface depths
 
     K%u%all = 0.0
     K%s%all = 0.0
@@ -45,13 +52,13 @@ contains
           w%u(xx) = -K%u%ML(xx) * (U%div_i(xx) - gamma%m(xx))
           w%v(xx) = -K%u%ML(xx) * (V%div_i(xx) - gamma%m(xx))
           ! Buoyancy flux by definition given t and s flux
-          w%b(xx) = g * (alph%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))  
+          w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))  
           ! Buoyancy flux variation due to error in z
-          w%b_err(xx) = g*(alph%idiv(xx)*w%t(xx) -beta%idiv(xx)*w%s(xx)) 
+          w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) - beta%grad_i(xx) * w%s(xx)) 
           K%u%all(xx) = K%u%ML(xx)
           K%s%all(xx) = K%s%ML(xx)
           K%t%all(xx) = K%t%ML(xx)
-          Q_t(xx) = -w%t(xx) * density%new(xx) * Cpi(xx)
+          Q_t(xx) = -w%t(xx) * rho_g(xx) * Cp_i(xx)
        endif
     enddo
 
@@ -61,12 +68,12 @@ contains
           w%s(xx) = -K%s%total(xx) * S%div_i(xx)
           w%u(xx) = -K%u%total(xx) * U%div_i(xx)
           w%v(xx) = -K%u%total(xx) * V%div_i(xx)
-          w%b(xx) = g * (alph%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))
-          w%b_err(xx) = g * (alph%idiv(xx) * w%t(xx) - beta%idiv(xx) * w%s(xx))
+          w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))
+          w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) - beta%grad_i(xx) * w%s(xx))
           K%u%all(xx) = K%u%total(xx)
           K%s%all(xx) = K%s%total(xx)
           K%t%all(xx) = K%t%total(xx)
-          Q_t(xx) = -w%t(xx) * density%new(xx) * Cpi(xx)
+          Q_t(xx) = -w%t(xx) * rho_g(xx) * Cp_i(xx)
        endif
     enddo
   end subroutine define_flux
