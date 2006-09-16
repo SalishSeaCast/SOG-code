@@ -1,8 +1,8 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
-     I_k, Qs, euphotic, Qriver, hh, P_i)
+SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
+     I_k, Qs, euphotic, Qriver, P_i)
 
       USE mean_param
       USE surface_forcing
@@ -11,8 +11,8 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
   
       TYPE(plankton), INTENT(IN)::P_i
       TYPE(gr_d), INTENT(IN)::d
-      TYPE(height), INTENT(IN)::hh
-      TYPE(okta), INTENT(IN) :: clouds
+!!$      TYPE(height), INTENT(IN)::hh
+!!$      TYPE(okta), INTENT(IN) :: clouds
       REAL, INTENT(IN) :: cf, Qriver !cloud_fraction  (random variable)
       INTEGER, INTENT(OUT)::I_k 
       DOUBLE PRECISION, INTENT(OUT)::Qs   !integrated daily solar contribution to
@@ -27,6 +27,33 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
                         sunrise, sunset, Qso, a, b,KK
       DOUBLE PRECISION:: II, cos_Z_max, IImax      
       DOUBLE PRECISION, DIMENSION(0:d%M)::Iparmax
+
+!!!Define Okta Cloud Model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! based on Dobson and Smith, table 5
+
+  TYPE :: cloudy
+     DOUBLE PRECISION :: A, B, fraction   !Regression coefficients
+  END TYPE cloudy
+
+  TYPE :: okta
+     TYPE(cloudy), DIMENSION(0:9) :: type
+  END TYPE okta
+
+
+!!!KC-- new coefficients addded august, 2004. Check on the standard deviation values, but I don't think these are used anywhere, anyway
+  TYPE(okta)::cloud
+      cloud%type(0) = cloudy(0.4641,0.3304,0.0945) 
+      cloud%type(1) = cloudy(0.4062,0.3799,0.0186)  
+      cloud%type(2) = cloudy(0.4129,0.3420,0.0501)
+      cloud%type(3) = cloudy(0.4263,0.3212,0.0743)
+      cloud%type(4) = cloudy(0.4083,0.3060,0.0723)
+      cloud%type(5) = cloudy(0.3360,0.3775,0.0294)
+      cloud%type(6) = cloudy(0.3448,0.3128,0.0226)
+      cloud%type(7) = cloudy(0.3232,0.3259,0.0019)
+      cloud%type(8) = cloudy(0.2835,0.2949,0.0081)
+      cloud%type(9) = cloudy(0.1482,0.3384,0.1345)
+
+
 
       check = 0
       hour = (t_ime/3600.0-12.0)*15.  !degrees
@@ -51,22 +78,22 @@ SUBROUTINE irradiance_sog(clouds, cf, t_ime, Jday, In, Ipar, d, &
          of = int(cf)
       endif
 
-      IImax = Qso*(clouds%type(of)%A + clouds%type(of)%B*cos_Z_max)*cos_Z_max  
+      IImax = Qso*(cloud%type(of)%A + cloud%type(of)%B*cos_Z_max)*cos_Z_max  
       !!Jeffrey thesis page 124
 
       IF (t_ime/3600.0 > sunrise .AND. t_ime/3600.0 < sunset) THEN    
-          II = Qso*(clouds%type(of)%A + clouds%type(of)%B*cos_Z)*cos_Z   
+          II = Qso*(cloud%type(of)%A + cloud%type(of)%B*cos_Z)*cos_Z   
       ELSE
          II = 0.
       END IF
 
 ! so II is the incoming radiation
 
-      Qs = Qso*(((clouds%type(of)%A+clouds%type(of)%B*a)*a+clouds%type(of)%B*b**2.0/2.0)*&
+      Qs = Qso*(((cloud%type(of)%A+cloud%type(of)%B*a)*a+cloud%type(of)%B*b**2.0/2.0)*&
            day_length+&
-           (clouds%type(of)%A*b+2.0*clouds%type(of)%B*a*b)*&
+           (cloud%type(of)%A*b+2.0*cloud%type(of)%B*a*b)*&
            180.0/PI/15.0*(SIN(PI/180.0*(sunset-12.0)*15.0)-SIN(PI/180.0*(sunrise-12.0)*15.0)) + &
-           clouds%type(of)%B*b**2.0*&
+           cloud%type(of)%B*b**2.0*&
            180.0/PI/60.0*(SIN(PI/180.0*(sunset-12.0)*30.0)-SIN(PI/180.0*(sunrise-12.0)*30.0)))/24.0 
 
 ! Qs is the daily integrated value
