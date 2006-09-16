@@ -28,7 +28,7 @@ SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
       nu_s = 0.0
       ! *** Vectorizable
       DO k = 1, mm%M
-         N_2(k) = -g / (rho%i(k) * rho%grad_i(k)) ! calculate N2
+         N_2(k) = -(g / rho%i(k)) * rho%grad_i(k) ! calculate N2
 
          V_grad_sq(k) = u_vel%div_i(k)**2.0+v_vel%div_i(k)**2.0
          Rig(k) = N_2(k)/(V_grad_sq(k) + 1.0D-30) ! grad Ri number for interior (27)
