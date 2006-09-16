@@ -31,9 +31,7 @@ subroutine allocate1(M, STAT)
               Gvector_ao%d(D_bins),Detritus1_p(D_bins,M),&
               STAT = alloc_stat(3))
 
-      ALLOCATE(alph%g(0:M+1), alph%i(0:M), alph%idiv(M), &
-           beta%idiv(M), beta%g(0:M+1), beta%i(0:M),     &
-           w%b(0:M),w%b_err(0:M),&
+      ALLOCATE(w%b(0:M),w%b_err(0:M),&
            w%t(0:M),w%s(0:M),w%u(0:M),&
                w%v(0:M),w%p%micro(0:M),Amatrix%u%A(M),Amatrix%u%B(M),&
                Amatrix%u%C(M),Amatrix%t%A(M),Amatrix%t%B(M),Amatrix%t%C(M),Amatrix%s%A(M),Amatrix%s%B(M),&
@@ -56,9 +54,8 @@ subroutine allocate1(M, STAT)
            &U%div_g(M),V%div_g(M),&
            &S%div_g(M),&
            &B%div_g(M),&
-           density%div_g(M),&
            T%div_i(M),&
-           U%div_i(M), V%div_i(M), S%div_i(M), density%div_i(M),&
+           U%div_i(M), V%div_i(M), S%div_i(M), &
            K%u%shear(0:M),K%s%dd(0:M),K%t%dd(0:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
            K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
