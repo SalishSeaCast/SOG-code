@@ -25,14 +25,15 @@ program SOG
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_profiles, &
        profiles_output_close
-  use water_properties, only: rho, Cp, calc_rho_alpha_beta_Cp_profiles, &
+  use water_properties, only: rho, alpha, beta, Cp, &
+       calc_rho_alpha_beta_Cp_profiles, &
        alloc_water_props, dalloc_water_props
-  use grid_mod, only: init_grid, dalloc_grid, interp_g_d, interp_i
+  use grid_mod, only: init_grid, dalloc_grid, interp_g_d, interp_i, &
+       gradient_i, gradient_g
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
-  use rungekutta, only: odeint
   use do_biology_mod, only: do_biology
   use biological_mod, only: init_biology
   use forcing, only: read_variation, read_forcing, get_forcing
@@ -82,7 +83,7 @@ program SOG
   double precision :: sumpbx, sumpby, tol
   integer :: ii       ! loop index
 
-  ! Physical model domain parameter (should go elsewhere)
+  ! Physical model domain parameters (should go elsewhere)
   double precision :: oLx, oLy, gorLx, gorLy
 
   ! Code identification string (maintained by CVS), for output file headers
@@ -109,7 +110,7 @@ program SOG
   year_o = getpari("year_o")
   month_o = getpari("month_o")
   day_o = getpari("yr_day_o")
-  t_o = getpard("t_o")
+  t_o = getpari("t_o")
   t_f = getpard("run_dur")
   dt = getpard("dt")
   ! Calculate the number of time steps for the run (note that int()
@@ -135,9 +136,10 @@ program SOG
   ! Initialize the biology model
   call init_biology(grid%M)
 
-  ! initialize stability
-  stable = 1
-
+  ! Allocate memory
+  ! *** It would be nice if everything in allocate[13] could end up in 
+  ! *** alloc_* subroutines private to various modules, and called by 
+  ! *** their init_* subroutines.
   CALL allocate1(grid%M, alloc_stat) 
   DO xx = 1,12
      IF (alloc_stat(xx) /= 0) THEN
@@ -146,6 +148,7 @@ program SOG
         STOP
      END IF
   END DO
+  CALL allocate3(grid%M)
   ! Allocate memory for water property arrays
   call alloc_water_props(grid%M)
 
@@ -161,12 +164,10 @@ program SOG
   nu_w_m = getpard('nu_w_m')         ! Internal wave mixing momentum
   nu_w_s = getpard('nu_w_s')         ! Internal wave mixing scalar
   Fw_scale = getpard('Fw_scale')     ! Fresh water scale factor for river flows
-  Fw_surface = getparl('Fw_surface') ! Add all fresh water on surfaec?
+  Fw_surface = getparl('Fw_surface') ! Add all fresh water on surface?
   if (.not. Fw_surface) then
      Fw_depth = getpard('Fw_depth')  ! Depth to distribute freshwater flux over
   endif
-
-  CALL allocate3(grid%M)
 
   CALL initialize ! initializes everything (biology too)
 
@@ -182,26 +183,31 @@ program SOG
   ! *** This should go somewhere else - maybe init_physics() (yet to come)
   niter = getpari("niter")
 
+  ! Initialize mixing, and mixed layer depths
+  ! *** It would be cool to calculate these from the initial salinity
+  ! *** profile read from the CTD file.
   IF(h%new < grid%d_g(1))THEN 
      h%new = grid%d_g(1)
   END IF
-
-  !    initialize h_m
   h_m%new = 10.
 
   ! Initialize the profiles of the water column properties
-  ! Thermal and salinity expansion and their gradients
-  CALL coefficients(alph, beta, dens, cloud,p_Knox)
-  CALL alpha_sub(T%new, S%new, alph, grid) 
-  CALL alpha_sub(T%new, S%new, beta, grid)
-  CALL div_i_param(grid, alph) ! alph%idiv = d alpha /dz
-  CALL div_i_param(grid, beta) ! beta%idiv = d beta /dz
-  ! Heat capacity
-  call  calc_rho_alpha_beta_Cp_profiles(T%new, S%new, Cp%g)
+  ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
+  ! coefficients, and specific heat capacity (Cp)
+  call calc_rho_alpha_beta_Cp_profiles(T%new, S%new, rho%g, alpha%g, &
+       beta%g, Cp%g)
+  density%new = rho%g
+  ! Interpolate the values of density and specific heat capacity at
+  ! the grid layer interface depths
+  rho%i = interp_i(rho%g)
+  alpha%i = interp_i(alpha%g)
+  beta%i = interp_i(beta%g)
   Cp%i = interp_i(Cp%g)
-  ! Density with depth
-  CALL density_sub(T, S, density%new, grid%M) 
-  rho%i = interp_i(density%new)
+  ! Calculate the gradients of density, and thermal expansion and saline
+  ! contraction coefficients at the grid layer interface depths
+  rho%grad_i = gradient_i(rho%g)
+  alpha%grad_i = gradient_i(alpha%g)
+  beta%grad_i = gradient_i(beta%g)
 
   ! Close the input parameters file
   close(stripped_infile)
@@ -216,8 +222,8 @@ program SOG
           Qinter, Einter, cf_value, atemp_value, humid_value, &
           unow, vnow)
 
-     CALL irradiance_sog(cloud, cf_value, day_time, day, &
-          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, h, P)
+     CALL irradiance_sog(cf_value, day_time, day, &
+          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P)
 
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
         ! *** I think this is finding the depths of the grid point
@@ -240,16 +246,16 @@ program SOG
 
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
-        CALL surface_flux_sog(grid%M, density%new, w, wt_r, S%new(1),        &
+        CALL surface_flux_sog(grid%M, rho%g, w, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t(0),        &
-             alph%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
+             alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value, Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
 
         ! Calculate nonturbulent heat flux profile
         ! *** Vectorize this and move it into a subroutine
-        Q_n(0) = I(0) / (Cp%i(0) * density%new(0))        
+        Q_n(0) = I(0) / (Cp%i(0) * rho%g(0))        
         do ii = 1, grid%M       
            Q_n(ii) = I(ii) / (Cp%i(ii) * rho%i(ii))
         enddo
@@ -260,14 +266,24 @@ program SOG
         if (Fw_surface) then
            F_n = 0.
         else
+!!$           Fw_depth = h%old
            Fw = Ft * exp(-grid%d_i / Fw_depth)
            F_n = S%new * Fw
         endif
 
+!!$        ! Store the surface buoyancy forcing value from the previous
+!!$        ! iteration so we can use it to blend with the new value to
+!!$        ! help the implicit solver converge more quickly
+!!$        Bf_old = Bf
+
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
-             density%new, alph%g, beta%g, Cp%g, Fw_surface,  &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,  &  ! in
              B%new, Bf)                                         ! out
+
+!!$        ! Blend the values of the surface buoyancy forcing from current
+!!$        ! and previous iteration to help convergence
+!!$        Bf = (count * Bf_old + (niter - count) * Bf) / niter
 
         CALL fun_constants(u_star, w_star, L_star,w, Bf, h%new)   !test conv
 
@@ -289,10 +305,10 @@ program SOG
            omega%m%h = 0.
         END IF
 
-        CALL shear_diff(grid,U,V,density,K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
+        CALL shear_diff(grid, U, V, rho, K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
 
         ! Calculates interior double diffusion    
-        call double_diff(grid,T,S,K,alph%i,beta%i)  !test conv
+        call double_diff(grid,T,S,K,alpha%i,beta%i)  !test conv
 
         ! Define interior diffusivity K%x%total, nu_w_m and nu_w_s
         ! constant internal wave mixing
@@ -395,7 +411,7 @@ program SOG
         CALL div_interface(grid, V)
 
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
-        CALL define_flux(Cp%i)
+        CALL define_flux(rho%g, alpha, beta, Cp%i)
 
         ! Calculate matrix B (changed to Amatrix later) 
         call diffusion_coeff(grid, dt, K%t%all, &
@@ -510,25 +526,31 @@ program SOG
         S%new(grid%M+1) = S%old(grid%M+1)
 
         ! Update the profiles of the water column properties
-        ! Thermal and salinity expansion and their gradients
-        CALL alpha_sub(T%new, S%new, alph, grid)
-        CALL alpha_sub(T%new, S%new, beta, grid)
-        CALL div_i_param(grid,alph)
-        CALL div_i_param(grid,beta)
-        ! Heat capacity
-        call  calc_rho_alpha_beta_Cp_profiles(T%new, S%new, Cp%g)
+        ! Density (rho), thermal expansion (alpha) and saline
+        ! contraction (beta) coefficients, and specific heat capacity (Cp)
+        call calc_rho_alpha_beta_Cp_profiles(T%new, S%new, rho%g, alpha%g, &
+             beta%g, Cp%g)
+        density%new = rho%g
+        ! Interpolate the values of density and specific heat capacity at
+        ! the grid layer interface depths
+        rho%i = interp_i(rho%g)
+        alpha%i = interp_i(alpha%g)
+        beta%i = interp_i(beta%g)
         Cp%i = interp_i(Cp%g)
-        ! Density with depth
-        CALL density_sub(T, S, density%new, grid%M)
-        rho%i = interp_i(density%new)
-        CALL div_grid(grid,density)
+        ! Calculate the gradients of thermal expansion and saline
+        ! contraction coefficients at the grid layer interface depths
+        rho%grad_i = gradient_i(rho%g)
+        alpha%grad_i = gradient_i(alpha%g)
+        beta%grad_i = gradient_i(beta%g)
 
-        ! Update buoyancy profile
-        B%new = g*(alph%g*T%new - beta%g*S%new)
-        CALL div_grid(grid,B)
-
+        ! Update buoyancy profile and local buoyancy frequency
+        ! *** Figure out what N_2 designates (in contrast to N in Large, etal)
+        ! *** (may be buoyancy frequency squared); can it go into buoyancy?
+        ! *** Why not just call buoyancy again here?
+        B%new = g * (alpha%g * T%new - beta%g * S%new)
+        rho%grad_g = gradient_g(rho%g)
         DO xx = 1,grid%M
-           N_2_g(xx) = -g/density%new(xx)*density%div_g(xx) !B%div_g(xx)
+           N_2_g(xx) = -(g / rho%g(xx)) * rho%grad_g(xx)
         END DO
 
 !!!Define turbulent velocity shear V_t_square for Ri_b  use last count values
@@ -543,8 +565,9 @@ program SOG
         DO xx = 1, grid%M           !uses K%old and T%new
            w%t(xx) = -K%t%all(xx)*(T%div_i(xx) - gamma%t(xx))
            w%s(xx) = -K%s%all(xx)*(S%div_i(xx) - gamma%s(xx))
-           w%b(xx) = g*(alph%i(xx)*w%t(xx)-beta%i(xx)*w%s(xx))   
-           w%b_err(xx) = g*(alph%idiv(xx)*w%t(xx)- beta%idiv(xx)*w%s(xx))
+           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))   
+           w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) &
+                - beta%grad_i(xx) * w%s(xx))
         END DO
 
 
@@ -566,6 +589,7 @@ program SOG
 
         ! Calculate the profile of bulk Richardson number (Large, etal
         ! (1994) eq'n(21))
+        ! *** This needs to be refactored to change density to rho
         CALL define_Ri_b_sog(grid, h, surface_h, B, U, V, density, Ri_b, &
              V_t_square, N_2_g)
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
@@ -594,10 +618,10 @@ program SOG
            DO xx = 0,grid%M+1
               PRINT *,V%new(xx)
            END DO
-           PRINT "(A)","density%new"
+           PRINT "(A)","rho%g"
 
            DO xx = 0,grid%M+1
-              PRINT *,density%new(xx)
+              PRINT *,rho%g(xx)
            END DO
            PRINT "(A)","Ri_b"
            PRINT *,Ri_b
@@ -691,16 +715,16 @@ program SOG
         ii=1
         do yy=1,grid%M
            if (yy == 1) then
-              pbx(yy) = -density%new(yy)
+              pbx(yy) = -rho%g(yy)
            else
-              pbx(yy) = pbx(yy-1)-density%new(yy)
+              pbx(yy) = pbx(yy-1)-rho%g(yy)
            endif
            do while ((dzx(ii)-yy) < -tol .and. ii < grid%M)
-              pbx(yy) = pbx(yy) + density%new(ii)*(dzx(ii)-cz)
+              pbx(yy) = pbx(yy) + rho%g(ii)*(dzx(ii)-cz)
               cz = dzx(ii)
               ii = ii + 1
            enddo
-           pbx(yy) = pbx(yy) + density%new(ii)*(yy-cz)
+           pbx(yy) = pbx(yy) + rho%g(ii)*(yy-cz)
            sumpbx = sumpbx + pbx(yy)
            cz = yy
         enddo
@@ -710,16 +734,16 @@ program SOG
         ii=1
         do yy=1,grid%M
            if (yy == 1) then
-              pby(yy) = -density%new(yy)
+              pby(yy) = -rho%g(yy)
            else
-              pby(yy) = pby(yy-1)-density%new(yy)
+              pby(yy) = pby(yy-1)-rho%g(yy)
            endif
            do while ((dzy(ii)- yy) <-tol .and. ii < grid%M)
-              pby(yy) = pby(yy) + density%new(ii)*(dzy(ii)-cz)
+              pby(yy) = pby(yy) + rho%g(ii)*(dzy(ii)-cz)
               cz = dzy(ii)
               ii = ii + 1
            enddo
-           pby(yy) = pby(yy) + density%new(ii)*(yy-cz)
+           pby(yy) = pby(yy) + rho%g(ii)*(yy-cz)
            sumpby = sumpby + pby(yy)
            cz = yy
         enddo
@@ -755,7 +779,7 @@ program SOG
 
      call write_profiles(codeId, datetime_str(runDatetime),            &
           datetime_str(startDatetime), year, day, day_time, dt, grid,  &
-          T%new, S%new, density%new, P%micro%new, P%nano%new, N%O%new, &
+          T%new, S%new, rho%g, P%micro%new, P%nano%new, N%O%new, &
           N%H%new, Sil%new, Detritus(1)%D%new, Detritus(2)%D%new,      &
           Detritus(3)%D%new, K%u%all, K%t%all, K%s%all, I_par, U%new,  &
           V%new)
