@@ -3,13 +3,12 @@
 
 SUBROUTINE initialize
 
-      USE mean_param
       USE surface_forcing
       USE declarations
 
       IMPLICIT NONE
 
-      time = t_o
+      time = dble(t_o)
       dummy_time = 0.
       day = day_o   !initialize julian day
      ! month = month_o   !KC june 28, 2004
