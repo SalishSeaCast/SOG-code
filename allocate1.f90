@@ -96,8 +96,7 @@ subroutine allocate1(M, STAT)
            N%O_uptake%new(M),N%H_uptake%new(M),N%urea%new(M),N%remin(M),N%bacteria(M), &
            micro%mort%new(M),  nano%mort%new(M),&
            zmicro%growth%new(M), zmicro%mort%new(M),&
-           zmicro%graze(zprey,M),zmicro%q(zprey-1), waste%small(M),waste%medium(M), &
-           waste%large(M),waste%s%destiny(0:D_bins),waste%m%destiny(0:D_bins),waste%l%destiny(0:D_bins), &
+           zmicro%graze(zprey,M),zmicro%q(zprey-1), &
            wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
