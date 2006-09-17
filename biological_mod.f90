@@ -12,9 +12,10 @@ module biological_mod
   private
 
   public :: derivs_sog, &
-       define_PZ, & ! temporary
+       define_PZ, & 
        reaction_p_sog, &
-       init_biology
+       init_biology, &
+       rate_detritus, rate_det !*** for sinking
 
   ! Private type definitions:
   !
@@ -36,7 +37,7 @@ module biological_mod
           gamma_o, & ! exp strength of NH inhit of NO3 uptake
           N_o, & ! overall half saturation constant????
           N_x, & ! exponent in inhibition equation
-          Sil_rat, & ! silicon to nitrogen ratio in phyto     
+          Sil_rat, & ! silcon to nitrogen ratio in phyto     
           Rm, & ! respiration rate
           M_z ! mortality rate
   end type rate_para_phyto
@@ -45,7 +46,17 @@ module biological_mod
   type :: rate_para_nutrient
      real(kind=dp) r ! reminerialization rate NH to NO3
   end type rate_para_nutrient
-  
+
+  ! parameters for mortality (where it goes)
+  type :: loss_param
+     real(kind=dp), dimension(:), pointer :: s,m  ! nano, micro
+  end type loss_param
+
+  ! rate parameters for detritus
+  type :: rate_detritus
+     real(kind=dp), dimension(:), pointer :: remineral, sink
+  end type rate_detritus
+
   ! Private variable declarations:
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
@@ -55,7 +66,7 @@ module biological_mod
   data PZ_bins%nano  /2/  ! Position of Flagellates (nano plankton)
   data PZ_bins%NO    /3/  ! Position of Nitrate
   data PZ_bins%NH    /4/  ! Position of Ammonium
-  data PZ_bins%Sil   /5/  ! Position of Silicon
+  data PZ_bins%Sil   /5/  ! Position of Silcon
   data PZ_bins%det   /6/  ! Start of detritus
   !
   ! PZ vector
@@ -66,6 +77,8 @@ module biological_mod
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano
   type(rate_para_nutrient) :: rate_N
+  type(loss_param) :: wastedestiny
+  type(rate_detritus) :: rate_det
 
 contains
 
@@ -80,15 +93,28 @@ contains
     msg = "PZ vector (biology model timestep initial conditions) array"
     allocate(PZ(M2), stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Waste destiny (biology model timestep initial conditions) array"
+    allocate(wastedestiny%m(0:D_bins), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    allocate(wastedestiny%s(0:D_bins), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Detritus parameters (biology model timestep initial conditions) array"
+    allocate(rate_det%remineral(D_bins), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    allocate(rate_det%sink(D_bins), stat=allocstat)
   end subroutine alloc_biology
 
 
   subroutine init_biology (M)
     ! Initialize biological model.
     ! *** Incomplete...
-    use input_processor, only: getpard, getparl
+    use input_processor, only: getpard, getparl, getpari
+
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
+    ! Local variables
+    integer :: xx ! counter through detritus bins
+    integer :: binno ! detritus bin as read
 
     ! Number of detritus bins, dissolved, slow sink and fast sink
     D_bins = 3
@@ -129,7 +155,7 @@ contains
     ! exponent in inhibition equation
     rate_micro%N_x = getpard('Micro, N_x')
     rate_nano%N_x = getpard('Nano, N_x')
-    ! silicon to nitrogen ratio in phyto
+    ! silcon to nitrogen ratio in phyto
     rate_micro%Sil_rat = getpard('Micro, Sil ratio')
     rate_nano%Sil_rat = getpard('Nano, Sil ratio')
     ! respiration rate
@@ -140,6 +166,25 @@ contains
     rate_nano%M_z = getpard('Nano, mort')
     ! nitrate remineralization rate
     rate_N%r = getpard('Nitrate, remineral')
+    
+    ! DETRITUS
+    do xx= 1, D_bins
+       binno = getpari("Bin No")
+       if (binno .ne. xx) then
+          write (*,*) "Bins must be in order, expecting"
+          write (*,*) "bin number ",xx
+          write (*,*) "but got bin number ",binno,"."
+          stop
+       endif
+       wastedestiny%m(xx) = getpard('frac waste m')
+       wastedestiny%s(xx) = getpard('frac waste s')
+       rate_det%remineral(xx) = getpard("Remineral. rate")
+       rate_det%sink(xx) = getpard("Sinking rate")
+    enddo
+    wastedestiny%m(0) = 1. - wastedestiny%m(1) - wastedestiny%m(2) - &
+         wastedestiny%m(D_bins)
+    wastedestiny%s(0) = 1. - wastedestiny%s(1) - wastedestiny%s(2) - &
+         wastedestiny%s(D_bins)
 
   end subroutine init_biology
 
@@ -200,7 +245,7 @@ contains
        PZ(bPZ:ePZ) = 0
     endif
 
-    ! Silicon
+    ! Silcon
 
     bPz = (PZ_bins%Sil-1) * M + 1
     ePZ = PZ_bins%Sil * M
@@ -256,7 +301,7 @@ contains
     ePZ = PZ_bins%NH * M
     Gvector%N%H = PZ(bPZ:ePZ) - NH(1:M)
 
-    ! Silicon
+    ! Silcon
     bPZ = (PZ_bins%Sil-1) * M + 1
     ePZ = PZ_bins%Sil * M
     Gvector%Sil = PZ(bPZ:ePZ) - Sil(1:M)
@@ -424,9 +469,9 @@ contains
     ! use to advance the biology to the next time step.
 
     use precision_defs, only: dp
-    use mean_param, only: losses, plankton2, nutrient, snow
+    use mean_param, only: plankton2, nutrient, snow
     use declarations, only: D_bins, N, micro, nano, &
-         f_ratio, waste, Detritus
+         f_ratio, Detritus
 
     implicit none
 
@@ -449,6 +494,7 @@ contains
     real(kind=dp), dimension (M) :: Pmicro, Pnano ! micro/nano plankton conc.
     real(kind=dp), dimension (M) :: NO, NH,Sil ! nitrate and ammonium conc.
     real(kind=dp), dimension (D_bins, M) :: detr ! detritus
+    real(kind=dp), dimension (M) :: WasteMicro, WasteNano ! losses by size
 
     ! Put PZ micro values into Pmicro variable, removing any negative values
     do ii = 1,M                        ! counter through grid
@@ -498,7 +544,7 @@ contains
        endif
     enddo
 
-    ! put PZ silicon values into Sil variable, removing any negative values
+    ! put PZ silcon values into Sil variable, removing any negative values
 
     do ii = 1,M                        ! counter through grid
        jj = (PZ_bins%Sil-1) * M + ii    ! counter into PZ
@@ -528,8 +574,8 @@ contains
     ! initialize transfer rates between the pools
     N%O_uptake%new = 0.
     N%H_uptake%new = 0.
-    waste%medium = 0.
-    waste%small = 0.
+    WasteMicro = 0.
+    WasteNano = 0.
     N%remin = 0.
 
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of micro plankton
@@ -544,7 +590,7 @@ contains
          Resp_micro, Mort_micro)                    ! out
 
     ! put microplankton mortality into the medium detritus flux
-    waste%medium = waste%medium + Mort_micro*Pmicro
+    WasteMicro = WasteMicro + Mort_micro*Pmicro
 
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of nano plankton
     ! I_par is light, Temp is temperature 
@@ -557,14 +603,14 @@ contains
          N, rate_nano, nano, &             ! in and out, in, out
          Resp_nano, Mort_nano)                     ! out
 
-    waste%small = waste%small + Mort_nano*Pnano
+    WasteNano = WasteNano + Mort_nano*Pnano
 
 !!!New quantity, bacterial 0xidation of NH to NO pool ==> NH^2
     N%bacteria(1:M) = rate_N%r * NH**2
 
     ! remineralization of detritus groups 1 and 2 (not last one)
     do kk = 1,D_bins-1
-       N%remin(:) = N%remin(:) + Detritus(kk)%r * detr(kk,:)
+       N%remin(:) = N%remin(:) + rate_det%remineral(kk) * detr(kk,:)
     enddo
 
     IF (MINVAL(N%remin) < 0.) THEN
@@ -629,22 +675,22 @@ contains
        if (NH(ii) > 0.) then  
           dPZdt(jj) = -N%H_uptake%new(ii) &
                + Resp_micro(ii)*Pmicro(ii) + Resp_nano(ii)*Pnano(ii)       & 
-               + waste%medium(ii) * waste%m%destiny(0)                     &
-               + waste%small(ii) * waste%s%destiny(0)                      &
+               + WasteMicro(ii) * wastedestiny%m(0)                     &
+               + WasteNano(ii) * wastedestiny%s(0)                      &
                + N%remin(ii) - N%bacteria(ii)
        endif
     enddo
 
-    ! silicon
+    ! silcon
 
     do ii = 1, M
        jj = (PZ_bins%Sil-1) * M + ii ! index for PZ, derivatives etc
 
        if (Sil(ii) > 0.) then
-          dPZdt(jj) = - (micro%growth%new(ii) * Pmicro(ii) * &
-                             rate_micro%Sil_rat &
-                         + nano%growth%new(ii) * Pnano(ii) * &
-                             rate_nano%Sil_rat)
+          dPZdt(jj) = - (micro%growth%new(ii) - Resp_micro(ii)) * Pmicro(ii) &
+                         * rate_micro%Sil_rat &
+                      - (nano%growth%new(ii) - Resp_nano(ii)) * Pnano(ii) &
+                         * rate_nano%Sil_rat
        endif
     enddo
 
@@ -655,9 +701,9 @@ contains
           jj = (PZ_bins%Quant + (kk-1)) * M + ii
 
           if (detr(kk,ii) > 0) then
-             dPZdt(jj) = waste%medium(ii) * waste%m%destiny(kk)  &
-                  + waste%small(ii) * waste%s%destiny(kk) &
-                  - Detritus(kk)%r * detr(kk,ii) 
+             dPZdt(jj) = WasteMicro(ii) * wastedestiny%m(kk)  &
+                  + WasteNano(ii) * wastedestiny%s(kk) &
+                  - rate_det%remineral(kk) * detr(kk,ii) 
           end if
        end do
     end do
