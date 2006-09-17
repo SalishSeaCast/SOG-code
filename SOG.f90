@@ -35,7 +35,7 @@ program SOG
        diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use do_biology_mod, only: do_biology
-  use biological_mod, only: init_biology
+  use biological_mod, only: init_biology, rate_detritus, rate_det
   use forcing, only: read_variation, read_forcing, get_forcing
 
   ! Subroutine & function modules:
@@ -48,10 +48,9 @@ program SOG
 
   implicit none
 
-  double precision:: cz, upwell 
-
+  double precision:: cz, upwell
   ! Upwelling constant (tuned parameter)
-  !*** read by read_sog used by surface_flux_sog : eventually should be local
+  !*** read in here, used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
   ! surface_forcing module
   real(kind=dp) :: upwell_const, S_riv, sumS=0, sumSriv=0
@@ -158,9 +157,9 @@ program SOG
   river_n = 1826
   call read_forcing (wind_n, met_n, river_n)
   call read_variation
-  CALL read_sog (upwell_const)
 
   ! Read the physic model parameter values
+  upwell_const = getpard("upwell_const")
   nu_w_m = getpard('nu_w_m')         ! Internal wave mixing momentum
   nu_w_s = getpard('nu_w_s')         ! Internal wave mixing scalar
   Fw_scale = getpard('Fw_scale')     ! Fresh water scale factor for river flows
@@ -835,15 +834,14 @@ program SOG
              Gvector%d(xx)%bin)
      END DO
 
-     !      micro%sink=1.1574D-05
-     !      CALL advection(grid,micro%sink,P%micro%old,dt,Gvector_ao%p%micro) !sinking phytoplankton
+     micro%sink = 0.*1.1574D-05 ! 0/m per day
+!     CALL advection(grid,micro%sink,P%micro%old,dt,Gvector_ao%p%micro) !sinking phytoplankton
      Gvector_ao%p%micro = 0. ! sinking not implemented
-     !      Gvector_ao%d(D_bins)%bin = 0.
 
      DO xx = 1,D_bins-1
-        CALL advection(grid,Detritus(2)%v,Detritus(2)%D%old,dt,Gvector_ao%d(2)%bin)
+        CALL advection(grid,rate_det%sink(xx),Detritus(xx)%D%old,dt,Gvector_ao%d(xx)%bin)
      END DO
-     
+     Gvector_ao%d(D_bins)%bin = 0.
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
      CALL matrix_A (Amatrix%no, Bmatrix%no)
