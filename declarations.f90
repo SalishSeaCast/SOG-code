@@ -45,7 +45,6 @@ module declarations
 !!$  TYPE(okta)::cloud
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano, zmicro
-  TYPE(losses)::waste
   TYPE(entrain)::euph
 
   DOUBLE PRECISION, DIMENSION(365)::insol_avg, insol_actual_avg, insol_smooth, insol_actual_smooth
@@ -133,6 +132,5 @@ module declarations
   ! An empty vector
   real(kind=dp), dimension(:), allocatable :: null_vector
 
-  TYPE(bottom_fit), DIMENSION(1659):: ctd_bottom
 
 end module declarations
