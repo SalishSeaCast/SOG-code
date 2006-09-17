@@ -146,26 +146,11 @@ module mean_param
 
   ! Detritus Types
   TYPE :: snow  !Detritus(D_bins)
-     DOUBLE PRECISION::r, & !regeneration rate
-          v ! sinking velocity
      TYPE(prop)::D !%new, old (0:M+1)
   END TYPE snow
 
-  TYPE :: loss_param
-     DOUBLE PRECISION, DIMENSION(:), POINTER::destiny !waste%s%destiny(0:D_bins): 0==>NH, 
-     !1:D_bins ==>Detritus 
-  END TYPE loss_param
-
-  TYPE :: losses  !waste
-     DOUBLE PRECISION, DIMENSION(:),POINTER::small, medium, large  !new waste pools (M)
-     TYPE(loss_param)::s,m,l
-  END TYPE losses
-
   INTEGER::is_leap_year, was_leap_year
 
-  TYPE :: bottom_fit
-     DOUBLE PRECISION:: temp, sal, P, No, date
-  END TYPE bottom_fit
 
 CONTAINS
 
