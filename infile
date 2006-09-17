@@ -80,6 +80,22 @@
 "Nano, mort"		2.3e-07      "Nano, mort"
 ! Nutrient values:
 "Nitrate, remineral"	0.	     "NH remineralization to NO rate"
+! Waste and detritus
+"Bin No"                1            "DON is detritus bin"
+"frac waste m"		0.23	     "frac of micro waste to this bin"
+"frac waste s"		0.	     "frac of nano waste to this bin"
+"Remineral. rate"	2.3e-6	     "remineralization rate"
+"Sinking rate"		0.           "sinking rate"
+"Bin No"                2            "PON is detritus bin"
+"frac waste m"		0.77	     "frac of micro waste to this bin"
+"frac waste s"		0.	     "frac of nano waste to this bin"
+"Remineral. rate"	8e-7	     "remineralization rate"
+"Sinking rate"		1.157e-5     "sinking rate"
+"Bin No"                3            "System loss is detritus bin"
+"frac waste m"		0.	     "frac of micro waste to this bin"
+"frac waste s"		0.	     "frac of nano waste to this bin"
+"Remineral. rate"	0.	     "remineralization rate"
+"Sinking rate"		0.	     "sinking rate"
 
 ! Vary parameters
 "vary%wind%enabled"    .false.       "Variation of wind data?"
