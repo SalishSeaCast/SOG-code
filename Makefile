@@ -49,7 +49,7 @@ water_properties.o find_upwell.o diffusion.o fitbottom.o \
 biological_mod.o rungekutta.o do_biology_mod.o forcing.o\
 \
 define_flux.o phys_Hvector.o \
-allocate1.o read_sog.o 	\
+allocate1.o	\
 stability.o \
 \
 allocate2.o initialize.o define_sog.o irradiance_sog.o 	\
