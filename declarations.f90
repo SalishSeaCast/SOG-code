@@ -44,7 +44,7 @@ module declarations
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o
 !!$  TYPE(okta)::cloud
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
-  TYPE(plankton2)::micro, nano, zmicro
+  TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
 
   DOUBLE PRECISION, DIMENSION(365)::insol_avg, insol_actual_avg, insol_smooth, insol_actual_smooth
