@@ -95,8 +95,6 @@ subroutine allocate1(M, STAT)
       ALLOCATE(micro%growth%light(M),micro%growth%new(M),nano%growth%light(M),nano%growth%new(M),&
            N%O_uptake%new(M),N%H_uptake%new(M),N%urea%new(M),N%remin(M),N%bacteria(M), &
            micro%mort%new(M),  nano%mort%new(M),&
-           zmicro%growth%new(M), zmicro%mort%new(M),&
-           zmicro%graze(zprey,M),zmicro%q(zprey-1), &
            wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
