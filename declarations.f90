@@ -72,6 +72,10 @@ module declarations
        Fw, &  ! Fresh water flux profile
        F_n    ! Fresh water contribution to salinity flux
 
+  ! Heat fluxes
+  real(kind=dp) :: Q_t  ! Turbulent surface heat flux
+  real(kind=dp), dimension(:), allocatable :: Q_n  ! Nonturb heat flux profile
+
   double precision :: wt_r
 
   INTEGER::j_gamma !interface point corresponding to depth at which Radiation contributes to turbulent
@@ -89,12 +93,10 @@ module declarations
   !monin_obukov length and julian day
   DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::V_t_square, &
-       Ri_b, Q_n, N_2_g
+       Ri_b, N_2_g
   double precision, dimension(:), allocatable:: pbx,pby,dzx,dzy
-  !I = intensity, Q_n is the
-  !non_turbulent heat flux  (i.e. I)
-  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par, &
-       &Q_t
+  !I = intensity
+  DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
   ! Temporary vectors U_i , U_p... to hold results from tridiagonal solver
