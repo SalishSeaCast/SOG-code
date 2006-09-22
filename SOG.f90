@@ -246,7 +246,7 @@ program SOG
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
         CALL surface_flux_sog(grid%M, rho%g, w, wt_r, S%new(1),        &
-             S%old(1), S_riv, T%new(0), j_gamma, I, Q_t(0),        &
+             S%old(1), S_riv, T%new(0), j_gamma, I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value, Qinter,stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
@@ -410,7 +410,7 @@ program SOG
         CALL div_interface(grid, V)
 
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
-        CALL define_flux(rho%g, alpha, beta, Cp%i)
+        CALL define_flux(alpha, beta)
 
         ! Calculate matrix B (changed to Amatrix later) 
         call diffusion_coeff(grid, dt, K%t%all, &
