@@ -253,11 +253,7 @@ program SOG
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
 
         ! Calculate nonturbulent heat flux profile
-        ! *** Vectorize this and move it into a subroutine
-        Q_n(0) = I(0) / (Cp%i(0) * rho%g(0))        
-        do ii = 1, grid%M       
-           Q_n(ii) = I(ii) / (Cp%i(ii) * rho%i(ii))
-        enddo
+        Q_n = I / (Cp%i * rho%i)
 
         ! Calculate the nonturbulent fresh water flux profile, and its
         ! contribution to the salinity profile
@@ -277,7 +273,7 @@ program SOG
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,  &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,       &  ! in
              B%new, Bf)                                         ! out
 
 !!$        ! Blend the values of the surface buoyancy forcing from current
