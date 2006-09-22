@@ -21,17 +21,12 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-!!$  TYPE(constant):: &
-!!$       &alph, &
-!!$       &beta, &
-!!$       &dens
   TYPE(prop)::T, S, U, V, B, density, vt, ut
   type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
   TYPE(nutrient):: N
   TYPE(Knu)::K 
   TYPE(flux)::w
-!!$,Bf  
   TYPE(height)::h, surface_h, h_m
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::phi,omega
@@ -42,7 +37,6 @@ module declarations
   type(UVST):: Gvector_ao             ! Sinking of particles
   type(UVST):: Gvector_ro             ! Contains effect of biol. model
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o
-!!$  TYPE(okta)::cloud
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
@@ -118,9 +112,6 @@ module declarations
   INTEGER::M2, M3, N_ok, N_bad      
 
   DOUBLE PRECISION::vapour_pressure, prain ! (atmosphere at 17m) and current value for &
-!!$  !precipitation from p_Knox (Large_param.f90) !
-!!$  DOUBLE PRECISION, DIMENSION(23)::p_Knox  !Piecewise linear function for precipitation
-!!$  !defined in coefficients.f90 !
 
   ! Vertical profile of the entrainment velocity
   real(kind=dp), dimension(:), allocatable :: wupwell
