@@ -2,43 +2,20 @@
 ! $Source$
 
 module initial_sog
-
-  use surface_forcing
-
+  ! *** What's in here?
   implicit none
 
-  ! *** This appears to be a collection of parameters of the Large, et al KPP
-  ! *** model.  Why are they declared here?
-  DOUBLE PRECISION, PARAMETER::To = 5. +273.15, & !!Large1996, &!22.000 + 273.15000   
-       So = 32.70, & ! Large199635.0 !32.8, &!PSU  !32.70 Large1996
+  ! *** These parameter values can probably be set in other, more
+  ! *** appropriate modules
+  DOUBLE PRECISION, PARAMETER:: &
        Uo = 0.0,     & ! m/s
        Vo = 0.0,     &   ! m/s
-       ho = 0.0, & !20.0, &  !19.0,     & ! 
-       !hm = 80.0, & !(28.0)Sep, Aug (19.0), Oct (38.0), Nov (58.0), Dec(80.0)
-  hm =  2.0, & !28, & !75.0, & !Large1996
-       hm2 = 2.0, & !Large et al 1994
-       To2 = 6.0 + 273.15, & !Large et al 1994
-       hs = 100.0, & !Large1996
-       hs2 = 150.0, & !Large1996
-       !Tm = 6.7, & !(12.8)Sep, Aug (12.9), Oct (10.8), Nov (8.1), Dec(6.7)
-  Tm = 4.0 + 273.15, & !Large1996
-  Zd = 200., & !Large1996 (m)
-       Ss = 33.70, & !Large1996 
-       Sd = 33.80, &  !Large1996
-       dh_t = 20.0, & !(32.0)Sep, Aug (41.0), Oct (32.0), Nov (32.0), Dec(20.0)
-       dT_t = 2.4, & !(6.2)Sep, Aug (6.7), Oct (4.9), Nov (2.8), Dec (2.4)
-       h_t = 100.0, & !(60.0)Sep, Aug (60.0), Oct (70.0), Nov (90.0), Dec (100.0)
-       Div_T_M = 0.0, & !!Bottom flux  1/s
-       Div_S_M = 0.0, &  
-       Div_U_M = 0.0, &
-       Div_V_M = 0.0, &                             
+       hm =  2.0, & !28, & !75.0, & !Large1996
        P_micro = 0.3D-3, &
 ! *** Parameter value setting of P_nano replaced by a variable version in 
 ! *** initial_mean below, so that initial value of flagellates biomass may
 ! *** be set to zero without recompiling
 !       P_nano = 2.6D-3 * 0., & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
-       Z_micro = 1.6D-3, &
-       Deto =  1.D-3, &
        NHo = .5D-3 
 
 contains
@@ -46,7 +23,11 @@ contains
   subroutine initial_mean (Ui, Vi, Ti, Si, Pi, NO, NH, Sil, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
+    ! *** What's it do?
     use input_processor, only: getpars
+    use grid_mod, only: grid_
+    use mean_param, only: prop, plankton, snow
+    implicit none
     ! Arguments:
     type(prop), intent(out) :: Ui, Vi, Ti, Si
     type(plankton), intent(out) :: Pi 
@@ -57,7 +38,7 @@ contains
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     double precision, intent(out) :: hi !h%new
     type(prop), intent(out) :: ut, vt
-    type(gr_d), intent(in) :: d
+    type(grid_), intent(in) :: d
     double precision, dimension(d%M), intent(out) :: pbx, pby
     character*4  cruise_id           ! cruise_id
 
@@ -78,8 +59,6 @@ contains
 
     Ui%new(1) = Uo
     Vi%new(1) = Vo
-    Si%new(1) = So
-    Ti%new(1) = To 
     Pi%micro%new(1) = P_micro
     Pi%nano%new(1) = P_nano !V.flagella.01
     NH(1) = NHo
@@ -109,7 +88,7 @@ contains
           Pi%micro%new(i) = P_micro
           Pi%nano%new(i) = P_nano !V.flagella.01
           NH(i) = NHo
-       ELSE       !IF (d%d_g(i) <= Zd) THEN
+       ELSE
           Pi%micro%new(i) = 0.
           Pi%nano%new(i) = 0. !V.flagella.01
           NH(i) = 0.
@@ -119,11 +98,11 @@ contains
 
     END DO
 
-    Pi%micro%new(d%M+1) = zero !0.
-    Pi%nano%new(d%M+1) = zero !0. !V.flagella.01
-    NH(d%M+1) = zero !0.
-    Detritus(1)%D%new(d%M+1) = zero ! 0. (DON ==> Detritus(1), need some deep ocean value)
-    Detritus(2)%D%new(d%M+1) =  zero !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
+    Pi%micro%new(d%M+1) = 0.
+    Pi%nano%new(d%M+1) = 0.
+    NH(d%M+1) = 0.
+    Detritus(1)%D%new(d%M+1) = 0. ! (DON ==> Detritus(1), need some deep ocean value)
+    Detritus(2)%D%new(d%M+1) =  0. !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
 
 
     ! read in nutrients data
