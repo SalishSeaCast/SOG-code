@@ -228,7 +228,9 @@ contains
     ! Result:
     real(kind=dp) :: d_value
     ! Local variables:
-    integer :: j, j_above
+    logical, dimension(0:grid%M+1) :: mask
+    integer, dimension(1) :: j
+    integer :: j_above
 
     ! Make sure the requested depth is within the grid
     if (d < grid%d_g(0) .or. d > grid%d_g(grid%M+1)) then
@@ -236,14 +238,15 @@ contains
        d_value = 9999999999.
     endif
     ! Find the index of the grid point above the specified depth
-    ! *** Is may be possible to replace this loop with a maxloc() call
-    do j = 0, grid%M
-       if (d > grid%d_g(j)) then
-          j_above = j
-       else
-          exit
-       endif
-    enddo
+    ! Note that the maxloc() intrinsic has come idosyncacies: a) it returns
+    ! and array, so j must have dimension(1); b) it disregards the
+    ! lower bound value of grid%d_g, so we have to subtract 1 to get
+    ! j_above to be the correct index in the grid%d_g(0:) array.
+    ! But, for all of that, this should be faster than than a do-loop
+    ! with an embedded if-else-exit construct.
+    mask = grid%d_g <= d
+    j = maxloc(grid%d_g, mask)
+    j_above = j(1) - 1
     ! Interpolate the quantity value at the specified depth from its
     ! value at the grid points above and below
     d_value = qty_g(j_above) + (qty_g(j_above+1) - qty_g(j_above)) &
