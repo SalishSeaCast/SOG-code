@@ -62,9 +62,6 @@ module mean_param
      TYPE(grazing):: mort   !**&
 !!!phytoplankton constants!!!!!!!!!!!!!!!!!!
      DOUBLE PRECISION :: sink   !sink = sinking vel
-     DOUBLE PRECISION :: Q_cn, Q_old, dlnQ_dt 
-     !CN ratio (old copies) and 1/Q*dQ/dt
-     !gamma = photorespiration param , Rm = maintenance respiration 
 !!!zooplankton constants!!!!!!!!!!!!!!!!!
      DOUBLE PRECISION :: delta, eta, G, ks, nn !delta = assim efficiency, eta = excretion
      !G = max grazing rate, lambda = slope of linear grazing at small [prey]
