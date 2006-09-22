@@ -21,11 +21,6 @@ SUBROUTINE initialize
 
       neg_count = 0  ! counts number of times scheme biology becomes negative
 
-!!!!Initial CN ratios for P%micro and P%nano
-
-      micro%Q_cn = Q_min !6.67  
-      nano%Q_cn = Q_min !6.67 
-
       f_ratio = 0.
       null_vector = 0.
 end subroutine initialize
