@@ -62,7 +62,7 @@ subroutine allocate1(M, STAT)
            STAT = alloc_stat(5))
 
       ALLOCATE(Fw(0:M), F_n(0:M), &
-           Q_t(0:M), Q_n(0:M), &
+           Q_n(0:M), &
            I(0:M), I_par(0:M), &
            phi%m%value(0:M), phi%s%value(0:M), &
            Ri_b(M), N_2_g(M), V_t_square(M), &
