@@ -71,12 +71,6 @@ module surface_forcing
   ! bin = 50 !50, &  !number of copepod weight bins in wt_pdf
   DOUBLE PRECISION, PARAMETER::min_bin = 0.005, & !minimum bin size for copepod wt_pdf is 0.0001*Zoo%wt
        sigma_max = 10.  !12 is too big ==> stage 1's increase slightly. see bye_zoo
-  DOUBLE PRECISION, PARAMETER::Q_max = 8.,&   !maximum and minimum allowed CN ratios
-       Q_min = 5. !4.                             !
-
-  INTEGER :: zprey  !number of Copepod animal prey (P%micro+Z%micro) and 
-  !detrital prey (Detritus(1:D_bins-1)
-  !See read_data.f90 and input/biology for values
   DOUBLE PRECISION, PARAMETER::desired_var = 6.267101794384283, &  !12.6, & !6.267101794384283, & !used for ECMWF smoothed winds
        desired_avg =   10.06734127539335 
   DOUBLE PRECISION :: &
