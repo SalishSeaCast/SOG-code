@@ -232,17 +232,6 @@ program SOG
         ! d_i(j_max_i) > h ie h%i is just above h
         CALL find_jmax_i(h, grid)
 
-        ! *** Does this allocation really need to be done for every pass
-        ! *** through the implicit loop?
-        CALL allocate2(alloc_stat) ! allocate shape and K's
-        DO xx = 16,17
-           IF (alloc_stat(xx) /= 0) THEN
-              PRINT "(A)","ALLOCATION failed.  KPP.f  xx:"
-              PRINT *,xx
-              STOP
-           END IF
-        END DO
-
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
         CALL surface_flux_sog(grid%M, rho%g, w, wt_r, S%new(1),        &
