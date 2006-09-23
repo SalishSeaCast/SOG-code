@@ -52,7 +52,7 @@ define_flux.o phys_Hvector.o \
 allocate1.o	\
 stability.o \
 \
-allocate2.o initialize.o define_sog.o irradiance_sog.o 	\
+initialize.o define_sog.o irradiance_sog.o 	\
 buoyancy.o surface_flux_sog.o fun_constants.o		\
 ND_flux_profile.o vel_scales.o convection_scales.o		\
 shear_diff.o double_diff.o interior_match.o interior_match2.o		\
