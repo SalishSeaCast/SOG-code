@@ -92,9 +92,10 @@ subroutine allocate1(M, STAT)
       ALLOCATE(U_p(M), V_p(M), S_p(M), T_p(M), P1_p(M), Pnano1_p(M), &
            NO1_p(M), NH1_p(M), Sil1_p(M), STAT = alloc_stat(9))
 
-      ALLOCATE(micro%growth%light(M),micro%growth%new(M),nano%growth%light(M),nano%growth%new(M),&
-           N%O_uptake%new(M),N%H_uptake%new(M),N%urea%new(M),N%remin(M),N%bacteria(M), &
-           micro%mort%new(M),  nano%mort%new(M),&
+      ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
+           nano%growth%light(M), nano%growth%new(M), &
+           N%O_uptake%new(M), N%H_uptake%new(M), &
+           N%remin(M), N%bacteria(M), &
            wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
@@ -102,8 +103,8 @@ subroutine allocate1(M, STAT)
            STAT = alloc_stat(11))
 
 ! sea add
-      ALLOCATE (ut%new(M),vt%new(M),pbx(M),pby(M),&
-                ut%old(M),vt%old(M),dzx(M),dzy(M), STAT=alloc_stat(12))
+      ALLOCATE (ut%new(M), vt%new(M), pbx(M), pby(M),&
+                ut%old(M), vt%old(M), dzx(M), dzy(M), STAT=alloc_stat(12))
 
       ALLOCATE(G_shape%s(0:M+1), G_shape%m(0:M+1), G_shape%t(0:M+1), &
            STAT = alloc_stat(16))
