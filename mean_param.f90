@@ -40,6 +40,7 @@ module mean_param
      real(kind=dp), dimension(:), pointer :: bin  !bin(M)
   end type det
 
+  ! Type for Gvectors and Hvector used in implicit solver
   type :: UVST              
      real(kind=dp), dimension(:), pointer :: u, v, s, t, sil
      type(phyto) :: p 
@@ -47,36 +48,32 @@ module mean_param
      type(det), dimension(:), pointer :: d !d(D_bins)
   end type UVST
 
+  ! Grow component of plankton2 type
+  type :: grow               
+     real(kind=dp), dimension(:), pointer :: light, new
+  end type grow
 
-  TYPE :: grow               
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: light, new, net !**&    
-  END TYPE grow
+  ! Grazing component of plankton2 and nutrient types
+  type :: grazing
+     real(kind=dp), dimension(:), pointer :: new
+  end type grazing
 
-  TYPE :: grazing
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: new   !**&
-  END TYPE grazing
+  ! *** Plankton "behaviours" ??? type
+  ! *** This will probably be refactored when Susan implements sinking
+  type :: plankton2
+     type(grow) :: growth
+     real(kind=dp) :: sink  ! Sinking velocity
+  end type plankton2
 
+  ! Nutrient type
+  ! *** But only used for nitrogen now, and only applicable to things that
+  ! *** form compounds with oxygen and hydrogen
+  type :: nutrient
+     type(prop) :: O, H
+     type(grazing) :: O_uptake, H_uptake
+     real(kind=dp), dimension(:), pointer :: remin, bacteria  
+  end type nutrient
 
-  TYPE :: plankton2                   
-     TYPE(grow)::growth
-     TYPE(grazing):: mort   !**&
-!!!phytoplankton constants!!!!!!!!!!!!!!!!!!
-     DOUBLE PRECISION :: sink   !sink = sinking vel
-!!!zooplankton constants!!!!!!!!!!!!!!!!!
-     DOUBLE PRECISION :: delta, eta, G, ks, nn !delta = assim efficiency, eta = excretion
-     !G = max grazing rate, lambda = slope of linear grazing at small [prey]
-     !ks and nn holling type nn+1 grazing function param.
-     DOUBLE PRECISION :: beta     ! beta = mortality time constant
-     DOUBLE PRECISION, DIMENSION(:), POINTER::q  !preference q(1+d_prey)
-     DOUBLE PRECISION, DIMENSION(:,:),POINTER::graze !graze(1+d_prey,mm%M)
-     !used in p_growth.dat
-  END TYPE plankton2
-
-  TYPE :: nutrient
-     TYPE(prop)::O,H
-     TYPE(grazing)::O_uptake, H_uptake, urea
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: remin,bacteria  
-  END TYPE nutrient
 
   TYPE :: diff
      DOUBLE PRECISION, DIMENSION(:), POINTER :: shear, total 
