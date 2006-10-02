@@ -5,7 +5,7 @@ SUBROUTINE double_diff(mm,temp,sal,nus,alp_i, betai)
 
   use precision_defs, only: dp
   use grid_mod, only: grid_
-      USE mean_param, only: prop, Knu, div_grid, div_interface
+      USE mean_param, only: prop, Knu, div_interface
       USE surface_forcing
 
       IMPLICIT NONE
@@ -19,8 +19,6 @@ SUBROUTINE double_diff(mm,temp,sal,nus,alp_i, betai)
 
       CALL div_interface(mm, temp)
       CALL div_interface(mm, sal)
-      CALL div_grid(mm, temp)
-      CALL div_grid(mm, sal)
 
       Ri_rho = 0.0
       nus%s%dd = 0.0

@@ -6,7 +6,7 @@ SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
   use precision_defs, only: dp
   use grid_mod, only: grid_
   use water_properties, only: water_property
-      USE mean_param, only: prop, div_interface, div_grid
+      USE mean_param, only: prop, div_interface
       USE surface_forcing
 
       IMPLICIT NONE
@@ -23,8 +23,6 @@ SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
  
       CALL div_interface(mm, u_vel) ! calculate du/dz in u%div_i
       CALL div_interface(mm, v_vel) ! calculate dv/dz in v%div_i
-      CALL div_grid(mm, u_vel) ! cclculate 1/2 grid point off
-      CALL div_grid(mm, v_vel) ! calculate 1/2 grid point off
 
       Rig = 0.0
       nu_s = 0.0
