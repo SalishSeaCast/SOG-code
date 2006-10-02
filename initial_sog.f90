@@ -11,7 +11,7 @@ module initial_sog
        Uo = 0.0,     & ! m/s
        Vo = 0.0,     &   ! m/s
        hm =  2.0, & !28, & !75.0, & !Large1996
-       P_micro = 0.3D-3, &
+!!$       P_micro = 0.3D-3, &
 ! *** Parameter value setting of P_nano replaced by a variable version in 
 ! *** initial_mean below, so that initial value of flagellates biomass may
 ! *** be set to zero without recompiling
@@ -20,26 +20,28 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean (Ui, Vi, Ti, Si, Pi, NO, NH, Sil, Detritus, &
+  subroutine initial_mean (Ui, Vi, Tnew, Si, Pi, NO, NH, Sil, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
     ! *** What's it do?
-    use input_processor, only: getpars
+    use precision_defs, only: dp
     use grid_mod, only: grid_
+    use input_processor, only: getpars
     use mean_param, only: prop, plankton, snow
     implicit none
     ! Arguments:
-    type(prop), intent(out) :: Ui, Vi, Ti, Si
+    type(prop), intent(out) :: Ui, Vi, Si
+    real(kind=dp), dimension(0:), intent(out) :: Tnew
     type(plankton), intent(out) :: Pi 
-    double precision, dimension (0:), intent(out) :: NO  ! N%O%new,  nitrate
-    double precision, dimension (0:), intent(out) :: NH  ! N%H%new,  ammonium
-    double precision, dimension (0:), intent(out) :: Sil ! Sil%new,  silicon
+    real(kind=dp), dimension (0:), intent(out) :: NO  ! N%O%new,  nitrate
+    real(kind=dp), dimension (0:), intent(out) :: NH  ! N%H%new,  ammonium
+    real(kind=dp), dimension (0:), intent(out) :: Sil ! Sil%new,  silicon
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
-    double precision, intent(out) :: hi !h%new
+    real(kind=dp), intent(out) :: hi !h%new
     type(prop), intent(out) :: ut, vt
     type(grid_), intent(in) :: d
-    double precision, dimension(d%M), intent(out) :: pbx, pby
+    real(kind=dp), dimension(d%M), intent(out) :: pbx, pby
     character*4  cruise_id           ! cruise_id
 
     ! Local variables:
@@ -52,14 +54,14 @@ contains
     ! *** P_nano variable replaces parameter version above,
     ! *** so that initial value of flagellates biomass may
     ! *** be set to zero without recompiling
-    double precision :: P_nano
+    real(kind=dp) :: P_nano
 
        !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
        P_nano = 2.6D-3
 
     Ui%new(1) = Uo
     Vi%new(1) = Vo
-    Pi%micro%new(1) = P_micro
+!!$    Pi%micro%new(1) = P_micro
     Pi%nano%new(1) = P_nano !V.flagella.01
     NH(1) = NHo
 
@@ -72,6 +74,8 @@ contains
     end do
     close(44)
 
+    ! *** The values read here are all overwritten, but removing this code
+    ! *** causes unclean diffs (profiles are visually the same though)
     open(unit=49, file="input/NH4.dat", status="OLD", &
          action="READ")
     do i = 1, d%M + 1
@@ -85,11 +89,11 @@ contains
     DO i = 2, d%M+1   
        IF (d%d_g(i) <= hm) THEN  !Large1996  March 1960 initial profile        
 
-          Pi%micro%new(i) = P_micro
+!!$          Pi%micro%new(i) = P_micro
           Pi%nano%new(i) = P_nano !V.flagella.01
           NH(i) = NHo
        ELSE
-          Pi%micro%new(i) = 0.
+!!$          Pi%micro%new(i) = 0.
           Pi%nano%new(i) = 0. !V.flagella.01
           NH(i) = 0.
        END IF
@@ -98,7 +102,7 @@ contains
 
     END DO
 
-    Pi%micro%new(d%M+1) = 0.
+!!$    Pi%micro%new(d%M+1) = 0.
     Pi%nano%new(d%M+1) = 0.
     NH(d%M+1) = 0.
     Detritus(1)%D%new(d%M+1) = 0. ! (DON ==> Detritus(1), need some deep ocean value)
@@ -131,16 +135,16 @@ contains
     ! *** Maybe rework this so we can read orginal (not stripped) CTD
     ! *** data files?
     do i = 1, d%M + 1
-       read(46, *) dum1, depth,Ti%new(i), dumc, Pi%micro%new(i), &
+       read(46, *) dum1, depth,Tnew(i), dumc, Pi%micro%new(i), &
             dumt, dump, dumo, Si%new(i)  
        ! *** Maybe we should have a degC2degK function? 
-       Ti%new(i) = Ti%new(i) + 273.15
+       Tnew(i) = Tnew(i) + 273.15
        ! *** Does the next line actually do anything?
-       Pi%micro%new(i) = Pi%micro%new(i)
+!!$       Pi%micro%new(i) = Pi%micro%new(i)
     enddo
     close(46)
 
-    Ti%new(0) = Ti%new(1)  !Surface
+    Tnew(0) = Tnew(1)  !Surface
     Si%new(0) = Si%new(1)  !Boundary
     Pi%micro%new(0) = Pi%micro%new(1)
     Pi%nano%new(0) = Pi%nano%new(1) !V.flagella.02
@@ -151,16 +155,16 @@ contains
     do i = d%M + 1, 2, -1
        j = i / 2
        if (j * 2 == i) then
-          Ti%new(i) = Ti%new(j)
+          Tnew(i) = Tnew(j)
           Si%new(i) = Si%new(j)
           Pi%micro%new(i) = Pi%micro%new(j) 
-          Pi%nano%new(i) = Pi%nano%new(j) !V.flagella.02
+!!$          Pi%nano%new(i) = Pi%nano%new(j) !V.flagella.02
        else
           ! *** This looks like a job for a arith_mean function
-          Ti%new(i) = Ti%new(j) * 0.5 + Ti%new(j+1) * 0.5
+          Tnew(i) = Tnew(j) * 0.5 + Tnew(j+1) * 0.5
           Si%new(i) = Si%new(j) * 0.5 + Si%new(j+1) * 0.5
           Pi%micro%new(i) = Pi%micro%new(j) * 0.5 + Pi%micro%new(j+1) * 0.5
-          Pi%nano%new(i) = Pi%nano%new(j) * 0.5 + Pi%nano%new(j+1) * 0.5 !V.flagella.02
+!!$          Pi%nano%new(i) = Pi%nano%new(j) * 0.5 + Pi%nano%new(j+1) * 0.5 !V.flagella.02
        endif
     enddo
 
