@@ -8,7 +8,7 @@ module mean_param
   ! hierarchy is more evident.
 
   use precision_defs, only: dp
-  use grid_mod, only: gr_d => grid_
+  use grid_mod, only: grid_
 
   implicit none
 
@@ -152,7 +152,7 @@ CONTAINS
   SUBROUTINE div_grid (dm, X)
     ! *** can be replaced by gradient_g() in grid module if %div_g -> %grad_g
 
-    TYPE(gr_d), INTENT(IN)::dm 
+    TYPE(grid_), INTENT(IN)::dm 
     TYPE(prop), INTENT(IN OUT)::X
     INTEGER::i
 
@@ -169,7 +169,7 @@ CONTAINS
   SUBROUTINE div_interface(dm1, X1)
     ! *** Can be replaced by gradient_i() if %div_i -> %grad_i
 
-    TYPE(gr_d), INTENT(IN)::dm1         
+    TYPE(grid_), INTENT(IN)::dm1         
     TYPE(prop), INTENT(IN OUT)::X1    !U, V...
     INTEGER::j
 
@@ -184,7 +184,7 @@ CONTAINS
   SUBROUTINE find_jmax_g(hh, d)
 
     TYPE(height), INTENT(IN OUT)::hh !mixed layer depth
-    TYPE(gr_d), INTENT(IN)::d 
+    TYPE(grid_), INTENT(IN)::d 
 
     INTEGER::i
 
@@ -209,7 +209,7 @@ CONTAINS
   SUBROUTINE find_jmax_i(h1, d1)
 
     TYPE(height), INTENT(IN OUT)::h1 !depth
-    TYPE(gr_d), INTENT(IN)::d1
+    TYPE(grid_), INTENT(IN)::d1
 
     INTEGER::i
 
