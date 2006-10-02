@@ -15,7 +15,7 @@ module mean_param
   ! Properties (U, V, S, ...)
   ! *** Might better be called quantities...
   type :: prop
-     real(kind=dp), dimension(:), pointer :: new, old, div_i, div_g
+     real(kind=dp), dimension(:), pointer :: new, old, div_i
      ! *** avg is only used in define_Ri_b_sog; calculate it locally?
      real(kind=dp) :: avg      !surface layer average 
   end type prop
@@ -147,23 +147,6 @@ module mean_param
 
 
 CONTAINS
-
-
-  SUBROUTINE div_grid (dm, X)
-    ! *** can be replaced by gradient_g() in grid module if %div_g -> %grad_g
-
-    TYPE(grid_), INTENT(IN)::dm 
-    TYPE(prop), INTENT(IN OUT)::X
-    INTEGER::i
-
-    X%div_g(1) = (X%new(1)-X%new(2))/(2*dm%g_space(1))
-
-    DO i = 2, dm%M
-       X%div_g(i) = (X%new(i-1)-X%new(i+1))/(dm%g_space(i-1)+ &
-            dm%g_space(i))
-    END DO
-
-  END SUBROUTINE div_grid
 
 
   SUBROUTINE div_interface(dm1, X1)
