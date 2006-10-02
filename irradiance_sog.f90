@@ -4,44 +4,46 @@
 SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
      I_k, Qs, euphotic, Qriver, P_i)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: plankton, entrain
       USE surface_forcing
 
       IMPLICIT NONE
   
       TYPE(plankton), INTENT(IN)::P_i
-      TYPE(gr_d), INTENT(IN)::d
+      TYPE(grid_), INTENT(IN)::d
 !!$      TYPE(height), INTENT(IN)::hh
 !!$      TYPE(okta), INTENT(IN) :: clouds
       REAL, INTENT(IN) :: cf, Qriver !cloud_fraction  (random variable)
       INTEGER, INTENT(OUT)::I_k 
-      DOUBLE PRECISION, INTENT(OUT)::Qs   !integrated daily solar contribution to
+      REAL(KIND=DP), INTENT(OUT)::Qs   !integrated daily solar contribution to
                                               !the heat flux 
       TYPE(entrain), INTENT(OUT)::euphotic !euphotic%depth, euphotic%i                                         
-      DOUBLE PRECISION, DIMENSION(0:d%M), INTENT(OUT)::In, Ipar  
-      DOUBLE PRECISION, INTENT(IN) :: t_ime!, phyto  !day_time
+      REAL(KIND=DP), DIMENSION(0:d%M), INTENT(OUT)::In, Ipar  
+      REAL(KIND=DP), INTENT(IN) :: t_ime!, phyto  !day_time
       INTEGER, INTENT(IN)::Jday  ! julian day 
 
       INTEGER::k, check, of                          
-      DOUBLE PRECISION::declination, hour, cos_Z, day_length, hour_angle, &
+      REAL(KIND=DP)::declination, hour, cos_Z, day_length, hour_angle, &
                         sunrise, sunset, Qso, a, b,KK
-      DOUBLE PRECISION:: II, cos_Z_max, IImax      
-      DOUBLE PRECISION, DIMENSION(0:d%M)::Iparmax
+      REAL(KIND=DP):: II, cos_Z_max, IImax      
+      REAL(KIND=DP), DIMENSION(0:d%M)::Iparmax
 
 !!!Define Okta Cloud Model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! based on Dobson and Smith, table 5
 
-  TYPE :: cloudy
-     DOUBLE PRECISION :: A, B, fraction   !Regression coefficients
-  END TYPE cloudy
+  type :: cloudy
+     real(kind=dp) :: A, B, fraction   !Regression coefficients
+  end type cloudy
 
-  TYPE :: okta
-     TYPE(cloudy), DIMENSION(0:9) :: type
-  END TYPE okta
+  type :: okta
+     type(cloudy), dimension(0:9) :: type
+  end type okta
 
 
 !!!KC-- new coefficients addded august, 2004. Check on the standard deviation values, but I don't think these are used anywhere, anyway
-  TYPE(okta)::cloud
+  type(okta)::cloud
       cloud%type(0) = cloudy(0.4641,0.3304,0.0945) 
       cloud%type(1) = cloudy(0.4062,0.3799,0.0186)  
       cloud%type(2) = cloudy(0.4129,0.3420,0.0501)
