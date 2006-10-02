@@ -3,15 +3,17 @@
 
 SUBROUTINE interior_match2(omeg, L, u_st, hh, mm)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: MS, height
       USE surface_forcing
 
       IMPLICIT NONE
 
       TYPE(MS), INTENT(IN OUT)::omeg       !omega
-      DOUBLE PRECISION, INTENT(IN)::L, u_st     !L_star, u_star
+      REAL(KIND=DP), INTENT(IN)::L, u_st     !L_star, u_star
       TYPE(height), INTENT(IN)::hh         !h
-      TYPE(gr_d), INTENT(IN)::mm
+      TYPE(grid_), INTENT(IN)::mm
 
       IF (L /= 0) THEN          
          IF (hh%new/L <= 0) THEN !!!Unstable and Neutral Conditions

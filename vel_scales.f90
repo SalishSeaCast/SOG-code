@@ -3,19 +3,21 @@
 
 SUBROUTINE vel_scales(mm,omeg,phig,u_st,L,hh)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: height, MS, find_jmax_i
       USE surface_forcing
 
       IMPLICIT NONE
 
-      TYPE(gr_d), INTENT(IN)::mm
+      TYPE(grid_), INTENT(IN)::mm
       TYPE(height), INTENT(IN)::hh
       TYPE(MS), INTENT(IN)::phig
       TYPE(MS), INTENT(OUT)::omeg
-      DOUBLE PRECISION, INTENT(IN)::u_st, L !friction velocity scale and Monin- 
+      REAL(KIND=DP), INTENT(IN)::u_st, L !friction velocity scale and Monin- 
                                       !Obukov Length
       INTEGER::k
-      DOUBLE PRECISION::phime,phise
+      REAL(KIND=DP)::phime,phise
       TYPE(height)::surface_h
 
       surface_h%new = ep*hh%new  ! height of the surface layer is 0.1 hh

@@ -8,22 +8,24 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Bb, Uu, Vv, dens, Rib, &
   ! 371-372, in particular, eq'n (21)
   ! *** Argument order needs to be standardized
 
-  USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+  USE mean_param, only: height, prop
   USE surface_forcing
 
   ! Arguments:
-  type(gr_d), intent(in) :: d
+  type(grid_), intent(in) :: d
   type(height), intent(in) :: hh 
   type(height), intent(out) :: surf_h
   type(prop), intent(in out) :: Bb, Uu, Vv, dens
-  double precision, dimension(d%M), intent(in) :: Vt_sq
-  double precision, dimension(d%M), intent(out) :: Rib
-  double precision, dimension(0:d%M+1), intent(in) :: N2
+  real(kind=dp), dimension(d%M), intent(in) :: Vt_sq
+  real(kind=dp), dimension(d%M), intent(out) :: Rib
+  real(kind=dp), dimension(0:d%M+1), intent(in) :: N2
  
   ! Local variables:
-  double precision, dimension(0:d%M+1) :: test_vector, test_vector2
+  real(kind=dp), dimension(0:d%M+1) :: test_vector, test_vector2
   integer :: yy, ymin
-  double precision ::Ribmin
+  real(kind=dp) ::Ribmin
 
   surf_h%new = ep*hh%new
        

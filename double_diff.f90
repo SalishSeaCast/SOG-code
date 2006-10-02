@@ -3,16 +3,18 @@
 
 SUBROUTINE double_diff(mm,temp,sal,nus,alp_i, betai)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: prop, Knu, div_grid, div_interface
       USE surface_forcing
 
       IMPLICIT NONE
 
-      TYPE(gr_d),INTENT(IN)::mm  
+      TYPE(grid_),INTENT(IN)::mm  
       TYPE(prop), INTENT(IN OUT)::temp,sal      !T,S
       TYPE(Knu), INTENT(IN OUT)::nus
-      DOUBLE PRECISION, DIMENSION(0:mm%M), INTENT(IN)::alp_i, betai
-      DOUBLE PRECISION, DIMENSION(0:mm%M)::Ri_rho
+      REAL(KIND=DP), DIMENSION(0:mm%M), INTENT(IN)::alp_i, betai
+      REAL(KIND=DP), DIMENSION(0:mm%M)::Ri_rho
       INTEGER::k
 
       CALL div_interface(mm, temp)

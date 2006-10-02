@@ -7,14 +7,16 @@ SUBROUTINE ND_flux_profile(mm,L,phi1)
   ! *** Cleanup needed.  Constants should be declared here instead of
   ! *** in surface forcing, etc.
      
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: MS
       USE surface_forcing
 
       IMPLICIT NONE
 
-      TYPE(gr_d), INTENT(IN)::mm
+      TYPE(grid_), INTENT(IN)::mm
       TYPE(MS), INTENT(OUT)::phi1
-      DOUBLE PRECISION,INTENT(IN)::L  !L_star
+      real(kind=dp), intent(in) :: L  !L_star
 
       INTEGER::y
 

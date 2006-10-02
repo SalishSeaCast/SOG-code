@@ -3,19 +3,21 @@
 
 SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: height
       USE surface_forcing
 
       IMPLICIT NONE
 
-      TYPE(gr_d), INTENT(IN)::mm   !grid
+      TYPE(grid_), INTENT(IN)::mm   !grid
       TYPE(height), INTENT(IN)::hh   !h
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(IN)::N_2  !N^2
-      DOUBLE PRECISION, DIMENSION(0:mm%M), INTENT(IN)::omeg_s  !omega%s%value
-      DOUBLE PRECISION, DIMENSION(mm%M), INTENT(OUT)::vt_sq   !V_t_square
-      DOUBLE PRECISION, INTENT(IN)::betat, Lstar   !beta_t (-0.2) and L_star
+      REAL(KIND=DP), DIMENSION(mm%M), INTENT(IN)::N_2  !N^2
+      REAL(KIND=DP), DIMENSION(0:mm%M), INTENT(IN)::omeg_s  !omega%s%value
+      REAL(KIND=DP), DIMENSION(mm%M), INTENT(OUT)::vt_sq   !V_t_square
+      REAL(KIND=DP), INTENT(IN)::betat, Lstar   !beta_t (-0.2) and L_star
 
-      DOUBLE PRECISION, DIMENSION(mm%M)::omeg_g
+      REAL(KIND=DP), DIMENSION(mm%M)::omeg_g
       INTEGER::xx
 
       vt_sq = 0.

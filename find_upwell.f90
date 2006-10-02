@@ -32,12 +32,12 @@ contains
     ! in late June 2006.
 
     use precision_defs, only: dp
-    use mean_param, only: gr_d
+    use grid_mod, only: grid_
 
     implicit none
 
     ! Arguments:
-    type(gr_d), intent(in) :: grid                 ! Grid properties
+    type(grid_), intent(in) :: grid                 ! Grid properties
     real(kind=dp), intent(in) :: upwell            ! Maximum upwelling velocity
     ! Vertical upwelling velocity profile
     real(kind=dp), intent(out), dimension(1:) :: wupwell 
@@ -73,12 +73,12 @@ contains
     ! water and property is squeezed out the sides of the water column.
 
     use precision_defs, only: dp
-    use mean_param, only: gr_d
+    use grid_mod, only: grid_
 
     implicit none
 
     ! Arguments:
-    type(gr_d), intent(in) :: grid 
+    type(grid_), intent(in) :: grid 
     real(kind=dp), intent(in) :: dt ! time step
     real(kind=dp), dimension (0:), intent(in) :: qty ! quantity to be advected
     real(kind=dp), intent(in), dimension(1:) :: wupwell

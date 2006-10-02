@@ -3,15 +3,17 @@
 
 SUBROUTINE convection_scales(mm,omeg,hh,w_st)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: height, MS
       USE surface_forcing
 
       IMPLICIT NONE
 
-      TYPE(gr_d), INTENT(IN)::mm
+      TYPE(grid_), INTENT(IN)::mm
       TYPE(height), INTENT(IN)::hh
       TYPE(MS), INTENT(OUT)::omeg
-      DOUBLE PRECISION, INTENT(IN)::w_st !convective velocity
+      REAL(KIND=DP), INTENT(IN)::w_st !convective velocity
       TYPE(height)::surface_h 
       INTEGER::k
  

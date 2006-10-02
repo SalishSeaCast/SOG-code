@@ -3,14 +3,16 @@
 
 SUBROUTINE def_gamma( L,  mm, ww, wtr, hh, gamm, Bf, omeg)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: flux, height, MST, MS
       USE surface_forcing
 
       IMPLICIT NONE
 
-      DOUBLE PRECISION, INTENT(IN)::L,  wtr, Bf !L_star, wt_r, Bf
+      REAL(KIND=DP), INTENT(IN)::L,  wtr, Bf !L_star, wt_r, Bf
       TYPE(flux), INTENT(IN)::ww            !w
-      TYPE(gr_d), INTENT(IN)::mm            !grid
+      TYPE(grid_), INTENT(IN)::mm            !grid
       TYPE(height), INTENT(IN)::hh          !h 
       TYPE(MST), INTENT(OUT)::gamm          !gamma
       TYPE(MS), INTENT(IN)::omeg            !omega

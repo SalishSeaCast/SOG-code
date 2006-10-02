@@ -5,7 +5,7 @@ module surface_forcing
   ! *** This is a very poorly named module!
 
   use precision_defs, only: dp
-  use mean_param
+!!$  use mean_param
 
   implicit none
 
@@ -87,12 +87,14 @@ CONTAINS
     ! *** prop density.
 
     use precision_defs, only: dp
+    use grid_mod, only: grid_
+    use mean_param, only: prop, height, find_jmax_g
 
-    TYPE(gr_d), INTENT(IN)::mm 
+    TYPE(grid_), INTENT(IN)::mm 
     TYPE(prop), INTENT(INout)::X   !U, V, T ...
     TYPE(height), INTENT(INout)::surf_h  !surface_height   
 
-    DOUBLE PRECISION::X_sl,X_h 
+    REAL(KIND=DP)::X_sl,X_h 
     INTEGER::k
 
     CALL find_jmax_g(surf_h, mm)

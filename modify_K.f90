@@ -3,14 +3,16 @@
 
 SUBROUTINE modify_K(mm, hh, X)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: diff, height
 
       IMPLICIT NONE
 
-      TYPE(gr_d), INTENT(IN)::mm
+      TYPE(grid_), INTENT(IN)::mm
       TYPE(diff), INTENT(IN OUT)::X
       TYPE(height), INTENT(IN)::hh
-      DOUBLE PRECISION::delta, K_star, K_grid
+      REAL(KIND=DP)::delta, K_star, K_grid
 
       !!Find modified X%ML(hh%g-1) for case(2) and X%total(hh%g-1) for case(1)!!
       !!or X%ML(hh%i-1) for case(2) and X%total(hh%i) for case(1)!!

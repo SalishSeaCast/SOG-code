@@ -4,24 +4,25 @@
 subroutine advection(mm, sink, pp, step, Gvector)
   ! *** What's it do?
 
-  use mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
 
   implicit none
 
   ! Arguments:
-  type(gr_d), intent(in) :: mm
-  double precision, intent(in) :: sink                       ! sinking velocity
-  double precision, dimension(0:mm%M+1), intent(in) :: pp    ! P%micro%old
-  double precision, intent(in) :: step                       ! timestep
-  double precision, dimension(mm%M), intent(out) :: Gvector  ! Gvector_ao%p%micro
+  type(grid_), intent(in) :: mm
+  real(kind=dp), intent(in) :: sink                       ! sinking velocity
+  real(kind=dp), dimension(0:mm%M+1), intent(in) :: pp    ! P%micro%old
+  real(kind=dp), intent(in) :: step                       ! timestep
+  real(kind=dp), dimension(mm%M), intent(out) :: Gvector  ! Gvector_ao%p%micro
 
   ! Local variables:
-  DOUBLE PRECISION, DIMENSION(0:mm%M+1)::Ru_1, Ru_a, &
+  REAL(KIND=DP), DIMENSION(0:mm%M+1)::Ru_1, Ru_a, &
        Au_1, Au_2, delta_1
-  DOUBLE PRECISION, DIMENSION(0:mm%M)::Fu
-  DOUBLE PRECISION, DIMENSION(0:mm%M+1)::Ru, Ru_b
-  DOUBLE PRECISION, DIMENSION(-1:mm%M)::Ru_2,delta_2 
-  DOUBLE PRECISION, DIMENSION(0:mm%M+1,0:3)::aa  !for a third order advection scheme
+  REAL(KIND=DP), DIMENSION(0:mm%M)::Fu
+  REAL(KIND=DP), DIMENSION(0:mm%M+1)::Ru, Ru_b
+  REAL(KIND=DP), DIMENSION(-1:mm%M)::Ru_2,delta_2 
+  REAL(KIND=DP), DIMENSION(0:mm%M+1,0:3)::aa  !for a third order advection scheme
   INTEGER, DIMENSION(0:mm%M+1)::L    !order as a function of grid spacing
   INTEGER::index, jk
 
