@@ -13,10 +13,10 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(U%new(0:M+1),U%old(0:M+1),&
-           V%new(0:M+1),V%old(0:M+1),&
-           T%new(0:M+1),T%old(0:M+1),&
-           S%new(0:M+1),S%old(0:M+1),&
+      ALLOCATE(U%new(0:M+1), U%old(0:M+1), U%div_i(M), &
+           V%new(0:M+1), V%old(0:M+1), V%div_i(M), &
+           T%new(0:M+1), T%old(0:M+1), T%div_i(M), &
+           S%new(0:M+1), S%old(0:M+1), S%div_i(M), &
            B%new(0:M+1),&
            P%micro%old(0:M+1),P%micro%new(0:M+1), &
            P%nano%new(0:M+1),P%nano%old(0:M+1), &
@@ -50,13 +50,7 @@ subroutine allocate1(M, STAT)
                Bmatrix_o%no%A(M),Bmatrix_o%no%B(M),Bmatrix_o%no%C(M),&
                STAT = alloc_stat(4)) !**&
 
-      ALLOCATE(T%div_g(M),&
-           &U%div_g(M),V%div_g(M),&
-           &S%div_g(M),&
-           &B%div_g(M),&
-           T%div_i(M),&
-           U%div_i(M), V%div_i(M), S%div_i(M), &
-           K%u%shear(0:M),K%s%dd(0:M),K%t%dd(0:M),&
+      ALLOCATE(K%u%shear(0:M),K%s%dd(0:M),K%t%dd(0:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
            K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
            STAT = alloc_stat(5))
