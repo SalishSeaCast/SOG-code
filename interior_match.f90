@@ -3,16 +3,18 @@
 
 SUBROUTINE interior_match(mm, hh, X, X_min)
 
-      USE mean_param
+  use precision_defs, only: dp
+  use grid_mod, only: grid_
+      USE mean_param, only: diff, height
 
       IMPLICIT NONE
 
-      TYPE(gr_d), INTENT(IN)::mm !
+      TYPE(grid_), INTENT(IN)::mm !
       TYPE(diff), INTENT(IN OUT)::X
       TYPE(height), INTENT(IN)::hh
-      DOUBLE PRECISION, INTENT(IN)::X_min
+      REAL(KIND=DP), INTENT(IN)::X_min
 
-      DOUBLE PRECISION::R
+      REAL(KIND=DP)::R
 
       !!!!!Case (1) h%g-1 == h%i and n = h%g - 1 or h%i
       !!!!!Case (2) h%g == h%i and n = h%g or h%i
