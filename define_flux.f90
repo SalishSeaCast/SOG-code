@@ -7,7 +7,7 @@ module define_flux_mod
 
 contains
 
-  subroutine define_flux(alpha, beta)
+  subroutine define_flux(T_grad_i, alpha, beta)
     ! *** What's it do?
 
     use precision_defs, only: dp
@@ -19,6 +19,8 @@ contains
     implicit none
 
     ! Arguments:
+    real(kind=dp), dimension(1:) :: &
+         T_grad_i  ! Temperature gradient profile at grid interface depths
     type(water_property), intent(in) :: &
          alpha, &  ! Thermal expansion coefficient profile arrays
          beta      ! Saline contraction coefficient profile arrays
@@ -41,7 +43,7 @@ contains
           w%b(xx) = 0.
           w%b_err(xx) = 0.
        else
-          w%t(xx) = -K%t%ML(xx) * (T%div_i(xx) - gamma%t(xx)) ! (9)
+          w%t(xx) = -K%t%ML(xx) * (T_grad_i(xx) - gamma%t(xx)) ! (9)
           w%s(xx) = -K%s%ML(xx) * (S%div_i(xx) - gamma%s(xx))
           w%u(xx) = -K%u%ML(xx) * (U%div_i(xx) - gamma%m(xx))
           w%v(xx) = -K%u%ML(xx) * (V%div_i(xx) - gamma%m(xx))
@@ -57,7 +59,7 @@ contains
 
     do xx = h%i, grid%M
        if (grid%d_i(xx) > h%new) then
-          w%t(xx) = -K%t%total(xx) * T%div_i(xx)
+          w%t(xx) = -K%t%total(xx) * T_grad_i(xx)
           w%s(xx) = -K%s%total(xx) * S%div_i(xx)
           w%u(xx) = -K%u%total(xx) * U%div_i(xx)
           w%v(xx) = -K%u%total(xx) * V%div_i(xx)
