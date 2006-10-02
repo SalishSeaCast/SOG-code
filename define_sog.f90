@@ -4,8 +4,8 @@
 SUBROUTINE define_sog(timestep)
   
   !!store previous time_steps in old (n)
-  
-  USE declarations, only: D_bins, U, V, S, T, h, P, N, Sil, &
+  use core_variables, only: T
+  USE declarations, only: D_bins, U, V, S, h, P, N, Sil, &
        Bmatrix, Bmatrix_o, & 
        Gvector, Gvector_o, Gvector_c, Gvector_co, &
        Detritus, ut, vt
