@@ -15,7 +15,6 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(U%new(0:M+1), U%old(0:M+1), U%div_i(M), &
            V%new(0:M+1), V%old(0:M+1), V%div_i(M), &
-           T%new(0:M+1), T%old(0:M+1), T%div_i(M), &
            S%new(0:M+1), S%old(0:M+1), S%div_i(M), &
            B%new(0:M+1),&
            P%micro%old(0:M+1),P%micro%new(0:M+1), &
