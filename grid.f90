@@ -307,7 +307,7 @@ contains
   function gradient_i(qty_g) result(grad_i)
     ! Return the values of the gradients at the grid layer interface
     ! depths of a quantity stored at the grid point depths.
-    ! *** This function does work for an unevenly spaced grid
+    ! *** This function may not work for an unevenly spaced grid
     implicit none
     ! Argument:
     ! Quantity values at grid point depths
@@ -323,7 +323,7 @@ contains
   function gradient_g(qty_g) result(grad_g)
     ! Return the values of the gradients at the grid point
     ! depths of a quantity stored at the grid point depths.
-    ! *** This function does work for an unevenly spaced grid
+    ! *** This function does not work for an unevenly spaced grid
     implicit none
     ! Argument:
     ! Quantity values at grid point depths
