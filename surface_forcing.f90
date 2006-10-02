@@ -43,13 +43,7 @@ module surface_forcing
        ep = 0.1  !epsilon
   DOUBLE PRECISION, PARAMETER::Ri_o = 0.7, & !critical grad Richardson #
        nu_o = 0.001, & !0.0050 !m^2/s interior diff constant
-       p_1 = 3.0, & ! shear diff power constant
-       !  nu_w_m, internal wave mixing, momentum, now read in
-       !  nu_w_s, internal wave mixing, scalar, now read in
-  nu_f = 0.001, & ! m^2/s salt fingering constant 
-       Ri_rho_o = 1.9, &
-       p_2 = 3.0, & !salt finger diff power constant
-       nu = 1.5D-06 !m^2/s molecular viscosity
+       p_1 = 3.0 ! shear diff power constant
   DOUBLE PRECISION, PARAMETER::C_star = 9.9
   DOUBLE PRECISION, PARAMETER::del_o = 0.10, &!tolerance
        A_stress = -0.6, & !N/m^2 Wind stress constant
