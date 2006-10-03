@@ -7,9 +7,13 @@ module core_variables
   ! 
   ! Public Variables:
   !
-  ! U -- Profile of velocity component in the u (cross-strait) direction [m/s]
+  ! U -- Velocity component in the u (cross-strait, 35 deg) direction [m/s]
   !
-  ! T -- Profile of water column temperature [K]
+  ! V -- Velocity component in the v (along-strait, 305 deg) direction [m/s]
+  !
+  ! T -- Water column temperature [K]
+  !
+  ! S -- Water column salinity [-]
   !
   ! Public Subroutines:
   !
@@ -24,6 +28,7 @@ module core_variables
   public :: &
        ! Variables:
        T, &  ! Temperature profile arrays
+       S, &  ! Salinity profile arrays
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
@@ -37,7 +42,8 @@ module core_variables
 
   ! Public variable declarations:
   type(quantity) :: &
-       T  ! Temperature profile arrays
+       T, &  ! Temperature profile arrays
+       S     ! Salinity profile arrays
 
 contains
 
@@ -55,6 +61,10 @@ contains
     allocate(T%new(0:M+1), T%old(0:M+1), T%grad_i(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Water column salinity profile arrays"
+    allocate(S%new(0:M+1), S%old(0:M+1), S%grad_i(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_core_variables
 
 
@@ -68,6 +78,10 @@ contains
 
     msg = "Water column temperature profile arrays"
     deallocate(T%new, T%old, T%grad_i, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Water column salinity profile arrays"
+    deallocate(S%new, S%old, S%grad_i, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_core_variables
