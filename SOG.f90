@@ -19,7 +19,8 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-  use core_variables, only: T, S, alloc_core_variables, dalloc_core_variables
+  use core_variables, only: T, S, B, &
+       alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, interp_g_d, interp_i, &
        gradient_i, gradient_g
   use physics_model, only: double_diffusion
@@ -589,7 +590,7 @@ program SOG
         ! Calculate the profile of bulk Richardson number (Large, etal
         ! (1994) eq'n(21))
         ! *** This needs to be refactored to change density to rho
-        CALL define_Ri_b_sog(grid, h, surface_h, B, U, V, density, Ri_b, &
+        CALL define_Ri_b_sog(grid, h, surface_h, U, V, density, Ri_b, &
              V_t_square, N_2_g)
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
         CALL ML_height_sog(grid, Ri_b, year, day, day_time, count, h_i, jmaxg)
