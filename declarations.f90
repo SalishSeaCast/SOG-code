@@ -21,7 +21,7 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(prop)::S, U, V, B, density, vt, ut
+  TYPE(prop)::U, V, B, density, vt, ut
   type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
   TYPE(nutrient):: N
