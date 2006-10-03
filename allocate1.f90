@@ -15,7 +15,6 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(U%new(0:M+1), U%old(0:M+1), U%div_i(M), &
            V%new(0:M+1), V%old(0:M+1), V%div_i(M), &
-           S%new(0:M+1), S%old(0:M+1), S%div_i(M), &
            B%new(0:M+1),&
            P%micro%old(0:M+1),P%micro%new(0:M+1), &
            P%nano%new(0:M+1),P%nano%old(0:M+1), &
@@ -49,7 +48,8 @@ subroutine allocate1(M, STAT)
                Bmatrix_o%no%A(M),Bmatrix_o%no%B(M),Bmatrix_o%no%C(M),&
                STAT = alloc_stat(4)) !**&
 
-      ALLOCATE(K%u%shear(0:M),K%s%dd(0:M),K%t%dd(0:M),&
+      ALLOCATE(K%u%shear(0:M),&
+           K%s%dd(1:M), K%t%dd(1:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
            K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
            STAT = alloc_stat(5))
