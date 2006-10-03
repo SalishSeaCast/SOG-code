@@ -20,7 +20,7 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean (Ui, Vi, Tnew, Si, Pi, NO, NH, Sil, Detritus, &
+  subroutine initial_mean (Ui, Vi, Tnew, Snew, Pi, NO, NH, Sil, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
     ! *** What's it do?
@@ -30,8 +30,10 @@ contains
     use mean_param, only: prop, plankton, snow
     implicit none
     ! Arguments:
-    type(prop), intent(out) :: Ui, Vi, Si
-    real(kind=dp), dimension(0:), intent(out) :: Tnew
+    type(prop), intent(out) :: Ui, Vi
+    real(kind=dp), dimension(0:), intent(out) :: &
+         Tnew, &  ! Temperature profile
+         Snew     ! Salinity profile
     type(plankton), intent(out) :: Pi 
     real(kind=dp), dimension (0:), intent(out) :: NO  ! N%O%new,  nitrate
     real(kind=dp), dimension (0:), intent(out) :: NH  ! N%H%new,  ammonium
@@ -136,7 +138,7 @@ contains
     ! *** data files?
     do i = 1, d%M + 1
        read(46, *) dum1, depth,Tnew(i), dumc, Pi%micro%new(i), &
-            dumt, dump, dumo, Si%new(i)  
+            dumt, dump, dumo, Snew(i)  
        ! *** Maybe we should have a degC2degK function? 
        Tnew(i) = Tnew(i) + 273.15
        ! *** Does the next line actually do anything?
@@ -145,7 +147,7 @@ contains
     close(46)
 
     Tnew(0) = Tnew(1)  !Surface
-    Si%new(0) = Si%new(1)  !Boundary
+    Snew(0) = Snew(1)  !Boundary
     Pi%micro%new(0) = Pi%micro%new(1)
     Pi%nano%new(0) = Pi%nano%new(1) !V.flagella.02
     NH(0) = NH(1)
@@ -156,13 +158,13 @@ contains
        j = i / 2
        if (j * 2 == i) then
           Tnew(i) = Tnew(j)
-          Si%new(i) = Si%new(j)
+          Snew(i) = Snew(j)
           Pi%micro%new(i) = Pi%micro%new(j) 
 !!$          Pi%nano%new(i) = Pi%nano%new(j) !V.flagella.02
        else
           ! *** This looks like a job for a arith_mean function
           Tnew(i) = Tnew(j) * 0.5 + Tnew(j+1) * 0.5
-          Si%new(i) = Si%new(j) * 0.5 + Si%new(j+1) * 0.5
+          Snew(i) = Snew(j) * 0.5 + Snew(j+1) * 0.5
           Pi%micro%new(i) = Pi%micro%new(j) * 0.5 + Pi%micro%new(j+1) * 0.5
 !!$          Pi%nano%new(i) = Pi%nano%new(j) * 0.5 + Pi%nano%new(j+1) * 0.5 !V.flagella.02
        endif
