@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-subroutine define_Ri_b_sog(d, hh, surf_h, Bb, Uu, Vv, dens, Rib, &
+subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, dens, Rib, &
      Vt_sq, N2)
   ! Calculate the profile of the bulk Richardson number, which is
   ! used to find the mixing layer depth.  See Large, etal (1994) pp
@@ -17,9 +17,9 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Bb, Uu, Vv, dens, Rib, &
   type(grid_), intent(in) :: d
   type(height), intent(in) :: hh 
   type(height), intent(out) :: surf_h
-  type(prop), intent(in out) :: Bb, Uu, Vv, dens
-  real(kind=dp), dimension(d%M), intent(in) :: Vt_sq
-  real(kind=dp), dimension(d%M), intent(out) :: Rib
+  type(prop), intent(in out) :: Uu, Vv, dens
+  real(kind=dp), dimension(1:d%M), intent(in) :: Vt_sq
+  real(kind=dp), dimension(1:d%M), intent(out) :: Rib
   real(kind=dp), dimension(0:d%M+1), intent(in) :: N2
  
   ! Local variables:
