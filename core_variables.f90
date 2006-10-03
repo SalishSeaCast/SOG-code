@@ -15,6 +15,8 @@ module core_variables
   !
   ! S -- Water column salinity [-]
   !
+  ! B -- Water column buoyancy [m/s^2]
+  !
   ! Public Subroutines:
   !
   ! alloc_core_variables -- Allocate memory for core variables arrays.
@@ -29,6 +31,7 @@ module core_variables
        ! Variables:
        T, &  ! Temperature profile arrays
        S, &  ! Salinity profile arrays
+       B, &  ! Buoyancy profile array
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
@@ -43,7 +46,8 @@ module core_variables
   ! Public variable declarations:
   type(quantity) :: &
        T, &  ! Temperature profile arrays
-       S     ! Salinity profile arrays
+       S, &  ! Salinity profile arrays
+       B     ! Buoyancy profile array
 
 contains
 
@@ -65,6 +69,10 @@ contains
     allocate(S%new(0:M+1), S%old(0:M+1), S%grad_i(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Water column buoyancy profile array"
+    allocate(B%new(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_core_variables
 
 
@@ -82,6 +90,10 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Water column salinity profile arrays"
     deallocate(S%new, S%old, S%grad_i, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Water column buoyancy profile array"
+    deallocate(B%new, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_core_variables
