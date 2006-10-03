@@ -19,7 +19,7 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-  use core_variables, only: T, alloc_core_variables, dalloc_core_variables
+  use core_variables, only: T, S, alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, interp_g_d, interp_i, &
        gradient_i, gradient_g
   use physics_model, only: double_diffusion
@@ -179,7 +179,8 @@ program SOG
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
-  CALL initial_mean(U, V, T%new, S, P, N%O%new, N%H%new, Sil%new, Detritus, &
+  CALL initial_mean(U, V, T%new, S%new, P, N%O%new, N%H%new, Sil%new, &
+       Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
 
@@ -231,9 +232,10 @@ program SOG
           I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P)
 
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
-        ! Calculate gradient pofile of the water column
-        ! temperature at the grid layer interface depths
+        ! Calculate gradient pofiles of the water column
+        ! temperature, and salinity at the grid layer interface depths
         T%grad_i = gradient_i(T%new)
+        S%grad_i = gradient_i(S%new)
 
         ! *** I think this is finding the depths of the grid point
         ! *** and grid interface that bound the mixed layer depth
@@ -301,9 +303,10 @@ program SOG
 
         CALL shear_diff(grid, U, V, rho, K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
 
-        ! Calculate interior double diffusion    
-        call double_diffusion(grid, T%grad_i, S, alpha%i, beta%i, &  ! in
-             K)                                                      ! out
+        ! Calculate double diffusion mixing   
+        call double_diffusion(grid%M, T%grad_i, S%grad_i, &  ! in
+             alpha%i, beta%i, &                              ! in
+             K%t%dd, K%s%dd)                                 ! out
 
         ! Define interior diffusivity K%x%total, nu_w_m and nu_w_s
         ! constant internal wave mixing
@@ -400,14 +403,11 @@ program SOG
            gamma%m = 0.
         END IF
 
-!!$        CALL div_interface(grid, T)
-!!$        T%grad_i = gradient_i(T%new)
-        CALL div_interface(grid, S)
         CALL div_interface(grid, U)
         CALL div_interface(grid, V)
 
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
-        CALL define_flux(T%grad_i, alpha, beta)
+        CALL define_flux(T%grad_i, S%grad_i, alpha, beta)
 
         ! Calculate matrix B (changed to Amatrix later) 
         call diffusion_coeff(grid, dt, K%t%all, &
@@ -521,9 +521,10 @@ program SOG
         T%new(grid%M+1) = T%old(grid%M+1)
         S%new(grid%M+1) = S%old(grid%M+1)
 
-        ! Update gradient pofile of the water column
-        ! temperature at the grid layer interface depths
+        ! Update gradient pofiles of the water column
+        ! temperature, and salinity at the grid layer interface depths
         T%grad_i = gradient_i(T%new)
+        S%grad_i = gradient_i(S%new)
 
         ! Update the profiles of the water column properties
         ! Density (rho), thermal expansion (alpha) and saline
@@ -557,14 +558,12 @@ program SOG
 
 !!!Calculate beta_t: need h%e and h%e%i and new w%b  w%i vertical turbulent flux of i
 
-!!$        CALL div_interface(grid, T)
-        CALL div_interface(grid, S)
 
         w%b_err(0) = 0.
 
         DO xx = 1, grid%M           !uses K%old and T%new
            w%t(xx) = -K%t%all(xx)*(T%grad_i(xx) - gamma%t(xx))
-           w%s(xx) = -K%s%all(xx)*(S%div_i(xx) - gamma%s(xx))
+           w%s(xx) = -K%s%all(xx)*(S%grad_i(xx) - gamma%s(xx))
            w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))   
            w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) &
                 - beta%grad_i(xx) * w%s(xx))
