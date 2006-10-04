@@ -134,7 +134,7 @@ contains
     ! dependency removed.  rho, alpha, and beta calculations are based
     ! on swstate.m.  Cp calculation is based on swcp.m.  In all cases the
     ! pressure dependency has been removed.  Variable names are, as
-    ! far as possile, the same as those in the .m files.
+    ! far as possible, the same as those in the .m files.
     !
     ! The calculations have been combined into 1 subroutine because
     ! they all require the evaluation of the square root of the
