@@ -4,8 +4,8 @@
 SUBROUTINE define_sog(timestep)
   
   !!store previous time_steps in old (n)
-  use core_variables, only: T, S
-  USE declarations, only: D_bins, U, V, h, P, N, Sil, &
+  use core_variables, only: T, S, N, Si
+  USE declarations, only: D_bins, U, V, h, P, &
        Bmatrix, Bmatrix_o, & 
        Gvector, Gvector_o, Gvector_c, Gvector_co, &
        Detritus, ut, vt
@@ -43,7 +43,7 @@ SUBROUTINE define_sog(timestep)
          Gvector_o%p%nano = Gvector%p%nano
          Gvector_o%n%o = Gvector%n%o
          Gvector_o%n%h = Gvector%n%h
-         Gvector_o%sil = Gvector%sil
+         Gvector_o%si = Gvector%si
         
          Gvector_co%u = Gvector_c%u
          Gvector_co%v = Gvector_c%v
@@ -63,7 +63,7 @@ SUBROUTINE define_sog(timestep)
          P%nano%old = P%nano%new
          N%O%old = N%O%new
          N%H%old = N%H%new
-         Sil%old = Sil%new
+         Si%old = Si%new
 
          ut%old = ut%new
          vt%old = vt%new
