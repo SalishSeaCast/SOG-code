@@ -5,7 +5,7 @@ program SOG
   ! Coupled physical and biological model of the Strait of Georgia
 
   ! Utility modules:
-  use io_unit_defs, only: stripped_infile
+  use io_unit_defs, only: stripped_infile, stdout
   use unit_conversions, only: KtoC
   use datetime, only: datetime_, os_datetime, calendar_date, &
        clock_time, datetime_str
@@ -15,30 +15,31 @@ program SOG
   use declarations
   use surface_forcing
   use initial_sog, only: initial_mean
-  use pdf
   use IMEX_constants  
 
   ! Refactored modules
-  use core_variables, only: T, S, B, &
+  use core_variables, only: T, S, N, Si, &
        alloc_core_variables, dalloc_core_variables
-  use grid_mod, only: init_grid, dalloc_grid, interp_g_d, interp_i, &
+  use grid_mod, only: init_grid, dalloc_grid, interp_i, &
        gradient_i, gradient_g
-  use physics_model, only: double_diffusion
+  use physics_model, only: B, &
+       init_physics, double_diffusion, dalloc_physics_variables
+  use biological_mod, only: rate_det, &
+       init_biology, dalloc_biology_variables
+  use do_biology_mod, only: do_biology
+  use water_properties, only: rho, alpha, beta, Cp, &
+       calc_rho_alpha_beta_Cp_profiles
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
   use timeseries_output, only: init_timeseries_output, write_timeseries, &
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_profiles, &
        profiles_output_close
-  use water_properties, only: rho, alpha, beta, Cp, &
-       calc_rho_alpha_beta_Cp_profiles, &
-       alloc_water_props, dalloc_water_props
+  use mixing_layer, only: find_mixing_layer_depth
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
-  use do_biology_mod, only: do_biology
-  use biological_mod, only: init_biology, rate_detritus, rate_det
   use forcing, only: read_variation, read_forcing, get_forcing
 
   ! Subroutine & function modules:
@@ -139,6 +140,9 @@ program SOG
   ! we are calculating, i.e. U, V, T, S, etc.
   call alloc_core_variables(grid%M)
 
+  ! Initialize the physics model
+  call init_physics(grid%M)
+
   ! Initialize the biology model
   call init_biology(grid%M)
 
@@ -155,8 +159,6 @@ program SOG
      END IF
   END DO
   CALL allocate3(grid%M)
-  ! Allocate memory for water property arrays
-  call alloc_water_props(grid%M)
 
   ! Length of forcing data files (move to be read in)
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
@@ -180,7 +182,7 @@ program SOG
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
-  CALL initial_mean(U, V, T%new, S%new, P, N%O%new, N%H%new, Sil%new, &
+  CALL initial_mean(U, V, T%new, S%new, P, N%O%new, N%H%new, Si%new, &
        Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
@@ -196,7 +198,6 @@ program SOG
   IF(h%new < grid%d_g(1))THEN 
      h%new = grid%d_g(1)
   END IF
-  h_m%new = 10.
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
@@ -593,45 +594,9 @@ program SOG
         CALL define_Ri_b_sog(grid, h, surface_h, U, V, density, Ri_b, &
              V_t_square, N_2_g)
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
-        CALL ML_height_sog(grid, Ri_b, year, day, day_time, count, h_i, jmaxg)
-        ! *** This block of code is never executed because
-        ! *** ML_height_sog doesn't allow jamxg to exceed grid%M-3
-        IF (jmaxg >= grid%M-2) THEN ! mixing down to bottom of grid
-           PRINT "(A)","jmaxg >= grid%M-2. OR. h_i >= grid%d_g(grid%M-2) in KPP"
-           PRINT "(A)","jmaxg,h_i"
-           PRINT *,jmaxg,h_i
-           PRINT "(A)","day,time"
-           PRINT *,day,time
-           PRINT "(A)","T%new"
-           DO xx = 0,grid%M+1
-              PRINT *,T%new(xx)
-           END DO
-           PRINT "(A)","S%new"
-           DO xx = 0,grid%M+1
-              PRINT *,S%new(xx)
-           END DO
-           PRINT "(A)","U%new"
-           DO xx = 0,grid%M+1
-              PRINT *,U%new(xx)
-           END DO
-           PRINT "(A)","V%new"
-           DO xx = 0,grid%M+1
-              PRINT *,V%new(xx)
-           END DO
-           PRINT "(A)","rho%g"
-
-           DO xx = 0,grid%M+1
-              PRINT *,rho%g(xx)
-           END DO
-           PRINT "(A)","Ri_b"
-           PRINT *,Ri_b
-           PRINT "(A)","K%u%all"
-           PRINT *,K%u%all
-           PRINT "(A)","h%old"
-           PRINT *,h%old
-           STOP
-        END IF
-        !  Apply the Ekman depth criterion to the mixing layer depth
+        call find_mixing_layer_depth (grid, Ri_b, year, day, day_time, count, &
+             h_i)
+        ! Apply the Ekman depth criterion to the mixing layer depth
         ! when stable forcing exists
         ! *** This code could probably go into ML_height_sog.
         h_i = (h_i + h%new)/2.0 !use the average value!!!!!!!!##
@@ -655,10 +620,9 @@ program SOG
 
         CALL find_jmax_g(h,grid) !***! can't be less than the grid
 
-        del = ABS(h_i - h%new)/grid%i_space(jmaxg)  !##
+        del = ABS(h_i - h%new)/grid%i_space(1)
         h%new = h_i
         CALL find_jmax_g(h,grid)
-        CALL define_hm_sog(grid,S%new,h_m) !***! definition of mixed layer depth
 
         !----pressure grads--------------------
 
@@ -765,13 +729,13 @@ program SOG
      enddo  !---------- End of the implicit solver loop ----------
 
      ! Write time series results
-     call write_timeseries(time / 3600., &
+     call write_timeseries(time / 3600., grid, &
        ! Variables for standard physical model output
        count, h%new, T%new, S%new, &
        ! User-defined physical model output variables
 !!$       &
        ! Variables for standard biological model output
-       N%O%new , N%H%new, Sil%new, P%micro%new, P%nano%new, &
+       N%O%new , N%H%new, Si%new, P%micro%new, P%nano%new, &
        Detritus(1)%D%new, Detritus(2)%D%new, Detritus(3)%D%new &
        ! User-defined biological model output variables
 !!$       &
@@ -780,14 +744,14 @@ program SOG
      call write_profiles(codeId, datetime_str(runDatetime),            &
           datetime_str(startDatetime), year, day, day_time, dt, grid,  &
           T%new, S%new, rho%g, P%micro%new, P%nano%new, N%O%new, &
-          N%H%new, Sil%new, Detritus(1)%D%new, Detritus(2)%D%new,      &
+          N%H%new, Si%new, Detritus(1)%D%new, Detritus(2)%D%new,      &
           Detritus(3)%D%new, K%u%all, K%t%all, K%s%all, I_par, U%new,  &
           V%new)
 
 !------BIOLOGICAL MODEL--------------------------------------------
 
      call do_biology (time, day, dt, grid%M, precision, step_guess, step_min, &
-          T%new(0:grid%M), I_Par, P, N, Sil, Detritus, &
+          T%new(0:grid%M), I_Par, P, N%O%new, N%H%new, Si%new, Detritus, &
           Gvector_ro)
 !*** more of the below can be moved into the do_biology module
 
@@ -816,8 +780,8 @@ program SOG
           N%H%new(grid%M+1), &                                         ! in
           Gvector%n%h)                                                 ! out
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          Sil%new(grid%M+1), &                                         ! in
-          Gvector%sil)                                                 ! out
+          Si%new(grid%M+1), &                                          ! in
+          Gvector%si)                                                  ! out
 
      ! vertical advection
      call vertical_advection (grid, dt, P%micro%new, wupwell, &
@@ -828,8 +792,8 @@ program SOG
           Gvector%n%o)
      call vertical_advection (grid, dt, N%H%new, wupwell, &
           Gvector%n%h)
-     call vertical_advection (grid, dt, Sil%new, wupwell, &
-          Gvector%sil)
+     call vertical_advection (grid, dt, Si%new, wupwell, &
+          Gvector%si)
      DO xx = 1,D_bins-1
         call vertical_advection (grid, dt, Detritus(xx)%D%new, wupwell, &
              Gvector%d(xx)%bin)
@@ -863,7 +827,7 @@ program SOG
         Gvector_o%p%nano = Gvector%p%nano !V.flagella.01
         Gvector_o%n%o = Gvector%n%o
         Gvector_o%n%h = Gvector%n%h
-        Gvector_o%sil = Gvector%sil
+        Gvector_o%si = Gvector%si
 
         DO xx = 1,D_bins
            Gvector_o%d(xx)%bin = Gvector%d(xx)%bin
@@ -893,9 +857,9 @@ program SOG
      CALL P_H(grid%M,  N%H%old, Gvector%n%h, Gvector_o%n%h, &
           Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
           Hvector%n%h)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  Sil%old, Gvector%sil, Gvector_o%sil, &
-          Gvector_ro%sil, null_vector, Bmatrix_o%no, &
-          Hvector%sil)  ! null_vector 'cause no sinking
+     CALL P_H(grid%M,  Si%old, Gvector%si, Gvector_o%si, &
+          Gvector_ro%si, null_vector, Bmatrix_o%no, &
+          Hvector%si)  ! null_vector 'cause no sinking
 
      ! Solve the tridiagonal system for the biological quantities
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
@@ -903,11 +867,11 @@ program SOG
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
           Hvector%p%nano, Pnano1_p)
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
-          NO1_p) 
+          N%O%new(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
-          NH1_p) 
-     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%sil, &
-          Sil1_p)
+          N%H%new(1:grid%M))
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
+          Si%new(1:grid%M))
      do xx = 1,D_bins-1
         call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
              Hvector%d(xx)%bin, Detritus1_p(xx,:))
@@ -915,7 +879,29 @@ program SOG
      call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
           Hvector%d(D_bins)%bin, Detritus1_p(D_bins,:))
 
+     ! Update boundary conditions at surface, and deal with negative
+     ! values in biological model quantities
      CALL find_new(grid%M)
+     ! *** This is refactored code from find_new() that needs to go
+     ! *** somewhere else
+     N%O%new(0) = N%O%new(1)
+     if (any(N%O%new < 0.)) then
+        where (N%O%new < 0.) Si%new = 0.
+        write(stdout, *) "Warning: negative value(s) in N%O%new ", &
+             "were set to zero."
+     endif
+     N%H%new(0) = N%H%new(1)
+     if (any(N%H%new < 0.)) then
+        where (N%H%new < 0.) Si%new = 0.
+        write(stdout, *) "Warning: negative value(s) in N%H%new ", &
+             "were set to zero."
+     endif
+     Si%new(0) = Si%new(1)
+     if (any(Si%new < 0.)) then
+        where (Si%new < 0.) Si%new = 0.
+        write(stdout, *) "Warning: negative value(s) in Si%new ", &
+             "were set to zero."
+     endif
 
      !-----END BIOLOGY------------------------------------------------
 
@@ -926,7 +912,7 @@ program SOG
      ! calculated from the data
      call bot_bound_time (day, day_time, &                                ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O%new(grid%M+1), &          ! out
-          Sil%new(grid%M+1), P%micro%new(grid%M+1), P%nano%new(grid%M+1)) ! out
+          Si%new(grid%M+1), P%micro%new(grid%M+1), P%nano%new(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform (grid%M, N%H%new, Detritus)
@@ -948,8 +934,9 @@ program SOG
   call profiles_output_close
 
   ! Deallocate memory
-  call dalloc_water_props
   call dalloc_grid
   call dalloc_core_variables
+  call dalloc_physics_variables
+  call dalloc_biology_variables
 
 end program SOG
