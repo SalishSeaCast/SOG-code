@@ -47,6 +47,7 @@ timeseries_output.o profiles_output.o \
 \
 water_properties.o find_upwell.o diffusion.o fitbottom.o \
 biological_mod.o rungekutta.o do_biology_mod.o forcing.o physics_model.o \
+mixing_layer.o \
 \
 define_flux.o phys_Hvector.o \
 allocate1.o	\
@@ -58,7 +59,7 @@ ND_flux_profile.o vel_scales.o convection_scales.o		\
 shear_diff.o interior_match.o interior_match2.o		\
 shape_parameters.o modify_K.o def_gamma.o Coriolis_and_pg.o 		\
 matrix_A.o def_v_t_sog.o tridiag.o	\
-define_Ri_b_sog.o ML_height_sog.o define_hm_sog.o pdf.o 		\
+define_Ri_b_sog.o \
 new_year.o SOG.o P_H.o find_new.o allocate3.o advection.o
 
 # The executable is the default target that is built by "make"
