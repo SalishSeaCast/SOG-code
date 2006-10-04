@@ -179,13 +179,13 @@ contains
   end subroutine init_timeseries_output
 
 
-  subroutine write_timeseries(time, &
+  subroutine write_timeseries(time, grid, &
        ! Variables for standard physical model output
        iter_cnt, h, T, S, &
        ! User-defined physical model output variables
 !!$       &
        ! Variables for standard biological model output
-       NO, NH, Sil, Pmicro, Pnano, remin_Detritus, sink_Detritus, &
+       NO, NH, Si, Pmicro, Pnano, remin_Detritus, sink_Detritus, &
        mort_Detritus &
 !!$       &
        ! User-defined biological model output variables
@@ -195,17 +195,18 @@ contains
 
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
-    use grid_mod, only: interp_g_d
+    use grid_mod, only: grid_, interp_value
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: time                ! [hr aftr start midnight]
+    type(grid_), intent(in) :: grid                  ! Grid arrays
     integer, intent(in) :: iter_cnt                  ! Timestep iteration count
     real(kind=dp), intent(in) :: h                   ! Mixed layer depth [m]
     real(kind=dp), dimension(0:), intent(in) :: T    ! Temperature [K]
     real(kind=dp), dimension(0:), intent(in) :: S    ! Salinity [-]
     real(kind=dp), dimension(0:), intent(in) :: NO   ! Nitrate conc [uM N]
     real(kind=dp), dimension(0:), intent(in) :: NH   ! Ammonium conc [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: Sil  ! Silicon conc [uM Si]
+    real(kind=dp), dimension(0:), intent(in) :: Si   ! Silicon conc [uM Si]
     ! Micro phytoplankton biomass [uM N]
     real(kind=dp), dimension(0:), intent(in) :: Pmicro
     ! Nano phytoplankton biomass [uM N]
@@ -262,9 +263,10 @@ contains
     ! time, surface nitrate, ammonium, and concentrations, 
     ! surface biomass of micro and nano phytoplankton,
     ! biomasses of detritus at 20 m depth
-    write(std_bio_timeseries, 102) time, NO(0), NH(0), Sil(0), &
-         Pmicro(0), Pnano(0), interp_g_d(remin_Detritus, 20.0d0),   &
-         interp_g_d(sink_Detritus, 20.0d0), interp_g_d(mort_Detritus, 20.0d0)
+    write(std_bio_timeseries, 102) time, NO(0), NH(0), Si(0),                 &
+         Pmicro(0), Pnano(0), interp_value(20.0d0, grid%d_g, remin_Detritus), &
+         interp_value(20.0d0, grid%d_g, sink_Detritus),                       &
+         interp_value(20.0d0, grid%d_g, mort_Detritus)
 102 format(f10.4, 80(2x, f8.4))
 
 
