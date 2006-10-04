@@ -7,7 +7,7 @@ module fitbottom
   !
   ! Public Subroutines:
   !
-  ! bot__bound_time (day, day_time, Tbot, Sbot, Nobot, Silbot, Pmbot, Pnbot)
+  ! bot__bound_time (day, day_time, Tbot, Sbot, Nobot, Sibot, Pmbot, Pnbot)
   !  -- Calculate the values at the bottom of the grid for those
   !     quantities that we have data for from an annual fit.
   !
@@ -89,7 +89,7 @@ contains
 
 
   subroutine bot_bound_time (day, day_time, &
-       Tbot, Sbot, Nobot, Silbot, Pmbot, Pnbot)
+       Tbot, Sbot, Nobot, Sibot, Pmbot, Pnbot)
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
@@ -99,7 +99,7 @@ contains
     ! Arguments:
     integer, intent(in) :: day
     real(kind=dp), intent(in) :: day_time
-    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Silbot, Pmbot, Pnbot
+    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Pmbot, Pnbot
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio
     
@@ -109,7 +109,7 @@ contains
     Tbot = CtoK(Tbot)
     Sbot = bottom_value(arg, 'salinity')
     Nobot = bottom_value(arg, 'nitrate')
-    Silbot = bottom_value(arg, 'silicon')
+    Sibot = bottom_value(arg, 'silicon')
     
     chl = bottom_value(arg, 'chl fluor')
     ratio = bottom_value(arg, 'plank ratio')
