@@ -127,7 +127,7 @@ contains
 
   subroutine write_profiles(codeId, str_runDatetime, str_CTDdatetime,    &
        year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, NO, NH,  &
-       Sil, dissolved_detritus, sinking_detritus, lost_Detritus, Ku, Kt, &
+       Si, dissolved_detritus, sinking_detritus, lost_Detritus, Ku, Kt, &
        Ks, I_par, U, V)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
@@ -154,7 +154,7 @@ contains
          Pnano(0:), &   ! Nano phytoplankton (flagellates) [uM N]
          NO(0:), &      ! Nitrates [uM N]
          NH(0:), &      ! Ammonium [uM N]
-         Sil(0:), &     ! Silicon [uM]
+         Si(0:), &      ! Silicon [uM]
          dissolved_detritus(0:), &  ! Dissolved detritus [uM N]
          sinking_detritus(0:),   &  ! Dissolved detritus [uM N]
          lost_detritus(0:),      &  ! Dissolved detritus [uM N]
@@ -217,7 +217,7 @@ contains
                str_CTDdatetime, str_proDatetime, derS, dep
 200       format("! Profiles of Temperature, Salinity, Density, ",           &
                "Phytoplankton (micro & nano),"/,                             &
-               "! Nitrate, Ammonium, Silcion and Detritus (dissolved, ",     &
+               "! Nitrate, Ammonium, Silicon and Detritus (dissolved, ",     &
                "sinking, and mortality),"/,                                  &
                "! Total Eddy Diffusivities (momentum, temperature, & ",      &
                "salinity, Photosynthetic"/,                                  &
@@ -245,7 +245,7 @@ contains
           do i = 0, grid%M
              sigma_t = rho(i) - 1000.
              write(profiles, 201) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
-                  Pmicro(i), Pnano(i), NO(i), NH(i), Sil(i),              &
+                  Pmicro(i), Pnano(i), NO(i), NH(i), Si(i),              &
                   dissolved_detritus(i), sinking_detritus(i),             &
                   lost_detritus(i), Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
           enddo
@@ -254,7 +254,7 @@ contains
           sigma_t = rho(grid%M+1) - 1000.
           write(profiles, 201) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),    &
                S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1),  &
-               NO(grid%M+1), NH(grid%M+1), Sil(grid%M+1),                &
+               NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),                 &
                dissolved_detritus(grid%M+1), sinking_detritus(grid%M+1), &
                lost_detritus(grid%M+1), Ku(grid%M), Kt(grid%M),          &
                Ks(grid%M), I_par(grid%M), U(grid%M+1), V(grid%M+1)
