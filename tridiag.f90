@@ -5,7 +5,7 @@ module tridiag_mod
 
 contains
 
-  subroutine tridiag(A, B, C, R, U) !!A,B,C,R,U are N dimensional vectors
+  subroutine tridiag(A, B, C, R, U)
     ! Solve the matrix equation MU = R, where M is a tridiagonal matrix
     ! with diagonal B, sub-diagonal A, and super-diagonal C.
     use precision_defs, only: dp
