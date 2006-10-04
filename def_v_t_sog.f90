@@ -5,8 +5,9 @@ SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
 
   use precision_defs, only: dp
   use grid_mod, only: grid_
+  use mixing_layer, only: Ri_c
       USE mean_param, only: height
-      USE surface_forcing
+      USE surface_forcing, only: c_s, Cv, ep, kapa
 
       IMPLICIT NONE
 
