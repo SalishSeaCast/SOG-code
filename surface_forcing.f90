@@ -20,10 +20,6 @@ module surface_forcing
   real(kind=dp), parameter :: f = 1.1d-4
   ! Acceleration due to gravity
   real(kind=dp), parameter :: g = 9.81  ! m/s^2
-  ! Critical value of Richardson number for mixed layer depth
-  ! determination
-  ! *** Susan was surprised that this value was not 0.25
-  real(kind=dp), parameter :: Ri_c = 0.3
 
   DOUBLE PRECISION, PARAMETER:: &
        small = 1.D-15, &
