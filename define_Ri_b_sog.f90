@@ -19,7 +19,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, dens, Rib, &
   type(height), intent(out) :: surf_h
   type(prop), intent(in out) :: Uu, Vv, dens
   real(kind=dp), dimension(1:d%M), intent(in) :: Vt_sq
-  real(kind=dp), dimension(1:d%M), intent(out) :: Rib
+  real(kind=dp), dimension(0:d%M), intent(out) :: Rib
   real(kind=dp), dimension(0:d%M+1), intent(in) :: N2
  
   ! Local variables:
