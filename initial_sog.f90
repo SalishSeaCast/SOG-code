@@ -20,7 +20,7 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean (Ui, Vi, Tnew, Snew, Pi, NO, NH, Sil, Detritus, &
+  subroutine initial_mean (Ui, Vi, Tnew, Snew, Pi, NO, NH, Si_new, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
     ! *** What's it do?
@@ -33,11 +33,11 @@ contains
     type(prop), intent(out) :: Ui, Vi
     real(kind=dp), dimension(0:), intent(out) :: &
          Tnew, &  ! Temperature profile
-         Snew     ! Salinity profile
+         Snew, &  ! Salinity profile
+         Si_new   ! Silicon profile
     type(plankton), intent(out) :: Pi 
     real(kind=dp), dimension (0:), intent(out) :: NO  ! N%O%new,  nitrate
     real(kind=dp), dimension (0:), intent(out) :: NH  ! N%H%new,  ammonium
-    real(kind=dp), dimension (0:), intent(out) :: Sil ! Sil%new,  silicon
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     real(kind=dp), intent(out) :: hi !h%new
@@ -116,7 +116,7 @@ contains
     open(unit=66, file=fn, status="OLD", action="READ")
 
     do i = 0, d%M
-       read(66, *) depth, NO(i), Sil(i)
+       read(66, *) depth, NO(i), Si_new(i)
        if (depth.ne.i*0.5) then
           write (*,*) 'Expecting nutrients, NO3 and Silicon at 0.5 m intervals'
           stop
@@ -124,7 +124,7 @@ contains
     enddo
     close (66)
     NO(d%M+1) = NO(d%M)
-    Sil(d%M+1) = Sil(d%M)
+    Si_new(d%M+1) = Si_new(d%M)
     
 
 
