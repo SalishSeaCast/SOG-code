@@ -22,12 +22,10 @@ module declarations
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   TYPE(prop)::U, V, density, vt, ut
-  type(prop):: Sil              ! silicon 
   TYPE(plankton):: P 
-  TYPE(nutrient):: N
   TYPE(Knu)::K 
   TYPE(flux)::w
-  TYPE(height)::h, surface_h, h_m
+  TYPE(height)::h, surface_h
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::phi,omega
   TYPE(MSTscalar)::a2,a3  !shape constants
@@ -95,7 +93,8 @@ module declarations
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
   ! Temporary vectors U_i , U_p... to hold results from tridiagonal solver
   real(kind=dp), dimension(:), allocatable :: P1_p, Pnano1_p, &
-       NO1_p, NH1_p, Sil1_p, &
+!!$       NO1_p, NH1_p, &
+!!$       &Si1_p, &
        U_p, V_p, S_p, T_p
   real(kind=dp), dimension(:,:), allocatable :: Detritus1_p
   ! Surface biological flux == 0
