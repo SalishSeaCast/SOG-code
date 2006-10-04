@@ -7,21 +7,25 @@ module core_variables
   ! 
   ! Public Variables:
   !
-  ! U -- Velocity component in the u (cross-strait, 35 deg) direction [m/s]
+  !   U -- Velocity component in the u (cross-strait, 35 deg) direction [m/s]
   !
-  ! V -- Velocity component in the v (along-strait, 305 deg) direction [m/s]
+  !   V -- Velocity component in the v (along-strait, 305 deg) direction [m/s]
   !
-  ! T -- Water column temperature [K]
+  !   T -- Water column temperature [K]
   !
-  ! S -- Water column salinity [-]
+  !   S -- Water column salinity [-]
   !
-  ! B -- Water column buoyancy [m/s^2]
+  !   N%O -- Nitrate concentration [uM N]
+  !
+  !   N%H -- Ammonium concentration [uM N]
+  !
+  !   Si -- Silicon concentration [uM]
   !
   ! Public Subroutines:
   !
-  ! alloc_core_variables -- Allocate memory for core variables arrays.
+  !   alloc_core_variables -- Allocate memory for core variables arrays.
   !
-  ! dalloc_core_variables -- De-allocate memory for core variables arrays.
+  !   dalloc_core_variables -- De-allocate memory for core variables arrays.
 
   use precision_defs, only: dp
   implicit none
@@ -29,25 +33,38 @@ module core_variables
   private
   public :: &
        ! Variables:
-       T, &  ! Temperature profile arrays
-       S, &  ! Salinity profile arrays
-       B, &  ! Buoyancy profile array
+       T,  &  ! Temperature profile arrays
+       S,  &  ! Salinity profile arrays
+       N,  &  ! Nitrate & ammonium concentation profile arrays
+       Si, &  ! Silicon concentration profile arrays
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
-  ! Core variables type definition:
-  type :: quantity
+  ! Private module type definitions:
+  !
+  ! Core variables:
+  type :: profiles
      real(kind=dp), dimension(:), pointer :: &
           new, &  ! Profile of quantity at current time setp
           old, &  ! Profile of quantity at previous time step
           grad_i  ! Profile of gradient of quantity at grid layer interfaces
-  end type quantity
+  end type profiles
+  !
+  ! Nitrogen compounds
+  type :: nitrogen
+     type(profiles) :: &
+          O, &  ! N%O is nitrate (NO3) concentration profile
+          H     ! H%H is ammonium (NH4) concentration profile
+  end type nitrogen
+
 
   ! Public variable declarations:
-  type(quantity) :: &
+  type(profiles) :: &
        T, &  ! Temperature profile arrays
        S, &  ! Salinity profile arrays
-       B     ! Buoyancy profile array
+       Si    ! Silicon concentration profile arrays
+  type(nitrogen) :: &
+       N  ! Nitrate & ammonium profile arrays
 
 contains
 
@@ -61,39 +78,55 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Water column temperature profile arrays"
+    msg = "Temperature profile arrays"
     allocate(T%new(0:M+1), T%old(0:M+1), T%grad_i(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Water column salinity profile arrays"
+    msg = "Salinity profile arrays"
     allocate(S%new(0:M+1), S%old(0:M+1), S%grad_i(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Water column buoyancy profile array"
-    allocate(B%new(0:M+1), &
+    msg = "Nitrate profile arrays"
+    allocate(N%O%new(0:M+1), N%O%old(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Ammonium profile arrays"
+    allocate(N%H%new(0:M+1), N%H%old(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Silicon concentration profile arrays"
+    allocate(Si%new(0:M+1), Si%old(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_core_variables
 
 
   subroutine dalloc_core_variables
-    ! Allocate memory for core variables arrays.
+    ! Deallocate memory for core variables arrays.
     use malloc, only: dalloc_check
     implicit none
     ! Local variables:
-    integer           :: dallocstat  ! Allocation return status
-    character(len=80) :: msg        ! Allocation failure message prefix
+    integer           :: dallocstat  ! Deallocation return status
+    character(len=80) :: msg        ! Deallocation failure message prefix
 
-    msg = "Water column temperature profile arrays"
+    msg = "Temperature profile arrays"
     deallocate(T%new, T%old, T%grad_i, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Water column salinity profile arrays"
+    msg = "Salinity profile arrays"
     deallocate(S%new, S%old, S%grad_i, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Water column buoyancy profile array"
-    deallocate(B%new, &
+    msg = "Nitrate profile arrays"
+    deallocate(N%O%new, N%O%old, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Ammonium profile arrays"
+    deallocate(N%H%new, N%H%old, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Silicon concentration profile arrays"
+    deallocate(Si%new, Si%old, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_core_variables
