@@ -3,6 +3,23 @@
 
 module biological_mod
   ! Type definitions, and subroutines for the biological model.
+  !
+  ! Public variables:
+  !
+  !   rate_det --
+  !
+  ! Public subroutines:
+  !
+  !   init_biology -- Initialize biology model.
+  !
+  !   define_PZ --
+  !
+  !   derivs_sog --
+  !
+  !   reaction_p_sog --
+  !
+  !   dalloc_biology_variables -- Deallocate memory from biology model
+  !                               variables.
 
   use precision_defs, only: dp
   use declarations, only: D_bins, M2 ! hopefully can get these out of everything else
@@ -10,20 +27,19 @@ module biological_mod
   implicit none
 
   private
-
-  public :: derivs_sog, &
-       define_PZ, & 
-       reaction_p_sog, &
-       init_biology, &
-       rate_detritus, rate_det !*** for sinking
+  public :: &
+       ! Variables:
+       rate_det, & !*** for sinking
+       ! Subroutines:
+       init_biology, define_PZ, derivs_sog, reaction_p_sog, &
+       dalloc_biology_variables
 
   ! Private type definitions:
   !
   ! Indices for quantities in PZ vector
   TYPE :: bins
-     INTEGER :: micro, nano, NO, NH, Sil, det, Quant
+     INTEGER :: micro, nano, NO, NH, Si, det, Quant
   END TYPE bins
-
   !
   ! Rate parameters for phytoplankton
   type :: rate_para_phyto
@@ -37,25 +53,37 @@ module biological_mod
           gamma_o, & ! exp strength of NH inhit of NO3 uptake
           N_o, & ! overall half saturation constant????
           N_x, & ! exponent in inhibition equation
-          Sil_rat, & ! silcon to nitrogen ratio in phyto     
+          Si_ratio, & ! silicon to nitrogen ratio in phyto     
           Rm, & ! respiration rate
           M_z ! mortality rate
   end type rate_para_phyto
-
-  ! rate parameters for nutrients !*** temporary for old N%r which got orphaned
+  !
+  ! Rate parameters for nutrients !*** temporary for old N%r which got orphaned
   type :: rate_para_nutrient
      real(kind=dp) r ! reminerialization rate NH to NO3
   end type rate_para_nutrient
-
-  ! parameters for mortality (where it goes)
+  !
+  ! Parameters for mortality (where it goes)
   type :: loss_param
      real(kind=dp), dimension(:), pointer :: s,m  ! nano, micro
   end type loss_param
-
-  ! rate parameters for detritus
+  !
+  ! Rate parameters for detritus
   type :: rate_detritus
      real(kind=dp), dimension(:), pointer :: remineral, sink
   end type rate_detritus
+  !
+  ! Nitrogen compound uptake diagnostics
+  type :: uptake_
+     real(kind=dp), dimension(:), pointer :: &
+          NO, &  ! Nitrate uptake profile
+          NH     ! Ammonium uptake profile
+  end type uptake_
+
+
+  ! Public variable declarations:
+  type(rate_detritus) :: rate_det
+
 
   ! Private variable declarations:
   !
@@ -66,46 +94,32 @@ module biological_mod
   data PZ_bins%nano  /2/  ! Position of Flagellates (nano plankton)
   data PZ_bins%NO    /3/  ! Position of Nitrate
   data PZ_bins%NH    /4/  ! Position of Ammonium
-  data PZ_bins%Sil   /5/  ! Position of Silcon
+  data PZ_bins%Si    /5/  ! Position of Silicon
   data PZ_bins%det   /6/  ! Start of detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
+  !
   ! Biological model logicals (turned parts of the model on or off)
   logical :: flagellates  ! whether flagellates can influence other biology
   logical :: remineralization !whether there is a remineralization loop
+  !
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano
   type(rate_para_nutrient) :: rate_N
   type(loss_param) :: wastedestiny
-  type(rate_detritus) :: rate_det
+  !
+  ! Nitrogen compound uptake diagnotics
+  type(uptake_) :: uptake
+  !
+  ! Nitrogen remineralization diagnostics
+  real(kind=dp), dimension(:), pointer :: &
+       remin_NH, &  ! Total remineralization to ammonium
+       NH_oxid      ! Bacterial oxidation of NH4 to NO3
 
 contains
 
-  subroutine alloc_biology
-    ! Allocate memory for biological model arrays.
-    use malloc, only: alloc_check
-    implicit none
-    ! Local variables:
-    integer           :: allocstat  ! Allocation return status
-    character(len=80) :: msg        ! Allocation failure message prefix
-
-    msg = "PZ vector (biology model timestep initial conditions) array"
-    allocate(PZ(M2), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Waste destiny (biology model timestep initial conditions) array"
-    allocate(wastedestiny%m(0:D_bins), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    allocate(wastedestiny%s(0:D_bins), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Detritus parameters (biology model timestep initial conditions) array"
-    allocate(rate_det%remineral(D_bins), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    allocate(rate_det%sink(D_bins), stat=allocstat)
-  end subroutine alloc_biology
-
-
-  subroutine init_biology (M)
+  subroutine init_biology(M)
     ! Initialize biological model.
     ! *** Incomplete...
     use input_processor, only: getpard, getparl, getpari
@@ -121,8 +135,8 @@ contains
 
     ! Size of the PZ vector for biological model
     M2 = (PZ_bins%Quant + D_bins) * M   !size of PZ in biology: 
-    ! Allocate memory for PZ
-    call alloc_biology
+    ! Allocate memory for biology model variables
+    call alloc_biology_variables(M)
 
     flagellates = getparl('flagellates_on')
     remineralization = getparl('remineralization')
@@ -155,9 +169,9 @@ contains
     ! exponent in inhibition equation
     rate_micro%N_x = getpard('Micro, N_x')
     rate_nano%N_x = getpard('Nano, N_x')
-    ! silcon to nitrogen ratio in phyto
-    rate_micro%Sil_rat = getpard('Micro, Sil ratio')
-    rate_nano%Sil_rat = getpard('Nano, Sil ratio')
+    ! silicon to nitrogen ratio in phyto
+    rate_micro%Si_ratio = getpard('Micro, Si ratio')
+    rate_nano%Si_ratio = getpard('Nano, Si ratio')
     ! respiration rate
     rate_micro%Rm = getpard('Micro, resp')
     rate_nano%Rm = getpard('Nano, resp')
@@ -189,7 +203,71 @@ contains
   end subroutine init_biology
 
 
-  SUBROUTINE define_PZ(M, Pmicro, Pnano, NO, NH, Sil, Detritus, &
+  subroutine alloc_biology_variables(M)
+    ! Allocate memory for biological model arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Argument:
+    integer :: M  ! Number of grid points
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "PZ vector (biology model timestep initial conditions) array"
+    allocate(PZ(M2), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Waste destiny (biology model timestep initial conditions) array"
+    allocate(wastedestiny%m(0:D_bins), wastedestiny%s(0:D_bins), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Detritus params (biology model timestep initial conditions) array"
+    allocate(rate_det%remineral(D_bins), rate_det%sink(D_bins), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Nitrogen compounds uptake diagnostic arrays"
+    allocate(uptake%NO(1:M), uptake%NH(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Nitrogen remineralization diagnostic arrays"
+    allocate(remin_NH(1:M), NH_oxid(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_biology_variables
+
+
+  subroutine dalloc_biology_variables
+    ! Deallocate memory for biological model arrays.
+    use malloc, only: dalloc_check
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Deallocation return status
+    character(len=80) :: msg         ! Deallocation failure message prefix
+
+    msg = "PZ vector (biology model timestep initial conditions) array"
+    deallocate(PZ, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Waste destiny (biology model timestep initial conditions) array"
+    deallocate(wastedestiny%m, wastedestiny%s, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Detritus params (biology model timestep initial conditions) array"
+    deallocate(rate_det%remineral, rate_det%sink, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Nitrogen compounds uptake diagnostic arrays"
+    deallocate(uptake%NO, uptake%NH, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Nitrogen remineralization diagnostic arrays"
+    deallocate(remin_NH, NH_oxid, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+  end subroutine dalloc_biology_variables
+
+
+  SUBROUTINE define_PZ(M, Pmicro, Pnano, NO, NH, Si, Detritus, &
        PZ)
 
     ! This subroutine takes all the separate variables (microplankton,
@@ -202,7 +280,7 @@ contains
     IMPLICIT NONE
 
     integer, intent(in):: M
-    DOUBLE PRECISION, DIMENSION(0:), INTENT(IN)::Pmicro, Pnano, NO, NH, Sil
+    DOUBLE PRECISION, DIMENSION(0:), INTENT(IN)::Pmicro, Pnano, NO, NH, Si
     TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
     DOUBLE PRECISION, DIMENSION (M2), INTENT (OUT) :: PZ
 
@@ -245,11 +323,11 @@ contains
        PZ(bPZ:ePZ) = 0
     endif
 
-    ! Silcon
+    ! Silicon
 
-    bPz = (PZ_bins%Sil-1) * M + 1
-    ePZ = PZ_bins%Sil * M
-    PZ(bPZ:ePZ) = Sil(1:M)
+    bPz = (PZ_bins%Si-1) * M + 1
+    ePZ = PZ_bins%Si * M
+    PZ(bPZ:ePZ) = Si(1:M)
 
     ! Detritus
     do j=1,D_bins
@@ -264,22 +342,24 @@ contains
 
   END SUBROUTINE define_PZ
 
-  SUBROUTINE reaction_p_sog(M, PZ, Pmicro, Pnano, NO, &
-       NH, Sil, Detritus, Gvector)
 
-    USE mean_param, only: snow, UVST
-
-    IMPLICIT NONE
-
+  subroutine reaction_p_sog(M, PZ, Pmicro, Pnano, NO, &
+       NH, Si, Detritus, Gvector)
+    ! Unpack the biological quantities from the PZ vector into the
+    ! appropriate components of Gvector
+    ! *** This subroutine could have a more meaningful name...
+    use precision_defs, only: dp
+    use mean_param, only: snow, UVST
+    implicit none
+    ! Arguments:
     integer, intent(in):: M
-    DOUBLE PRECISION, DIMENSION(M2), INTENT(IN)::PZ
-    DOUBLE PRECISION, DIMENSION(0:M+1), INTENT(IN)::Pmicro,Pnano, NO, NH, Sil
-    TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
-    TYPE(UVST), INTENT(IN OUT)::Gvector  ! IN only 'cause not setting all
-
+    real(kind=dp), dimension(M2), intent(in) :: PZ
+    real(kind=dp), dimension(0:M+1), intent(in) :: Pmicro, Pnano, NO, NH, Si
+    type(snow), dimension(D_bins), intent(in) :: Detritus
+    type(UVST), intent(inout) :: Gvector  ! inout 'cause we're not setting all
     ! Local variables
-    INTEGER :: bPZ, ePZ ! start position and end position in PZ array
-    INTEGER::j
+    integer :: bPZ, ePZ ! start position and end position in PZ array
+    integer :: j
 
     ! Micro plankton
     bPZ = (PZ_bins%micro-1) * M + 1
@@ -301,63 +381,52 @@ contains
     ePZ = PZ_bins%NH * M
     Gvector%N%H = PZ(bPZ:ePZ) - NH(1:M)
 
-    ! Silcon
-    bPZ = (PZ_bins%Sil-1) * M + 1
-    ePZ = PZ_bins%Sil * M
-    Gvector%Sil = PZ(bPZ:ePZ) - Sil(1:M)
+    ! Silicon
+    bPZ = (PZ_bins%Si-1) * M + 1
+    ePZ = PZ_bins%Si * M
+    Gvector%Si = PZ(bPZ:ePZ) - Si(1:M)
 
     ! Detritus
-    DO j = 1,D_bins
+    do j = 1, D_bins
        bPz = (PZ_bins%Quant + (j-1) ) * M + 1
        ePz = (PZ_bins%Quant + j) * M
        Gvector%d(j)%bin = PZ(bPz:ePz) - Detritus(j)%D%old(1:M)
-    END DO
+    enddo
 
-  END SUBROUTINE reaction_p_sog
+  end subroutine reaction_p_sog
 
-  SUBROUTINE p_growth(M, NO, NH, Sil, P, I_par, Temp, N, rate, plank, & 
+
+  subroutine p_growth(M, NO, NH, Si, P, I_par, Temp, rate, plank, & 
        Resp, Mort) 
-
-    ! this subroutine calculates the growth, respiration and mortality
-    ! (light limited or nutrient limited) of either phytoplankton class.
-    ! All three are functions of temperature
-
-    use mean_param, only: plankton2, nutrient
+    ! Calculate the growth, respiration and mortality (light limited
+    ! or nutrient limited) of either phytoplankton class.  All three
+    ! are functions of temperature
+    use precision_defs, only: dp
+    use mean_param, only: plankton2
     use surface_forcing, only: small
-
     implicit none
-
+    ! Arguments:
     integer, intent(in) :: M
-    ! Nitrate and ammonium concentrations
-    double precision, dimension(M), intent(in) :: NO, NH, Sil 
+    ! Nitrate, ammonium & silicon concentrations
+    real(kind=dp), dimension(1:M), intent(in) :: NO, NH, Si 
     ! plankton concentraton (either Pmicro or Pnano)
-    DOUBLE PRECISION, DIMENSION(M), INTENT(IN)::P !V.flagella.01 note: either Pmicro or Pnano
-
-    DOUBLE PRECISION, DIMENSION(0:M), INTENT(IN):: I_par  ! light
-    DOUBLE PRECISION, DIMENSION(0:M), INTENT(IN):: Temp  ! temperature
-
-
+    real(kind=dp), dimension(1:M), intent(in) :: P
+    real(kind=dp), dimension(0:M), intent(in) :: I_par  ! light
+    real(kind=dp), dimension(0:M), intent(in) :: Temp  ! temperature
     ! parameters of the growth equations
     type(rate_para_phyto), intent(in) :: rate
     ! out are the growth values
-    TYPE(plankton2), INTENT(OUT):: plank ! either micro or nano 
+    type(plankton2), intent(out) :: plank ! either micro or nano 
+    real(kind=dp), dimension(1:M), intent(out) :: Resp, Mort
 
-    ! nutrient uptake values (incremented)
-    TYPE(nutrient), INTENT(IN OUT):: N
-
-    DOUBLE PRECISION, DIMENSION(M), intent(out) :: Resp, Mort
-
-
-    ! internal variables
-
-    INTEGER::j ! counter through depth
-
-    DOUBLE PRECISION, DIMENSION(M) :: Uc ! growth based on light
-    double precision, dimension(M) :: Oup_cell ! NO uptake assuming full light
-    double precision, dimension(M) :: Hup_cell ! NH uptake assuming full light
-    DOUBLE PRECISION, DIMENSION(M) :: Rmax ! maximum growth rate for given Temp
-    double precision :: temp_effect ! temperature limitation
-    double precision :: NH_effect ! ammonium effect on nutrient uptake
+    ! Local variables:
+    integer :: j ! counter through depth
+    real(kind=dp), dimension(1:M) :: Uc ! growth based on light
+    real(kind=dp), dimension(1:M) :: Oup_cell ! NO uptake assuming full light
+    real(kind=dp), dimension(1:M) :: Hup_cell ! NH uptake assuming full light
+    real(kind=dp), dimension(1:M) :: Rmax ! maximum growth rate for given Temp
+    real(kind=dp) :: temp_effect ! temperature limitation
+    real(kind=dp) :: NH_effect ! ammonium effect on nutrient uptake
 
 !!!!!!!!!!!Define growth Due to I_par!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -436,12 +505,12 @@ contains
           IF (Uc(j) <= Hup_cell(j)) THEN
              ! add to nutrient uptake so we combined the effects of
              ! different phyto classes
-             N%H_uptake%new(j) = Uc(j) * P(j) + N%H_uptake%new(j)
-             N%O_uptake%new(j) = 0.
+             uptake%NH(j) = Uc(j) * P(j) + uptake%NH(j)
+             uptake%NO(j) = 0.
           ELSE
-             N%H_uptake%new(j) = Hup_cell(j) * P(j) + N%H_uptake%new(j)
-             N%O_uptake%new(j) = (Uc(j) - Hup_cell(j)) * P(j) + &
-                  N%O_uptake%new(j)
+             uptake%NH(j) = Hup_cell(j) * P(j) + uptake%NH(j)
+             uptake%NO(j) = (Uc(j) - Hup_cell(j)) * P(j) + &
+                  uptake%NO(j)
           END IF
 
        ELSE IF (Uc(j) >= 0. .AND. Uc(j) >= Oup_cell(j) + Hup_cell(j)) THEN
@@ -453,8 +522,8 @@ contains
              plank%growth%new(j) = 0.
           ENDIF
 
-          N%O_uptake%new(j) = Oup_cell(j) * P(j) + N%O_uptake%new(j)
-          N%H_uptake%new(j) = Hup_cell(j) * P(j) + N%H_uptake%new(j)
+          uptake%NO(j) = Oup_cell(j) * P(j) + uptake%NO(j)
+          uptake%NH(j) = Hup_cell(j) * P(j) + uptake%NH(j)
 
        ELSE  !No nutrient uptake, no growth
           plank%growth%new(j) =  0
@@ -469,8 +538,8 @@ contains
     ! use to advance the biology to the next time step.
 
     use precision_defs, only: dp
-    use mean_param, only: plankton2, nutrient, snow
-    use declarations, only: D_bins, N, micro, nano, &
+    use mean_param, only: plankton2, snow
+    use declarations, only: D_bins, micro, nano, &
          f_ratio, Detritus
 
     implicit none
@@ -492,7 +561,7 @@ contains
     real(kind=dp), DIMENSION(M):: Resp_nano, Mort_nano  ! respiration & mortality
 
     real(kind=dp), dimension (M) :: Pmicro, Pnano ! micro/nano plankton conc.
-    real(kind=dp), dimension (M) :: NO, NH,Sil ! nitrate and ammonium conc.
+    real(kind=dp), dimension (M) :: NO, NH, Si ! nitrate, ammonium & silicon conc.
     real(kind=dp), dimension (D_bins, M) :: detr ! detritus
     real(kind=dp), dimension (M) :: WasteMicro, WasteNano ! losses by size
 
@@ -544,15 +613,15 @@ contains
        endif
     enddo
 
-    ! put PZ silcon values into Sil variable, removing any negative values
+    ! put PZ silicon values into Si variable, removing any negative values
 
     do ii = 1,M                        ! counter through grid
-       jj = (PZ_bins%Sil-1) * M + ii    ! counter into PZ
+       jj = (PZ_bins%Si-1) * M + ii    ! counter into PZ
 
        if (PZ(jj) > 0) then
-          Sil(ii) = PZ(jj)
+          Si(ii) = PZ(jj)
        else
-          Sil(ii) = 0
+          Si(ii) = 0
        endif
     enddo
 
@@ -572,11 +641,11 @@ contains
     enddo
 
     ! initialize transfer rates between the pools
-    N%O_uptake%new = 0.
-    N%H_uptake%new = 0.
+    uptake%NO = 0.
+    uptake%NH = 0.
     WasteMicro = 0.
     WasteNano = 0.
-    N%remin = 0.
+    remin_NH = 0.
 
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of micro plankton
     ! I_par is light, Temp is temperature 
@@ -585,8 +654,8 @@ contains
     ! (OUT)
     ! Resp is respiration, Mort is mortality
 
-    call p_growth(M, NO, NH, Sil, Pmicro, I_par, Temp, & ! in
-         N, rate_micro, micro, &         ! in and out, in, out
+    call p_growth(M, NO, NH, Si, Pmicro, I_par, Temp, & ! in
+         rate_micro, micro, &         ! in and out, in, out
          Resp_micro, Mort_micro)                    ! out
 
     ! put microplankton mortality into the medium detritus flux
@@ -599,31 +668,31 @@ contains
     ! (OUT)
     ! Resp_nano is respiration, Mort_nano is mortality
 
-    call p_growth(M, NO, NH, Sil, Pnano, I_par, Temp, & ! in
-         N, rate_nano, nano, &             ! in and out, in, out
+    call p_growth(M, NO, NH, Si, Pnano, I_par, Temp, & ! in
+         rate_nano, nano, &             ! in and out, in, out
          Resp_nano, Mort_nano)                     ! out
 
     WasteNano = WasteNano + Mort_nano*Pnano
 
 !!!New quantity, bacterial 0xidation of NH to NO pool ==> NH^2
-    N%bacteria(1:M) = rate_N%r * NH**2
+    NH_oxid(1:M) = rate_N%r * NH**2
 
     ! remineralization of detritus groups 1 and 2 (not last one)
     do kk = 1,D_bins-1
-       N%remin(:) = N%remin(:) + rate_det%remineral(kk) * detr(kk,:)
+       remin_NH(:) = remin_NH(:) + rate_det%remineral(kk) * detr(kk,:)
     enddo
 
-    IF (MINVAL(N%remin) < 0.) THEN
-       PRINT "(A)","N%remin < 0. in derivs.f90"
-       PRINT *,N%remin
+    IF (MINVAL(remin_NH) < 0.) THEN
+       PRINT "(A)","remin_NH < 0. in derivs.f90"
+       PRINT *,remin_NH
        STOP
     END IF
 
     ! calculate the f-ratio
     do jj = 1,M 
-       IF (N%O_uptake%new(jj) + N%H_uptake%new(jj) > 0.) THEN
-          f_ratio(jj) = N%O_uptake%new(jj) /  &
-               (N%O_uptake%new(jj) + N%H_uptake%new(jj))
+       IF (uptake%NO(jj) + uptake%NH(jj) > 0.) THEN
+          f_ratio(jj) = uptake%NO(jj) /  &
+               (uptake%NO(jj) + uptake%NH(jj))
        ELSE
           f_ratio(jj) = 0.
        END IF
@@ -663,7 +732,7 @@ contains
        jj = (PZ_bins%NO-1) * M + ii ! index for PZ, derivatives etc
 
        if (NO(ii) > 0.) then  
-          dPZdt(jj) = -N%O_uptake%new(ii) + N%bacteria(ii)
+          dPZdt(jj) = -uptake%NO(ii) + NH_oxid(ii)
        endif
     enddo
 
@@ -673,24 +742,24 @@ contains
        jj = (PZ_bins%NH-1) * M + ii ! index for PZ, derivatives etc
 
        if (NH(ii) > 0.) then  
-          dPZdt(jj) = -N%H_uptake%new(ii) &
+          dPZdt(jj) = -uptake%NH(ii) &
                + Resp_micro(ii)*Pmicro(ii) + Resp_nano(ii)*Pnano(ii)       & 
                + WasteMicro(ii) * wastedestiny%m(0)                     &
                + WasteNano(ii) * wastedestiny%s(0)                      &
-               + N%remin(ii) - N%bacteria(ii)
+               + remin_NH(ii) - NH_oxid(ii)
        endif
     enddo
 
-    ! silcon
+    ! silicon
 
     do ii = 1, M
-       jj = (PZ_bins%Sil-1) * M + ii ! index for PZ, derivatives etc
+       jj = (PZ_bins%Si-1) * M + ii ! index for PZ, derivatives etc
 
-       if (Sil(ii) > 0.) then
+       if (Si(ii) > 0.) then
           dPZdt(jj) = - (micro%growth%new(ii) - Resp_micro(ii)) * Pmicro(ii) &
-                         * rate_micro%Sil_rat &
+                         * rate_micro%Si_ratio &
                       - (nano%growth%new(ii) - Resp_nano(ii)) * Pnano(ii) &
-                         * rate_nano%Sil_rat
+                         * rate_nano%Si_ratio
        endif
     enddo
 
