@@ -42,7 +42,7 @@ module mean_param
 
   ! Type for Gvectors and Hvector used in implicit solver
   type :: UVST              
-     real(kind=dp), dimension(:), pointer :: u, v, s, t, sil
+     real(kind=dp), dimension(:), pointer :: u, v, s, t, si
      type(phyto) :: p 
      type(nut) :: n
      type(det), dimension(:), pointer :: d !d(D_bins)
@@ -53,26 +53,12 @@ module mean_param
      real(kind=dp), dimension(:), pointer :: light, new
   end type grow
 
-  ! Grazing component of plankton2 and nutrient types
-  type :: grazing
-     real(kind=dp), dimension(:), pointer :: new
-  end type grazing
-
   ! *** Plankton "behaviours" ??? type
   ! *** This will probably be refactored when Susan implements sinking
   type :: plankton2
      type(grow) :: growth
      real(kind=dp) :: sink  ! Sinking velocity
   end type plankton2
-
-  ! Nutrient type
-  ! *** But only used for nitrogen now, and only applicable to things that
-  ! *** form compounds with oxygen and hydrogen
-  type :: nutrient
-     type(prop) :: O, H
-     type(grazing) :: O_uptake, H_uptake
-     real(kind=dp), dimension(:), pointer :: remin, bacteria  
-  end type nutrient
 
 
   TYPE :: diff
