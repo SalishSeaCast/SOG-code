@@ -17,9 +17,6 @@ subroutine allocate1(M, STAT)
            V%new(0:M+1), V%old(0:M+1), V%div_i(M), &
            P%micro%old(0:M+1),P%micro%new(0:M+1), &
            P%nano%new(0:M+1),P%nano%old(0:M+1), &
-           N%O%new(0:M+1),N%O%old(0:M+1),&
-           N%H%new(0:M+1),N%H%old(0:M+1),&
-           Sil%new(0:M+1), Sil%old(0:M+1), &            ! silicon
            density%new(0:M+1),&
            STAT = alloc_stat(1))
 
@@ -57,7 +54,7 @@ subroutine allocate1(M, STAT)
            Q_n(0:M), &
            I(0:M), I_par(0:M), &
            phi%m%value(0:M), phi%s%value(0:M), &
-           Ri_b(M), N_2_g(M), V_t_square(M), &
+           Ri_b(0:M), N_2_g(M), V_t_square(M), &
            omega%s%value(0:M), omega%m%value(0:M), &
            STAT = alloc_stat(6)) 
                      
@@ -75,19 +72,17 @@ subroutine allocate1(M, STAT)
                Gvector_ao%p%micro(M), &
                Gvector_ro%p%micro(M),&
                Gvector_ro%p%nano(M),&
-               Hvector%n%o(M), Hvector%n%h(M), Hvector%sil(M), Gvector%n%o(M), Gvector%n%h(M), &
-               Gvector%sil(M), &
-               Gvector_o%n%o(M), Gvector_o%n%h(M), Gvector_o%sil(M), &
-               Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%sil(M), &
+               Hvector%n%o(M), Hvector%n%h(M), Hvector%si(M), Gvector%n%o(M), Gvector%n%h(M), &
+               Gvector%si(M), &
+               Gvector_o%n%o(M), Gvector_o%n%h(M), Gvector_o%si(M), &
+               Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%si(M), &
                null_vector(M),STAT = alloc_stat(8)) !**&
                
       ALLOCATE(U_p(M), V_p(M), S_p(M), T_p(M), P1_p(M), Pnano1_p(M), &
-           NO1_p(M), NH1_p(M), Sil1_p(M), STAT = alloc_stat(9))
+           STAT = alloc_stat(9))
 
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
            nano%growth%light(M), nano%growth%new(M), &
-           N%O_uptake%new(M), N%H_uptake%new(M), &
-           N%remin(M), N%bacteria(M), &
            wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
