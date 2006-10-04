@@ -7,21 +7,51 @@ module physics_model
   ! 
   ! Public Variables:
   !
+  !   B -- Water column buoyancy [m/s^2]
   !
   ! Public Subroutines:
   !
+  !   init_physics -- Initialize physics model.
+  !
+  !   double_diffusion -- Calculate double diffusion mixing.
 
   use precision_defs, only: dp
   implicit none
 
   private
   public :: &
+       ! Variables:
+       B, &  ! Buoyancy profile array
        ! Subroutines:
-       double_diffusion
+       init_physics, double_diffusion, dalloc_physics_variables
 
-  ! Private parameter declarations:
+  ! Private module type definitions:
+  !
+  ! Profile:
+  type :: profile
+     real(kind=dp), dimension(:), pointer :: &
+          new  ! Profile of quantity at current time setp
+  end type profile
+
+  ! Public variable declarations:
+  type(profile) :: &
+       B  ! Buoyancy profile array
 
 contains
+
+  subroutine init_physics(M)
+    ! Initialize physics model.
+    use water_properties, only: alloc_water_props
+    implicit none
+    ! Argument:
+    integer :: M  ! Number of grid points
+
+    ! Allocate memory for physics model variables
+    call alloc_physics_variables(M)
+    ! Allocate memory for water property arrays
+    call alloc_water_props(M)
+  end subroutine init_physics
+  
 
   subroutine double_diffusion(M, T_grad_i, S_grad_i, alpha_i, beta_i, &
        nu_t_dd, nu_s_dd)
@@ -98,5 +128,39 @@ contains
        endif
     enddo
   end subroutine double_diffusion
+
+
+  subroutine alloc_physics_variables(M)
+    ! Allocate memory for physics model variables arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Water column buoyancy profile array"
+    allocate(B%new(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_physics_variables
+
+
+  subroutine dalloc_physics_variables
+    ! Deallocate memory from physics model variables arrays.
+    use malloc, only: dalloc_check
+    use water_properties, only: dalloc_water_props
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Water column buoyancy profile array"
+    deallocate(B%new, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    call dalloc_water_props
+  end subroutine dalloc_physics_variables
 
 end module physics_model
