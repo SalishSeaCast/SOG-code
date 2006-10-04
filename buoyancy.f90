@@ -6,7 +6,7 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
      Bnew, Bf)                                                       ! out
   ! Calculate the buoyancy profile, and the surface buoyancy forcing.
   use precision_defs, only: dp
-  use grid_mod, only: grid_, interp_g_d, interp_i_d
+  use grid_mod, only: grid_, interp_value
   use mean_param, only: height
   use surface_forcing, only: g
   implicit none
@@ -43,16 +43,12 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
 
   ! Interpolate to find water property and flux values at the mixing
   ! layer depth
-  rho_ml = interp_g_d(rho, hml%new)
-  alpha_ml = interp_g_d(alpha, hml%new)
-  beta_ml = interp_g_d(beta, hml%new)
-  Cp_ml = interp_g_d(Cp, hml%new)
-  ! *** Irradiance and fresh water flux interpolations could be
-  ! replaced with a function analogous to interp_d
-  I_ml = Itotal(hml%i-1) + (Itotal(hml%i) - Itotal(hml%i-1)) &
-       * (hml%new - grid%d_i(hml%i-1)) / grid%i_space(hml%i)
-  Fn_ml = F_n(hml%i-1) + (F_n(hml%i) - F_n(hml%i-1)) &
-       * (hml%new - grid%d_i(hml%i-1)) / grid%i_space(hml%i)
+  rho_ml = interp_value(hml%new, grid%d_g, rho)
+  alpha_ml = interp_value(hml%new, grid%d_g, alpha)
+  beta_ml = interp_value(hml%new, grid%d_g, beta)
+  Cp_ml = interp_value(hml%new, grid%d_g, Cp)
+  I_ml = interp_value(hml%new, grid%d_i, Itotal)
+  Fn_ml = interp_value(hml%new, grid%d_i, F_n)
 
   ! Contribution of heat and fresh water fluxes to surface buoyancy
   ! forcing (Surface values less the amount at (and thus below) the
