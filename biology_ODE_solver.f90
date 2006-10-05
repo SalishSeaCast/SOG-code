@@ -18,12 +18,13 @@ module do_biology_mod
 
 contains
 
-  subroutine do_biology(time, day, dt, M, precision, step_guess, step_min, &
-       T_new, I_par, P, NO_new, NH_new, Si_new, Detritus, Gvector)
+  subroutine do_biology(time, day, dt, M, precision, step_guess, step_min,    &
+       T_new, I_par, Pmicro_new, Pnano_new, NO_new, NH_new, Si_new, Detritus, &
+       &Gvector)
     ! A wrapper around a bunch of subroutine calls that advance the
     ! biological quantities to the next time step.
     use precision_defs, only: dp
-    use mean_param, only: plankton, snow, UVST
+    use mean_param, only: snow, UVST
     use declarations, only: D_bins, M2   ! need to get rid of these
     use rungekutta, only: odeint
     use biological_mod, only: reaction_p_sog, define_PZ
@@ -38,11 +39,12 @@ contains
     real(kind=dp), intent(in) :: precision, step_guess, step_min
     real(kind=dp), dimension(0:), intent(in) :: T_new   ! Temperature
     real(kind=dp), dimension(0:), intent(in) :: I_par  ! Photosynth avail rad
-    type(plankton), intent(in) :: P                   ! Plankton
     real(kind=dp), dimension(0:), intent(in) :: &
-         NO_new, &  ! Nitrate
-         NH_new, &  ! Ammonium
-         Si_new     ! Silicon
+         NO_new, &      ! Nitrate
+         NH_new, &      ! Ammonium
+         Si_new, &      ! Silicon
+         Pmicro_new, &  ! Micro phytoplankton
+         Pnano_new      ! Nano phytoplankton
     type(snow), dimension(D_bins), intent(in) :: Detritus
     type(UVST), intent(in out) :: Gvector
 
@@ -53,7 +55,7 @@ contains
 
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on
-    call define_PZ(M, P%micro%new, P%nano%new, NO_new, NH_new, & ! in
+    call define_PZ(M, Pmicro_new, Pnano_new, NO_new, NH_new, & ! in
          Si_new, Detritus,                                     & ! in
          PZ)                                                     ! out
     call check_negative(PZ, 'after define_PZ', time, day)
@@ -68,7 +70,7 @@ contains
     ! Unpack the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
     ! *** This subroutine could have a more meaningful name...
-    call reaction_p_sog (M, PZ, P%micro%old, P%nano%old, NO_new, & ! in
+    call reaction_p_sog (M, PZ, Pmicro_new, Pnano_new, NO_new, & ! in
          NH_new, Si_new, Detritus,                               & ! in
          Gvector)                                                  ! out
 
