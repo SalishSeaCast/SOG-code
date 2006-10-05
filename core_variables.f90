@@ -21,6 +21,10 @@ module core_variables
   !
   !   Si -- Silicon concentration [uM]
   !
+  !   P%micro -- Micro phytoplankton (diatoms) biomass [uM N]
+  !
+  !   P%nano -- Nano phytoplankton (flagellates) biomass [uM N]
+  !
   ! Public Subroutines:
   !
   !   alloc_core_variables -- Allocate memory for core variables arrays.
@@ -37,6 +41,7 @@ module core_variables
        S,  &  ! Salinity profile arrays
        N,  &  ! Nitrate & ammonium concentation profile arrays
        Si, &  ! Silicon concentration profile arrays
+       P,  &  ! Micro & nano phytoplankton profile arrays
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
@@ -56,6 +61,13 @@ module core_variables
           O, &  ! N%O is nitrate (NO3) concentration profile
           H     ! H%H is ammonium (NH4) concentration profile
   end type nitrogen
+  !
+  ! Plankton
+  type :: plankton
+     type(profiles) :: &
+          micro, &  ! P%micro is micro phytoplankton (diatoms) biomass profile
+          nano      ! P%nano is nano phytoplankton (flagellate) biomass profile
+  end type plankton
 
 
   ! Public variable declarations:
@@ -65,6 +77,8 @@ module core_variables
        Si    ! Silicon concentration profile arrays
   type(nitrogen) :: &
        N  ! Nitrate & ammonium profile arrays
+  type(plankton) :: &
+       P  ! Micro & nano phytoplankton profile arrays
 
 contains
 
@@ -98,6 +112,14 @@ contains
     allocate(Si%new(0:M+1), Si%old(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Micro phytoplankton biomass profile arrays"
+    allocate(P%micro%new(0:M+1), P%micro%old(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Nano phytoplankton biomass profile arrays"
+    allocate(P%nano%new(0:M+1), P%nano%old(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_core_variables
 
 
@@ -127,6 +149,14 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Silicon concentration profile arrays"
     deallocate(Si%new, Si%old, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Micro phytoplankton biomass profile arrays"
+    deallocate(P%micro%new, P%micro%old, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Nano phytoplankton biomass profile arrays"
+    deallocate(P%nano%new, P%nano%old, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_core_variables
