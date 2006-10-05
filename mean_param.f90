@@ -20,11 +20,6 @@ module mean_param
      real(kind=dp) :: avg      !surface layer average 
   end type prop
 
-  ! Phytoplankton
-  type :: plankton                  
-     type(prop) :: micro, nano
-  end type plankton
-
   ! Phytoplankton component of UVST type
   type :: phyto                     
      real(kind=dp), dimension(:), pointer :: micro, nano
