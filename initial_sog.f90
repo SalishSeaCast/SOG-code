@@ -20,24 +20,26 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean (Ui, Vi, Tnew, Snew, Pi, NO, NH, Si_new, Detritus, &
+  subroutine initial_mean (Ui, Vi, Tnew, Snew, Pmicro_new, Pnano_new, &
+       NO, NH, Si_new, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_
     use input_processor, only: getpars
-    use mean_param, only: prop, plankton, snow
+    use mean_param, only: prop, snow
     implicit none
     ! Arguments:
     type(prop), intent(out) :: Ui, Vi
     real(kind=dp), dimension(0:), intent(out) :: &
-         Tnew, &  ! Temperature profile
-         Snew, &  ! Salinity profile
-         Si_new   ! Silicon profile
-    type(plankton), intent(out) :: Pi 
-    real(kind=dp), dimension (0:), intent(out) :: NO  ! N%O%new,  nitrate
-    real(kind=dp), dimension (0:), intent(out) :: NH  ! N%H%new,  ammonium
+         Tnew, &        ! Temperature profile
+         Snew, &        ! Salinity profile
+         NO, &          ! Salinity Nitrate
+         NH, &          ! Ammonium profile
+         Si_new, &      ! Silicon profile
+         Pmicro_new, &  ! Micro phytoplankton profile
+         Pnano_new      ! Nano phytoplankton profile
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     real(kind=dp), intent(out) :: hi !h%new
@@ -63,8 +65,8 @@ contains
 
     Ui%new(1) = Uo
     Vi%new(1) = Vo
-!!$    Pi%micro%new(1) = P_micro
-    Pi%nano%new(1) = P_nano !V.flagella.01
+!!$    Pmicro_new(1) = P_micro
+    Pnano_new(1) = P_nano !V.flagella.01
     NH(1) = NHo
 
     !-----detritus loop added march 2006---------------------------------
@@ -91,12 +93,12 @@ contains
     DO i = 2, d%M+1   
        IF (d%d_g(i) <= hm) THEN  !Large1996  March 1960 initial profile        
 
-!!$          Pi%micro%new(i) = P_micro
-          Pi%nano%new(i) = P_nano !V.flagella.01
+!!$          Pmicro_new(i) = P_micro
+          Pnano_new(i) = P_nano !V.flagella.01
           NH(i) = NHo
        ELSE
-!!$          Pi%micro%new(i) = 0.
-          Pi%nano%new(i) = 0. !V.flagella.01
+!!$          Pmicro_new(i) = 0.
+          Pnano_new(i) = 0. !V.flagella.01
           NH(i) = 0.
        END IF
        Ui%new(i) = Uo
@@ -104,8 +106,8 @@ contains
 
     END DO
 
-!!$    Pi%micro%new(d%M+1) = 0.
-    Pi%nano%new(d%M+1) = 0.
+!!$    Pmicro_new(d%M+1) = 0.
+    Pnano_new(d%M+1) = 0.
     NH(d%M+1) = 0.
     Detritus(1)%D%new(d%M+1) = 0. ! (DON ==> Detritus(1), need some deep ocean value)
     Detritus(2)%D%new(d%M+1) =  0. !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
@@ -137,19 +139,19 @@ contains
     ! *** Maybe rework this so we can read orginal (not stripped) CTD
     ! *** data files?
     do i = 1, d%M + 1
-       read(46, *) dum1, depth,Tnew(i), dumc, Pi%micro%new(i), &
+       read(46, *) dum1, depth,Tnew(i), dumc, Pmicro_new(i), &
             dumt, dump, dumo, Snew(i)  
        ! *** Maybe we should have a degC2degK function? 
        Tnew(i) = Tnew(i) + 273.15
        ! *** Does the next line actually do anything?
-!!$       Pi%micro%new(i) = Pi%micro%new(i)
+!!$       Pmicro_new(i) = Pmicro_new(i)
     enddo
     close(46)
 
     Tnew(0) = Tnew(1)  !Surface
     Snew(0) = Snew(1)  !Boundary
-    Pi%micro%new(0) = Pi%micro%new(1)
-    Pi%nano%new(0) = Pi%nano%new(1) !V.flagella.02
+    Pmicro_new(0) = Pmicro_new(1)
+    Pnano_new(0) = Pnano_new(1) !V.flagella.02
     NH(0) = NH(1)
 
     ! assuming dz = 0.5
@@ -159,14 +161,14 @@ contains
        if (j * 2 == i) then
           Tnew(i) = Tnew(j)
           Snew(i) = Snew(j)
-          Pi%micro%new(i) = Pi%micro%new(j) 
-!!$          Pi%nano%new(i) = Pi%nano%new(j) !V.flagella.02
+          Pmicro_new(i) = Pmicro_new(j) 
+          Pnano_new(i) = Pnano_new(j)
        else
           ! *** This looks like a job for a arith_mean function
           Tnew(i) = Tnew(j) * 0.5 + Tnew(j+1) * 0.5
           Snew(i) = Snew(j) * 0.5 + Snew(j+1) * 0.5
-          Pi%micro%new(i) = Pi%micro%new(j) * 0.5 + Pi%micro%new(j+1) * 0.5
-!!$          Pi%nano%new(i) = Pi%nano%new(j) * 0.5 + Pi%nano%new(j+1) * 0.5 !V.flagella.02
+          Pmicro_new(i) = Pmicro_new(j) * 0.5 + Pmicro_new(j+1) * 0.5
+          Pnano_new(i) = Pnano_new(j) * 0.5 + Pnano_new(j+1) * 0.5
        endif
     enddo
 
