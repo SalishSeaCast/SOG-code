@@ -18,7 +18,7 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-  use core_variables, only: T, S, N, Si, &
+  use core_variables, only: T, S, N, Si, P, &
        alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, interp_i, &
        gradient_i, gradient_g
@@ -182,7 +182,8 @@ program SOG
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
-  CALL initial_mean(U, V, T%new, S%new, P, N%O%new, N%H%new, Si%new, &
+  CALL initial_mean(U, V, T%new, S%new, P%micro%new, P%nano%new, &
+       N%O%new, N%H%new, Si%new, &
        Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
@@ -231,7 +232,7 @@ program SOG
           unow, vnow)
 
      CALL irradiance_sog(cf_value, day_time, day, &
-          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P)
+          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro%new, P%nano%new)
 
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the water column
@@ -751,7 +752,8 @@ program SOG
 !------BIOLOGICAL MODEL--------------------------------------------
 
      call do_biology (time, day, dt, grid%M, precision, step_guess, step_min, &
-          T%new(0:grid%M), I_Par, P, N%O%new, N%H%new, Si%new, Detritus, &
+          T%new(0:grid%M), I_Par, P%micro%new, P%nano%new, N%O%new, N%H%new,  &
+          Si%new, Detritus, &
           Gvector_ro)
 !*** more of the below can be moved into the do_biology module
 
@@ -863,9 +865,9 @@ program SOG
 
      ! Solve the tridiagonal system for the biological quantities
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%p%micro, P1_p)
+          Hvector%p%micro, P%micro%new(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%p%nano, Pnano1_p)
+          Hvector%p%nano, P%nano%new(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
           N%O%new(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
@@ -900,6 +902,18 @@ program SOG
      if (any(Si%new < 0.)) then
         where (Si%new < 0.) Si%new = 0.
         write(stdout, *) "Warning: negative value(s) in Si%new ", &
+             "were set to zero."
+     endif
+     P%micro%new(0) = P%micro%new(1)
+     if (any(P%micro%new < 0.)) then
+        where (P%micro%new < 0.) P%micro%new = 0.
+        write(stdout, *) "Warning: negative value(s) in P%micro%new ", &
+             "were set to zero."
+     endif
+     P%nano%new(0) = P%nano%new(1)
+     if (any(P%nano%new < 0.)) then
+        where (P%nano%new < 0.) P%nano%new = 0.
+        write(stdout, *) "Warning: negative value(s) in P%nano%new ", &
              "were set to zero."
      endif
 
