@@ -1,29 +1,31 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
-     I_k, Qs, euphotic, Qriver, P_i)
+SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
+     I_k, Qs, euphotic, Qriver, Pmicro_new, Pnano_new)
 
-  use precision_defs, only: dp
+  use precision_defs, only: dp, sp
   use grid_mod, only: grid_
-      USE mean_param, only: plankton, entrain
+      USE mean_param, only: entrain
       USE surface_forcing
 
       IMPLICIT NONE
-  
-      TYPE(plankton), INTENT(IN)::P_i
-      TYPE(grid_), INTENT(IN)::d
-!!$      TYPE(height), INTENT(IN)::hh
-!!$      TYPE(okta), INTENT(IN) :: clouds
-      REAL, INTENT(IN) :: cf, Qriver !cloud_fraction  (random variable)
-      INTEGER, INTENT(OUT)::I_k 
-      REAL(KIND=DP), INTENT(OUT)::Qs   !integrated daily solar contribution to
-                                              !the heat flux 
-      TYPE(entrain), INTENT(OUT)::euphotic !euphotic%depth, euphotic%i                                         
-      REAL(KIND=DP), DIMENSION(0:d%M), INTENT(OUT)::In, Ipar  
-      REAL(KIND=DP), INTENT(IN) :: t_ime!, phyto  !day_time
-      INTEGER, INTENT(IN)::Jday  ! julian day 
+      ! Arguments:
+      real(kind=sp), intent(in) :: cf        ! cloud fraction
+      real(kind=dp), intent(in) :: day_time  ! day-second
+      integer, intent(in) :: day             ! year-day 
+      type(grid_), intent(in) :: d           ! grid
+      real(kind=dp), dimension(0:d%M), intent(out) :: In, Ipar  
+      integer, intent(out) :: I_k
+      ! Integrated daily solar contribution to the heat flux
+      real(kind=dp), intent(out) :: Qs   
+      type(entrain), intent(out) :: euphotic !euphotic%depth, euphotic%i
+      real, intent(in) :: Qriver
+      real(kind=dp), dimension(0:d%M), intent(in) :: &
+           Pmicro_new, &  ! Micro phytoplankton
+           Pnano_new      ! Nano phytoplankton
 
+      ! Local variables:
       INTEGER::k, check, of                          
       REAL(KIND=DP)::declination, hour, cos_Z, day_length, hour_angle, &
                         sunrise, sunset, Qso, a, b,KK
@@ -58,8 +60,8 @@ SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
 
 
       check = 0
-      hour = (t_ime/3600.0-12.0)*15.  !degrees
-      declination = 23.45*PI/180.0*SIN((284.0+DBLE(Jday))/365.25*2.0*PI)  !radians
+      hour = (day_time/3600.0-12.0)*15.  !degrees
+      declination = 23.45*PI/180.0*SIN((284.0+DBLE(day))/365.25*2.0*PI)  !radians
 
       a = SIN(declination)*SIN(Lat) 
       b = COS(declination)*COS(Lat)
@@ -71,7 +73,7 @@ SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
       cos_Z_max = COS(declination-Lat)  !zenith angle
 
 
-      Qso = Q_o*(1.0+0.033*COS(DBLE(Jday)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
+      Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
       if (cf .ge. 9) then
          of = int(cf) - 2
       elseif (cf .ge. 3) then
@@ -83,7 +85,7 @@ SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
       IImax = Qso*(cloud%type(of)%A + cloud%type(of)%B*cos_Z_max)*cos_Z_max  
       !!Jeffrey thesis page 124
 
-      IF (t_ime/3600.0 > sunrise .AND. t_ime/3600.0 < sunset) THEN    
+      IF (day_time/3600.0 > sunrise .AND. day_time/3600.0 < sunset) THEN    
           II = Qso*(cloud%type(of)%A + cloud%type(of)%B*cos_Z)*cos_Z   
       ELSE
          II = 0.
@@ -115,11 +117,11 @@ SUBROUTINE irradiance_sog(cf, t_ime, Jday, In, Ipar, d, &
       Ipar(0) = II*0.44  !44% of total light is PAR at surface (Jerlov)
       Iparmax(0) = IImax*0.44
 
-     ! plank=P_i%micro%new(1)+P_i%micro%new(2)+P_i%micro%new(3)+P_i%micro%new(4)+P_i%micro%new(5)
+     ! plank=Pmicro_new(1)+Pmicro_new(2)+Pmicro_new(3)+Pmicro_new(4)+Pmicro_new(5)
      ! plank=plank/5;
 
       !added V.flagella.01
-      KK = 0.0146 * (P_i%micro%new(1) + P_i%nano%new(1)) &
+      KK = 0.0146 * (Pmicro_new(1) + Pnano_new(1)) &
            + Qriver * 3.6597e-05 - 0.0110 * 3 + 0.2697
       !*** set mixed layer depth in this parameterization to a constant 3 m -- 
       ! otherwise a shallow mixed layer in winter is actually a disadvantage.
