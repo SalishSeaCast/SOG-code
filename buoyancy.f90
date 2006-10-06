@@ -37,18 +37,20 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
        ! Contributions to surface buoyancy forcing
        Br, &  ! Radiative
        Bfw    ! Fresh water flux
+  integer :: j_below ! Index of grid point or interface immediately
+                     ! below mixing layer depth
 
-  ! Buoyancy profile (see Large, etal (1994), eq'n A3a)
+  ! Calculate buoyancy profile (Large, etal (1994), eq'n A3a)
   Bnew = g * (alpha * Tnew - beta * Snew)
 
   ! Interpolate to find water property and flux values at the mixing
   ! layer depth
-  rho_ml = interp_value(hml%new, grid%d_g, rho)
-  alpha_ml = interp_value(hml%new, grid%d_g, alpha)
-  beta_ml = interp_value(hml%new, grid%d_g, beta)
-  Cp_ml = interp_value(hml%new, grid%d_g, Cp)
-  I_ml = interp_value(hml%new, grid%d_i, Itotal)
-  Fn_ml = interp_value(hml%new, grid%d_i, F_n)
+  call interp_value(hml%new, grid%d_g, rho, rho_ml, j_below)
+  call interp_value(hml%new, grid%d_g, alpha, alpha_ml, j_below)
+  call interp_value(hml%new, grid%d_g, beta, beta_ml, j_below)
+  call interp_value(hml%new, grid%d_g, Cp, Cp_ml, j_below)
+  call interp_value(hml%new, grid%d_i, Itotal, I_ml, j_below)
+  call interp_value(hml%new, grid%d_i, F_n, Fn_ml, j_below)
 
   ! Contribution of heat and fresh water fluxes to surface buoyancy
   ! forcing (Surface values less the amount at (and thus below) the
