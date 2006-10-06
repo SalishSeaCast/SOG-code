@@ -202,21 +202,24 @@ contains
     type(grid_), intent(in) :: grid                  ! Grid arrays
     integer, intent(in) :: iter_cnt                  ! Timestep iteration count
     real(kind=dp), intent(in) :: h                   ! Mixed layer depth [m]
-    real(kind=dp), dimension(0:), intent(in) :: T    ! Temperature [K]
-    real(kind=dp), dimension(0:), intent(in) :: S    ! Salinity [-]
-    real(kind=dp), dimension(0:), intent(in) :: NO   ! Nitrate conc [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: NH   ! Ammonium conc [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: Si   ! Silicon conc [uM Si]
-    ! Micro phytoplankton biomass [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: Pmicro
-    ! Nano phytoplankton biomass [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: Pnano
-    ! Remineralized detritus biomass [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: remin_Detritus
-    ! Sinking detritus biomass [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: sink_Detritus
-    ! Mortality detritus biomass [uM N]
-    real(kind=dp), dimension(0:), intent(in) :: mort_Detritus
+    real(kind=dp), dimension(0:), intent(in) :: &
+         T, &               ! Temperature [K]
+         S, &               ! Salinity [-]
+         NO, &              ! Nitrate conc [uM N]
+         NH, &              ! Ammonium conc [uM N]
+         Si, &              ! Silicon conc [uM Si]
+         Pmicro, &          ! Micro phytoplankton biomass [uM N]
+         Pnano, &           ! Nano phytoplankton biomass [uM N]
+         remin_Detritus, &  ! Remineralized detritus biomass [uM N]
+         sink_Detritus, &   ! Sinking detritus biomass [uM N]
+         mort_Detritus      ! Mortality detritus biomass [uM N]
+
+    ! Local variables:
+    real(kind=dp) :: &
+         remin_D_20m, &  ! Remineralized detritus at 20 m [uM N]
+         sink_D_20m, &   ! Sinking detritus at 20 m [uM N]
+         mort_D_20m      ! Mortality detritus at 20 m [uM N]
+    integer :: j_below   ! Index of result found by interp_value()
 
     ! Standard physics model time series results
     ! !!! Please don't change this unless you have a good reason to !!!
@@ -263,10 +266,11 @@ contains
     ! time, surface nitrate, ammonium, and concentrations, 
     ! surface biomass of micro and nano phytoplankton,
     ! biomasses of detritus at 20 m depth
-    write(std_bio_timeseries, 102) time, NO(0), NH(0), Si(0),                 &
-         Pmicro(0), Pnano(0), interp_value(20.0d0, grid%d_g, remin_Detritus), &
-         interp_value(20.0d0, grid%d_g, sink_Detritus),                       &
-         interp_value(20.0d0, grid%d_g, mort_Detritus)
+    call interp_value(20.0d0, grid%d_g, remin_Detritus, remin_D_20m, j_below)
+    call interp_value(20.0d0, grid%d_g, sink_Detritus, sink_D_20m, j_below)
+    call interp_value(20.0d0, grid%d_g, mort_Detritus, mort_D_20m, j_below)
+    write(std_bio_timeseries, 102) time, NO(0), NH(0), Si(0),      &
+         Pmicro(0), Pnano(0), remin_D_20m, sink_D_20m, mort_D_20m
 102 format(f10.4, 80(2x, f8.4))
 
 
