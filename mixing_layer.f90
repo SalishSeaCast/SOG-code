@@ -65,9 +65,13 @@ contains
     real(kind=dp), intent(in) :: day_time
     real(kind=dp), intent(out) :: h_new  ! Mixing layer depth [m]
 
+    ! Local variable:
+    integer :: j_below  ! Index of grid point immediately below mixing
+                        ! layer depth
+
     ! Find the depth at which the bulk Richardson number exceeds the
     ! critical value
-    h_new = interp_value(Ri_c, Ri_b, grid%d_g(0:grid%M))
+    call interp_value(Ri_c, Ri_b, grid%d_g(0:grid%M), h_new, j_below)
     ! Handle mixing layer extending nearly to the bottom of the grid
     if (h_new > grid%d_g(grid%M - 3)) then
        h_new = grid%d_g(grid%M - 3)
