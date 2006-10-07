@@ -21,7 +21,7 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(prop)::U, V, density, vt, ut
+  TYPE(prop)::U, V, vt, ut
   TYPE(Knu)::K 
   TYPE(flux)::w
   TYPE(height)::h, surface_h
