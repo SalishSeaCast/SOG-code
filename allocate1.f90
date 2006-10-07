@@ -15,7 +15,6 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(U%new(0:M+1), U%old(0:M+1), U%div_i(M), &
            V%new(0:M+1), V%old(0:M+1), V%div_i(M), &
-           density%new(0:M+1),&
            STAT = alloc_stat(1))
 
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
