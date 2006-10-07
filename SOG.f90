@@ -20,8 +20,8 @@ program SOG
   ! Refactored modules
   use core_variables, only: T, S, N, Si, P, &
        alloc_core_variables, dalloc_core_variables
-  use grid_mod, only: init_grid, dalloc_grid, interp_i, &
-       gradient_i, gradient_g
+  use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
+       interp_i
   use physics_model, only: B, &
        init_physics, double_diffusion, dalloc_physics_variables
   use biological_mod, only: rate_det, &
@@ -205,7 +205,6 @@ program SOG
   ! coefficients, and specific heat capacity (Cp)
   call calc_rho_alpha_beta_Cp_profiles(T%new, S%new, rho%g, alpha%g, &
        beta%g, Cp%g)
-  density%new = rho%g
   ! Interpolate the values of density and specific heat capacity at
   ! the grid layer interface depths
   rho%i = interp_i(rho%g)
@@ -534,7 +533,6 @@ program SOG
         ! contraction (beta) coefficients, and specific heat capacity (Cp)
         call calc_rho_alpha_beta_Cp_profiles(T%new, S%new, rho%g, alpha%g, &
              beta%g, Cp%g)
-        density%new = rho%g
         ! Interpolate the values of density and specific heat capacity at
         ! the grid layer interface depths
         rho%i = interp_i(rho%g)
@@ -591,8 +589,7 @@ program SOG
 
         ! Calculate the profile of bulk Richardson number (Large, etal
         ! (1994) eq'n(21))
-        ! *** This needs to be refactored to change density to rho
-        CALL define_Ri_b_sog(grid, h, surface_h, U, V, density, Ri_b, &
+        CALL define_Ri_b_sog(grid, h, surface_h, U, V, rho%g, Ri_b, &
              V_t_square, N_2_g)
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
         call find_mixing_layer_depth (grid, Ri_b, year, day, day_time, count, &
