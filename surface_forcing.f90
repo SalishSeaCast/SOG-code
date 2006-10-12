@@ -64,9 +64,9 @@ module surface_forcing
   DOUBLE PRECISION, PARAMETER::desired_var = 6.267101794384283, &  !12.6, & !6.267101794384283, & !used for ECMWF smoothed winds
        desired_avg =   10.06734127539335 
   DOUBLE PRECISION :: &
-       precision = 1.0D-3, &
-       step_min = 30., &
-       step_guess = 3600.0
+       precision = 1.0D-4, &
+       step_min = 3., &
+       step_guess = 100.0
 
 CONTAINS
 
