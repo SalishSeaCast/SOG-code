@@ -55,17 +55,18 @@ contains
 
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on
+
     call define_PZ(M, Pmicro_new, Pnano_new, NO_new, NH_new, & ! in
          Si_new, Detritus,                                     & ! in
          PZ)                                                     ! out
-    call check_negative(PZ, 'after define_PZ', time, day)
+    call check_negative(PZ, M2, 'after define_PZ', time, day)
 
     ! Solve the biological model for values at the next time step
     next_time = time + dt
     call odeint(PZ, M, M2, time, next_time, precision, step_guess, &
          step_min, &
          N_ok, N_bad, T_new, I_par)
-    call check_negative (PZ, 'after odeint', time, day)
+    call check_negative (PZ, M2, 'after odeint', time, day)
 
     ! Unpack the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
@@ -77,20 +78,28 @@ contains
   end subroutine do_biology
 
 
-  subroutine check_negative (PZ, msg, time, day)
+  subroutine check_negative (PZ, M2, msg, time, day)
     ! Check for negative values in PZ vector, a fatal error.
     use precision_defs, only: dp
     use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     real(kind=dp), dimension(:), intent(in) :: PZ
+    integer, intent (in) :: M2
     character(len=*) :: msg
     real(kind=dp), intent(in) :: time
     integer, intent(in) :: day
 
+    integer :: i ! counter
+
     if (minval(PZ) < 0.) then
        write(stderr, *) "do_biology: Negative value in PZ ", &
             msg, " day = ", day, " time = ", time
+       do i=1,M2
+          if (PZ(i) < 0.) then
+             write (stderr, *) "Value at index, ",i
+          endif
+       enddo
        stop
     endif
   end subroutine check_negative
