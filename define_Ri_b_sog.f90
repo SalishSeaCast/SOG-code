@@ -11,7 +11,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
   use precision_defs, only: dp
   use grid_mod, only: grid_, depth_average
   USE mean_param, only: height, prop
-  USE surface_forcing
+  USE surface_forcing, only: g, ep
 
   ! Arguments:
   type(grid_), intent(in) :: d
@@ -26,12 +26,12 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
   ! Local variables:
   real(kind=dp), dimension(0:d%M+1) :: test_vector, test_vector2
   integer :: yy
-  real(kind=dp) ::Ribmin, rho_avg
+  real(kind=dp) ::Ribmin, rho_avg, U_avg, V_avg
 
-  surf_h%new = ep*hh%new
+  surf_h%new = ep * hh%new
        
-  call average(d,Uu,surf_h) !test conv  
-  call average(d,Vv,surf_h) !test conv 
+  U_avg = depth_average(Uu%new, 0.0d0, surf_h%new)
+  V_avg = depth_average(Vv%new, 0.0d0, surf_h%new)
   rho_avg = depth_average(rho, 0.0d0, surf_h%new)
 !!$print *, ''
 !!$print *, "d%d_g(0:3) ", d%d_g(0:3)
@@ -59,8 +59,8 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
 !!$print *, "rho_avg(0, 0.1) ", rho_avg
 !!$stop
 
-  test_vector = (Uu%avg - Uu%new)**2.0 + (Vv%avg - Vv%new)**2.0 
-  test_vector2 =  -g / rho(0) * (rho_avg - rho) !Bb%avg - Bb%new  
+  test_vector = (U_avg - Uu%new) ** 2 + (V_avg - Vv%new) ** 2
+  test_vector2 =  -g / rho(0) * (rho_avg - rho)
          
   Rib = 0.0
   Ribmin = 1000.
