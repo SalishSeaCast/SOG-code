@@ -4,31 +4,29 @@
 program SOG      
   ! Coupled physical and biological model of the Strait of Georgia
 
-  ! Utility modules:
-  use io_unit_defs, only: stripped_infile, stdout
-  use unit_conversions, only: KtoC
-  use datetime, only: datetime_, os_datetime, calendar_date, &
-       clock_time, datetime_str
-
-  ! Inherited modules
-  ! *** Goal is to make these go away
-  use declarations
-  use surface_forcing
-  use initial_sog, only: initial_mean
-  use IMEX_constants  
-
-  ! Refactored modules
+  ! Things that we will use from other modules
+  !
+  ! Type definitions:
+  use datetime, only: datetime_
+  !
+  ! Parameter values:
+  use physics_model, only: g
+  !
+  ! Variables:
   use core_variables, only: U, V, T, S, P, N, Si
+  use water_properties, only: rho, alpha, beta, Cp
+  use physics_model, only: B
+  use biological_mod, only: rate_det
+  !
+  ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
-  use physics_model, only: B, &
-       init_physics, double_diffusion, dalloc_physics_variables
-  use biological_mod, only: rate_det, &
-       init_biology, dalloc_biology_variables
+  use physics_model, only: init_physics, double_diffusion, &
+       dalloc_physics_variables
+  use biological_mod, only: init_biology, dalloc_biology_variables
   use do_biology_mod, only: do_biology
-  use water_properties, only: rho, alpha, beta, Cp, &
-       calc_rho_alpha_beta_Cp_profiles
+  use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
   use timeseries_output, only: init_timeseries_output, write_timeseries, &
@@ -41,7 +39,17 @@ program SOG
        diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
+  use precision_defs, only: dp
+  use io_unit_defs, only: stripped_infile, stdout
+  use unit_conversions, only: KtoC
+  use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
 
+  ! Inherited modules
+  ! *** Goal is to make these go away
+  use declarations
+  use surface_forcing
+  use initial_sog, only: initial_mean
+  use IMEX_constants  
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
@@ -52,7 +60,7 @@ program SOG
 
   implicit none
 
-  double precision:: cz, upwell
+  real(kind=dp) :: cz, upwell
   ! Upwelling constant (tuned parameter)
   !*** read in here, used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
