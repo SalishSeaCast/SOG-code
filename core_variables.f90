@@ -15,15 +15,15 @@ module core_variables
   !
   !   S -- Water column salinity [-]
   !
+  !   P%micro -- Micro phytoplankton (diatoms) biomass [uM N]
+  !
+  !   P%nano -- Nano phytoplankton (flagellates) biomass [uM N]
+  !
   !   N%O -- Nitrate concentration [uM N]
   !
   !   N%H -- Ammonium concentration [uM N]
   !
   !   Si -- Silicon concentration [uM]
-  !
-  !   P%micro -- Micro phytoplankton (diatoms) biomass [uM N]
-  !
-  !   P%nano -- Nano phytoplankton (flagellates) biomass [uM N]
   !
   ! Public Subroutines:
   !
@@ -39,17 +39,17 @@ module core_variables
        ! Variables:
        T,  &  ! Temperature profile arrays
        S,  &  ! Salinity profile arrays
+       P,  &  ! Micro & nano phytoplankton profile arrays
        N,  &  ! Nitrate & ammonium concentation profile arrays
        Si, &  ! Silicon concentration profile arrays
-       P,  &  ! Micro & nano phytoplankton profile arrays
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
   ! Private module type definitions:
   !
-  ! Core variables:
+  ! Velocities, temperature, and salinity
   type :: profiles
-     real(kind=dp), dimension(:), pointer :: &
+     real(kind=dp), dimension(:), allocatable :: &
           new, &  ! Profile of quantity at current time setp
           old, &  ! Profile of quantity at previous time step
           grad_i  ! Profile of gradient of quantity at grid layer interfaces
@@ -57,14 +57,14 @@ module core_variables
   !
   ! Nitrogen compounds
   type :: nitrogen
-     type(profiles) :: &
+     real(kind=dp), dimension(:), allocatable :: &
           O, &  ! N%O is nitrate (NO3) concentration profile
           H     ! H%H is ammonium (NH4) concentration profile
   end type nitrogen
   !
   ! Plankton
   type :: plankton
-     type(profiles) :: &
+     real(kind=dp), dimension(:), allocatable :: &
           micro, &  ! P%micro is micro phytoplankton (diatoms) biomass profile
           nano      ! P%nano is nano phytoplankton (flagellate) biomass profile
   end type plankton
@@ -73,12 +73,13 @@ module core_variables
   ! Public variable declarations:
   type(profiles) :: &
        T, &  ! Temperature profile arrays
-       S, &  ! Salinity profile arrays
-       Si    ! Silicon concentration profile arrays
-  type(nitrogen) :: &
-       N  ! Nitrate & ammonium profile arrays
+       S     ! Salinity profile arrays
   type(plankton) :: &
        P  ! Micro & nano phytoplankton profile arrays
+  type(nitrogen) :: &
+       N  ! Nitrate & ammonium profile arrays
+  real(kind=dp), dimension(:), allocatable :: &
+       Si ! Silicon concentration profile array
 
 contains
 
@@ -100,24 +101,24 @@ contains
     allocate(S%new(0:M+1), S%old(0:M+1), S%grad_i(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Nitrate profile arrays"
-    allocate(N%O%new(0:M+1), N%O%old(0:M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Ammonium profile arrays"
-    allocate(N%H%new(0:M+1), N%H%old(0:M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Silicon concentration profile arrays"
-    allocate(Si%new(0:M+1), Si%old(0:M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
     msg = "Micro phytoplankton biomass profile arrays"
-    allocate(P%micro%new(0:M+1), P%micro%old(0:M+1), &
+    allocate(P%micro(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nano phytoplankton biomass profile arrays"
-    allocate(P%nano%new(0:M+1), P%nano%old(0:M+1), &
+    allocate(P%nano(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Nitrate profile arrays"
+    allocate(N%O(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Ammonium profile arrays"
+    allocate(N%H(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Silicon concentration profile arrays"
+    allocate(Si(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_core_variables
@@ -139,24 +140,24 @@ contains
     deallocate(S%new, S%old, S%grad_i, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Nitrate profile arrays"
-    deallocate(N%O%new, N%O%old, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Ammonium profile arrays"
-    deallocate(N%H%new, N%H%old, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Silicon concentration profile arrays"
-    deallocate(Si%new, Si%old, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
     msg = "Micro phytoplankton biomass profile arrays"
-    deallocate(P%micro%new, P%micro%old, &
+    deallocate(P%micro, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Nano phytoplankton biomass profile arrays"
-    deallocate(P%nano%new, P%nano%old, &
+    deallocate(P%nano, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Nitrate profile arrays"
+    deallocate(N%O, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Ammonium profile arrays"
+    deallocate(N%H, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Silicon concentration profile arrays"
+    deallocate(Si, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_core_variables
