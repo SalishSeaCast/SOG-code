@@ -3,7 +3,7 @@
 
 subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
      alpha, beta, Cp, Fw_surface,                                 &  ! in
-     Bnew, Bf)                                                       ! out
+     B, Bf)                                                          ! out
   ! Calculate the buoyancy profile, and the surface buoyancy forcing.
   use precision_defs, only: dp
   use grid_mod, only: grid_, interp_value
@@ -27,7 +27,7 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
        Cp        ! Specific heat capacity
   logical, intent(in) :: Fw_surface
   ! Results:
-  real(kind=dp), dimension(0:grid%M+1), intent(out) :: Bnew  ! Buoyance profile
+  real(kind=dp), dimension(0:grid%M+1), intent(out) :: B  ! Buoyance profile
   real(kind=dp), intent(out) :: Bf  ! Surface buoyancy forcing
 
   ! Local variables:
@@ -41,7 +41,7 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
                      ! below mixing layer depth
 
   ! Calculate buoyancy profile (Large, etal (1994), eq'n A3a)
-  Bnew = g * (alpha * Tnew - beta * Snew)
+  B = g * (alpha * Tnew - beta * Snew)
 
   ! Interpolate to find water property and flux values at the mixing
   ! layer depth
@@ -57,7 +57,7 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
   ! mixing layer depth)
   !
   ! Radiative contribution (see Large, etal (1994) eq'n A3c)
-  Br = g * (alpha(0) * Itotal(0) / (Cp(0) * rho(0)) &
+  Br = g * (alpha(0) * Itotal(0) / (rho(0) * Cp(0)) &
             - alpha_ml * I_ml / (rho_ml * Cp_ml))
   ! Fresh water salinity flux contribution
   if (Fw_surface) then
