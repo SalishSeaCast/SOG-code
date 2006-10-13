@@ -13,10 +13,6 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(U%new(0:M+1), U%old(0:M+1), U%div_i(M), &
-           V%new(0:M+1), V%old(0:M+1), V%div_i(M), &
-           STAT = alloc_stat(1))
-
       ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
               Gvector_ro%d(D_bins),&
               Gvector_ao%d(D_bins),Detritus1_p(D_bins,M),&
@@ -75,9 +71,6 @@ subroutine allocate1(M, STAT)
                Gvector_ro%n%o(M), Gvector_ro%n%h(M), Gvector_ro%si(M), &
                null_vector(M),STAT = alloc_stat(8)) !**&
                
-      ALLOCATE(U_p(M), V_p(M), S_p(M), T_p(M), &
-           STAT = alloc_stat(9))
-
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
            nano%growth%light(M), nano%growth%new(M), &
            wupwell(1:M+1), &
