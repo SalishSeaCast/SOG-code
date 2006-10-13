@@ -8,9 +8,9 @@ module initial_sog
   ! *** These parameter values can probably be set in other, more
   ! *** appropriate modules
   DOUBLE PRECISION, PARAMETER:: &
-       Uo = 0.0,     & ! m/s
-       Vo = 0.0,     &   ! m/s
-       hm =  2.0, & !28, & !75.0, & !Large1996
+       Uo = 0.0,     &  ! m/s
+       Vo = 0.0,     &  ! m/s
+       hm =  2.0, &     !28, & !75.0, & !Large1996
 !!$       P_micro = 0.3D-3, &
 ! *** Parameter value setting of P_nano replaced by a variable version in 
 ! *** initial_mean below, so that initial value of flagellates biomass may
@@ -20,8 +20,8 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean (Ui, Vi, Tnew, Snew, Pmicro_new, Pnano_new, &
-       NO, NH, Si_new, Detritus, &
+  subroutine initial_mean (Ui, Vi, T_new, S_new, Pmicro, Pnano, &
+       NO, NH, Si, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
     ! *** What's it do?
@@ -33,13 +33,13 @@ contains
     ! Arguments:
     type(prop), intent(out) :: Ui, Vi
     real(kind=dp), dimension(0:), intent(out) :: &
-         Tnew, &        ! Temperature profile
-         Snew, &        ! Salinity profile
-         NO, &          ! Salinity Nitrate
-         NH, &          ! Ammonium profile
-         Si_new, &      ! Silicon profile
-         Pmicro_new, &  ! Micro phytoplankton profile
-         Pnano_new      ! Nano phytoplankton profile
+         T_new,  &  ! Temperature profile
+         S_new,  &  ! Salinity profile
+         NO,     &  ! Salinity Nitrate
+         NH,     &  ! Ammonium profile
+         Si,     &  ! Silicon profile
+         Pmicro, &  ! Micro phytoplankton profile
+         Pnano      ! Nano phytoplankton profile
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     real(kind=dp), intent(out) :: hi !h%new
@@ -66,7 +66,7 @@ contains
     Ui%new(1) = Uo
     Vi%new(1) = Vo
 !!$    Pmicro_new(1) = P_micro
-    Pnano_new(1) = P_nano !V.flagella.01
+    Pnano(1) = P_nano
     NH(1) = NHo
 
     !-----detritus loop added march 2006---------------------------------
@@ -94,11 +94,11 @@ contains
        IF (d%d_g(i) <= hm) THEN  !Large1996  March 1960 initial profile        
 
 !!$          Pmicro_new(i) = P_micro
-          Pnano_new(i) = P_nano !V.flagella.01
+          Pnano(i) = P_nano
           NH(i) = NHo
        ELSE
 !!$          Pmicro_new(i) = 0.
-          Pnano_new(i) = 0. !V.flagella.01
+          Pnano(i) = 0.
           NH(i) = 0.
        END IF
        Ui%new(i) = Uo
@@ -107,7 +107,7 @@ contains
     END DO
 
 !!$    Pmicro_new(d%M+1) = 0.
-    Pnano_new(d%M+1) = 0.
+    Pnano(d%M+1) = 0.
     NH(d%M+1) = 0.
     Detritus(1)%D%new(d%M+1) = 0. ! (DON ==> Detritus(1), need some deep ocean value)
     Detritus(2)%D%new(d%M+1) =  0. !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
@@ -118,7 +118,7 @@ contains
     open(unit=66, file=fn, status="OLD", action="READ")
 
     do i = 0, d%M
-       read(66, *) depth, NO(i), Si_new(i)
+       read(66, *) depth, NO(i), Si(i)
        if (depth.ne.i*0.5) then
           write (*,*) 'Expecting nutrients, NO3 and Silicon at 0.5 m intervals'
           stop
@@ -126,7 +126,7 @@ contains
     enddo
     close (66)
     NO(d%M+1) = NO(d%M)
-    Si_new(d%M+1) = Si_new(d%M)
+    Si(d%M+1) = Si(d%M)
     
 
 
@@ -139,19 +139,19 @@ contains
     ! *** Maybe rework this so we can read orginal (not stripped) CTD
     ! *** data files?
     do i = 1, d%M + 1
-       read(46, *) dum1, depth,Tnew(i), dumc, Pmicro_new(i), &
-            dumt, dump, dumo, Snew(i)  
+       read(46, *) dum1, depth, T_new(i), dumc, Pmicro(i), &
+            dumt, dump, dumo, S_new(i)  
        ! *** Maybe we should have a degC2degK function? 
-       Tnew(i) = Tnew(i) + 273.15
+       T_new(i) = T_new(i) + 273.15
        ! *** Does the next line actually do anything?
 !!$       Pmicro_new(i) = Pmicro_new(i)
     enddo
     close(46)
 
-    Tnew(0) = Tnew(1)  !Surface
-    Snew(0) = Snew(1)  !Boundary
-    Pmicro_new(0) = Pmicro_new(1)
-    Pnano_new(0) = Pnano_new(1) !V.flagella.02
+    T_new(0) = T_new(1)  !Surface
+    S_new(0) = S_new(1)  !Boundary
+    Pmicro(0) = Pmicro(1)
+    Pnano(0) = Pnano(1)
     NH(0) = NH(1)
 
     ! assuming dz = 0.5
@@ -159,16 +159,16 @@ contains
     do i = d%M + 1, 2, -1
        j = i / 2
        if (j * 2 == i) then
-          Tnew(i) = Tnew(j)
-          Snew(i) = Snew(j)
-          Pmicro_new(i) = Pmicro_new(j) 
-          Pnano_new(i) = Pnano_new(j)
+          T_new(i) = T_new(j)
+          S_new(i) = S_new(j)
+          Pmicro(i) = Pmicro(j) 
+          Pnano(i) = Pnano(j)
        else
           ! *** This looks like a job for a arith_mean function
-          Tnew(i) = Tnew(j) * 0.5 + Tnew(j+1) * 0.5
-          Snew(i) = Snew(j) * 0.5 + Snew(j+1) * 0.5
-          Pmicro_new(i) = Pmicro_new(j) * 0.5 + Pmicro_new(j+1) * 0.5
-          Pnano_new(i) = Pnano_new(j) * 0.5 + Pnano_new(j+1) * 0.5
+          T_new(i) = T_new(j) * 0.5 + T_new(j+1) * 0.5
+          S_new(i) = S_new(j) * 0.5 + S_new(j+1) * 0.5
+          Pmicro(i) = Pmicro(j) * 0.5 + Pmicro(j+1) * 0.5
+          Pnano(i) = Pnano(j) * 0.5 + Pnano(j+1) * 0.5
        endif
     enddo
 
