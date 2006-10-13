@@ -1,18 +1,19 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
+SUBROUTINE shear_diff(mm, U_grad_i, V_grad_i, rho, nu_s)
 
   use precision_defs, only: dp
   use grid_mod, only: grid_
   use water_properties, only: water_property
-      USE mean_param, only: prop, div_interface
-      USE surface_forcing
+      USE surface_forcing, only: g, nu_o, Ri_o, p_1
 
       IMPLICIT NONE
 
       TYPE(grid_), INTENT(IN)::mm  !
-      TYPE(prop), INTENT(IN OUT)::u_vel, v_vel  !U, V
+      real(kind=dp), dimension(1:mm%M), intent(in) :: &
+           U_grad_i, &  ! Cross-strait vel component gradient at interfaces
+           V_grad_i     ! Along-strait vel component gradient at interfaces
       type(water_property), intent(in) :: rho 
       REAL(KIND=DP), DIMENSION(0:mm%M),INTENT(OUT)::nu_s
 
@@ -21,17 +22,13 @@ SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
       REAL(KIND=DP), DIMENSION(mm%M)::V_grad_sq
       INTEGER::k
  
-      CALL div_interface(mm, u_vel) ! calculate du/dz in u%div_i
-      CALL div_interface(mm, v_vel) ! calculate dv/dz in v%div_i
-
       Rig = 0.0
       nu_s = 0.0
       ! *** Vectorizable
       DO k = 1, mm%M
          N_2(k) = -(g / rho%i(k)) * rho%grad_i(k) ! calculate N2
-
-         V_grad_sq(k) = u_vel%div_i(k)**2.0+v_vel%div_i(k)**2.0
-         Rig(k) = N_2(k)/(V_grad_sq(k) + 1.0D-30) ! grad Ri number for interior (27)
+         V_grad_sq(k) = U_grad_i(k) ** 2 + V_grad_i(k) ** 2
+         Rig(k) = N_2(k) / (V_grad_sq(k) + 1.0D-30) ! grad Ri number for interior (27)
       END DO
       
 !PRINT*,'Rig',Rig
@@ -42,7 +39,7 @@ SUBROUTINE shear_diff(mm, u_vel, v_vel, rho, nu_s)
 !PRINT*,'1yes'
          ELSE IF (0. < Rig(k) .AND. Rig(k) < Ri_o) THEN
 !PRINT*,'2yes'
-            nu_s(k) = nu_o*(1.0 - (Rig(k)/Ri_o)**2.0)**p_1 ! (28b)
+            nu_s(k) = nu_o * (1.0 - (Rig(k) / Ri_o) ** 2) ** p_1 ! (28b)
          ELSE 
             nu_s(k) = 0. ! stable
 !PRINT*,'3yes'
