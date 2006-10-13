@@ -16,8 +16,6 @@ module mean_param
   ! *** Might better be called quantities...
   type :: prop
      real(kind=dp), dimension(:), pointer :: new, old, div_i
-     ! *** avg is only used in define_Ri_b_sog; calculate it locally?
-     real(kind=dp) :: avg      !surface layer average 
   end type prop
 
   ! Phytoplankton component of UVST type
@@ -128,22 +126,6 @@ module mean_param
 
 
 CONTAINS
-
-
-  SUBROUTINE div_interface(dm1, X1)
-    ! *** Can be replaced by gradient_i() if %div_i -> %grad_i
-
-    TYPE(grid_), INTENT(IN)::dm1         
-    TYPE(prop), INTENT(IN OUT)::X1    !U, V...
-    INTEGER::j
-
-    DO j = 1, dm1%M
-       X1%div_i(j) = (X1%new(j)-X1%new(j+1))/dm1%g_space(j)
-    END DO
-
-  END SUBROUTINE div_interface
-
-
 
   SUBROUTINE find_jmax_g(hh, d)
 
