@@ -21,7 +21,7 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(prop)::U, V, vt, ut
+  TYPE(prop):: vt, ut
   TYPE(Knu)::K 
   TYPE(flux)::w
   TYPE(height)::h, surface_h
@@ -91,10 +91,6 @@ module declarations
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
   ! Temporary vectors U_i , U_p... to hold results from tridiagonal solver
-  real(kind=dp), dimension(:), allocatable :: P1_p, Pnano1_p, &
-!!$       NO1_p, NH1_p, &
-!!$       &Si1_p, &
-       U_p, V_p, S_p, T_p
   real(kind=dp), dimension(:,:), allocatable :: Detritus1_p
   ! Surface biological flux == 0
   DOUBLE PRECISION::pflux_o
