@@ -67,46 +67,6 @@ module surface_forcing
        precision = 1.0D-4, &
        step_min = 3., &
        step_guess = 100.0
-
-CONTAINS
-
-  SUBROUTINE average(mm, X, surf_h)
-    ! *** This is only used in define_Ri_b_sog, and should move into it's
-    ! *** module.  It needs to be refactored to unhook the %avg component
-    ! *** of X so that it works with water_property rho instead of
-    ! *** prop density.
-
-    use precision_defs, only: dp
-    use grid_mod, only: grid_
-    use mean_param, only: prop, height, find_jmax_g
-
-    TYPE(grid_), INTENT(IN)::mm 
-    TYPE(prop), INTENT(INout)::X   !U, V, T ...
-    TYPE(height), INTENT(INout)::surf_h  !surface_height   
-
-    REAL(KIND=DP)::X_sl,X_h 
-    INTEGER::k
-
-    CALL find_jmax_g(surf_h, mm)
-
-    X%avg = 0.
-
-    IF (surf_h%g <= 1) THEN
-       X%avg = X%new(1)
-    ELSE
-       X_h = X%new(1) * mm%g_space(0)
-       IF (surf_h%g > 2) THEN
-          DO k = 2, surf_h%g - 1
-             X_h = X_h + (X%new(k-1) + X%new(k)) * mm%g_space(k-1) / 2.0 
-          END DO
-       END IF
-       X_sl = X%new(surf_h%g-1) + (surf_h%new - mm%d_g(surf_h%g-1)) &
-            * (X%new(surf_h%g) - X%new(surf_h%g-1)) / mm%g_space(surf_h%g-1)
-       X%avg = (X_h + (X%new(surf_h%g-1) + X_sl) &
-            * (surf_h%new - mm%d_g(surf_h%g-1)) / 2.0) / surf_h%new
-    END IF
-  end subroutine average
-
 end module surface_forcing
 
 
