@@ -18,7 +18,7 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-  use core_variables, only: T, S, P, N, Si
+  use core_variables, only: U, V, T, S, P, N, Si
   use core_variables, only: alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
@@ -182,7 +182,7 @@ program SOG
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
-  CALL initial_mean(U, V, T%new, S%new, P%micro, P%nano, &
+  CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        N%O, N%H, Si, &
        Detritus, &
        h%new, ut, vt, pbx, pby, &
@@ -234,8 +234,10 @@ program SOG
           I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano)
 
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
-        ! Calculate gradient pofiles of the water column
+        ! Calculate gradient pofiles of the velocity field and water column
         ! temperature, and salinity at the grid layer interface depths
+        U%grad_i = gradient_i(U%new)
+        V%grad_i = gradient_i(V%new)
         T%grad_i = gradient_i(T%new)
         S%grad_i = gradient_i(S%new)
 
@@ -303,7 +305,7 @@ program SOG
            omega%m%h = 0.
         END IF
 
-        CALL shear_diff(grid, U, V, rho, K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
+        CALL shear_diff(grid, U%grad_i, V%grad_i, rho, K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
 
         ! Calculate double diffusion mixing   
         call double_diffusion(grid%M, T%grad_i, S%grad_i, &  ! in
@@ -405,11 +407,8 @@ program SOG
            gamma%m = 0.
         END IF
 
-        CALL div_interface(grid, U)
-        CALL div_interface(grid, V)
-
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
-        CALL define_flux(T%grad_i, S%grad_i, alpha, beta)
+        CALL define_flux(U%grad_i, V%grad_i, T%grad_i, S%grad_i, alpha, beta)
 
         ! Calculate matrix B (changed to Amatrix later) 
         call diffusion_coeff(grid, dt, K%t%all, &
@@ -496,28 +495,21 @@ program SOG
              Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
              Hvector%v)                                             ! out
 
-        ! Solves tridiagonal system
+        ! Solves tridiagonal system for physics quantities
         call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
-             U_p)
+             U%new(1:grid%M))
         call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%v, &
-             V_p)
-        call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
-             S_p)
+             V%new(1:grid%M))
         call tridiag(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%t, &
-             T_p)
+             T%new(1:grid%M))
+        call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
+             S%new(1:grid%M))
 
-        DO yy = 1, grid%M   !remove diffusion!!!!!!!!!!  ? not sure
-           U%new(yy) = U_p(yy)
-           V%new(yy) = V_p(yy)
-           S%new(yy) = S_p(yy)
-           T%new(yy) = T_p(yy)
-        END DO
-
+        ! Update boundary conditions at surface, and bottom of grid
         U%new(0) = U%new(1)
         V%new(0) = V%new(1)
         S%new(0) = S%new(1)   
         T%new(0) = T%new(1)
-
         U%new(grid%M+1) = U%new(grid%M) 
         V%new(grid%M+1) = V%new(grid%M) 
         T%new(grid%M+1) = T%old(grid%M+1)
@@ -934,7 +926,6 @@ program SOG
      scount = scount + 1
      sumS = sumS + S%new(1)
      sumSriv = sumSriv + S_riv
-
   end do  !--------- End of time loop ----------
 
   write (*,*) "For Ft tuning"
