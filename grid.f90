@@ -267,7 +267,15 @@ contains
     ! Find the values of the quantity at the depth limits, and the
     ! indices of the grid points immediately below those depths
     call interp_value(d1, grid%d_g, qty_g, q_d1, j_below_d1)
+!!$print *, "q_d1 j_below_d1 ", q_d1, j_below_d1 - 1
     call interp_value(d2, grid%d_g, qty_g, q_d2, j_below_d2)
+!!$print *, "q_d2 j_below_d2 ", q_d2, j_below_d2 - 1
+    ! Handle the special cases of d1 = d2 and q_d1 = q_d2
+    if (abs(d2 - d1) < epsilon(d2 - d1) &
+         .or. abs(q_d2 - q_d1) < epsilon(q_d2 - q_d1)) then
+       avg = q_d1
+       return
+    endif
     ! Adjust the j_below value for the fact that interp_value operates
     ! on 1-based index arrays, and qty_g arrays are 0-based, and set the
     ! indices of the grid points immediately above d1, and d2
