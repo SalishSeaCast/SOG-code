@@ -18,8 +18,8 @@ program SOG
   use IMEX_constants  
 
   ! Refactored modules
-  use core_variables, only: T, S, N, Si, P, &
-       alloc_core_variables, dalloc_core_variables
+  use core_variables, only: T, S, P, N, Si
+  use core_variables, only: alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
   use physics_model, only: B, &
@@ -182,8 +182,8 @@ program SOG
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
-  CALL initial_mean(U, V, T%new, S%new, P%micro%new, P%nano%new, &
-       N%O%new, N%H%new, Si%new, &
+  CALL initial_mean(U, V, T%new, S%new, P%micro, P%nano, &
+       N%O, N%H, Si, &
        Detritus, &
        h%new, ut, vt, pbx, pby, &
        grid, D_bins, cruise_id)
@@ -225,13 +225,13 @@ program SOG
      ! Store previous time_steps in %old components
      CALL define_sog(time_step) 
 
-     ! get forcing data
+     ! Get forcing data
      call get_forcing (year, day, day_time, &
           Qinter, Einter, cf_value, atemp_value, humid_value, &
           unow, vnow)
 
      CALL irradiance_sog(cf_value, day_time, day, &
-          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro%new, P%nano%new)
+          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano)
 
      DO count = 1, niter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the water column
@@ -277,7 +277,7 @@ program SOG
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,       &  ! in
-             B%new, Bf)                                         ! out
+             B, Bf)                                             ! out
 
 !!$        ! Blend the values of the surface buoyancy forcing from current
 !!$        ! and previous iteration to help convergence
@@ -545,11 +545,13 @@ program SOG
         alpha%grad_i = gradient_i(alpha%g)
         beta%grad_i = gradient_i(beta%g)
 
-        ! Update buoyancy profile and local buoyancy frequency
-        ! *** Figure out what N_2 designates (in contrast to N in Large, etal)
-        ! *** (may be buoyancy frequency squared); can it go into buoyancy?
-        ! *** Why not just call buoyancy again here?
-        B%new = g * (alpha%g * T%new - beta%g * S%new)
+        ! Update buoyancy profile, surface buoyancy forcing, and local
+        ! buoyancy frequency
+        ! *** Local buoyancy freqency may be part of mixing layer
+        ! *** depth calculation
+        CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,       &  ! in
+             B, Bf)                                             ! out
         rho%grad_g = gradient_g(rho%g)
         DO xx = 1,grid%M
            N_2_g(xx) = -(g / rho%g(xx)) * rho%grad_g(xx)
@@ -733,7 +735,7 @@ program SOG
        ! User-defined physical model output variables
 !!$       &
        ! Variables for standard biological model output
-       N%O%new , N%H%new, Si%new, P%micro%new, P%nano%new, &
+       N%O , N%H, Si, P%micro, P%nano, &
        Detritus(1)%D%new, Detritus(2)%D%new, Detritus(3)%D%new &
        ! User-defined biological model output variables
 !!$       &
@@ -741,16 +743,15 @@ program SOG
 
      call write_profiles(codeId, datetime_str(runDatetime),            &
           datetime_str(startDatetime), year, day, day_time, dt, grid,  &
-          T%new, S%new, rho%g, P%micro%new, P%nano%new, N%O%new, &
-          N%H%new, Si%new, Detritus(1)%D%new, Detritus(2)%D%new,      &
+          T%new, S%new, rho%g, P%micro, P%nano, N%O, &
+          N%H, Si, Detritus(1)%D%new, Detritus(2)%D%new,      &
           Detritus(3)%D%new, K%u%all, K%t%all, K%s%all, I_par, U%new,  &
           V%new)
 
 !------BIOLOGICAL MODEL--------------------------------------------
 
      call do_biology (time, day, dt, grid%M, precision, step_guess, step_min, &
-          T%new(0:grid%M), I_Par, P%micro%new, P%nano%new, N%O%new, N%H%new,  &
-          Si%new, Detritus, &
+          T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si, Detritus,    &
           Gvector_ro)
 !*** more of the below can be moved into the do_biology module
 
@@ -761,10 +762,10 @@ program SOG
 
      ! Initialize Gvector and add the upward from the bottom (surface flux = 0)
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          P%micro%new(grid%M+1), &                                     ! in
+          P%micro(grid%M+1), &                                     ! in
           Gvector%p%micro)                                             ! out
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          P%nano%new(grid%M+1), &                                      ! in
+          P%nano(grid%M+1), &                                      ! in
           Gvector%p%nano)                                              ! out
      DO xx = 1, D_bins-1
         call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &       ! in
@@ -773,25 +774,25 @@ program SOG
      END DO
      Gvector%d(D_bins)%bin = 0.
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          N%O%new(grid%M+1), &                                         ! in
+          N%O(grid%M+1), &                                         ! in
           Gvector%n%o)                                                 ! out
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          N%H%new(grid%M+1), &                                         ! in
+          N%H(grid%M+1), &                                         ! in
           Gvector%n%h)                                                 ! out
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          Si%new(grid%M+1), &                                          ! in
+          Si(grid%M+1), &                                          ! in
           Gvector%si)                                                  ! out
 
      ! vertical advection
-     call vertical_advection (grid, dt, P%micro%new, wupwell, &
+     call vertical_advection (grid, dt, P%micro, wupwell, &
           Gvector%p%micro)
-     call vertical_advection (grid, dt, P%nano%new, wupwell, &
+     call vertical_advection (grid, dt, P%nano, wupwell, &
           Gvector%p%nano)
-     call vertical_advection (grid, dt, N%O%new, wupwell, &
+     call vertical_advection (grid, dt, N%O, wupwell, &
           Gvector%n%o)
-     call vertical_advection (grid, dt, N%H%new, wupwell, &
+     call vertical_advection (grid, dt, N%H, wupwell, &
           Gvector%n%h)
-     call vertical_advection (grid, dt, Si%new, wupwell, &
+     call vertical_advection (grid, dt, Si, wupwell, &
           Gvector%si)
      DO xx = 1,D_bins-1
         call vertical_advection (grid, dt, Detritus(xx)%D%new, wupwell, &
@@ -835,10 +836,10 @@ program SOG
      END IF ! time_step == 1
 
      ! Build the H vectors for the biological quantities
-     CALL P_H (grid%M, P%micro%old, Gvector%p%micro, Gvector_o%p%micro, &
+     CALL P_H (grid%M, P%micro, Gvector%p%micro, Gvector_o%p%micro, &
           Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix_o%bio, &
           Hvector%p%micro)
-     CALL P_H(grid%M, P%nano%old, Gvector%p%nano, Gvector_o%p%nano, &
+     CALL P_H(grid%M, P%nano, Gvector%p%nano, Gvector_o%p%nano, &
           Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
      DO xx = 1, D_bins - 1
@@ -850,27 +851,27 @@ program SOG
      CALL P_H(grid%M, Detritus(D_bins)%D%old, Gvector%d(D_bins)%bin, &
           Gvector_o%d(D_bins)%bin, Gvector_ro%d(D_bins)%bin, &
           null_vector, Bmatrix%null, Hvector%d(D_bins)%bin) 
-     CALL P_H(grid%M, N%O%old, Gvector%n%o, Gvector_o%n%o, &
+     CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
           Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
           Hvector%n%o)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  N%H%old, Gvector%n%h, Gvector_o%n%h, &
+     CALL P_H(grid%M,  N%H, Gvector%n%h, Gvector_o%n%h, &
           Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
           Hvector%n%h)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  Si%old, Gvector%si, Gvector_o%si, &
+     CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
           Gvector_ro%si, null_vector, Bmatrix_o%no, &
           Hvector%si)  ! null_vector 'cause no sinking
 
-     ! Solve the tridiagonal system for the biological quantities
+     ! Solve the tridiagonal system for the biology quantities
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%p%micro, P%micro%new(1:grid%M))
+          Hvector%p%micro, P%micro(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%p%nano, P%nano%new(1:grid%M))
+          Hvector%p%nano, P%nano(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
-          N%O%new(1:grid%M))
+          N%O(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
-          N%H%new(1:grid%M))
+          N%H(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
-          Si%new(1:grid%M))
+          Si(1:grid%M))
      do xx = 1,D_bins-1
         call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
              Hvector%d(xx)%bin, Detritus1_p(xx,:))
@@ -883,34 +884,34 @@ program SOG
      CALL find_new(grid%M)
      ! *** This is refactored code from find_new() that needs to go
      ! *** somewhere else
-     N%O%new(0) = N%O%new(1)
-     if (any(N%O%new < 0.)) then
-        where (N%O%new < 0.) Si%new = 0.
-        write(stdout, *) "Warning: negative value(s) in N%O%new ", &
+     N%O(0) = N%O(1)
+     if (any(N%O < 0.)) then
+        where (N%O < 0.) N%O = 0.
+        write(stdout, *) "Warning: negative value(s) in N%O ", &
              "were set to zero."
      endif
-     N%H%new(0) = N%H%new(1)
-     if (any(N%H%new < 0.)) then
-        where (N%H%new < 0.) Si%new = 0.
-        write(stdout, *) "Warning: negative value(s) in N%H%new ", &
+     N%H(0) = N%H(1)
+     if (any(N%H < 0.)) then
+        where (N%H < 0.) N%H = 0.
+        write(stdout, *) "Warning: negative value(s) in N%H ", &
              "were set to zero."
      endif
-     Si%new(0) = Si%new(1)
-     if (any(Si%new < 0.)) then
-        where (Si%new < 0.) Si%new = 0.
-        write(stdout, *) "Warning: negative value(s) in Si%new ", &
+     Si(0) = Si(1)
+     if (any(Si < 0.)) then
+        where (Si < 0.) Si = 0.
+        write(stdout, *) "Warning: negative value(s) in Si ", &
              "were set to zero."
      endif
-     P%micro%new(0) = P%micro%new(1)
-     if (any(P%micro%new < 0.)) then
-        where (P%micro%new < 0.) P%micro%new = 0.
-        write(stdout, *) "Warning: negative value(s) in P%micro%new ", &
+     P%micro(0) = P%micro(1)
+     if (any(P%micro < 0.)) then
+        where (P%micro < 0.) P%micro = 0.
+        write(stdout, *) "Warning: negative value(s) in P%micro ", &
              "were set to zero."
      endif
-     P%nano%new(0) = P%nano%new(1)
-     if (any(P%nano%new < 0.)) then
-        where (P%nano%new < 0.) P%nano%new = 0.
-        write(stdout, *) "Warning: negative value(s) in P%nano%new ", &
+     P%nano(0) = P%nano(1)
+     if (any(P%nano < 0.)) then
+        where (P%nano < 0.) P%nano = 0.
+        write(stdout, *) "Warning: negative value(s) in P%nano ", &
              "were set to zero."
      endif
 
@@ -922,11 +923,11 @@ program SOG
      ! For those variables that we have data, use the annual fit
      ! calculated from the data
      call bot_bound_time (day, day_time, &                                ! in
-          T%new(grid%M+1), S%new(grid%M+1), N%O%new(grid%M+1), &          ! out
-          Si%new(grid%M+1), P%micro%new(grid%M+1), P%nano%new(grid%M+1)) ! out
+          T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
+          Si(grid%M+1), P%micro(grid%M+1), P%nano(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
-     call bot_bound_uniform (grid%M, N%H%new, Detritus)
+     call bot_bound_uniform (grid%M, N%H, Detritus)
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
