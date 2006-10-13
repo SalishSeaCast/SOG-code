@@ -37,6 +37,8 @@ module core_variables
   private
   public :: &
        ! Variables:
+       U,  &  ! Cross-strait (35 deg) velocity component arrays
+       V,  &  ! Along-strait (305 deg) velocity component arrays
        T,  &  ! Temperature profile arrays
        S,  &  ! Salinity profile arrays
        P,  &  ! Micro & nano phytoplankton profile arrays
@@ -72,6 +74,8 @@ module core_variables
 
   ! Public variable declarations:
   type(profiles) :: &
+       U, &  ! Cross-strait (35 deg) velocity component arrays
+       V, &  ! Along-strait (305 deg) velocity component arrays
        T, &  ! Temperature profile arrays
        S     ! Salinity profile arrays
   type(plankton) :: &
@@ -93,6 +97,14 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
+    msg = "Cross-strait velocity component profile arrays"
+    allocate(U%new(0:M+1), U%old(0:M+1), U%grad_i(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Along-strait velocity component profile arrays"
+    allocate(V%new(0:M+1), V%old(0:M+1), V%grad_i(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
     msg = "Temperature profile arrays"
     allocate(T%new(0:M+1), T%old(0:M+1), T%grad_i(1:M), &
          stat=allocstat)
@@ -132,6 +144,14 @@ contains
     integer           :: dallocstat  ! Deallocation return status
     character(len=80) :: msg        ! Deallocation failure message prefix
 
+    msg = "Cross-strait velocity component profile arrays"
+    deallocate(U%new, U%old, U%grad_i, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Along-strait velocity component profile arrays"
+    deallocate(V%new, V%old, V%grad_i, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
     msg = "Temperature profile arrays"
     deallocate(T%new, T%old, T%grad_i, &
          stat=dallocstat)
