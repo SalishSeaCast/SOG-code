@@ -25,7 +25,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
  
   ! Local variables:
   real(kind=dp), dimension(0:d%M+1) :: test_vector, test_vector2
-  integer :: yy, ymin, j_below
+  integer :: yy
   real(kind=dp) ::Ribmin, rho_avg
 
   surf_h%new = ep*hh%new
@@ -33,6 +33,31 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
   call average(d,Uu,surf_h) !test conv  
   call average(d,Vv,surf_h) !test conv 
   rho_avg = depth_average(rho, 0.0d0, surf_h%new)
+!!$print *, ''
+!!$print *, "d%d_g(0:3) ", d%d_g(0:3)
+!!$print *, "rho(0:3) ", rho(0:3)
+!!$print *, ''
+!!$rho_avg = depth_average(d%d_g, 0.0d0, 1.25d0)
+!!$print *, "d%d_g_avg(0, 1.25) ", rho_avg
+!!$print *, ''
+!!$rho_avg = depth_average(rho, 0.0d0, 1.25d0)
+!!$print *, "rho_avg(0, 1.25) ", rho_avg
+!!$print *, ''
+!!$rho_avg = depth_average(d%d_g, 0.75d0, 0.75d0)
+!!$print *, "d%d_g_avg(0.75, 0.75) ", rho_avg
+!!$print *, ''
+!!$rho_avg = depth_average(rho, 0.75d0, 0.75d0)
+!!$print *, "rho_avg(0.75, 0.75) ", rho_avg
+!!$print *, ''
+!!$rho_avg = depth_average(d%d_g, 0.0d0, 0.25d0)
+!!$print *, "d%d_g_avg(0, 0.25) ", rho_avg
+!!$print *, ''
+!!$rho_avg = depth_average(rho, 0.0d0, 0.25d0)
+!!$print *, "rho_avg(0, 0.25) ", rho_avg
+!!$print *, ''
+!!$rho_avg = depth_average(rho, 0.0d0, 0.1d0)
+!!$print *, "rho_avg(0, 0.1) ", rho_avg
+!!$stop
 
   test_vector = (Uu%avg - Uu%new)**2.0 + (Vv%avg - Vv%new)**2.0 
   test_vector2 =  -g / rho(0) * (rho_avg - rho) !Bb%avg - Bb%new  
@@ -48,9 +73,6 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
                 / (test_vector(yy) + Vt_sq(yy) + 1.0D-30)
            if (Rib(yy) < Ribmin) then
                Ribmin = Rib(yy)
-               ! *** This line doesn't appear to have any purpose,
-               ! *** ymin is never used
-               ymin = yy
             endif
         end if
      end if
