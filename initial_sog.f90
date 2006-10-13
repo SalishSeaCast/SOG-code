@@ -20,7 +20,7 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean (Ui, Vi, T_new, S_new, Pmicro, Pnano, &
+  subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, &
        NO, NH, Si, Detritus, &
        hi, ut, vt, &
        pbx, pby, d, D_bins, cruise_id)       
@@ -31,15 +31,16 @@ contains
     use mean_param, only: prop, snow
     implicit none
     ! Arguments:
-    type(prop), intent(out) :: Ui, Vi
     real(kind=dp), dimension(0:), intent(out) :: &
+         U_new,  &  ! Cross-strait velocity component profile
+         V_new,  &  ! Along-strait velocity component profile
          T_new,  &  ! Temperature profile
          S_new,  &  ! Salinity profile
+         Pmicro, &  ! Micro phytoplankton profile
+         Pnano,  &  ! Nano phytoplankton profile
          NO,     &  ! Salinity Nitrate
          NH,     &  ! Ammonium profile
-         Si,     &  ! Silicon profile
-         Pmicro, &  ! Micro phytoplankton profile
-         Pnano      ! Nano phytoplankton profile
+         Si         ! Silicon profile
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     real(kind=dp), intent(out) :: hi !h%new
@@ -63,8 +64,8 @@ contains
        !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
        P_nano = 2.6D-3
 
-    Ui%new(1) = Uo
-    Vi%new(1) = Vo
+    U_new(1) = Uo
+    V_new(1) = Vo
 !!$    Pmicro_new(1) = P_micro
     Pnano(1) = P_nano
     NH(1) = NHo
@@ -101,8 +102,8 @@ contains
           Pnano(i) = 0.
           NH(i) = 0.
        END IF
-       Ui%new(i) = Uo
-       Vi%new(i) = Vo
+       U_new(i) = Uo
+       V_new(i) = Vo
 
     END DO
 
@@ -176,8 +177,8 @@ contains
 
     !If the bottom fluxes are fixed, use the following 
     !tp reevaluate M+1 values:
-    Vi%new(0) = Vi%new(1)  !Conditions
-    Ui%new(0) = Ui%new(1)
+    V_new(0) = V_new(1)  !Conditions
+    U_new(0) = U_new(1)
 
     !            initialize ut and vt
     do i=1,d%M
