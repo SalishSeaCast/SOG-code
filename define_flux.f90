@@ -7,24 +7,28 @@ module define_flux_mod
 
 contains
 
-  subroutine define_flux(T_grad_i, S_grad_i, alpha, beta)
+  subroutine define_flux(U_grad_i, V_grad_i, T_grad_i, S_grad_i, alpha, beta)
     ! *** What's it do?
 
     use precision_defs, only: dp
     use water_properties, only: water_property
 
-    USE declarations
-    USE surface_forcing
+    USE declarations, only: grid, K, w, gamma, h
+    USE surface_forcing, only: g
 
     implicit none
 
     ! Arguments:
     real(kind=dp), dimension(1:) :: &
+         U_grad_i, &  ! Cross-strait velocity gradient profile at interfaces
+         V_grad_i, &  ! Along-strait velocity gradient profile at interfaces
          T_grad_i, &  ! Temperature gradient profile at grid interface depths
          S_grad_i     ! Salinity gradient profile at grid interface depths
     type(water_property), intent(in) :: &
          alpha, &  ! Thermal expansion coefficient profile arrays
          beta      ! Saline contraction coefficient profile arrays
+    ! Local variable:
+    integer :: xx  ! Loop index over depth
 
     K%u%all = 0.0
     K%s%all = 0.0
@@ -46,8 +50,8 @@ contains
        else
           w%t(xx) = -K%t%ML(xx) * (T_grad_i(xx) - gamma%t(xx)) ! (9)
           w%s(xx) = -K%s%ML(xx) * (S_grad_i(xx) - gamma%s(xx))
-          w%u(xx) = -K%u%ML(xx) * (U%div_i(xx) - gamma%m(xx))
-          w%v(xx) = -K%u%ML(xx) * (V%div_i(xx) - gamma%m(xx))
+          w%u(xx) = -K%u%ML(xx) * (U_grad_i(xx) - gamma%m(xx))
+          w%v(xx) = -K%u%ML(xx) * (V_grad_i(xx) - gamma%m(xx))
           ! Buoyancy flux by definition given t and s flux
           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))  
           ! Buoyancy flux variation due to error in z
@@ -62,8 +66,8 @@ contains
        if (grid%d_i(xx) > h%new) then
           w%t(xx) = -K%t%total(xx) * T_grad_i(xx)
           w%s(xx) = -K%s%total(xx) * S_grad_i(xx)
-          w%u(xx) = -K%u%total(xx) * U%div_i(xx)
-          w%v(xx) = -K%u%total(xx) * V%div_i(xx)
+          w%u(xx) = -K%u%total(xx) * U_grad_i(xx)
+          w%v(xx) = -K%u%total(xx) * V_grad_i(xx)
           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))
           w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) - beta%grad_i(xx) * w%s(xx))
           K%u%all(xx) = K%u%total(xx)
