@@ -12,9 +12,8 @@ contains
 
     use precision_defs, only: dp
     use water_properties, only: water_property
-
+    use physics_model, only: g
     USE declarations, only: grid, K, w, gamma, h
-    USE surface_forcing, only: g
 
     implicit none
 

@@ -20,6 +20,8 @@ module physics_model
 
   private
   public :: &
+       ! Parameter values:
+       g, &  ! Acceleration due to gravity [m/s^2]
        ! Variables:
        B, &  ! Buoyancy profile array
        ! Subroutines:
@@ -32,6 +34,10 @@ module physics_model
      real(kind=dp), dimension(:), pointer :: &
           new  ! Profile of quantity at current time setp
   end type profile
+
+  ! Public parameter declarations:
+  real(kind=dp) :: &
+       g = 9.81  ! Acceleration due to gravity [m/s^2]
 
   ! Public variable declarations:
   real(kind=dp), dimension(:), allocatable :: &

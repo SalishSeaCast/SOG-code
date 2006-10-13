@@ -18,8 +18,6 @@ module surface_forcing
 !*** real(kind=dp), parameter :: f = 2. * (2. * PI / 86400.) * &
 !***    sin(PI * latitude / 180.)
   real(kind=dp), parameter :: f = 1.1d-4
-  ! Acceleration due to gravity
-  real(kind=dp), parameter :: g = 9.81  ! m/s^2
 
   DOUBLE PRECISION, PARAMETER:: &
        small = 1.D-15, &

@@ -8,7 +8,7 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
   use precision_defs, only: dp
   use grid_mod, only: grid_, interp_value
   use mean_param, only: height
-  use surface_forcing, only: g
+  use physics_model, only: g
   implicit none
   ! Arguments:
   type(grid_), intent(in) :: grid  ! Grid depths & spacings arrays

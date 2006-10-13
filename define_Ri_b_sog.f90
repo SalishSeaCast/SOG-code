@@ -10,8 +10,9 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
 
   use precision_defs, only: dp
   use grid_mod, only: grid_, depth_average
+  use physics_model, only: g
   USE mean_param, only: height, prop
-  USE surface_forcing, only: g, ep
+  USE surface_forcing, only: ep
 
   ! Arguments:
   type(grid_), intent(in) :: d
