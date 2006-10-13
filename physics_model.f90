@@ -2,8 +2,8 @@
 ! $Source$
 
 module physics_model
-  ! Type declarations, variables, and subroutines related to the physics
-  ! model in the code.
+  ! Type declarations, variables, parameters, and subroutines related
+  ! to the physics model in the code.
   ! 
   ! Public Variables:
   !
@@ -34,7 +34,7 @@ module physics_model
   end type profile
 
   ! Public variable declarations:
-  type(profile) :: &
+  real(kind=dp), dimension(:), allocatable :: &
        B  ! Buoyancy profile array
 
 contains
@@ -140,8 +140,8 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Water column buoyancy profile array"
-    allocate(B%new(0:M+1), &
+    msg = "Buoyancy profile array"
+    allocate(B(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_physics_variables
@@ -156,8 +156,8 @@ contains
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Water column buoyancy profile array"
-    deallocate(B%new, &
+    msg = "Buoyancy profile array"
+    deallocate(B, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     call dalloc_water_props
