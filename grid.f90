@@ -283,19 +283,41 @@ contains
     j_below_d2 = j_below_d2 - 1
     j_above_d1 = j_below_d1 - 1
     j_above_d2 = j_below_d2 - 1
-    ! Calculate the depth weighted average value of the quantity
-    ! Portion between d1 and nearest grid layer interface below
-    call interp_value(grid%d_i(j_above_d1), grid%d_g, qty_g, &
-         q_i_d1, j_junk)
-    avg = (q_d1 + q_i_d1) / 2 * (grid%d_i(j_above_d1) - d1)
-    ! Portion between whole grid layer interfaces
-    avg = avg + dot_product(qty_g(j_below_d1:j_above_d2), &
-         grid%i_space(j_below_d1:j_above_d2))
-    ! Portion below last grid layer interface and d2
-    call interp_value(grid%d_i(j_above_d2), grid%d_g, qty_g, &
+    ! check for d1 and d2 close together
+    if (d2<grid%d_g(j_below_d1+1)) then
+       ! in this case d1 and d2 and within the same pair of grid points
+       if (d2<=grid%d_g(j_below_d1)) then
+          avg = 0.5*(q_d1+q_d2)
+       ! in this case d1 and d2 are within three grid points
+       else
+          avg = (0.5*(q_d1+qty_g(j_below_d1))*(grid%d_g(j_below_d1)-d1) &
+               + 0.5*(qty_g(j_below_d1)+q_d2)*(d2-grid%d_g(j_below_d1))) &
+               / (d2-d1)
+       endif
+    else
+       ! Calculate the depth weighted average value of the quantity
+       ! through at least one grid point and then to the interface
+       ! below that
+       call interp_value(grid%d_i(j_below_d1), grid%d_g, qty_g, &
+            q_i_d1, j_junk)
+       avg = 0.5*(q_d1+qty_g(j_below_d1))*(grid%d_g(j_below_d1)-d1) &
+            + 0.5*(qty_g(j_below_d1)+q_i_d1)* &
+            (grid%d_i(j_below_d1)-grid%d_g(j_below_d1))
+       ! Portion between whole grid layer interfaces (note, if the second
+       ! index is less that the first the dot product gets 0 (so we don't 
+       ! need to test to this)
+       avg = avg + dot_product(qty_g(j_below_d1+1:j_above_d2-1), &
+            grid%i_space(j_below_d1+1:j_above_d2-1))
+       ! Portion below a layer interface through one
+       ! grid point and to d2
+       call interp_value(grid%d_i(j_above_d2-1), grid%d_g, qty_g, &
          q_i_d2, j_junk)
-    avg = avg + ((q_d2 + q_i_d2) / 2 * (d2 - grid%d_i(j_above_d2)))
-    avg = avg / (d2 - d1)
+       avg = avg + &
+            0.5*(q_i_d2+qty_g(j_above_d2))* &
+            (grid%d_g(j_above_d2)-grid%d_i(j_above_d2-1)) + &
+            0.5*(qty_g(j_above_d2)+q_d2)*(d2-grid%d_g(j_above_d2))
+       avg = avg / (d2 - d1)
+    endif
   end function depth_average
 
 
