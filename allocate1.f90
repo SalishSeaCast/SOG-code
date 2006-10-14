@@ -73,18 +73,17 @@ subroutine allocate1(M, STAT)
                
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
            nano%growth%light(M), nano%growth%new(M), &
+           micro%Nlimit(M), nano%Nlimit(M), &
            wupwell(1:M+1), &
            STAT = alloc_stat(10))
 
       ALLOCATE(f_ratio(M), &
            STAT = alloc_stat(11))
 
-! sea add
       ALLOCATE(G_shape%s(0:M+1), G_shape%m(0:M+1), G_shape%t(0:M+1), &
            STAT = alloc_stat(16))
       ALLOCATE(K%u%ML(0:M+1), K%s%ML(0:M+1), K%t%ML(0:M+1), &
            STAT = alloc_stat(17))
-
                
       
 END SUBROUTINE allocate1
