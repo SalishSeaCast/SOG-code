@@ -131,7 +131,7 @@ contains
     integer :: binno ! detritus bin as read
 
     ! Number of detritus bins, dissolved, slow sink and fast sink
-    D_bins = 3
+    D_bins = 4
 
     ! Size of the PZ vector for biological model
     M2 = (PZ_bins%Quant + D_bins) * M   !size of PZ in biology: 
@@ -477,6 +477,8 @@ contains
           Hup_cell(j) = 0.
        END IF
 
+       plank%Nlimit(j) = (Oup_cell(j) + Hup_cell(j)) / Rmax(j)
+
        IF (Oup_cell(j) < 0.) THEN
           PRINT "(A)","Oup_cell(j) < 0. in reaction.f90"
           PRINT *,Oup_cell(j)
@@ -564,6 +566,7 @@ contains
     real(kind=dp), dimension (M) :: NO, NH, Si ! nitrate, ammonium & silicon conc.
     real(kind=dp), dimension (D_bins, M) :: detr ! detritus
     real(kind=dp), dimension (M) :: WasteMicro, WasteNano ! losses by size
+    real(kind=dp), dimension (M) :: Si_remin ! dissolution of bio-silicon
 
     ! Put PZ micro values into Pmicro variable, removing any negative values
     do ii = 1,M                        ! counter through grid
@@ -678,9 +681,11 @@ contains
     NH_oxid(1:M) = rate_N%r * NH**2
 
     ! remineralization of detritus groups 1 and 2 (not last one)
-    do kk = 1,D_bins-1
+    do kk = 1, 2
        remin_NH(:) = remin_NH(:) + rate_det%remineral(kk) * detr(kk,:)
     enddo
+    ! remineraliation of silcon
+    Si_remin(:) = rate_det%remineral(3) * detr(3,:)
 
     IF (MINVAL(remin_NH) < 0.) THEN
        PRINT "(A)","remin_NH < 0. in derivs.f90"
@@ -759,14 +764,15 @@ contains
           dPZdt(jj) = - (micro%growth%new(ii) - Resp_micro(ii)) * Pmicro(ii) &
                          * rate_micro%Si_ratio &
                       - (nano%growth%new(ii) - Resp_nano(ii)) * Pnano(ii) &
-                         * rate_nano%Si_ratio
+                         * rate_nano%Si_ratio &
+                         + Si_remin(ii)
        endif
     enddo
 
-    ! detritus (not last bin)
+    ! detritus (DON and PON and biogenic silicon)
 
     do ii = 1, M
-       do kk = 1, D_bins-1
+       do kk = 1, 2
           jj = (PZ_bins%Quant + (kk-1)) * M + ii
 
           if (detr(kk,ii) > 0) then
@@ -775,7 +781,16 @@ contains
                   - rate_det%remineral(kk) * detr(kk,ii) 
           end if
        end do
+       kk = 3
+       jj = (PZ_bins%Quant + (kk-1)) * M + ii
+       
+       if (detr(kk,ii) > 0) then
+          dPZdt(jj) = Mort_micro(ii) * Pmicro(ii) * rate_micro%Si_ratio &
+               - rate_det%remineral(kk) * detr(kk,ii) 
+       end if
+  
     end do
+
 
   end subroutine derivs_sog
 
