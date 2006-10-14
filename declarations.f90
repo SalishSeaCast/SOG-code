@@ -21,7 +21,6 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(prop):: vt, ut
   TYPE(Knu)::K 
   TYPE(flux)::w
   TYPE(height)::h, surface_h
@@ -85,7 +84,6 @@ module declarations
   DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::V_t_square, &
        Ri_b, N_2_g
-  double precision, dimension(:), allocatable:: pbx,pby,dzx,dzy
   !I = intensity
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par
 
