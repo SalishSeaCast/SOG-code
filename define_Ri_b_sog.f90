@@ -34,31 +34,6 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
   U_avg = depth_average(Uu%new, 0.0d0, surf_h%new)
   V_avg = depth_average(Vv%new, 0.0d0, surf_h%new)
   rho_avg = depth_average(rho, 0.0d0, surf_h%new)
-!!$print *, ''
-!!$print *, "d%d_g(0:3) ", d%d_g(0:3)
-!!$print *, "rho(0:3) ", rho(0:3)
-!!$print *, ''
-!!$rho_avg = depth_average(d%d_g, 0.0d0, 1.25d0)
-!!$print *, "d%d_g_avg(0, 1.25) ", rho_avg
-!!$print *, ''
-!!$rho_avg = depth_average(rho, 0.0d0, 1.25d0)
-!!$print *, "rho_avg(0, 1.25) ", rho_avg
-!!$print *, ''
-!!$rho_avg = depth_average(d%d_g, 0.75d0, 0.75d0)
-!!$print *, "d%d_g_avg(0.75, 0.75) ", rho_avg
-!!$print *, ''
-!!$rho_avg = depth_average(rho, 0.75d0, 0.75d0)
-!!$print *, "rho_avg(0.75, 0.75) ", rho_avg
-!!$print *, ''
-!!$rho_avg = depth_average(d%d_g, 0.0d0, 0.25d0)
-!!$print *, "d%d_g_avg(0, 0.25) ", rho_avg
-!!$print *, ''
-!!$rho_avg = depth_average(rho, 0.0d0, 0.25d0)
-!!$print *, "rho_avg(0, 0.25) ", rho_avg
-!!$print *, ''
-!!$rho_avg = depth_average(rho, 0.0d0, 0.1d0)
-!!$print *, "rho_avg(0, 0.1) ", rho_avg
-!!$stop
 
   test_vector = (U_avg - Uu%new) ** 2 + (V_avg - Vv%new) ** 2
   test_vector2 =  -g / rho(0) * (rho_avg - rho)
@@ -78,5 +53,5 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
         end if
      end if
   end do
-  
+
 end subroutine define_Ri_b_sog
