@@ -8,7 +8,7 @@ SUBROUTINE define_sog(timestep)
   USE declarations, only: D_bins, h, &
        Bmatrix, Bmatrix_o, & 
        Gvector, Gvector_o, Gvector_c, Gvector_co, &
-       Detritus, ut, vt
+       Detritus
 
       IMPLICIT NONE
 
@@ -60,8 +60,6 @@ SUBROUTINE define_sog(timestep)
          T%old = T%new
          h%old = h%new
 
-         ut%old = ut%new
-         vt%old = vt%new
 
          DO kk = 1, D_bins
             Detritus(kk)%D%old = Detritus(kk)%D%new
