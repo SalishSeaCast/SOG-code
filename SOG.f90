@@ -60,6 +60,7 @@ program SOG
 
   implicit none
 
+  real(kind=dp) :: aflux, sflux(80)
   real(kind=dp) :: &
        upwell
   ! Upwelling constant (tuned parameter)
@@ -682,10 +683,12 @@ program SOG
      Bmatrix%no = Bmatrix%bio          ! both diffuse like S
 
      ! Initialize Gvector and add the upward from the bottom (surface flux = 0)
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+     aflux = -Ft*(0.-P%micro(1)) 
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
           P%micro(grid%M+1), &                                     ! in
           Gvector%p%micro)                                             ! out
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+     aflux = -Ft*(0.-P%nano(1)) 
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
           P%nano(grid%M+1), &                                      ! in
           Gvector%p%nano)                                              ! out
      DO xx = 1, D_bins-1
@@ -694,15 +697,17 @@ program SOG
              Gvector%d(xx)%bin)                                        ! out
      END DO
      Gvector%d(D_bins)%bin = 0.
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
+     aflux = -Ft*(6.4-N%O(1)) 
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
           N%O(grid%M+1), &                                         ! in
           Gvector%n%o)                                                 ! out
      call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
           N%H(grid%M+1), &                                         ! in
           Gvector%n%h)                                                 ! out
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          Si(grid%M+1), &                                          ! in
-          Gvector%si)                                                  ! out
+     aflux = -Ft*(60.0-Si(1)) 
+     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
+          Si(grid%M+1), &                                         ! in
+          Gvector%si)                                                 ! out
 
      ! vertical advection
      call vertical_advection (grid, dt, P%micro, wupwell, &
@@ -720,14 +725,15 @@ program SOG
              Gvector%d(xx)%bin)
      END DO
 
-     micro%sink = 0.*1.1574D-05 ! 0/m per day
-!     CALL advection(grid,micro%sink,P%micro%old,dt,Gvector_ao%p%micro) !sinking phytoplankton
-     Gvector_ao%p%micro = 0. ! sinking not implemented
+     micro%sink_min = 0.3*1.1574D-05 ! 0.3/m per day
+     micro%sink_max = 1.2*1.1574D-05 ! 1.2/m per day
+     sflux = micro%sink_min*micro%Nlimit + micro%sink_max*(1-micro%Nlimit)
+     CALL advection(grid,sflux,P%micro,dt,Gvector_ao%p%micro) !sinking phytoplankton
 
      DO xx = 1,D_bins-1
         CALL advection(grid,rate_det%sink(xx),Detritus(xx)%D%old,dt,Gvector_ao%d(xx)%bin)
      END DO
-     Gvector_ao%d(D_bins)%bin = 0.
+     
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
      CALL matrix_A (Amatrix%no, Bmatrix%no)
