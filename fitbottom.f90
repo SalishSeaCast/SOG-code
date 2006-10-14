@@ -128,12 +128,16 @@ contains
     implicit none
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
-    real(kind=dp), dimension(0:), intent(inout) :: NH
     type (snow), dimension(1:), intent(inout) :: Detritus
+    real(kind=dp), intent(in out), dimension(0:) :: NH
     ! Local variable:
     integer xx
-    
-    NH(M+1) = NH(M)
+
+    if (NH(M) .lt. 0.5) then
+       NH(M+1) = NH(M)
+    else
+       NH(M+1) = 0.5
+    endif
     do xx = 1, D_bins
        Detritus(xx)%D%new(M+1) = Detritus(xx)%D%new(M)
     enddo
