@@ -66,8 +66,8 @@ contains
 
     U_new(1) = Uo
     V_new(1) = Vo
-!!$    Pmicro_new(1) = P_micro
-    Pnano(1) = P_nano
+!!$    Pmicro(1) = P_micro
+!!$    Pnano(1) = P_nano
     NH(1) = NHo
 
     !-----detritus loop added march 2006---------------------------------
@@ -76,6 +76,7 @@ contains
          status="OLD", action="READ")
     do i = 1, d%M + 1
        read(44, *) Detritus(1)%D%new(i), Detritus(2)%D%new(i)
+       Detritus(3)%D%new(i) = Detritus(2)%D%new(i)
     end do
     close(44)
 
@@ -94,12 +95,12 @@ contains
     DO i = 2, d%M+1   
        IF (d%d_g(i) <= hm) THEN  !Large1996  March 1960 initial profile        
 
-!!$          Pmicro_new(i) = P_micro
-          Pnano(i) = P_nano
+!!$          Pmicro(i) = P_micro
+!!$          Pnano(i) = P_nano
           NH(i) = NHo
        ELSE
-!!$          Pmicro_new(i) = 0.
-          Pnano(i) = 0.
+!!$          Pmicro(i) = 0.
+!!$          Pnano(i) = 0.
           NH(i) = 0.
        END IF
        U_new(i) = Uo
@@ -107,11 +108,12 @@ contains
 
     END DO
 
-!!$    Pmicro_new(d%M+1) = 0.
-    Pnano(d%M+1) = 0.
+!!$    Pmicro(d%M+1) = 0.
+!!$    Pnano(d%M+1) = 0.
     NH(d%M+1) = 0.
     Detritus(1)%D%new(d%M+1) = 0. ! (DON ==> Detritus(1), need some deep ocean value)
     Detritus(2)%D%new(d%M+1) =  0. !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
+    Detritus(3)%D%new(d%M+1) = 0. ! Biogenic silica needs a deep ocean value
 
 
     ! read in nutrients data
@@ -144,8 +146,8 @@ contains
             dumt, dump, dumo, S_new(i)  
        ! *** Maybe we should have a degC2degK function? 
        T_new(i) = T_new(i) + 273.15
-       ! *** Does the next line actually do anything?
-!!$       Pmicro_new(i) = Pmicro_new(i)
+       Pmicro(i) = 5.0/6.0*Pmicro(i)
+       Pnano(i) = 1.0/5.0*Pmicro(i)
     enddo
     close(46)
 
