@@ -22,13 +22,14 @@ contains
 
   subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, &
        NO, NH, Si, Detritus, &
-       hi, ut, vt, &
-       pbx, pby, d, D_bins, cruise_id)       
+       hi, &
+       pbx, pby, &
+       &d, D_bins, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_
     use input_processor, only: getpars
-    use mean_param, only: prop, snow
+    use mean_param, only: snow
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(out) :: &
@@ -40,11 +41,10 @@ contains
          Pnano,  &  ! Nano phytoplankton profile
          NO,     &  ! Salinity Nitrate
          NH,     &  ! Ammonium profile
-         Si         ! Silicon profile
+         Si  ! Silicon profile
     integer, intent(in) :: D_bins
     type(snow), dimension(D_bins), intent(inout) :: Detritus
     real(kind=dp), intent(out) :: hi !h%new
-    type(prop), intent(out) :: ut, vt
     type(grid_), intent(in) :: d
     real(kind=dp), dimension(d%M), intent(out) :: pbx, pby
     character*4  cruise_id           ! cruise_id
@@ -180,13 +180,9 @@ contains
     V_new(0) = V_new(1)  !Conditions
     U_new(0) = U_new(1)
 
-    !            initialize ut and vt
-    do i=1,d%M
-       ut%new(i) = 0.
-       vt%new(i) = 0.
-       pbx(i) = 0.
-       pby(i) = 0.
-    enddo
+    ! Initialize baroclinic pressure gradient component arrays
+       pbx = 0.
+       pby = 0.
   end subroutine initial_mean
 
 end module initial_sog
