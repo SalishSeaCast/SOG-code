@@ -50,8 +50,10 @@ module mean_param
   ! *** This will probably be refactored when Susan implements sinking
   type :: plankton2
      type(grow) :: growth
-     real(kind=dp) :: sink  ! Sinking velocity
+     real(kind=dp) :: sink_min, sink_max  ! Sinking velocity
+     real(kind=dp), dimension(:), pointer:: Nlimit
   end type plankton2
+
 
 
   TYPE :: diff
