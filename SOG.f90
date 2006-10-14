@@ -15,7 +15,7 @@ program SOG
   ! Variables:
   use core_variables, only: U, V, T, S, P, N, Si
   use water_properties, only: rho, alpha, beta, Cp
-  use physics_model, only: B
+  use physics_model, only: B, dPdx_b, dPdy_b
   use biological_mod, only: rate_det
   !
   ! Subroutines and functions:
@@ -23,7 +23,7 @@ program SOG
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
   use physics_model, only: init_physics, double_diffusion, &
-       dalloc_physics_variables
+       baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use biological_mod, only: init_biology, dalloc_biology_variables
   use do_biology_mod, only: do_biology
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
@@ -60,7 +60,8 @@ program SOG
 
   implicit none
 
-  real(kind=dp) :: cz, upwell
+  real(kind=dp) :: &
+       upwell
   ! Upwelling constant (tuned parameter)
   !*** read in here, used by surface_flux_sog : eventually should be local
   ! to the surface_forcing module (not be be confused with current 
@@ -89,13 +90,9 @@ program SOG
   ! Iteration limit for inner loop that solves KPP turbulence model
   integer :: niter
 
-  ! Variables for baroclinic pressure gradient calculations
-  double precision :: sumu, sumv, uprev, vprev, delu, delv
-  double precision :: sumpbx, sumpby, tol
-  integer :: ii       ! loop index
-
-  ! Physical model domain parameters (should go elsewhere)
-  double precision :: oLx, oLy, gorLx, gorLy
+  ! Variables for velocity component convergence metric
+  double precision :: &
+       &uprev, vprev, delu, delv
 
   ! Code identification string (maintained by CVS), for output file headers
   character*70 :: &
@@ -193,7 +190,8 @@ program SOG
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        N%O, N%H, Si, &
        Detritus, &
-       h%new, ut, vt, pbx, pby, &
+       h%new, &
+       &dPdx_b, dPdy_b, &
        grid, D_bins, cruise_id)
 
   ! Read the iteration count limit for the physics model implicit
@@ -230,8 +228,11 @@ program SOG
   ! ---------- End of Initialization Section ----------
 
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
-     ! Store previous time_steps in %old components
-     CALL define_sog(time_step) 
+     ! Store %new components of various variables from time step just
+     ! completed in %old their components for use in the next time
+     ! step
+     CALL define_sog(time_step)
+     call new_to_old_physics()
 
      ! Get forcing data
      call get_forcing (year, day, day_time, &
@@ -261,7 +262,7 @@ program SOG
         CALL surface_flux_sog(grid%M, rho%g, w, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
-             atemp_value, humid_value, Qinter,stress, &
+             atemp_value, humid_value, Qinter, stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
 
@@ -292,6 +293,12 @@ program SOG
 !!$        ! Blend the values of the surface buoyancy forcing from current
 !!$        ! and previous iteration to help convergence
 !!$        Bf = (count * Bf_old + (niter - count) * Bf) / niter
+
+!!$        ! Calculate baroclinic pressure gradient components
+!!$        ! *** This might be a better place to calculate these gradients
+!!$        ! *** than at the end of the implicit loop.
+!!$        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
+!!$             stress%u%new, stress%v%new, dPdx_b, dPdy_b)
 
         CALL fun_constants(u_star, w_star, L_star,w, Bf, h%new)   !test conv
 
@@ -455,9 +462,9 @@ program SOG
 
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
-        call Coriolis_and_pg(f, dt, V%new, pbx, &
+        call Coriolis_and_pg(f, dt, V%new, dPdx_b, &
              Gvector_c%u)
-        call Coriolis_and_pg(f, dt, -U%new, pby, &
+        call Coriolis_and_pg(f, dt, -U%new, dPdy_b, &
              Gvector_c%v)      
 
         IF (time_step == 1 .AND. count  == 1) THEN
@@ -624,103 +631,17 @@ program SOG
         h%new = h_i
         CALL find_jmax_g(h,grid)
 
-        !----pressure grads--------------------
+        ! Calculate baroclinic pressure gradient components
+        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
+             stress%u%new, stress%v%new, dPdx_b, dPdy_b)
 
-        sumu = 0.
-        sumv = 0.
-        DO yy = 1, grid%M   !remove barotropic mode
-           sumu = sumu+U%new(yy)
-           sumv = sumv+V%new(yy)
-        END DO
-        sumu = sumu/grid%M
-        sumv = sumv/grid%M
-
-        DO yy = 1, grid%M   !remove barotropic mode
-           U%new(yy) = U%new(yy)-sumu
-           V%new(yy) = V%new(yy)-sumv
-        END DO
-
+        ! Calculate convergence metric for velocity field
         delu = abs(U%new(1)-uprev)/0.01
         delv = abs(V%new(1)-vprev)/0.01
-
         uprev = U%new(1)
         vprev = V%new(1)
-
         if (del.lt.delu) del = delu
         if (del.lt.delv) del = delv
-
-        ! integrate ut and vt (note v is 305 degrees and u is 35 degrees)
-
-        oLx = 2./(20e3)
-        oLy = 2./(60e3)
-        gorLx = 9.8/(1025.*20e3)
-        gorLy = 9.8/(1025.*60e3)
-
-        sumu = 0
-        sumv = 0
-        do yy=1,grid%M
-           ut%new(yy) = ut%old(yy)*0.95+U%new(yy)*dt*oLx
-           vt%new(yy) = vt%old(yy)*0.95+V%new(yy)*dt*oLy 
-        enddo
-
-        dzx(1) = ut%new(1)+1
-        dzy(1) = vt%new(1)+1
-
-        do yy=2,grid%M
-           dzx(yy) = dzx(yy-1) + (ut%new(yy)+1)
-           dzy(yy) = dzy(yy-1) + (vt%new(yy)+1)
-        enddo
-
-        ! Calculate the baroclinic pressure gradient
-        ! *** This tolerance should be read in as a run parameter
-        tol=1e-6
-        sumpbx = 0.
-        cz = 0.
-        ii=1
-        do yy=1,grid%M
-           if (yy == 1) then
-              pbx(yy) = -rho%g(yy)
-           else
-              pbx(yy) = pbx(yy-1)-rho%g(yy)
-           endif
-           do while ((dzx(ii)-yy) < -tol .and. ii < grid%M)
-              pbx(yy) = pbx(yy) + rho%g(ii)*(dzx(ii)-cz)
-              cz = dzx(ii)
-              ii = ii + 1
-           enddo
-           pbx(yy) = pbx(yy) + rho%g(ii)*(yy-cz)
-           sumpbx = sumpbx + pbx(yy)
-           cz = yy
-        enddo
-
-        sumpby = 0.
-        cz = 0.
-        ii=1
-        do yy=1,grid%M
-           if (yy == 1) then
-              pby(yy) = -rho%g(yy)
-           else
-              pby(yy) = pby(yy-1)-rho%g(yy)
-           endif
-           do while ((dzy(ii)- yy) <-tol .and. ii < grid%M)
-              pby(yy) = pby(yy) + rho%g(ii)*(dzy(ii)-cz)
-              cz = dzy(ii)
-              ii = ii + 1
-           enddo
-           pby(yy) = pby(yy) + rho%g(ii)*(yy-cz)
-           sumpby = sumpby + pby(yy)
-           cz = yy
-        enddo
-
-        sumpbx = sumpbx/grid%M
-        sumpby = sumpby/grid%M
-
-        do yy = 1, grid%M
-           pbx(yy) = (pbx(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                + stress%u%new / (1025. * grid%M * grid%i_space(yy))
-           pby(yy) = (pby(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                + stress%v%new / (1025. * grid%M * grid%i_space(yy))     
-        enddo
 
         ! Test for convergence of implicit solver
         if (count >= 2 .and. del < del_o) then
