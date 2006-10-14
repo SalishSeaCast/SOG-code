@@ -80,9 +80,6 @@ subroutine allocate1(M, STAT)
            STAT = alloc_stat(11))
 
 ! sea add
-      ALLOCATE (ut%new(M), vt%new(M), pbx(M), pby(M),&
-                ut%old(M), vt%old(M), dzx(M), dzy(M), STAT=alloc_stat(12))
-
       ALLOCATE(G_shape%s(0:M+1), G_shape%m(0:M+1), G_shape%t(0:M+1), &
            STAT = alloc_stat(16))
       ALLOCATE(K%u%ML(0:M+1), K%s%ML(0:M+1), K%t%ML(0:M+1), &
