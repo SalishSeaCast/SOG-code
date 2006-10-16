@@ -5,7 +5,6 @@ subroutine allocate1(M, STAT)
 
       use mean_param
       use declarations
-      use surface_forcing
 
       implicit none
      
