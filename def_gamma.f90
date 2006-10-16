@@ -5,8 +5,10 @@ SUBROUTINE def_gamma( L,  mm, ww, wtr, hh, gamm, Bf, omeg)
 
   use precision_defs, only: dp
   use grid_mod, only: grid_
+  use turbulence, only: &
+       c_s       ! Coefficient of phi%s in 1/3 power law regime
       USE mean_param, only: flux, height, MST, MS
-      USE surface_forcing
+      USE surface_forcing, only: ep, c_star, kapa
 
       IMPLICIT NONE
 

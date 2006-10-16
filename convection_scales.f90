@@ -5,8 +5,11 @@ SUBROUTINE convection_scales(mm,omeg,hh,w_st)
 
   use precision_defs, only: dp
   use grid_mod, only: grid_
+  use turbulence, only: &
+       c_m,   &  ! Coefficient of phi%m in 1/3 power law regime
+       c_s       ! Coefficient of phi%s in 1/3 power law regime
       USE mean_param, only: height, MS
-      USE surface_forcing
+      USE surface_forcing, only: ep, kapa
 
       IMPLICIT NONE
 
