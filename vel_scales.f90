@@ -6,7 +6,7 @@ SUBROUTINE vel_scales(mm,omeg,phig,u_st,L,hh)
   use precision_defs, only: dp
   use grid_mod, only: grid_
       USE mean_param, only: height, MS, find_jmax_i
-      USE surface_forcing
+      USE surface_forcing, only: ep, kapa
 
       IMPLICIT NONE
 
