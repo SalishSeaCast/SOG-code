@@ -6,9 +6,9 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_
-  use physics_model, only: pi
+  use physics_model, only: pi, latitude
       USE mean_param, only: entrain
-      USE surface_forcing, only: Lat, albedo, Q_o
+      USE surface_forcing, only: albedo, Q_o
 
       IMPLICIT NONE
       ! Arguments:
@@ -27,6 +27,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
            Pnano_new      ! Nano phytoplankton
 
       ! Local variables:
+      real(kind=dp) :: lat  ! Latitude of centre of model domain [rad]
       INTEGER::k, check, of                          
       REAL(KIND=DP)::declination, hour, cos_Z, day_length, hour_angle, &
                         sunrise, sunset, Qso, a, b,KK
@@ -64,14 +65,17 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       hour = (day_time/3600.0-12.0)*15.  !degrees
       declination = 23.45*PI/180.0*SIN((284.0+DBLE(day))/365.25*2.0*PI)  !radians
 
-      a = SIN(declination)*SIN(Lat) 
-      b = COS(declination)*COS(Lat)
-      cos_Z = a+b*COS(PI/180.0*hour)      !solar elevation
-      hour_angle = ACOS(-(TAN(Lat)*TAN(declination)))  !radians
-      day_length = hour_angle/15.0*2.0*180.0/PI !hours
-      sunrise = 12.0 - 0.5*day_length  !hours
-      sunset = 12.0 + 0.5*day_length   !hours
-      cos_Z_max = COS(declination-Lat)  !zenith angle
+      ! Convert latitude of centre of model domain from degrees to radians
+      lat = pi * latitude / 180.
+
+      a = sin(declination) * sin(lat) 
+      b = cos(declination) * cos(lat)
+      cos_Z = a + b * cos(pi / 180.0 * hour)      !solar elevation
+      hour_angle = acos(-(tan(lat) * tan(declination)))  !radians
+      day_length = hour_angle / 15.0 * 2.0 * 180.0 / pi !hours
+      sunrise = 12.0 - 0.5 * day_length  !hours
+      sunset = 12.0 + 0.5 * day_length   !hours
+      cos_Z_max = cos(declination - lat)  !zenith angle
 
 
       Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
