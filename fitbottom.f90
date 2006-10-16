@@ -93,8 +93,8 @@ contains
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
-    use surface_forcing, only: PI
     use unit_conversions, only: CtoK
+    use physics_model, only: pi
     implicit none
     ! Arguments:
     integer, intent(in) :: day
@@ -103,7 +103,7 @@ contains
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio
     
-    arg = 2 * PI * (day + day_time / 86400.) / 365.25
+    arg = 2 * pi * (day + day_time / 86400.) / 365.25
     
     Tbot = bottom_value(arg, 'temperature')          ! in Celcius
     Tbot = CtoK(Tbot)
