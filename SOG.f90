@@ -10,7 +10,7 @@ program SOG
   use datetime, only: datetime_
   !
   ! Parameter values:
-  use physics_model, only: g
+  use physics_model, only: f, g
   !
   ! Variables:
   use core_variables, only: U, V, T, S, P, N, Si
@@ -47,7 +47,7 @@ program SOG
   ! Inherited modules
   ! *** Goal is to make these go away
   use declarations
-  use surface_forcing
+  use surface_forcing, only: del_o, precision, step_guess, step_min
   use initial_sog, only: initial_mean
   use IMEX_constants  
   ! Subroutine & function modules:
@@ -301,12 +301,12 @@ program SOG
 !!$        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
 !!$             stress%u%new, stress%v%new, dPdx_b, dPdy_b)
 
-        CALL fun_constants(u_star, w_star, L_star,w, Bf, h%new)   !test conv
+        CALL fun_constants(u_star, w_star, L_star, w, Bf, h%new)   !test conv
 
         CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
 
         IF (u_star /= 0.)  THEN         !Wind stress /= 0.
-           CALL ND_flux_profile(grid,L_star,phi)   ! define flux profiles aka (B1)
+           CALL ND_flux_profile(grid, L_star, phi)   ! define flux profiles aka (B1)
            CALL vel_scales(grid, omega, phi, u_star,L_star,h)
            ! calculates wx (13) as omega (not Omega's)
         ELSE IF (u_star == 0. .AND. Bf < 0.) THEN        !Convective unstable limit
@@ -463,9 +463,9 @@ program SOG
 
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
-        call Coriolis_and_pg(f, dt, V%new, dPdx_b, &
+        call Coriolis_and_pg(dt, V%new, dPdx_b, &
              Gvector_c%u)
-        call Coriolis_and_pg(f, dt, -U%new, dPdy_b, &
+        call Coriolis_and_pg(dt, -U%new, dPdy_b, &
              Gvector_c%v)      
 
         IF (time_step == 1 .AND. count  == 1) THEN
