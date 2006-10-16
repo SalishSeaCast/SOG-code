@@ -12,9 +12,8 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
   
   use physics_model, only: g
       USE mean_param
-      USE surface_forcing
-
-      IMPLICIT NONE
+  implicit none
+  ! Arguments:
       TYPE(height), INTENT(IN)::h
       INTEGER, INTENT(IN)::mm,day
       DOUBLE PRECISION,DIMENSION(0:mm+1), INTENT(IN)::ro ! density%new
