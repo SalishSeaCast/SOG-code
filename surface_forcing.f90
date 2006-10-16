@@ -31,7 +31,6 @@ module surface_forcing
        A_stress = -0.6, & !N/m^2 Wind stress constant
        T_stress = 57600.0, &  !seconds or 16 hrs
        Q_o = 1368.0, & !1367.0? W/m^2  Solar constant
-       Lat = 0.85521, &  ! 49 degrees  latitude
        Lon = 145., &  !(145oW)
        !           albedo = 0.061, &  !6% Large 1996
   albedo = 0.18, &  !KC 17% OCT.22 2004
