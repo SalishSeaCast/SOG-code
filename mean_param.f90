@@ -15,7 +15,7 @@ module mean_param
   ! Properties (U, V, S, ...)
   ! *** Might better be called quantities...
   type :: prop
-     real(kind=dp), dimension(:), pointer :: new, old, div_i
+     real(kind=dp), dimension(:), pointer :: new
   end type prop
 
   ! Phytoplankton component of UVST type
