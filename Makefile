@@ -45,8 +45,9 @@ initial_sog.o \
 \
 timeseries_output.o profiles_output.o \
 \
-water_properties.o find_upwell.o diffusion.o fitbottom.o \
-biological_mod.o rungekutta.o do_biology_mod.o forcing.o physics_model.o \
+water_properties.o physics_model.o turbulence.o find_upwell.o diffusion.o \
+fitbottom.o \
+biological_mod.o rungekutta.o do_biology_mod.o forcing.o \
 mixing_layer.o \
 \
 define_flux.o phys_Hvector.o \
