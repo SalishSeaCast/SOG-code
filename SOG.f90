@@ -13,7 +13,7 @@ program SOG
   use physics_model, only: f, g
   !
   ! Variables:
-  use core_variables, only: U, V, T, S, P, N, Si
+  use core_variables, only: U, V, T, S, P, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
   use biological_mod, only: rate_det
@@ -189,11 +189,13 @@ program SOG
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
-       N%O, N%H, Si, &
-       Detritus, &
-       h%new, &
-       &dPdx_b, dPdy_b, &
-       grid, D_bins, cruise_id)
+       N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
+       h%new, dPdx_b, dPdy_b, grid, cruise_id)
+! *** Temporary detritus refactoring bridge
+Detritus(1)%D%new = D%DON
+Detritus(2)%D%new = D%PON
+Detritus(3)%D%new = D%bSi
+Detritus(4)%D%new = D%refr
 
   ! Read the iteration count limit for the physics model implicit
   ! solver
@@ -693,7 +695,7 @@ program SOG
           Gvector%p%nano)                                              ! out
      DO xx = 1, D_bins-1
         call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &       ! in
-             Detritus(xx)%d%new(grid%M+1), &                           ! in
+             Detritus(xx)%D%new(grid%M+1), &                           ! in
              Gvector%d(xx)%bin)                                        ! out
      END DO
      Gvector%d(D_bins)%bin = 0.
@@ -731,7 +733,7 @@ program SOG
      CALL advection(grid,sflux,P%micro,dt,Gvector_ao%p%micro) !sinking phytoplankton
 
      DO xx = 1,D_bins-1
-        CALL advection(grid,rate_det%sink(xx),Detritus(xx)%D%old,dt,Gvector_ao%d(xx)%bin)
+        CALL advection(grid,rate_det%sink(xx),Detritus(xx)%D%new,dt,Gvector_ao%d(xx)%bin)
      END DO
      
 
@@ -770,12 +772,12 @@ program SOG
           Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
      DO xx = 1, D_bins - 1
-        CALL P_H (grid%M, Detritus(xx)%D%old, Gvector%d(xx)%bin, &
+        CALL P_H (grid%M, Detritus(xx)%D%new, Gvector%d(xx)%bin, &
              Gvector_o%d(xx)%bin, Gvector_ro%d(xx)%bin, &
              Gvector_ao%d(xx)%bin, Bmatrix_o%bio, &
              Hvector%d(xx)%bin)
      END DO
-     CALL P_H(grid%M, Detritus(D_bins)%D%old, Gvector%d(D_bins)%bin, &
+     CALL P_H(grid%M, Detritus(D_bins)%D%new, Gvector%d(D_bins)%bin, &
           Gvector_o%d(D_bins)%bin, Gvector_ro%d(D_bins)%bin, &
           null_vector, Bmatrix%null, Hvector%d(D_bins)%bin) 
      CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
