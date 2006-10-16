@@ -5,19 +5,9 @@ module surface_forcing
   ! *** This is a very poorly named module!
 
   use precision_defs, only: dp
-!!$  use mean_param
 
   implicit none
 
-  real(kind=dp), parameter :: PI = 3.141592653589793
-  ! Coriolis factor
-  ! *** This should be reworked so that the latitude is read as a run
-  ! *** parameter, and f calculated for the run.
-  real(kind=dp), parameter :: latitude = 49. + 7.517 / 60. ! station S3
-!*** Correction pgf90 will not except an intrinsic in parameter statement  
-!*** real(kind=dp), parameter :: f = 2. * (2. * PI / 86400.) * &
-!***    sin(PI * latitude / 180.)
-  real(kind=dp), parameter :: f = 1.1d-4
 
   DOUBLE PRECISION, PARAMETER:: &
        small = 1.D-15, &
@@ -31,9 +21,7 @@ module surface_forcing
   DOUBLE PRECISION, PARAMETER::S_ice = 0.0, & !ice salinity. unknown
        rho_ice = 1000.0, & !density ice, unknown
        kapa = 0.4 !Von Karman constant
-  DOUBLE PRECISION, PARAMETER::a_s = -28.86, a_m = 1.26, &
-       c_s =  98.96, c_m = 8.38, &
-       xsi_m = -0.20, xsi_s = -1.0,&
+  DOUBLE PRECISION, PARAMETER:: &
        ep = 0.1  !epsilon
   DOUBLE PRECISION, PARAMETER::Ri_o = 0.7, & !critical grad Richardson #
        nu_o = 0.001, & !0.0050 !m^2/s interior diff constant
