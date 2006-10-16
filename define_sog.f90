@@ -5,10 +5,9 @@ SUBROUTINE define_sog(timestep)
   
   !!store previous time_steps in old (n)
   use core_variables, only: U, V, T, S
-  USE declarations, only: D_bins, h, &
+  USE declarations, only: h, &
        Bmatrix, Bmatrix_o, & 
-       Gvector, Gvector_o, Gvector_c, Gvector_co, &
-       Detritus
+       Gvector, Gvector_o, Gvector_c, Gvector_co
 
       IMPLICIT NONE
 
@@ -59,13 +58,7 @@ SUBROUTINE define_sog(timestep)
          S%old = S%new
          T%old = T%new
          h%old = h%new
-
-
-         DO kk = 1, D_bins
-            Detritus(kk)%D%old = Detritus(kk)%D%new
-         END DO
-
-END SUBROUTINE define_sog
+end subroutine define_sog
 
 
 
