@@ -3,7 +3,6 @@
 
 SUBROUTINE initialize
 
-      USE surface_forcing
       USE declarations
 
       IMPLICIT NONE
