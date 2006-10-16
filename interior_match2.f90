@@ -6,7 +6,7 @@ SUBROUTINE interior_match2(omeg, L, u_st, hh, mm)
   use precision_defs, only: dp
   use grid_mod, only: grid_
       USE mean_param, only: MS, height
-      USE surface_forcing
+      USE surface_forcing, only: kapa
 
       IMPLICIT NONE
 

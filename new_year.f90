@@ -4,7 +4,7 @@
 subroutine new_year(day_ti, o_day, o_year, ti, ddt, month)
 
   USE mean_param
-  USE surface_forcing      
+  USE surface_forcing, only: leap_year
 
   IMPLICIT NONE
 
