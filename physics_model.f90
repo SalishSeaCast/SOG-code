@@ -8,6 +8,10 @@ module physics_model
   ! Public Parameters:
   !
   !   g -- Acceleration due to gravity [m/s^2]
+  !
+  !   f -- Coriolis factor
+  !
+  !   pi -- Ratio of circumference to diameter of a circle [-]
   ! 
   ! Public Variables:
   !
@@ -40,7 +44,9 @@ module physics_model
   private
   public :: &
        ! Parameter values:
-       g, &  ! Acceleration due to gravity [m/s^2]
+       f,  &  ! Coriolis factor
+       g,  &  ! Acceleration due to gravity [m/s^2]
+       pi, &
        ! Variables:
        B,   &     ! Buoyancy profile array
        dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
@@ -60,7 +66,11 @@ module physics_model
 
   ! Public parameter declarations:
   real(kind=dp) :: &
-       g = 9.81  ! Acceleration due to gravity [m/s^2]
+       f  ! Coriolis factor (would be a parameter bit for a pgf90 bug)
+  real(kind=dp), parameter :: &
+!!$       g = 9.80665, &  ! Acceleration due to gravity [m/s^2]
+       g = 9.81, &  ! Acceleration due to gravity [m/s^2]
+       pi = 3.141592653589793
 
   ! Public variable declarations:
   real(kind=dp), dimension(:), allocatable :: &
@@ -71,7 +81,8 @@ module physics_model
   ! Private parameter value declarations:
   real(kind=dp) :: &
        Lx = 20.0d3, &  ! Semi-minor axis (cross-strait) of model domain [m]
-       Ly = 60.0d3     ! Semi-major axis (along-strait) of model domain [m]
+       Ly = 60.0d3, &  ! Semi-major axis (along-strait) of model domain [m]
+       latitude = 49. + 7.517 / 60. ! Station S3 latitude; domain centre [deg]
   
   ! Private variable declarations:
   !
@@ -100,6 +111,11 @@ contains
     ! gradient calculations
     ut%new = 0.
     vt%new = 0.
+    ! Coriolis factor
+    ! *** This must be calculated because pgf90 will not accept an
+    ! *** intrinsic in parameter statement
+!!$    f = 2. * (2. * PI / 86400.) * sin(PI * latitude / 180.)
+    f = 1.1d-4
   end subroutine init_physics
 
 
