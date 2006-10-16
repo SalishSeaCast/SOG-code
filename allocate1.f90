@@ -12,9 +12,11 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(Detritus(D_bins),Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
+      ALLOCATE(&
+           Detritus(D_bins),&
+              Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
               Gvector_ro%d(D_bins),&
-              Gvector_ao%d(D_bins),Detritus1_p(D_bins,M),&
+              Gvector_ao%d(D_bins),&
               STAT = alloc_stat(3))
 
       ALLOCATE(w%b(0:M),w%b_err(0:M),&
