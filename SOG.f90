@@ -801,16 +801,15 @@ Detritus(4)%D%new = D%refr
           N%H(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
           Si(1:grid%M))
-     do xx = 1,D_bins-1
+     do xx = 1, D_bins - 1
         call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-             Hvector%d(xx)%bin, Detritus1_p(xx,:))
+             Hvector%d(xx)%bin, Detritus(xx)%D%new(1:grid%M))
      enddo
      call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
-          Hvector%d(D_bins)%bin, Detritus1_p(D_bins,:))
+          Hvector%d(D_bins)%bin, Detritus(D_bins)%D%new(1:grid%M))
 
      ! Update boundary conditions at surface, and deal with negative
      ! values in biological model quantities
-     CALL find_new(grid%M)
      ! *** This is refactored code from find_new() that needs to go
      ! *** somewhere else
      N%O(0) = N%O(1)
@@ -843,6 +842,14 @@ Detritus(4)%D%new = D%refr
         write(stdout, *) "Warning: negative value(s) in P%nano ", &
              "were set to zero."
      endif
+     do xx = 1, D_bins
+        Detritus(xx)%D%new(0) = Detritus(xx)%D%new(1)
+        if (any(Detritus(xx)%D%new < 0.)) then
+           where (Detritus(xx)%D%new < 0.) Detritus(xx)%D%new = 0.
+           write(stdout, *) "Warning: negative value(s) in Detritus ", &
+                "were set to zero."
+        endif
+     enddo
 
      !-----END BIOLOGY------------------------------------------------
 
