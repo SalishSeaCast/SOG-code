@@ -2,8 +2,8 @@
 ! $Source$
 
 module core_variables
-  ! Type declarations, variables, and subroutines related to the core
-  ! variables that the code calculates.
+  ! Type definitions, variable declarationss, and subroutines related
+  ! to the core variables that the SOG code calculates.
   ! 
   ! Public Variables:
   !
@@ -15,15 +15,21 @@ module core_variables
   !
   !   S -- Water column salinity [-]
   !
-  !   P%micro -- Micro phytoplankton (diatoms) biomass [uM N]
+  !   P -- Phytoplankton biomasses:
+  !          P%micro -- Micro phytoplankton (diatoms) [uM N]
+  !          P%nano -- Nano phytoplankton (flagellates) [uM N]
   !
-  !   P%nano -- Nano phytoplankton (flagellates) biomass [uM N]
-  !
-  !   N%O -- Nitrate concentration [uM N]
-  !
-  !   N%H -- Ammonium concentration [uM N]
+  !   N -- Nitrogen compounds concentrations:
+  !          N%O -- Nitrate concentration [uM N]
+  !          N%H -- Ammonium concentration [uM N]
   !
   !   Si -- Silicon concentration [uM]
+  !
+  !   D -- Detritus concentrations:
+  !          D%DON -- Dissolved organic nitrogen [uM N]
+  !          D%PON -- Particulate organic nitrogen [uM N]
+  !          D%refr -- Refractory nitrogen [uM N]
+  !          D%bSi -- Biogenic silicon [uM Si]
   !
   ! Public Subroutines:
   !
@@ -44,6 +50,7 @@ module core_variables
        P,  &  ! Micro & nano phytoplankton profile arrays
        N,  &  ! Nitrate & ammonium concentation profile arrays
        Si, &  ! Silicon concentration profile arrays
+       D,  &  ! Detritus concentration profile arrays
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
@@ -70,6 +77,15 @@ module core_variables
           micro, &  ! P%micro is micro phytoplankton (diatoms) biomass profile
           nano      ! P%nano is nano phytoplankton (flagellate) biomass profile
   end type plankton
+  !
+  ! Detritus
+  type :: detritus
+     real(kind=dp), dimension(:), allocatable :: &
+          DON,  &  ! Dissolved organic nitrogen [uM N]
+          PON,  &  ! Particulate organic nitrogen [uM N]
+          refr, &  ! Refractory nitrogen [uM N]
+          bSi      ! Biogenic silicon [uM Si]
+  end type detritus
 
 
   ! Public variable declarations:
@@ -79,11 +95,13 @@ module core_variables
        T, &  ! Temperature profile arrays
        S     ! Salinity profile arrays
   type(plankton) :: &
-       P  ! Micro & nano phytoplankton profile arrays
+       P  ! Micro & nano phytoplankton biomass profile arrays
   type(nitrogen) :: &
-       N  ! Nitrate & ammonium profile arrays
+       N  ! Nitrate & ammonium concentration profile arrays
   real(kind=dp), dimension(:), allocatable :: &
        Si ! Silicon concentration profile array
+  type(detritus) :: &
+       D  ! Detritus concentration profile arrays
 
 contains
 
@@ -113,24 +131,40 @@ contains
     allocate(S%new(0:M+1), S%old(0:M+1), S%grad_i(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Micro phytoplankton biomass profile arrays"
+    msg = "Micro phytoplankton biomass profile array"
     allocate(P%micro(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Nano phytoplankton biomass profile arrays"
+    msg = "Nano phytoplankton biomass profile array"
     allocate(P%nano(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Nitrate profile arrays"
+    msg = "Nitrate concentration profile array"
     allocate(N%O(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Ammonium profile arrays"
+    msg = "Ammonium concentration profile array"
     allocate(N%H(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Silicon concentration profile arrays"
+    msg = "Silicon concentration profile array"
     allocate(Si(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Dissolved organic nitrogen detritus concentration profile array"
+    allocate(D%DON(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Particulate organic nitrogen detritus concentration profile array"
+    allocate(D%PON(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Refractory nitrogen detritus concentration profile array"
+    allocate(D%refr(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Biogenic silicon detritus concentration profile array"
+    allocate(D%bSi(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_core_variables
@@ -160,24 +194,40 @@ contains
     deallocate(S%new, S%old, S%grad_i, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Micro phytoplankton biomass profile arrays"
+    msg = "Micro phytoplankton biomass profile array"
     deallocate(P%micro, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Nano phytoplankton biomass profile arrays"
+    msg = "Nano phytoplankton biomass profile array"
     deallocate(P%nano, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Nitrate profile arrays"
+    msg = "Nitrate concentration profile array"
     deallocate(N%O, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Ammonium profile arrays"
+    msg = "Ammonium concentration profile array"
     deallocate(N%H, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Silicon concentration profile arrays"
+    msg = "Silicon concentration profile array"
     deallocate(Si, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Dissolved organic nitrogen detritus concentration profile array"
+    deallocate(D%DON, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Particulate organic nitrogen detritus concentration profile array"
+    deallocate(D%PON, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Refractory nitrogen detritus concentration profile array"
+    deallocate(D%refr, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Biogenic silicon detritus concentration profile array"
+    deallocate(D%bSi, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_core_variables
