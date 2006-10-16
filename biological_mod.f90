@@ -390,7 +390,7 @@ contains
     do j = 1, D_bins
        bPz = (PZ_bins%Quant + (j-1) ) * M + 1
        ePz = (PZ_bins%Quant + j) * M
-       Gvector%d(j)%bin = PZ(bPz:ePz) - Detritus(j)%D%old(1:M)
+       Gvector%d(j)%bin = PZ(bPz:ePz) - Detritus(j)%D%new(1:M)
     enddo
 
   end subroutine reaction_p_sog
@@ -542,7 +542,7 @@ contains
     use precision_defs, only: dp
     use mean_param, only: plankton2, snow
     use declarations, only: D_bins, micro, nano, &
-         f_ratio, Detritus
+         f_ratio
 
     implicit none
 
