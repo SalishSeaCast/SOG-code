@@ -44,11 +44,12 @@ module physics_model
   private
   public :: &
        ! Parameter values:
-       f,  &  ! Coriolis factor
-       g,  &  ! Acceleration due to gravity [m/s^2]
-       pi, &
+       f,        &  ! Coriolis factor
+       g,        &  ! Acceleration due to gravity [m/s^2]
+       latitude, &  ! Station S3 latitude [deg]
+       pi,       &
        ! Variables:
-       B,   &     ! Buoyancy profile array
+       B,      &  ! Buoyancy profile array
        dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
        dPdy_b, &  ! Baroclinic pressure gradient y (along-strait) component
        ! Subroutines:
@@ -68,8 +69,8 @@ module physics_model
   real(kind=dp) :: &
        f  ! Coriolis factor (would be a parameter bit for a pgf90 bug)
   real(kind=dp), parameter :: &
-!!$       g = 9.80665, &  ! Acceleration due to gravity [m/s^2]
-       g = 9.81, &  ! Acceleration due to gravity [m/s^2]
+       g = 9.80665, &  ! Acceleration due to gravity [m/s^2]
+       latitude = 49. + 7.517 / 60., & ! Station S3 latitude [deg]
        pi = 3.141592653589793
 
   ! Public variable declarations:
@@ -81,8 +82,7 @@ module physics_model
   ! Private parameter value declarations:
   real(kind=dp) :: &
        Lx = 20.0d3, &  ! Semi-minor axis (cross-strait) of model domain [m]
-       Ly = 60.0d3, &  ! Semi-major axis (along-strait) of model domain [m]
-       latitude = 49. + 7.517 / 60. ! Station S3 latitude; domain centre [deg]
+       Ly = 60.0d3     ! Semi-major axis (along-strait) of model domain [m]
   
   ! Private variable declarations:
   !
@@ -114,8 +114,8 @@ contains
     ! Coriolis factor
     ! *** This must be calculated because pgf90 will not accept an
     ! *** intrinsic in parameter statement
-!!$    f = 2. * (2. * PI / 86400.) * sin(PI * latitude / 180.)
-    f = 1.1d-4
+    f = 2. * (2. * pi / 86400.) * sin(pi * latitude / 180.)
+!!$    f = 1.1d-4
   end subroutine init_physics
 
 
@@ -261,8 +261,8 @@ contains
     ! *** ut & vt grow too large.
         oLx = 2./(20e3)
         oLy = 2./(60e3)
-        gorLx = 9.8/(1025.*20e3)
-        gorLy = 9.8/(1025.*60e3)
+        gorLx = g / (1025.*20e3)
+        gorLy = g / (1025.*60e3)
 
         sumu = 0
         sumv = 0
