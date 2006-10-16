@@ -27,7 +27,7 @@ subroutine allocate3(M)
      allocate(Hvector%d(y_y)%bin(M), stat=allocstat)
      call alloc_check(allocstat, msg)
      msg = "Detritus component arrays"
-     allocate(Detritus(y_y)%D%new(0:M+1), Detritus(y_y)%D%old(0:M+1), &
+     allocate(Detritus(y_y)%D%new(0:M+1), &
           stat=allocstat)
      call alloc_check(allocstat, msg)
   end do
