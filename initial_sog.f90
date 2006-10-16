@@ -21,15 +21,12 @@ module initial_sog
 contains
 
   subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, &
-       NO, NH, Si, Detritus, &
-       hi, &
-       pbx, pby, &
-       &d, D_bins, cruise_id)       
+       NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
+       hi, pbx, pby, d, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_
     use input_processor, only: getpars
-    use mean_param, only: snow
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(out) :: &
@@ -39,11 +36,13 @@ contains
          S_new,  &  ! Salinity profile
          Pmicro, &  ! Micro phytoplankton profile
          Pnano,  &  ! Nano phytoplankton profile
-         NO,     &  ! Salinity Nitrate
+         NO,     &  ! Nitrate profile
          NH,     &  ! Ammonium profile
-         Si  ! Silicon profile
-    integer, intent(in) :: D_bins
-    type(snow), dimension(D_bins), intent(inout) :: Detritus
+         Si,     &  ! Silicon profile
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
     real(kind=dp), intent(out) :: hi !h%new
     type(grid_), intent(in) :: d
     real(kind=dp), dimension(d%M), intent(out) :: pbx, pby
@@ -75,10 +74,15 @@ contains
     open(unit=44, file="input/initial_Detritus.dat", &
          status="OLD", action="READ")
     do i = 1, d%M + 1
-       read(44, *) Detritus(1)%D%new(i), Detritus(2)%D%new(i)
-       Detritus(3)%D%new(i) = Detritus(2)%D%new(i)
+       read(44, *) D_DON(i), D_PON(i)
     end do
     close(44)
+    D_bSi = D_PON
+    D_refr = 0.
+    ! Need deep ocean values for bottom boundary condition
+    D_DON(d%M + 1) = 0.
+    D_PON(d%M + 1) = 0.
+    D_bSi(d%M + 1) = 0.
 
     ! *** The values read here are all overwritten, but removing this code
     ! *** causes unclean diffs (profiles are visually the same though)
@@ -111,9 +115,6 @@ contains
 !!$    Pmicro(d%M+1) = 0.
 !!$    Pnano(d%M+1) = 0.
     NH(d%M+1) = 0.
-    Detritus(1)%D%new(d%M+1) = 0. ! (DON ==> Detritus(1), need some deep ocean value)
-    Detritus(2)%D%new(d%M+1) =  0. !Detritus(2)%D%new(d%M) !PON needs a deep ocean value
-    Detritus(3)%D%new(d%M+1) = 0. ! Biogenic silica needs a deep ocean value
 
 
     ! read in nutrients data
