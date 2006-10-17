@@ -61,7 +61,7 @@ shear_diff.o interior_match.o interior_match2.o		\
 shape_parameters.o modify_K.o def_gamma.o Coriolis_and_pg.o 		\
 matrix_A.o def_v_t_sog.o tridiag.o	\
 define_Ri_b_sog.o \
-new_year.o SOG.o P_H.o find_new.o allocate3.o advection.o
+new_year.o SOG.o P_H.o allocate3.o advection.o
 
 # The executable is the default target that is built by "make"
 # It depends on all of the objects which are built from the
