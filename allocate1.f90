@@ -13,7 +13,6 @@ subroutine allocate1(M, STAT)
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
       ALLOCATE(&
-           Detritus(D_bins),&
               Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
               Gvector_ro%d(D_bins),&
               Gvector_ao%d(D_bins),&
