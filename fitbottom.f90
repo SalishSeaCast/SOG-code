@@ -119,28 +119,25 @@ contains
   end subroutine bot_bound_time
   
 
-  subroutine bot_bound_uniform (M, NH, Detritus)
+  subroutine bot_bound_uniform (M, NH, D_DON, D_PON, D_refr, D_bSi)
     ! Set the values at the bottom of the grid for those
     ! quantities that we don't have time series data for.
     use precision_defs, only: dp
-    use mean_param, only: snow
-    use declarations, only: D_bins
     implicit none
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
-    type (snow), dimension(1:), intent(inout) :: Detritus
-    real(kind=dp), intent(in out), dimension(0:) :: NH
-    ! Local variable:
-    integer xx
+    real(kind=dp), intent(inout), dimension(0:) :: &
+         NH,     &  ! Ammonium concentration profile array
+         D_DON,  &  ! Dissolved organic nitrogen concentration profile array
+         D_PON,  &  ! Particulate organic nitrogen concentration profile array
+         D_refr, &  ! Refractory nitrogen concentration profile array
+         D_bSi      ! Biogenic silicon concentration profile array
 
-    if (NH(M) .lt. 0.5) then
-       NH(M+1) = NH(M)
-    else
-       NH(M+1) = 0.5
-    endif
-    do xx = 1, D_bins
-       Detritus(xx)%D%new(M+1) = Detritus(xx)%D%new(M)
-    enddo
+    NH(M+1) = min(NH(M), 0.5d0)
+    D_DON(M+1) = D_DON(M)
+    D_PON(M+1) = D_PON(M)
+    D_refr(M+1) = D_refr(M)
+    D_bSi(M+1) = D_bSi(M)
   end subroutine bot_bound_uniform
   
 end module fitbottom
