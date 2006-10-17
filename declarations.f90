@@ -108,7 +108,6 @@ module declarations
 
   !Detritus variables
   INTEGER::D_bins  !number of detrital compartments  see input/biology.dat
-  TYPE(snow), DIMENSION(:), ALLOCATABLE::Detritus  
 
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
 
