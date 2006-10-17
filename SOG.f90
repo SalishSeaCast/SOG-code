@@ -816,22 +816,31 @@ Detritus(4)%D%new = D%refr
           N%H(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
           Si(1:grid%M))
-     do xx = 1, D_bins - 1
-        call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-             Hvector%d(xx)%bin, Detritus(xx)%D%new(1:grid%M))
-     enddo
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+          Hvector%d(1)%bin, D%DON(1:grid%M))
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+          Hvector%d(2)%bin, D%PON(1:grid%M))
      call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
-          Hvector%d(D_bins)%bin, Detritus(D_bins)%D%new(1:grid%M))
-! *** Temporary detritus refactoring bridge
-D%DON = Detritus(1)%D%new
-D%PON = Detritus(2)%D%new
-D%bSi = Detritus(3)%D%new
-D%refr = Detritus(4)%D%new
+          Hvector%d(4)%bin, D%refr(1:grid%M))
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
+          Hvector%d(3)%bin, D%bSi(1:grid%M))
 
      ! Update boundary conditions at surface, and deal with negative
      ! values in biological model quantities
      ! *** This is refactored code from find_new() that needs to go
      ! *** somewhere else
+     P%micro(0) = P%micro(1)
+     if (any(P%micro < 0.)) then
+        where (P%micro < 0.) P%micro = 0.
+        write(stdout, *) "Warning: negative value(s) in P%micro ", &
+             "were set to zero."
+     endif
+     P%nano(0) = P%nano(1)
+     if (any(P%nano < 0.)) then
+        where (P%nano < 0.) P%nano = 0.
+        write(stdout, *) "Warning: negative value(s) in P%nano ", &
+             "were set to zero."
+     endif
      N%O(0) = N%O(1)
      if (any(N%O < 0.)) then
         where (N%O < 0.) N%O = 0.
@@ -850,26 +859,30 @@ D%refr = Detritus(4)%D%new
         write(stdout, *) "Warning: negative value(s) in Si ", &
              "were set to zero."
      endif
-     P%micro(0) = P%micro(1)
-     if (any(P%micro < 0.)) then
-        where (P%micro < 0.) P%micro = 0.
-        write(stdout, *) "Warning: negative value(s) in P%micro ", &
+     D%DON(0) = D%DON(1)
+     if (any(D%DON < 0.)) then
+        where (D%DON < 0.) D%DON = 0.
+        write(stdout, *) "Warning: negative value(s) in D%DON ", &
              "were set to zero."
      endif
-     P%nano(0) = P%nano(1)
-     if (any(P%nano < 0.)) then
-        where (P%nano < 0.) P%nano = 0.
-        write(stdout, *) "Warning: negative value(s) in P%nano ", &
+     D%PON(0) = D%PON(1)
+     if (any(D%PON < 0.)) then
+        where (D%PON < 0.) D%PON = 0.
+        write(stdout, *) "Warning: negative value(s) in D%PON ", &
              "were set to zero."
      endif
-     do xx = 1, D_bins
-        Detritus(xx)%D%new(0) = Detritus(xx)%D%new(1)
-        if (any(Detritus(xx)%D%new < 0.)) then
-           where (Detritus(xx)%D%new < 0.) Detritus(xx)%D%new = 0.
-           write(stdout, *) "Warning: negative value(s) in Detritus ", &
-                "were set to zero."
-        endif
-     enddo
+     D%refr(0) = D%refr(1)
+     if (any(D%refr < 0.)) then
+        where (D%refr < 0.) D%refr = 0.
+        write(stdout, *) "Warning: negative value(s) in D%refr ", &
+             "were set to zero."
+     endif
+     D%bSi(0) = D%bSi(1)
+     if (any(D%bSi < 0.)) then
+        where (D%bSi < 0.) D%bSi = 0.
+        write(stdout, *) "Warning: negative value(s) in D%bSi ", &
+             "were set to zero."
+     endif
 
      !-----END BIOLOGY------------------------------------------------
 
@@ -878,17 +891,17 @@ D%refr = Detritus(4)%D%new
      !
      ! For those variables that we have data, use the annual fit
      ! calculated from the data
-     call bot_bound_time (day, day_time, &                                ! in
+     call bot_bound_time(day, day_time, &                             ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
           Si(grid%M+1), P%micro(grid%M+1), P%nano(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
-     call bot_bound_uniform (grid%M, N%H, Detritus)
+     call bot_bound_uniform(grid%M, N%H, D%DON, D%PON, D%refr, D%bSi)
 ! *** Temporary detritus refactoring bridge
-D%DON = Detritus(1)%D%new
-D%PON = Detritus(2)%D%new
-D%bSi = Detritus(3)%D%new
-D%refr = Detritus(4)%D%new
+Detritus(1)%D%new = D%DON
+Detritus(2)%D%new = D%PON
+Detritus(3)%D%new = D%bSi
+Detritus(4)%D%new = D%refr
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
@@ -897,9 +910,9 @@ D%refr = Detritus(4)%D%new
      sumSriv = sumSriv + S_riv
   end do  !--------- End of time loop ----------
 
-  write (*,*) "For Ft tuning"
-  write (*,*) "Average SSS should be", sumSriv/float(scount)
-  write (*,*) "Average SSS was", sumS/float(scount)
+  write (stdout,*) "For Ft tuning"
+  write (stdout,*) "Average SSS should be", sumSriv/float(scount)
+  write (stdout,*) "Average SSS was", sumS/float(scount)
 
   ! Close output files
   call timeseries_output_close
