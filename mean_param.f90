@@ -12,12 +12,6 @@ module mean_param
 
   implicit none
 
-  ! Properties (U, V, S, ...)
-  ! *** Might better be called quantities...
-  type :: prop
-     real(kind=dp), dimension(:), pointer :: new
-  end type prop
-
   ! Phytoplankton component of UVST type
   type :: phyto                     
      real(kind=dp), dimension(:), pointer :: micro, nano
@@ -118,11 +112,6 @@ module mean_param
   TYPE :: windstress
      TYPE(old_new)::u,v
   END TYPE windstress
-
-  ! Detritus Types
-  TYPE :: snow  !Detritus(D_bins)
-     TYPE(prop)::D !%new, old (0:M+1)
-  END TYPE snow
 
   INTEGER::is_leap_year, was_leap_year
 
