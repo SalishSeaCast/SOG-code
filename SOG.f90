@@ -659,82 +659,94 @@ Detritus(4)%D%new = D%refr
        ! User-defined physical model output variables
 !!$       &
        ! Variables for standard biological model output
-       N%O , N%H, Si, P%micro, P%nano, &
-       Detritus(1)%D%new, Detritus(2)%D%new, Detritus(3)%D%new &
+       N%O , N%H, Si, P%micro, P%nano, D%DON, D%PON, D%bSi &
        ! User-defined biological model output variables
 !!$       &
        )
 
      call write_profiles(codeId, datetime_str(runDatetime),            &
           datetime_str(startDatetime), year, day, day_time, dt, grid,  &
-          T%new, S%new, rho%g, P%micro, P%nano, N%O, &
-          N%H, Si, Detritus(1)%D%new, Detritus(2)%D%new,      &
-          Detritus(3)%D%new, K%u%all, K%t%all, K%s%all, I_par, U%new,  &
-          V%new)
+          T%new, S%new, rho%g, P%micro, P%nano, N%O, N%H, Si,          &
+          D%DON, D%PON, D%bSi, K%u%all, K%t%all, K%s%all, I_par,      &
+          U%new, V%new)
 
 !------BIOLOGICAL MODEL--------------------------------------------
 
-     call do_biology (time, day, dt, grid%M, precision, step_guess, step_min, &
+     call do_biology(time, day, dt, grid%M, precision, step_guess, step_min,  &
           T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si, Detritus,    &
           Gvector_ro)
 !*** more of the below can be moved into the do_biology module
 
      ! Calculate diffusion matrix Bmatrix
-     call diffusion_coeff (grid, dt, K%s%all, &
+     call diffusion_coeff(grid, dt, K%s%all, &
           Bmatrix%bio)
      Bmatrix%no = Bmatrix%bio          ! both diffuse like S
 
-     ! Initialize Gvector and add the upward from the bottom (surface flux = 0)
+     ! Initialize the Gvector%* and calculate the diffusive fluxes at
+     ! the bottom and top of the grid
      aflux = -Ft*(0.-P%micro(1)) 
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
-          P%micro(grid%M+1), &                                     ! in
-          Gvector%p%micro)                                             ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
+          P%micro(grid%M+1),                                 &  ! in
+          Gvector%p%micro)                                      ! out
      aflux = -Ft*(0.-P%nano(1)) 
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
-          P%nano(grid%M+1), &                                      ! in
-          Gvector%p%nano)                                              ! out
-     DO xx = 1, D_bins-1
-        call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &       ! in
-             Detritus(xx)%D%new(grid%M+1), &                           ! in
-             Gvector%d(xx)%bin)                                        ! out
-     END DO
-     Gvector%d(D_bins)%bin = 0.
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
+          P%nano(grid%M+1),                                  &  ! in
+          Gvector%p%nano)                                       ! out
      aflux = -Ft*(6.4-N%O(1)) 
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
-          N%O(grid%M+1), &                                         ! in
-          Gvector%n%o)                                                 ! out
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, 0.d0, &          ! in
-          N%H(grid%M+1), &                                         ! in
-          Gvector%n%h)                                                 ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
+          N%O(grid%M+1),                                     &  ! in
+          Gvector%n%o)                                          ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
+          N%H(grid%M+1),                                    &   ! in
+          Gvector%n%h)                                          ! out
      aflux = -Ft*(60.0-Si(1)) 
-     call diffusion_bot_surf_flux (grid, dt, K%s%all, aflux, &          ! in
-          Si(grid%M+1), &                                         ! in
-          Gvector%si)                                                 ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
+          Si(grid%M+1),                                      &  ! in
+          Gvector%si)                                           ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
+          D%DON(grid%M+1),                                  &   ! in
+          Gvector%d(1)%bin)                                     ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
+          D%PON(grid%M+1),                                  &   ! in
+          Gvector%d(2)%bin)                                     ! out
+     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
+          D%bSi(grid%M+1),                                  &   ! in
+          Gvector%d(3)%bin)                                     ! out
+     Gvector%d(4)%bin = 0.
 
-     ! vertical advection
-     call vertical_advection (grid, dt, P%micro, wupwell, &
+     ! Add vertical advection
+     ! *** Perhaps this subroutine would be better named upwelling_advection
+     call vertical_advection(grid, dt, P%micro, wupwell, &
           Gvector%p%micro)
-     call vertical_advection (grid, dt, P%nano, wupwell, &
+     call vertical_advection(grid, dt, P%nano, wupwell, &
           Gvector%p%nano)
-     call vertical_advection (grid, dt, N%O, wupwell, &
+     call vertical_advection(grid, dt, N%O, wupwell, &
           Gvector%n%o)
-     call vertical_advection (grid, dt, N%H, wupwell, &
+     call vertical_advection(grid, dt, N%H, wupwell, &
           Gvector%n%h)
-     call vertical_advection (grid, dt, Si, wupwell, &
+     call vertical_advection(grid, dt, Si, wupwell, &
           Gvector%si)
-     DO xx = 1,D_bins-1
-        call vertical_advection (grid, dt, Detritus(xx)%D%new, wupwell, &
-             Gvector%d(xx)%bin)
-     END DO
+     call vertical_advection(grid, dt, D%DON, wupwell, &
+          Gvector%d(1)%bin)
+     call vertical_advection(grid, dt, D%PON, wupwell, &
+          Gvector%d(2)%bin)
+     call vertical_advection(grid, dt, D%bSi, wupwell, &
+          Gvector%d(3)%bin)
 
+     ! Add sinking of plankton and detritus
+     ! *** Perhaps this subroutine would be better named sinking_advection
+     ! *** Argument order could be consistent w/ vertical_advection() too
      micro%sink_min = 0.3*1.1574D-05 ! 0.3/m per day
      micro%sink_max = 1.2*1.1574D-05 ! 1.2/m per day
      sflux = micro%sink_min*micro%Nlimit + micro%sink_max*(1-micro%Nlimit)
-     CALL advection(grid,sflux,P%micro,dt,Gvector_ao%p%micro) !sinking phytoplankton
-
-     DO xx = 1,D_bins-1
-        CALL advection(grid,rate_det%sink(xx),Detritus(xx)%D%new,dt,Gvector_ao%d(xx)%bin)
-     END DO
+     call advection(grid, sflux, P%micro, dt, &
+          Gvector_ao%p%micro)
+     call advection(grid, rate_det%sink(1), D%DON, dt, &
+          Gvector_ao%d(1)%bin)
+     call advection(grid, rate_det%sink(2), D%PON, dt, &
+          Gvector_ao%d(2)%bin)
+     call advection(grid, rate_det%sink(3), D%bSi, dt, &
+          Gvector_ao%d(3)%bin)
      
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
@@ -771,15 +783,6 @@ Detritus(4)%D%new = D%refr
      CALL P_H(grid%M, P%nano, Gvector%p%nano, Gvector_o%p%nano, &
           Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
-     DO xx = 1, D_bins - 1
-        CALL P_H (grid%M, Detritus(xx)%D%new, Gvector%d(xx)%bin, &
-             Gvector_o%d(xx)%bin, Gvector_ro%d(xx)%bin, &
-             Gvector_ao%d(xx)%bin, Bmatrix_o%bio, &
-             Hvector%d(xx)%bin)
-     END DO
-     CALL P_H(grid%M, Detritus(D_bins)%D%new, Gvector%d(D_bins)%bin, &
-          Gvector_o%d(D_bins)%bin, Gvector_ro%d(D_bins)%bin, &
-          null_vector, Bmatrix%null, Hvector%d(D_bins)%bin) 
      CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
           Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
           Hvector%n%o)  ! null_vector 'cause no sinking
@@ -789,6 +792,18 @@ Detritus(4)%D%new = D%refr
      CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
           Gvector_ro%si, null_vector, Bmatrix_o%no, &
           Hvector%si)  ! null_vector 'cause no sinking
+     CALL P_H (grid%M, D%DON, Gvector%d(1)%bin, Gvector_o%d(1)%bin, &
+          Gvector_ro%d(1)%bin, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
+          Hvector%d(1)%bin)
+     CALL P_H (grid%M, D%PON, Gvector%d(2)%bin, Gvector_o%d(2)%bin, &
+          Gvector_ro%d(2)%bin, Gvector_ao%d(2)%bin, Bmatrix_o%bio, &
+          Hvector%d(2)%bin)
+     CALL P_H (grid%M, D%refr, Gvector%d(4)%bin, Gvector_o%d(4)%bin, &
+          Gvector_ro%d(4)%bin, null_vector, Bmatrix_o%bio, &
+          Hvector%d(4)%bin)  ! null_vector 'cause no sinking
+     CALL P_H (grid%M, D%bSi, Gvector%d(3)%bin, Gvector_o%d(3)%bin, &
+          Gvector_ro%d(3)%bin, Gvector_ao%d(3)%bin, Bmatrix_o%bio, &
+          Hvector%d(3)%bin)
 
      ! Solve the tridiagonal system for the biology quantities
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
@@ -807,6 +822,11 @@ Detritus(4)%D%new = D%refr
      enddo
      call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
           Hvector%d(D_bins)%bin, Detritus(D_bins)%D%new(1:grid%M))
+! *** Temporary detritus refactoring bridge
+D%DON = Detritus(1)%D%new
+D%PON = Detritus(2)%D%new
+D%bSi = Detritus(3)%D%new
+D%refr = Detritus(4)%D%new
 
      ! Update boundary conditions at surface, and deal with negative
      ! values in biological model quantities
@@ -864,6 +884,11 @@ Detritus(4)%D%new = D%refr
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform (grid%M, N%H, Detritus)
+! *** Temporary detritus refactoring bridge
+D%DON = Detritus(1)%D%new
+D%PON = Detritus(2)%D%new
+D%bSi = Detritus(3)%D%new
+D%refr = Detritus(4)%D%new
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
