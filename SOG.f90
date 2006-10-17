@@ -191,11 +191,6 @@ program SOG
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
        h%new, dPdx_b, dPdy_b, grid, cruise_id)
-! *** Temporary detritus refactoring bridge
-Detritus(1)%D%new = D%DON
-Detritus(2)%D%new = D%PON
-Detritus(3)%D%new = D%bSi
-Detritus(4)%D%new = D%refr
 
   ! Read the iteration count limit for the physics model implicit
   ! solver
@@ -600,8 +595,8 @@ Detritus(4)%D%new = D%refr
         END IF
 
         ! Calculate the profile of bulk Richardson number (Large, etal
-        ! (1994) eq'n(21))
-        CALL define_Ri_b_sog(grid, h, surface_h, U, V, rho%g, Ri_b, &
+        ! (1994) eqn 21)
+        CALL define_Ri_b_sog(grid, h, surface_h, U%new, V%new, rho%g, Ri_b, &
              V_t_square, N_2_g)
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
         call find_mixing_layer_depth (grid, Ri_b, year, day, day_time, count, &
@@ -673,7 +668,8 @@ Detritus(4)%D%new = D%refr
 !------BIOLOGICAL MODEL--------------------------------------------
 
      call do_biology(time, day, dt, grid%M, precision, step_guess, step_min,  &
-          T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si, Detritus,    &
+          T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
+          D%DON, D%PON, D%refr, D%bSi,                                        &
           Gvector_ro)
 !*** more of the below can be moved into the do_biology module
 
@@ -897,11 +893,6 @@ Detritus(4)%D%new = D%refr
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform(grid%M, N%H, D%DON, D%PON, D%refr, D%bSi)
-! *** Temporary detritus refactoring bridge
-Detritus(1)%D%new = D%DON
-Detritus(2)%D%new = D%PON
-Detritus(3)%D%new = D%bSi
-Detritus(4)%D%new = D%refr
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
