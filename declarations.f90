@@ -88,8 +88,6 @@ module declarations
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par
 
   DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
-  ! Temporary vectors U_i , U_p... to hold results from tridiagonal solver
-  real(kind=dp), dimension(:,:), allocatable :: Detritus1_p
   ! Surface biological flux == 0
   DOUBLE PRECISION::pflux_o
 
