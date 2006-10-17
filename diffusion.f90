@@ -94,8 +94,8 @@ contains
     subroutine diffusion_bot_surf_flux(grid, dt, Kall, surface_flux, &
        bottom_value, Gvector)
       ! For variables without distributed fluxes and non-local fluxes.
-      ! The subroutine calculates the diffusive flux into the bottom
-      ! of the domain and adds the surface flux.
+      ! Initialize the Gvector (part of the RHS Hvector), and calculate
+      ! the diffusive fluxes into the bottom of the grid and at the surface.
       use precision_defs, only: dp
       use grid_mod, only: grid_
       implicit none
@@ -104,17 +104,20 @@ contains
       type(grid_),intent(in):: grid
       real(kind=dp), intent(in):: dt
       real(kind=dp), dimension(0:), intent(in):: Kall ! total mixing K
-      real(kind=dp), intent(in) :: surface_flux
-      real(kind=dp), intent(in) :: bottom_value ! of scalar
-
+      real(kind=dp), intent(in) :: &
+           surface_flux, &
+           bottom_value     ! of scalar
       real(kind=dp), dimension(:), intent(out) :: Gvector
 
-      ! initialize Gvector to 0
+      ! Initialize Gvector (part of RHS Hvector, 
+      ! see Large, et al (1994), App. D)
       Gvector = 0.
 
-      ! calculate rhs (the H vector) (D10)
+      ! Calculate grid boundary diffusive fluxes
+      ! (Large, et al (1994), pg 398, eqn D10c)
+      ! Surface
       Gvector(1) = - dt / grid%i_space(1) * surface_flux
-
+      ! Bottom of grid
       Gvector(grid%M) = dt / grid%i_space(grid%M) * &
            (bottom_value * Kall(grid%M) / grid%g_space(grid%M))      
     end subroutine diffusion_bot_surf_flux
