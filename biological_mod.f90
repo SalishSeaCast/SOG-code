@@ -12,11 +12,11 @@ module biological_mod
   !
   !   init_biology -- Initialize biology model.
   !
-  !   define_PZ --
+  !   load_PZ --
   !
   !   derivs_sog --
   !
-  !   reaction_p_sog --
+  !   unload_PZ --
   !
   !   dalloc_biology_variables -- Deallocate memory from biology model
   !                               variables.
@@ -29,16 +29,17 @@ module biological_mod
   private
   public :: &
        ! Variables:
+       PZ, &
        rate_det, & !*** for sinking
        ! Subroutines:
-       init_biology, define_PZ, derivs_sog, reaction_p_sog, &
+       init_biology, load_PZ, derivs_sog, unload_PZ, &
        dalloc_biology_variables
 
   ! Private type definitions:
   !
   ! Indices for quantities in PZ vector
   TYPE :: bins
-     INTEGER :: micro, nano, NO, NH, Si, det, Quant
+     INTEGER :: Quant, micro, nano, NO, NH, Si, det, DON, PON, refr, bSi
   END TYPE bins
   !
   ! Rate parameters for phytoplankton
@@ -96,6 +97,10 @@ module biological_mod
   data PZ_bins%NH    /4/  ! Position of Ammonium
   data PZ_bins%Si    /5/  ! Position of Silicon
   data PZ_bins%det   /6/  ! Start of detritus
+  data PZ_bins%DON   /6/  ! Position of dissolved organic nitrogen detritus
+  data PZ_bins%PON   /7/  ! Position of particulate organic nitrogen detritus
+  data PZ_bins%refr  /9/  ! Position of refractory nitrogen detritus
+  data PZ_bins%bSi   /8/  ! Position of dissolved biogenic silcon detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
@@ -181,7 +186,7 @@ contains
     ! nitrate remineralization rate
     rate_N%r = getpard('Nitrate, remineral')
     
-    ! DETRITUS
+    ! Detritus
     do xx= 1, D_bins
        binno = getpari("Bin No")
        if (binno .ne. xx) then
@@ -214,7 +219,7 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "PZ vector (biology model timestep initial conditions) array"
-    allocate(PZ(M2), &
+    allocate(PZ(1:(PZ_bins%Quant + D_bins) * M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Waste destiny (biology model timestep initial conditions) array"
@@ -222,7 +227,7 @@ contains
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Detritus params (biology model timestep initial conditions) array"
-    allocate(rate_det%remineral(D_bins), rate_det%sink(D_bins), &
+    allocate(rate_det%remineral(1:D_bins), rate_det%sink(1:D_bins), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrogen compounds uptake diagnostic arrays"
@@ -267,133 +272,163 @@ contains
   end subroutine dalloc_biology_variables
 
 
-  SUBROUTINE define_PZ(M, Pmicro, Pnano, NO, NH, Si, Detritus, &
+  SUBROUTINE load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi, &
        PZ)
-
-    ! This subroutine takes all the separate variables (microplankton,
-    ! nanoplankton, nitrate, ammonium and detritus and loads them
+    ! Load all of the separate biology variables (microplankton,
+    ! nanoplankton, nitrate, ammonium, silicon, and detritus
     ! sequentially into the PZ vector for the ODE solver to use.
-
-    USE mean_param, only : snow 
-
-
-    IMPLICIT NONE
-
-    integer, intent(in):: M
-    DOUBLE PRECISION, DIMENSION(0:), INTENT(IN)::Pmicro, Pnano, NO, NH, Si
-    TYPE(snow), DIMENSION(D_bins), INTENT(IN)::Detritus
-    DOUBLE PRECISION, DIMENSION (M2), INTENT (OUT) :: PZ
-
+    use precision_defs, only: dp
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(in) :: &
+         Pmicro, &  ! Micro phytoplankton biomass profile array
+         Pnano,  &  ! Nano phytoplankton biomass profile array
+         NO,     &  ! Nitrate concentration profile array
+         NH,     &  ! Ammonium concentration profile array
+         Si,     &  ! Silicon concentration profile array
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
+    real(kind=dp), dimension (1:), intent (out) :: &
+         PZ  ! Array of biology variables for ODE solver
     ! Local Variables
+    integer :: &
+         bPZ, &  ! Beginning index for a quantity in the PZ array
+         ePZ     ! Ending index for a quantity in the PZ array
 
-    INTEGER :: bPZ, ePZ ! start position and end position in PZ array
-    INTEGER :: j
-
+    ! Initialize PZ array
     PZ = 0.
-
-    ! Microplankton
-
-    bPz = (PZ_bins%micro-1) * M + 1
+    ! Load micro phytoplankton
+    bPz = (PZ_bins%micro - 1) * M + 1
     ePZ = PZ_bins%micro * M
     PZ(bPZ:ePZ) = Pmicro(1:M)
-
-    ! Nanoplankton
-
-    bPz = (PZ_bins%nano-1) * M + 1
+    ! Load nano phytoplankton
+    bPz = (PZ_bins%nano - 1) * M + 1
     ePZ = PZ_bins%nano * M
     if (flagellates) then
        PZ(bPZ:ePZ) = Pnano(1:M)
     else
-       PZ(bPZ:ePZ) = 0
+       PZ(bPZ:ePZ) = 0.
     endif
-
-    ! Nitrate
-
-    bPz = (PZ_bins%NO-1) * M + 1
+    ! Load nitrate
+    bPz = (PZ_bins%NO - 1) * M + 1
     ePZ = PZ_bins%NO * M
     PZ(bPZ:ePZ) = NO(1:M)
-
-    ! Ammonium
-
-    bPz = (PZ_bins%NH-1) * M + 1
+    ! Load ammonium
+    bPz = (PZ_bins%NH - 1) * M + 1
     ePZ = PZ_bins%NH * M
     if (remineralization) then
        PZ(bPZ:ePZ) = NH(1:M)
     else
        PZ(bPZ:ePZ) = 0
     endif
-
-    ! Silicon
-
-    bPz = (PZ_bins%Si-1) * M + 1
+    ! Load silicon
+    bPz = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M
     PZ(bPZ:ePZ) = Si(1:M)
+    ! Load dissolved organic nitrogen detritus
+    bPz = (PZ_bins%DON - 1) * M + 1
+    ePz = PZ_bins%DON * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_DON(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+    ! Load particulate organic nitrogen detritus
+    bPz = (PZ_bins%PON - 1) * M + 1
+    ePz = PZ_bins%PON * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_PON(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+    ! Load refractory nitrogen detritus
+    bPz = (PZ_bins%refr - 1) * M + 1
+    ePz = PZ_bins%refr * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_refr(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+    ! Load biogenic silicon detritus
+    bPz = (PZ_bins%bSi - 1) * M + 1
+    ePz = PZ_bins%bSi * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_bSi(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+  end subroutine load_PZ
 
-    ! Detritus
-    do j=1,D_bins
-       bPz = (PZ_bins%Quant + (j-1) ) * M + 1
-       ePz = (PZ_bins%Quant + j) * M
-       if (remineralization) then
-          PZ(bPz:ePz) = Detritus(j)%D%new(1:M)
-       else
-          PZ(bPz:ePz) = 0.
-       endif
-    enddo
 
-  END SUBROUTINE define_PZ
-
-
-  subroutine reaction_p_sog(M, PZ, Pmicro, Pnano, NO, &
-       NH, Si, Detritus, Gvector)
-    ! Unpack the biological quantities from the PZ vector into the
+  subroutine unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi, &
+       Gvector)
+    ! Unload the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
-    ! *** This subroutine could have a more meaningful name...
     use precision_defs, only: dp
-    use mean_param, only: snow, UVST
+    use mean_param, only: UVST
     implicit none
     ! Arguments:
-    integer, intent(in):: M
-    real(kind=dp), dimension(M2), intent(in) :: PZ
-    real(kind=dp), dimension(0:M+1), intent(in) :: Pmicro, Pnano, NO, NH, Si
-    type(snow), dimension(D_bins), intent(in) :: Detritus
+    integer, intent(in) :: M  ! Number of grid points
+    real(kind=dp), dimension(1:), intent(in) :: &
+         PZ  ! Array of biology variables for ODE solver
+    real(kind=dp), dimension(0:), intent(in) :: &
+         Pmicro, &  ! Micro phytoplankton biomass profile array
+         Pnano,  &  ! Nano phytoplankton biomass profile array
+         NO,     &  ! Nitrate concentration profile array
+         NH,     &  ! Ammonium concentration profile array
+         Si,     &  ! Silicon concentration profile array
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
     type(UVST), intent(inout) :: Gvector  ! inout 'cause we're not setting all
-    ! Local variables
-    integer :: bPZ, ePZ ! start position and end position in PZ array
-    integer :: j
+    ! Local Variables
+    integer :: &
+         bPZ, &  ! Beginning index for a quantity in the PZ array
+         ePZ     ! Ending index for a quantity in the PZ array
 
-    ! Micro plankton
-    bPZ = (PZ_bins%micro-1) * M + 1
+    ! Unload micro phytoplankton
+    bPZ = (PZ_bins%micro - 1) * M + 1
     ePZ = PZ_bins%micro * M
-    Gvector%p%micro = PZ(bPZ:ePZ) - Pmicro(1:M)
-
-    ! Nano plankton
-    bPZ = (PZ_bins%nano-1) * M + 1
+    Gvector%P%micro = PZ(bPZ:ePZ) - Pmicro(1:M)
+    ! Unload nano phytoplankton
+    bPZ = (PZ_bins%nano - 1) * M + 1
     ePZ = PZ_bins%nano * M
-    Gvector%p%nano = PZ(bPZ:ePZ) - Pnano(1:M)
-
-    ! Nitrate
-    bPZ = (PZ_bins%NO-1) * M + 1
+    Gvector%P%nano = PZ(bPZ:ePZ) - Pnano(1:M)
+    ! Unload nitrate
+    bPZ = (PZ_bins%NO - 1) * M + 1
     ePZ = PZ_bins%NO * M
     Gvector%N%O = PZ(bPZ:ePZ) - NO(1:M)
-
-    ! Ammonimum
-    bPZ = (PZ_bins%NH-1) * M + 1
+    ! Unload ammonimum
+    bPZ = (PZ_bins%NH - 1) * M + 1
     ePZ = PZ_bins%NH * M
     Gvector%N%H = PZ(bPZ:ePZ) - NH(1:M)
-
-    ! Silicon
-    bPZ = (PZ_bins%Si-1) * M + 1
+    ! Unload silicon
+    bPZ = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M
     Gvector%Si = PZ(bPZ:ePZ) - Si(1:M)
-
-    ! Detritus
-    do j = 1, D_bins
-       bPz = (PZ_bins%Quant + (j-1) ) * M + 1
-       ePz = (PZ_bins%Quant + j) * M
-       Gvector%d(j)%bin = PZ(bPz:ePz) - Detritus(j)%D%new(1:M)
-    enddo
-
-  end subroutine reaction_p_sog
+    ! Unload dissolved organic nitrogen detritus
+    bPz = (PZ_bins%DON - 1) * M + 1
+    ePz = PZ_bins%DON * M
+    Gvector%D(1)%bin = PZ(bPz:ePz) - D_DON(1:M)
+    ! Unload particulate organic nitrogen detritus
+    bPz = (PZ_bins%PON - 1) * M + 1
+    ePz = PZ_bins%PON * M
+    Gvector%D(2)%bin = PZ(bPz:ePz) - D_PON(1:M)
+    ! Unload refractory nitrogen detritus
+    bPz = (PZ_bins%refr - 1) * M + 1
+    ePz = PZ_bins%refr * M
+    Gvector%D(4)%bin = PZ(bPz:ePz) - D_refr(1:M)
+    ! Unload biogenic silicon detritus
+    bPz = (PZ_bins%bSi - 1) * M + 1
+    ePz = PZ_bins%bSi * M
+    Gvector%D(3)%bin = PZ(bPz:ePz) - D_bSi(1:M)
+  end subroutine unload_PZ
 
 
   subroutine p_growth(M, NO, NH, Si, P, I_par, Temp, rate, plank, & 
@@ -540,7 +575,7 @@ contains
     ! use to advance the biology to the next time step.
 
     use precision_defs, only: dp
-    use mean_param, only: plankton2, snow
+    use mean_param, only: plankton2
     use declarations, only: D_bins, micro, nano, &
          f_ratio
 
@@ -548,8 +583,8 @@ contains
 
     ! Arguments:
     integer, intent(in) :: M ! grid size
-    real(kind=dp), DIMENSION(M2), INTENT(IN):: PZ  ! values
-    real(kind=dp), DIMENSION(M2), INTENT(OUT)::dPZdt ! derivatives
+    real(kind=dp), DIMENSION(1:), INTENT(IN):: PZ  ! values
+    real(kind=dp), DIMENSION(1:), INTENT(OUT)::dPZdt ! derivatives
     real(kind=dp), dimension(0:M), INTENT(IN):: Temp ! temperature
     real(kind=dp), dimension(0:M), INTENT(IN):: I_par ! light
 
@@ -559,14 +594,14 @@ contains
     integer :: jj ! counter through PZ
     integer :: kk ! counter through detritus
 
-    real(kind=dp), DIMENSION(M):: Resp_micro, Mort_micro! respiration & mortality
-    real(kind=dp), DIMENSION(M):: Resp_nano, Mort_nano  ! respiration & mortality
+    real(kind=dp), DIMENSION(1:M):: Resp_micro, Mort_micro! respiration & mortality
+    real(kind=dp), DIMENSION(1:M):: Resp_nano, Mort_nano  ! respiration & mortality
 
-    real(kind=dp), dimension (M) :: Pmicro, Pnano ! micro/nano plankton conc.
-    real(kind=dp), dimension (M) :: NO, NH, Si ! nitrate, ammonium & silicon conc.
-    real(kind=dp), dimension (D_bins, M) :: detr ! detritus
-    real(kind=dp), dimension (M) :: WasteMicro, WasteNano ! losses by size
-    real(kind=dp), dimension (M) :: Si_remin ! dissolution of bio-silicon
+    real(kind=dp), dimension (1:M) :: Pmicro, Pnano ! micro/nano plankton conc.
+    real(kind=dp), dimension (1:M) :: NO, NH, Si ! nitrate, ammonium & silicon conc.
+    real(kind=dp), dimension (1:D_bins, 1:M) :: detr ! detritus
+    real(kind=dp), dimension (1:M) :: WasteMicro, WasteNano ! losses by size
+    real(kind=dp), dimension (1:M) :: Si_remin ! dissolution of bio-silicon
 
     ! Put PZ micro values into Pmicro variable, removing any negative values
     do ii = 1,M                        ! counter through grid
@@ -706,7 +741,7 @@ contains
     ! now put it all together into the derivatives
 
     ! initialize derivatives
-    dPZdt(1:M2) = 0.      
+    dPZdt = 0.      
 
     ! microplankton
 
