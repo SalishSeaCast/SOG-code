@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
+subroutine define_Ri_b_sog(d, hh, surf_h, U_new, V_new, rho_g, Rib, &
      Vt_sq, N2)
   ! Calculate the profile of the bulk Richardson number, which is
   ! used to find the mixing layer depth.  See Large, etal (1994) pp
@@ -11,15 +11,17 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
   use precision_defs, only: dp
   use grid_mod, only: grid_, depth_average
   use physics_model, only: g
-  USE mean_param, only: height, prop
+  USE mean_param, only: height
   USE surface_forcing, only: ep
 
   ! Arguments:
   type(grid_), intent(in) :: d
   type(height), intent(in) :: hh 
   type(height), intent(out) :: surf_h
-  real(kind=dp), dimension(0:d%M+1), intent(in) :: rho
-  type(prop), intent(in out) :: Uu, Vv
+  real(kind=dp), dimension(0:d%M+1), intent(in) :: &
+       U_new, &
+       V_new, &
+       rho_g
   real(kind=dp), dimension(1:d%M), intent(in) :: Vt_sq
   real(kind=dp), dimension(0:d%M), intent(out) :: Rib
   real(kind=dp), dimension(0:d%M+1), intent(in) :: N2
@@ -31,12 +33,12 @@ subroutine define_Ri_b_sog(d, hh, surf_h, Uu, Vv, rho, Rib, &
 
   surf_h%new = ep * hh%new
        
-  U_avg = depth_average(Uu%new, 0.0d0, surf_h%new)
-  V_avg = depth_average(Vv%new, 0.0d0, surf_h%new)
-  rho_avg = depth_average(rho, 0.0d0, surf_h%new)
+  U_avg = depth_average(U_new, 0.0d0, surf_h%new)
+  V_avg = depth_average(V_new, 0.0d0, surf_h%new)
+  rho_avg = depth_average(rho_g, 0.0d0, surf_h%new)
 
-  test_vector = (U_avg - Uu%new) ** 2 + (V_avg - Vv%new) ** 2
-  test_vector2 =  -g / rho(0) * (rho_avg - rho)
+  test_vector = (U_avg - U_new) ** 2 + (V_avg - V_new) ** 2
+  test_vector2 =  -g / rho_g(0) * (rho_avg - rho_g)
          
   Rib = 0.0
   Ribmin = 1000.
