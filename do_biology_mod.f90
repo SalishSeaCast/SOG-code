@@ -19,15 +19,15 @@ module do_biology_mod
 contains
 
   subroutine do_biology(time, day, dt, M, precision, step_guess, step_min,    &
-       T_new, I_par, Pmicro, Pnano, NO, NH, Si, Detritus, &
-       &Gvector)
+       T_new, I_par, Pmicro, Pnano, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi,  &
+       Gvector)
     ! A wrapper around a bunch of subroutine calls that advance the
     ! biological quantities to the next time step.
     use precision_defs, only: dp
-    use mean_param, only: snow, UVST
-    use declarations, only: D_bins, M2   ! need to get rid of these
+    use mean_param, only: UVST
+    use declarations, only: M2   ! need to get rid of these
     use rungekutta, only: odeint
-    use biological_mod, only: reaction_p_sog, define_PZ
+    use biological_mod, only: PZ, load_PZ, unload_PZ
     implicit none
 
     ! Arguments:
@@ -40,48 +40,50 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: T_new   ! Temperature
     real(kind=dp), dimension(0:), intent(in) :: I_par  ! Photosynth avail rad
     real(kind=dp), dimension(0:), intent(in) :: &
+         Pmicro, &  ! Micro phytoplankton
+         Pnano, &   ! Nano phytoplankton
          NO, &      ! Nitrate
          NH, &      ! Ammonium
          Si, &      ! Silicon
-         Pmicro, &  ! Micro phytoplankton
-         Pnano      ! Nano phytoplankton
-    type(snow), dimension(D_bins), intent(in) :: Detritus
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
     type(UVST), intent(in out) :: Gvector
 
     ! Local variables:
-    real(kind=dp), dimension(M2) :: PZ
     integer :: N_ok, N_bad    ! counts bad and good steps in odeint
     real(kind=dp) :: next_time
 
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on
-    call define_PZ(M, Pmicro, Pnano, NO, NH, Si, Detritus, & ! in
-         PZ)                                                 ! out
-    call check_negative(PZ, M2, 'after define_PZ', time, day)
+    call load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
+         D_DON, D_PON, D_refr, D_bSi, &
+         PZ)                                               ! out
+    call check_negative(PZ, 'after define_PZ', time, day)
 
     ! Solve the biological model for values at the next time step
     next_time = time + dt
     call odeint(PZ, M, M2, time, next_time, precision, step_guess, &
          step_min, &
          N_ok, N_bad, T_new, I_par)
-    call check_negative (PZ, M2, 'after odeint', time, day)
+    call check_negative(PZ, 'after odeint', time, day)
 
-    ! Unpack the biological quantities from the PZ vector into the
+    ! Unload the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
-    ! *** This subroutine could have a more meaningful name...
-    call reaction_p_sog (M, PZ, Pmicro, Pnano, NO, NH, Si, Detritus, & ! in
-         Gvector)                                                      ! out
+    call unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
+         D_DON, D_PON, D_refr, D_bSi, &
+         Gvector)                                                ! out
   end subroutine do_biology
 
 
-  subroutine check_negative (PZ, M2, msg, time, day)
+  subroutine check_negative(PZ, msg, time, day)
     ! Check for negative values in PZ vector, a fatal error.
     use precision_defs, only: dp
     use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     real(kind=dp), dimension(:), intent(in) :: PZ
-    integer, intent (in) :: M2
     character(len=*) :: msg
     real(kind=dp), intent(in) :: time
     integer, intent(in) :: day
@@ -91,7 +93,7 @@ contains
     if (minval(PZ) < 0.) then
        write(stderr, *) "do_biology: Negative value in PZ ", &
             msg, " day = ", day, " time = ", time
-       do i=1,M2
+       do i = 1, size(PZ)
           if (PZ(i) < 0.) then
              write (stderr, *) "Value at index, ",i
           endif
