@@ -55,7 +55,7 @@ module biological_mod
           N_o, & ! overall half saturation constant????
           N_x, & ! exponent in inhibition equation
           Si_ratio, & ! silicon to nitrogen ratio in phyto     
-          Rm, & ! respiration rate
+          Rm, & ! natural mortality rate
           M_z ! mortality rate
   end type rate_para_phyto
   !
@@ -177,9 +177,9 @@ contains
     ! silicon to nitrogen ratio in phyto
     rate_micro%Si_ratio = getpard('Micro, Si ratio')
     rate_nano%Si_ratio = getpard('Nano, Si ratio')
-    ! respiration rate
-    rate_micro%Rm = getpard('Micro, resp')
-    rate_nano%Rm = getpard('Nano, resp')
+    ! natural mortality rate
+    rate_micro%Rm = getpard('Micro, nat mort')
+    rate_nano%Rm = getpard('Nano, nat mort')
     ! mortality rate
     rate_micro%M_z = getpard('Micro, mort')
     rate_nano%M_z = getpard('Nano, mort')
@@ -432,9 +432,10 @@ contains
 
 
   subroutine p_growth(M, NO, NH, Si, P, I_par, Temp, rate, plank, & 
-       Resp, Mort) 
-    ! Calculate the growth, respiration and mortality (light limited
-    ! or nutrient limited) of either phytoplankton class.  All three
+       NatMort, GrazMort) 
+    ! Calculate the growth (light limited
+    ! or nutrient limited) natural mortality and grazing mortality
+    ! of either phytoplankton class.  All three
     ! are functions of temperature
     use precision_defs, only: dp
     use mean_param, only: plankton2
@@ -452,7 +453,7 @@ contains
     type(rate_para_phyto), intent(in) :: rate
     ! out are the growth values
     type(plankton2), intent(out) :: plank ! either micro or nano 
-    real(kind=dp), dimension(1:M), intent(out) :: Resp, Mort
+    real(kind=dp), dimension(1:M), intent(out) :: NatMort, GrazMort
 
     ! Local variables:
     integer :: j ! counter through depth
@@ -481,8 +482,8 @@ contains
        ! maximum growth rate (before light/nutrient limitation)
        Rmax(j)=rate%R*temp_effect 
 
-       Resp(j)=(rate%Rm)*temp_effect 
-       Mort(j)=(rate%M_z)*temp_effect
+       NatMort(j)=(rate%Rm)*temp_effect 
+       GrazMort(j)=(rate%M_z)*temp_effect
 
        plank%growth%light(j) = Rmax(j)*(1.0-EXP(-rate%sigma*I_par(j)/Rmax(j)))
 
@@ -543,7 +544,7 @@ contains
              ! add to nutrient uptake so we combined the effects of
              ! different phyto classes
              uptake%NH(j) = Uc(j) * P(j) + uptake%NH(j)
-             uptake%NO(j) = 0.
+             uptake%NO(j) = uptake%NO(j)
           ELSE
              uptake%NH(j) = Hup_cell(j) * P(j) + uptake%NH(j)
              uptake%NO(j) = (Uc(j) - Hup_cell(j)) * P(j) + &
@@ -570,7 +571,7 @@ contains
 
   END SUBROUTINE p_growth
 
-  subroutine derivs_sog(M, PZ, dPZdt, Temp, I_par)
+  subroutine derivs_sog(M, PZ, dPZdt, Temp, I_par, day)
     ! Calculate the derivatives of the biological model for odeint to
     ! use to advance the biology to the next time step.
 
@@ -587,6 +588,7 @@ contains
     real(kind=dp), DIMENSION(1:), INTENT(OUT)::dPZdt ! derivatives
     real(kind=dp), dimension(0:M), INTENT(IN):: Temp ! temperature
     real(kind=dp), dimension(0:M), INTENT(IN):: I_par ! light
+    integer, intent(in) :: day ! current day for mortality
 
     ! Local variables
 
@@ -594,8 +596,8 @@ contains
     integer :: jj ! counter through PZ
     integer :: kk ! counter through detritus
 
-    real(kind=dp), DIMENSION(1:M):: Resp_micro, Mort_micro! respiration & mortality
-    real(kind=dp), DIMENSION(1:M):: Resp_nano, Mort_nano  ! respiration & mortality
+    real(kind=dp), DIMENSION(1:M):: NatMort_micro, GrazMort_micro! natural & grazing mortality
+    real(kind=dp), DIMENSION(1:M):: NatMort_nano, GrazMort_nano  ! natural & grazing mortality
 
     real(kind=dp), dimension (1:M) :: Pmicro, Pnano ! micro/nano plankton conc.
     real(kind=dp), dimension (1:M) :: NO, NH, Si ! nitrate, ammonium & silicon conc.
@@ -690,27 +692,32 @@ contains
     ! N ammonium and nitrate uptake rates (IN and OUT) incremented
     ! micro is the growth parameters for micro plankton (IN) and the growth rates 
     ! (OUT)
-    ! Resp is respiration, Mort is mortality
+    ! NatMort is physiological death, GrazMort is grazing mortality
 
     call p_growth(M, NO, NH, Si, Pmicro, I_par, Temp, & ! in
          rate_micro, micro, &         ! in and out, in, out
-         Resp_micro, Mort_micro)                    ! out
+         NatMort_micro, GrazMort_micro)                    ! out
 
     ! put microplankton mortality into the medium detritus flux
-    WasteMicro = WasteMicro + Mort_micro*Pmicro
+!SEA    GrazMort_micro = (1.0 + 5.0 * exp(-(day-150.)**2/60.**2) + &
+!SEA         2.0 * exp(-(day-230.)**2/60.**2) ) * GrazMort_micro
+    ! copepods can't crop a full bloom (half-saturation 0.7 Alain)
+!SEA    GrazMort_micro = GrazMort_micro / (2.0 + Pmicro)
+    WasteMicro = WasteMicro + (GrazMort_micro+NatMort_micro)*Pmicro
 
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of nano plankton
     ! I_par is light, Temp is temperature 
     ! N ammonium and nitrate uptake rates (IN and OUT) incremented
     ! nano is the growth parameters for micro plankton (IN) and the growth rates 
     ! (OUT)
-    ! Resp_nano is respiration, Mort_nano is mortality
+    ! NatMort_nano is physiological death, GrazMort_nano is grazing mortality
 
     call p_growth(M, NO, NH, Si, Pnano, I_par, Temp, & ! in
          rate_nano, nano, &             ! in and out, in, out
-         Resp_nano, Mort_nano)                     ! out
+         NatMort_nano, GrazMort_nano)                     ! out
 
-    WasteNano = WasteNano + Mort_nano*Pnano
+!SEA    GrazMort_nano = GrazMort_nano*Pnano ! ie propto the square
+    WasteNano = WasteNano + (GrazMort_nano+NatMort_nano)*Pnano
 
 !!!New quantity, bacterial 0xidation of NH to NO pool ==> NH^2
     NH_oxid(1:M) = rate_N%r * NH**2
@@ -749,8 +756,8 @@ contains
        jj = (PZ_bins%micro-1) * M + ii ! index for PZ, derivatives etc
 
        if (Pmicro(ii) > 0.) then 
-          dPZdt(jj) = (micro%growth%new(ii) - Resp_micro(ii) &
-               - Mort_micro(ii)) * Pmicro(ii)
+          dPZdt(jj) = (micro%growth%new(ii) - NatMort_micro(ii) &
+               - GrazMort_micro(ii)) * Pmicro(ii)
        endif
     enddo
 
@@ -760,8 +767,8 @@ contains
        jj = (PZ_bins%nano-1) * M + ii ! index for PZ, derivatives etc
 
        if (Pnano(ii) > 0.) then 
-          dPZdt(jj) = (nano%growth%new(ii) - Resp_nano(ii) &
-               - Mort_nano(ii)) * Pnano(ii)
+          dPZdt(jj) = (nano%growth%new(ii) - NatMort_nano(ii) &
+               - GrazMort_nano(ii)) * Pnano(ii)
        endif
     enddo
 
@@ -783,7 +790,6 @@ contains
 
        if (NH(ii) > 0.) then  
           dPZdt(jj) = -uptake%NH(ii) &
-               + Resp_micro(ii)*Pmicro(ii) + Resp_nano(ii)*Pnano(ii)       & 
                + WasteMicro(ii) * wastedestiny%m(0)                     &
                + WasteNano(ii) * wastedestiny%s(0)                      &
                + remin_NH(ii) - NH_oxid(ii)
@@ -796,9 +802,9 @@ contains
        jj = (PZ_bins%Si-1) * M + ii ! index for PZ, derivatives etc
 
        if (Si(ii) > 0.) then
-          dPZdt(jj) = - (micro%growth%new(ii) - Resp_micro(ii)) * Pmicro(ii) &
+          dPZdt(jj) = - (micro%growth%new(ii)) * Pmicro(ii) &
                          * rate_micro%Si_ratio &
-                      - (nano%growth%new(ii) - Resp_nano(ii)) * Pnano(ii) &
+                      - (nano%growth%new(ii)) * Pnano(ii) &
                          * rate_nano%Si_ratio &
                          + Si_remin(ii)
        endif
@@ -820,7 +826,8 @@ contains
        jj = (PZ_bins%Quant + (kk-1)) * M + ii
        
        if (detr(kk,ii) > 0) then
-          dPZdt(jj) = Mort_micro(ii) * Pmicro(ii) * rate_micro%Si_ratio &
+          dPZdt(jj) = (NatMort_micro(ii) + GrazMort_micro(ii)) &
+               * Pmicro(ii) * rate_micro%Si_ratio &
                - rate_det%remineral(kk) * detr(kk,ii) 
        end if
   
