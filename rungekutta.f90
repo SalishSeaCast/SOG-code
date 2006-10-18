@@ -18,7 +18,7 @@ contains
 
   subroutine odeint (PZstart, M, M2, start_time, end_time, precision, &
        step_guess, &
-       step_min, N_ok, N_bad, Temp, I_par)
+       step_min, N_ok, N_bad, Temp, I_par, day)
 
     use precision_defs, only: dp
     use biological_mod, only: derivs_sog
@@ -38,6 +38,7 @@ contains
                            N_bad  ! number of bad steps
     real(kind=dp), dimension(0:), intent(in):: Temp  ! current temp field
     real(kind=dp), dimension(0:), intent(in):: I_par  ! current light field
+    integer, intent(in):: day ! current day (for mort strength)
 
     ! internal parameters (alphabetical)
     integer :: maxstp ! maximum number of steps
@@ -65,7 +66,7 @@ contains
 
     do istp = 1, maxstp
 
-       call derivs_sog (M, PZ, dPZdt, Temp, I_par)
+       call derivs_sog (M, PZ, dPZdt, Temp, I_par, day)
 
        PZscal(:) = abs(PZ(:)) + abs(step * dPZdt(:)) + tiny
 
@@ -73,7 +74,7 @@ contains
             step = end_time - time
 
        call rkqs (PZ, dPZdt, M, M2, time, step, precision, PZscal, &
-            step_done, step_next, Temp, I_par)
+            step_done, step_next, Temp, I_par, day)
 
        if (step_done == step) then
           N_ok = N_ok + 1
@@ -97,7 +98,7 @@ contains
   end subroutine odeint
 
 subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
-     step_done, step_next, Temp, I_par)
+     step_done, step_next, Temp, I_par, day)
 
     use precision_defs, only: dp
     
@@ -116,6 +117,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
                                   step_next  ! size for next time step
     real(kind=dp), dimension(0:), intent(in):: Temp  ! current temp field
     real(kind=dp), dimension(0:), intent(in):: I_par  ! current light field
+    integer, intent(in):: day ! current day for mortality
 
 
     ! internal parameters
@@ -138,7 +140,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     step = step_try
 
-0001 call rkck (PZ, dPZdt, M, M2, step, PZtemp, PZerr, Temp, I_par)
+0001 call rkck (PZ, dPZdt, M, M2, step, PZtemp, PZerr, Temp, I_par, day)
 
     errmax = 0.
 
@@ -170,7 +172,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
   end subroutine rkqs
 
-  subroutine rkck (PZ, dPZdt, M, M2, step, PZout, PZerr, Temp, I_par)
+  subroutine rkck (PZ, dPZdt, M, M2, step, PZout, PZerr, Temp, I_par, day)
 
     use precision_defs, only: dp
     use biological_mod, only: derivs_sog
@@ -187,6 +189,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
     real(kind=dp), dimension(:), intent(out) :: PZerr ! error (delta) in PZ
     real(kind=dp), dimension(0:), intent(in):: Temp  ! current temp field
     real(kind=dp), dimension(0:), intent(in):: I_par  ! current light field
+    integer, intent(in) :: day ! for mortality fields
     
     ! the Runge-Kutta constants
     real(kind=dp) A2,A3,A4,A5,A6,B21,B31,B32,B41,B42,B43,B51, &
@@ -206,25 +209,25 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     PZtemp(:) = PZ(:) + B21 * step * dPZdt(:)
 
-    call derivs_sog(M, PZtemp, AK2, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK2, Temp, I_par, day)
 
     PZtemp(:) = PZ(:) + step * (B31 * dPZdt(:) + B32 * AK2(:))
 
-    call derivs_sog(M, PZtemp, AK3, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK3, Temp, I_par, day)
 
     PZtemp(:) = PZ(:) + step * (B41 * dPZdt(:) + B42 * AK2(:) + B43 * AK3(:))
 
-    call derivs_sog(M, PZtemp, AK4, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK4, Temp, I_par, day)
 
     PZtemp(:) = PZ(:) + step * (B51 * dPZdt(:) + B52 * AK2(:) + B53 * AK3(:) &
          + B54 * AK4(:))
 
-    call derivs_sog(M, PZtemp, AK5, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK5, Temp, I_par, day)
 
     PZtemp(:) = PZ(:) + step * (B61 * dPZdt(:) + B62 * AK2(:) + B63 * AK3(:) &
          + B64 * AK4(:) + B65*AK5(:))
 
-    call derivs_sog(M, PZtemp, AK6, Temp, I_par)
+    call derivs_sog(M, PZtemp, AK6, Temp, I_par, day)
 
     PZout(:) = PZ(:) + step * (C1 * dPZdt(:) + C3 * AK3(:) + C4 * AK4(:) &
          + C6 * AK6(:))
