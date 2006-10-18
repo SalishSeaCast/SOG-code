@@ -74,8 +74,8 @@
 "Nano, N_x"		0.           "Nano, N_x"
 "Micro, Si ratio"	1.	     "Micro, ratio silicon/nitrogen"
 "Nano, Si ratio"	0.	     "Nano, ratio silicon/nitrogen"
-"Micro, resp"		0.e-06      "Micro, resp"
-"Nano, resp" 		0.e-07     "Nano, resp"
+"Micro, nat mort"	0.e-06       "Micro, natural mortality"
+"Nano, nat mort" 	0.e-07        "Nano, natural mortality"
 "Micro, mort"		3.75e-06      "Micro, mort"
 "Nano, mort"		3.75e-06      "Nano, mort"
 ! Nutrient values:
