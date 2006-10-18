@@ -43,10 +43,10 @@ datetime.o core_variables.o input_processor.o grid.o \
 mean_param.o declarations.o surface_forcing.o IMEX_constants.o \
 initial_sog.o \
 \
-timeseries_output.o profiles_output.o \
+profiles_output.o \
 \
 water_properties.o physics_model.o turbulence.o find_upwell.o diffusion.o \
-fitbottom.o \
+timeseries_output.o fitbottom.o \
 biological_mod.o rungekutta.o do_biology_mod.o forcing.o \
 mixing_layer.o \
 \
