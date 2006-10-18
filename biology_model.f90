@@ -66,7 +66,7 @@ contains
     next_time = time + dt
     call odeint(PZ, M, M2, time, next_time, precision, step_guess, &
          step_min, &
-         N_ok, N_bad, T_new, I_par)
+         N_ok, N_bad, T_new, I_par, day)
     call check_negative(PZ, 'after odeint', time, day)
 
     ! Unload the biological quantities from the PZ vector into the
