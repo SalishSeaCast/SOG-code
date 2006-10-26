@@ -8,6 +8,8 @@ module biology_eqn_builder
   !
   ! Public Variables:
   !
+  !   diff_coeffs -- Tridiagonal matrix of diffusion coefficient values
+  !
   !   Pmicro_RHS -- Micro phytoplankton (diatoms) right-hand side arrays
   !
   !   Pnano_RHS -- Nano phytoplankton (flagellates) right-hand side arrays
@@ -28,6 +30,10 @@ module biology_eqn_builder
   !
   ! Public Subroutines:
   !
+  !   build_biology_equations -- Build the right-hand side (RHS) arrays
+  !                              for the diffusion/advection equations for
+  !                              the biology quantities.
+  !
   !   alloc_bio_RHS_variables -- Allocate memory for biology RHS arrays
   !
   !   dalloc_bio_RHS_variables -- Deallocate memory for biology RHS arrays
@@ -38,21 +44,32 @@ module biology_eqn_builder
   private
   public :: &
        ! Variables:
-       Pmicro_RHS, &  ! Micro phytoplankton (diatoms) RHS arrays
-       Pnano_RHS,  &  ! Nano phytoplankton (flagellates) RHS arrays
-       NO_RHS,     &  ! Nitrate concentration RHS arrays
-       NH_RHS,     &  ! Ammonium concentration RHS arrays
-       Si_RHS,     &  ! Silicon concentration RHS arrays
-       D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
-       D_PON_RHS,  &  ! Particulate organic nitrogen detritus RHS arrays
-       D_refr_RHS, &  ! Refractory nitrogen detritus RHS arrays
-       D_bSi_RHS,  &  ! Biogenic silicon detritus RHS arrays
+       diff_coeffs, &  ! Tridiagonal matrix of diffusion coefficient values
+       Pmicro_RHS,  &  ! Micro phytoplankton (diatoms) RHS arrays
+       Pnano_RHS,   &  ! Nano phytoplankton (flagellates) RHS arrays
+       NO_RHS,      &  ! Nitrate concentration RHS arrays
+       NH_RHS,      &  ! Ammonium concentration RHS arrays
+       Si_RHS,      &  ! Silicon concentration RHS arrays
+       D_DON_RHS,   &  ! Dissolved organic nitrogen detritus RHS arrays
+       D_PON_RHS,   &  ! Particulate organic nitrogen detritus RHS arrays
+       D_refr_RHS,  &  ! Refractory nitrogen detritus RHS arrays
+       D_bSi_RHS,   &  ! Biogenic silicon detritus RHS arrays
        ! Subroutines:
+       build_biology_equations, &
        alloc_bio_RHS_variables, dalloc_bio_RHS_variables
 
   ! Type Definitions:
   !
   ! Private to module:
+  !
+  ! Tridiagnonal matrix:
+  type :: tridiag
+     real(kind=dp), dimension(:), allocatable :: &
+          sub_diag, &  ! Sub-diagonal vector of a tridiagonal matrix
+          diag,     &  ! Diagonal vector of a tridiagonal matrix
+          super_diag   ! Super-diagonal vector of a tridiagonal matrix
+  end type tridiag
+  !
   !
   ! New/old array components:
   type :: new_old
@@ -70,9 +87,11 @@ module biology_eqn_builder
           sink    ! Sinking component of RHS
   end type RHS
 
-  ! Parameter Value Declarations:
+  ! Variable Declarations:
   !
   ! Public:
+  type(tridiag) :: &
+       diff_coeffs  ! Tridiagonal matrix of diffusion coefficient values
   type(RHS) :: &
        Pmicro_RHS, &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,  &  ! Nano phytoplankton (flagellates) RHS arrays
@@ -83,18 +102,116 @@ module biology_eqn_builder
        D_PON_RHS,  &  ! Particulate organic nitro detritus RHS arrays
        D_refr_RHS, &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS      ! Biogenic silicon detritus RHS arrays
-  !
-  ! Private to module:
 
 contains
 
-  subroutine build_biology_equations()
+  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, NO, NH,  & ! in
+       Si, D_DON, D_PON, D_refr, D_bSi, Ft, K_all, wupwell,            & ! in
+       diff_coeffs_sub_diag, diff_coeffs_diag, diff_coeffs_super_diag, & ! out
+       Pmicro_RHS_diff_adv, Pnano_RHS_diff_adv, NO_RHS_diff_adv,       & ! out
+       NH_RHS_diff_adv, Si_RHS_diff_adv, D_DON_RHS_diff_adv,           & ! out
+       D_PON_RHS_diff_adv, D_refr_RHS_diff_adv, D_bSi_RHS_diff_adv)      ! out
     ! Build the right-hand side (RHS) arrays for the
     ! diffusion/advection equations for the biology quantities.
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    use diffusion, only: new_diffusion_coeff, diffusion_bot_surf_flux
+    use find_upwell, only: vertical_advection
+    implicit none
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         Pmicro, &  ! Micro phytoplankton
+         Pnano,  &  ! Nano phytoplankton
+         NO,     &  ! Nitrate
+         NH,     &  ! Ammonium
+         Si,     &  ! Silicon
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
+    real(kind=dp), intent(in) :: &
+         Ft  ! Total fresh water flux
+    real(kind=dp), dimension(0:), intent(in) :: &
+         K_all  ! Total diffusion coefficient array
+    real(kind=dp), dimension(1:), intent(in) :: &
+         wupwell  ! Profile of vertical upwelling velocity [m/s]
+    real(kind=dp), dimension(1:), intent(out) :: &
+         diff_coeffs_sub_diag, &  ! Sub-diag vector of diffusion coeff matrix
+         diff_coeffs_diag,     &  ! Diagonal vector of diffusion coeff matrix
+         diff_coeffs_super_diag   ! Super-diag vector of diffusion coeff matrix
+    real(kind=dp), dimension(1:), intent(out) :: &
+         Pmicro_RHS_diff_adv, &  ! Micro phytoplankton (diatoms) diff/adv term
+         Pnano_RHS_diff_adv,  &  ! Nano phytoplankton (flagellates) diff/adv
+         NO_RHS_diff_adv,     &  ! Nitrate concentration diffusion/advection
+         NH_RHS_diff_adv,     &  ! Ammonium concentration diff/adv term
+         Si_RHS_diff_adv,     &  ! Silicon concentration diff/adv term
+         D_DON_RHS_diff_adv,  &  ! Dissolved organic nitrogen detritus diff/adv
+         D_PON_RHS_diff_adv,  &  ! Particulate organic nitro detritus diff/adv
+         D_refr_RHS_diff_adv, &  ! Refractory nitrogen detritus diff/adv term
+         D_bSi_RHS_diff_adv      ! Biogenic silicon detritus diff/adva term
+    ! Local variables:
+    real(kind=dp) :: &
+         aflux  ! Surface nutrient flux
 
-    ! Initialize the RHS *%bio%new arrays, and calculate the diffusive
+    ! Calculate the strength of the diffusion coefficients for biology
+    ! model quantities.  They diffuse like salinity.
+    call new_diffusion_coeff(grid, dt, K_all,                           & ! in
+         diff_coeffs_sub_diag, diff_coeffs_diag, diff_coeffs_super_diag)  ! out
+
+    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
-    
+    aflux = -Ft * (0. - Pmicro(1)) 
+    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
+         Pmicro(grid%M+1),                               &   ! in
+         Pmicro_RHS_diff_adv)                                ! out
+    aflux = -Ft * (0. - Pnano(1)) 
+    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
+         Pnano(grid%M+1),                                &   ! in
+         Pnano_RHS_diff_adv)                                 ! out
+    aflux = -Ft * (6.4 - NO(1)) 
+    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
+         NO(grid%M+1),                                   &   ! in
+         NO_RHS_diff_adv)                                    ! out
+    call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
+         NH(grid%M+1),                                   &   ! in
+         NH_RHS_diff_adv)                                    ! out
+    aflux = -Ft * (60.0 - Si(1)) 
+    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
+         Si(grid%M+1),                                   &   ! in
+         Si_RHS_diff_adv)                                    ! out
+    call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
+         D_DON(grid%M+1),                                &   ! in
+         D_DON_RHS_diff_adv)                                 ! out
+    call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
+         D_PON(grid%M+1),                                &   ! in
+         D_PON_RHS_diff_adv)                                 ! out
+    D_refr_RHS_diff_adv = 0.
+    call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
+         D_bSi(grid%M+1),                                &   ! in
+         D_bSi_RHS_diff_adv)                                 ! out
+
+     ! Add vertical advection due to upwelling
+     call vertical_advection(grid, dt, Pmicro, wupwell, &
+          Pmicro_RHS_diff_adv)
+     call vertical_advection(grid, dt, Pnano, wupwell, &
+          Pnano_RHS_diff_adv)
+     call vertical_advection(grid, dt, NO, wupwell, &
+          NO_RHS_diff_adv)
+     call vertical_advection(grid, dt, NH, wupwell, &
+          NH_RHS_diff_adv)
+     call vertical_advection(grid, dt, Si, wupwell, &
+          Si_RHS_diff_adv)
+     call vertical_advection(grid, dt, D_DON, wupwell, &
+          D_DON_RHS_diff_adv)
+     call vertical_advection(grid, dt, D_PON, wupwell, &
+          D_PON_RHS_diff_adv)
+     call vertical_advection(grid, dt, D_bSi, wupwell, &
+          D_bSi_RHS_diff_adv)
+
 
   end subroutine build_biology_equations
 
@@ -110,6 +227,11 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
+    msg = "Diffusion coefficients tridiagonal matrix arrays"
+    allocate(diff_coeffs%sub_diag(1:M), diff_coeffs%diag(1:M), &
+         diff_coeffs%super_diag(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
     msg = "Micro phytoplankton RHS arrays"
     allocate(Pmicro_RHS%diff_adv%new(1:M), Pmicro_RHS%diff_adv%old(1:M), &
          Pmicro_RHS%bio(1:M), Pmicro_RHS%sink(1:M), &
@@ -167,6 +289,11 @@ contains
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg         ! Allocation failure message prefix
 
+    msg = "Diffusion coefficients tridiagonal matrix arrays"
+    deallocate(diff_coeffs%sub_diag, diff_coeffs%diag, &
+         diff_coeffs%super_diag, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
     msg = "Micro phytoplankton RHS arrays"
     deallocate(Pmicro_RHS%diff_adv%new, Pmicro_RHS%diff_adv%old, &
          Pmicro_RHS%bio, Pmicro_RHS%sink, &
