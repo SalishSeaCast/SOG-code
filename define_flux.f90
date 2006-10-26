@@ -7,17 +7,20 @@ module define_flux_mod
 
 contains
 
-  subroutine define_flux(U_grad_i, V_grad_i, T_grad_i, S_grad_i, alpha, beta)
+  subroutine define_flux(grid, U_grad_i, V_grad_i, T_grad_i, S_grad_i, &
+       alpha, beta)
     ! *** What's it do?
 
     use precision_defs, only: dp
+    use grid_mod, only: grid_
     use water_properties, only: water_property
     use physics_model, only: g
-    USE declarations, only: grid, K, w, gamma, h
+    USE declarations, only: K, w, gamma, h
 
     implicit none
 
     ! Arguments:
+    type(grid_) :: grid  ! Grid arrays
     real(kind=dp), dimension(1:) :: &
          U_grad_i, &  ! Cross-strait velocity gradient profile at interfaces
          V_grad_i, &  ! Along-strait velocity gradient profile at interfaces
