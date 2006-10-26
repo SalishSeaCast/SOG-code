@@ -5,7 +5,6 @@ module declarations
 ! *** What's in here?
 
   use precision_defs, only: dp
-  use grid_mod, only: grid
 
   use mean_param
 
