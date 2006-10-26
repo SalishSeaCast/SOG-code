@@ -48,9 +48,9 @@ module biological_mod
           sigma, & ! parameter in light limitation
           gamma, & ! loss parameter under light limitation
           inhib, & ! light inhibition
-          k, & ! NO3 half saturation constant
+          k, & ! half saturation constant
           ! preference for NO3 over NH (always less than 1 as NH is preferred)
-          kapa, & 
+          kapa, &
           gamma_o, & ! exp strength of NH inhit of NO3 uptake
           N_o, & ! overall half saturation constant????
           N_x, & ! exponent in inhibition equation
