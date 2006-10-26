@@ -18,6 +18,8 @@ program SOG
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
   use biological_mod, only: rate_det
+  use biology_eqn_builder, only: diff_coeffs, Pmicro_RHS, Pnano_RHS, NO_RHS, &
+       NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
   !
   ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
@@ -27,6 +29,7 @@ program SOG
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use biological_mod, only: init_biology, dalloc_biology_variables
   use do_biology_mod, only: do_biology
+  use biology_eqn_builder, only: build_biology_equations
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
@@ -61,7 +64,7 @@ program SOG
 
   implicit none
 
-  real(kind=dp) :: aflux, sflux(80)
+  real(kind=dp) :: sflux(80)
   real(kind=dp) :: &
        upwell
   ! Upwelling constant (tuned parameter)
@@ -673,63 +676,30 @@ program SOG
           T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
           D%DON, D%PON, D%refr, D%bSi,                                        &
           Gvector_ro)
-!*** more of the below can be moved into the do_biology module
 
-     ! Calculate diffusion matrix Bmatrix
-     call diffusion_coeff(grid, dt, K%s%all, &
-          Bmatrix%bio)
-     Bmatrix%no = Bmatrix%bio          ! both diffuse like S
-
-     ! Initialize the Gvector%* and calculate the diffusive fluxes at
-     ! the bottom and top of the grid
-     aflux = -Ft*(0.-P%micro(1)) 
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
-          P%micro(grid%M+1),                                 &  ! in
-          Gvector%p%micro)                                      ! out
-     aflux = -Ft*(0.-P%nano(1)) 
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
-          P%nano(grid%M+1),                                  &  ! in
-          Gvector%p%nano)                                       ! out
-     aflux = -Ft*(6.4-N%O(1)) 
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
-          N%O(grid%M+1),                                     &  ! in
-          Gvector%n%o)                                          ! out
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
-          N%H(grid%M+1),                                    &   ! in
-          Gvector%n%h)                                          ! out
-     aflux = -Ft*(60.0-Si(1)) 
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, aflux, &   ! in
-          Si(grid%M+1),                                      &  ! in
-          Gvector%si)                                           ! out
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
-          D%DON(grid%M+1),                                  &   ! in
-          Gvector%d(1)%bin)                                     ! out
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
-          D%PON(grid%M+1),                                  &   ! in
-          Gvector%d(2)%bin)                                     ! out
-     call diffusion_bot_surf_flux(grid, dt, K%s%all, 0.d0, &    ! in
-          D%bSi(grid%M+1),                                  &   ! in
-          Gvector%d(3)%bin)                                     ! out
-     Gvector%d(4)%bin = 0.
-
-     ! Add vertical advection
-     ! *** Perhaps this subroutine would be better named upwelling_advection
-     call vertical_advection(grid, dt, P%micro, wupwell, &
-          Gvector%p%micro)
-     call vertical_advection(grid, dt, P%nano, wupwell, &
-          Gvector%p%nano)
-     call vertical_advection(grid, dt, N%O, wupwell, &
-          Gvector%n%o)
-     call vertical_advection(grid, dt, N%H, wupwell, &
-          Gvector%n%h)
-     call vertical_advection(grid, dt, Si, wupwell, &
-          Gvector%si)
-     call vertical_advection(grid, dt, D%DON, wupwell, &
-          Gvector%d(1)%bin)
-     call vertical_advection(grid, dt, D%PON, wupwell, &
-          Gvector%d(2)%bin)
-     call vertical_advection(grid, dt, D%bSi, wupwell, &
-          Gvector%d(3)%bin)
+     call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H,    &!in
+          Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell,          &!in
+          diff_coeffs%sub_diag, diff_coeffs%diag, diff_coeffs%super_diag, &!out
+          Pmicro_RHS%diff_adv%new, Pnano_RHS%diff_adv%new,             & ! out
+          NO_RHS%diff_adv%new, NH_RHS%diff_adv%new,                    & ! out
+          Si_RHS%diff_adv%new, D_DON_RHS%diff_adv%new,                 & ! out
+          D_PON_RHS%diff_adv%new, D_refr_RHS%diff_adv%new,             & ! out
+          D_bSi_RHS%diff_adv%new)                                        ! out
+! *** Gvector refactoring bridge code
+Bmatrix%bio%A = diff_coeffs%sub_diag
+Bmatrix%bio%B = diff_coeffs%diag
+Bmatrix%bio%C = diff_coeffs%super_diag
+!*** Should be able to get rid of Bmatrix%NO
+Bmatrix%NO = Bmatrix%bio
+Gvector%p%micro = Pmicro_RHS%diff_adv%new
+Gvector%p%nano = Pnano_RHS%diff_adv%new
+Gvector%n%o = NO_RHS%diff_adv%new
+Gvector%n%h = NH_RHS%diff_adv%new
+Gvector%si = Si_RHS%diff_adv%new
+Gvector%d(1)%bin = D_DON_RHS%diff_adv%new
+Gvector%d(2)%bin = D_PON_RHS%diff_adv%new
+Gvector%d(4)%bin = D_refr_RHS%diff_adv%new
+Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
 
      ! Add sinking of plankton and detritus
      ! *** Perhaps this subroutine would be better named sinking_advection
@@ -767,11 +737,9 @@ program SOG
         Gvector_o%n%o = Gvector%n%o
         Gvector_o%n%h = Gvector%n%h
         Gvector_o%si = Gvector%si
-
         DO xx = 1,D_bins
            Gvector_o%d(xx)%bin = Gvector%d(xx)%bin
         END DO
-
      END IF ! time_step == 1
 
      ! Build the H vectors for the biological quantities
@@ -783,12 +751,15 @@ program SOG
           Hvector%p%nano) ! null_vector 'cause no sinking
      CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
           Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
+!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%n%o)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  N%H, Gvector%n%h, Gvector_o%n%h, &
           Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
+!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%n%h)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
           Gvector_ro%si, null_vector, Bmatrix_o%no, &
+!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%si)  ! null_vector 'cause no sinking
      CALL P_H (grid%M, D%DON, Gvector%d(1)%bin, Gvector_o%d(1)%bin, &
           Gvector_ro%d(1)%bin, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
@@ -814,6 +785,12 @@ program SOG
           N%H(1:grid%M))
      call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
           Si(1:grid%M))
+!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%o, &
+!!$          N%O(1:grid%M))
+!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%h, &
+!!$          N%H(1:grid%M))
+!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%si, &
+!!$          Si(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
           Hvector%d(1)%bin, D%DON(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
