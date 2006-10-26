@@ -20,21 +20,17 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(w%b(0:M),w%b_err(0:M),&
            w%t(0:M),w%s(0:M),w%u(0:M),&
-               w%v(0:M),w%p%micro(0:M),Amatrix%u%A(M),Amatrix%u%B(M),&
-               Amatrix%u%C(M),Amatrix%t%A(M),Amatrix%t%B(M),Amatrix%t%C(M),Amatrix%s%A(M),Amatrix%s%B(M),&
-               Amatrix%s%C(M),Bmatrix%u%A(M),Bmatrix%u%B(M),&
-               Bmatrix%u%C(M),Bmatrix%t%A(M),Bmatrix%t%B(M),Bmatrix%t%C(M),Bmatrix%s%A(M),Bmatrix%s%B(M),&
-               Bmatrix%s%C(M),Bmatrix_o%u%A(M),Bmatrix_o%u%B(M),&
-               Bmatrix_o%u%C(M),Bmatrix_o%t%A(M),Bmatrix_o%t%B(M),Bmatrix_o%t%C(M),Bmatrix_o%s%A(M),&
-               Bmatrix_o%s%B(M),Bmatrix_o%s%C(M),&
+               w%v(0:M),w%p%micro(0:M),&
+               Amatrix%u%A(M),Amatrix%u%B(M),Amatrix%u%C(M),&
+               Amatrix%t%A(M),Amatrix%t%B(M),Amatrix%t%C(M),&
+               Amatrix%s%A(M),Amatrix%s%B(M),Amatrix%s%C(M),&
+               Bmatrix%u%A(M),Bmatrix%u%B(M),Bmatrix%u%C(M),&
+               Bmatrix%t%A(M),Bmatrix%t%B(M),Bmatrix%t%C(M),&
+               Bmatrix%s%A(M),Bmatrix%s%B(M),Bmatrix%s%C(M),&
                Amatrix%bio%A(M),Amatrix%bio%B(M),Amatrix%bio%C(M),&
                Bmatrix%bio%A(M),Bmatrix%bio%B(M),Bmatrix%bio%C(M),&
                Bmatrix%null%A(M),Bmatrix%null%B(M),Bmatrix%null%C(M),&
                Amatrix%null%A(M),Amatrix%null%B(M),&
-               Bmatrix_o%bio%A(M),Bmatrix_o%bio%B(M),Bmatrix_o%bio%C(M),&
-               Amatrix%no%A(M),Amatrix%no%B(M),Amatrix%no%C(M),&
-               Bmatrix%no%A(M),Bmatrix%no%B(M),Bmatrix%no%C(M),&
-               Bmatrix_o%no%A(M),Bmatrix_o%no%B(M),Bmatrix_o%no%C(M),&
                STAT = alloc_stat(4)) !**&
 
       ALLOCATE(K%u%shear(0:M),&
