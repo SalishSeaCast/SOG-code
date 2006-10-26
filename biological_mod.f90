@@ -128,6 +128,7 @@ contains
     ! Initialize biological model.
     ! *** Incomplete...
     use input_processor, only: getpard, getparl, getpari
+    use biology_eqn_builder, only: alloc_bio_RHS_variables
 
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
@@ -142,6 +143,9 @@ contains
     M2 = (PZ_bins%Quant + D_bins) * M   !size of PZ in biology: 
     ! Allocate memory for biology model variables
     call alloc_biology_variables(M)
+    ! Allocate memory for arrays for right-hand sides of
+    ! diffusion/advection equations for the biology model.
+    call alloc_bio_RHS_variables(M)
 
     flagellates = getparl('flagellates_on')
     remineralization = getparl('remineralization')
@@ -244,6 +248,7 @@ contains
   subroutine dalloc_biology_variables
     ! Deallocate memory for biological model arrays.
     use malloc, only: dalloc_check
+    use biology_eqn_builder, only: dalloc_bio_RHS_variables
     implicit none
     ! Local variables:
     integer           :: dallocstat  ! Deallocation return status
@@ -269,6 +274,9 @@ contains
     deallocate(remin_NH, NH_oxid, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+    ! Deallocate memory from arrays for right-hand sides of
+    ! diffusion/advection equations for the biology model.
+    call dalloc_bio_RHS_variables()
   end subroutine dalloc_biology_variables
 
 
