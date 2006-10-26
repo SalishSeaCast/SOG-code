@@ -13,6 +13,7 @@ program SOG
   use physics_model, only: f, g
   !
   ! Variables:
+  use grid_mod, only: grid
   use core_variables, only: U, V, T, S, P, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
@@ -421,7 +422,8 @@ program SOG
         END IF
 
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
-        CALL define_flux(U%grad_i, V%grad_i, T%grad_i, S%grad_i, alpha, beta)
+        CALL define_flux(grid, U%grad_i, V%grad_i, T%grad_i, S%grad_i, &
+             alpha, beta)
 
         ! Calculate matrix B (changed to Amatrix later) 
         call diffusion_coeff(grid, dt, K%t%all, &
