@@ -6,49 +6,96 @@ module diffusion
   implicit none
 
   private
-  public :: diffusion_coeff, diffusion_nonlocal_fluxes, &
+  public :: diffusion_coeff, new_diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
 
 contains
 
-  subroutine diffusion_coeff (grid, dt, Kall, Bx)
-    ! Calculates the strength of the diffusion coefficients (K, dt and grid
-    ! spacing) for diffusion and puts them in Bx
+  subroutine diffusion_coeff(grid, dt, K_all, Bmatrix)
+    ! Calculate the strength of the diffusion coefficients
+    ! and put them in diagonal vectors of a tridiagonal matrix.
     use precision_defs, only: dp
     use grid_mod, only: grid_
     use mean_param, only: trivector
-
     implicit none
-
     ! Arguments:
-    type(grid_), intent(in) :: grid      
-    real(kind=dp), intent(in) :: dt
-    real(kind=dp), dimension(0:),intent(in)::Kall ! total mixing K
-    type(trivector), intent(out)::Bx
-
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         K_all  ! Total diffusion coefficient array
+    type(trivector), intent(out) :: &
+         Bmatrix
     ! Local variables:
     integer :: index             ! counter through depth
     real(kind=dp), dimension(grid%M) :: O_minus, O_plus
     
-    ! Calculate Omega plus and minus below (D9)
-
+    ! Calculate Omega+ and Omega-
+    ! (Large, et al (1994), pg. 398, eqn D9)
     do index = 1, grid%M
        O_minus(index) = dt / grid%i_space(index) * &
-            Kall(index-1) / grid%g_space(index-1)
+            K_all(index-1) / grid%g_space(index-1)
        O_plus(index) = dt / grid%i_space(index) * &
-            Kall(index) / grid%g_space(index)
+            K_all(index) / grid%g_space(index)
     enddo
 
-    Bx%A = 0.
-    Bx%B = 0.
-    Bx%C = 0.
-    
-    ! Put in three terms.(D9)
-    Bx%B = -O_plus -O_minus
-    Bx%C = O_plus
-    Bx%A = O_minus
-    Bx%C(grid%M) = 0.
+    ! Initialize diagonal vectors
+    Bmatrix%A = 0.
+    Bmatrix%B = 0.
+    Bmatrix%C = 0.
+    ! Put in the combinations of Omega+ and Omega- terms (eqn D9)
+    Bmatrix%B = -O_plus -O_minus
+    Bmatrix%C = O_plus
+    Bmatrix%A = O_minus
+    Bmatrix%C(grid%M) = 0.
   end subroutine diffusion_coeff
+
+
+  subroutine new_diffusion_coeff(grid, dt, K_all, sub_diag, diag, super_diag)
+    ! Calculate the strength of the diffusion coefficients
+    ! and put them in diagonal vectors of a tridiagonal matrix.
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    implicit none
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         K_all  ! Total diffusion coefficient array
+    real(kind=dp), dimension(1:), intent(out) :: &
+         sub_diag,  &  ! Sub-diag vector of diffusion coeff matrix
+         diag,      &  ! Diagonal vector of diffusion coeff matrix
+         super_diag    ! Super-diag vector of diffusion coeff matrix
+    ! Local variables:
+    integer :: index             ! counter through depth
+    real(kind=dp), dimension(1:grid%M) :: O_minus, O_plus
+    
+    ! Calculate Omega+ and Omega-
+    ! (Large, et al (1994), pg. 398, eqn D9)
+!!$    do index = 1, grid%M
+!!$       O_minus(index) = dt / grid%i_space(index) * &
+!!$            K_all(index-1) / grid%g_space(index-1)
+!!$       O_plus(index) = dt / grid%i_space(index) * &
+!!$            K_all(index) / grid%g_space(index)
+!!$    enddo
+       O_minus = (dt / grid%i_space) * &
+            (K_all(0:grid%M-1) / grid%g_space(0:grid%M-1))
+       O_plus = (dt / grid%i_space) * &
+            (K_all(1:grid%M) / grid%g_space(1:grid%M))
+
+    ! Initialize diagonal vectors
+    sub_diag = 0.
+    diag = 0.
+    super_diag = 0.
+    ! Put in the combinations of Omega+ and Omega- terms (eqn D9)
+    sub_diag = O_minus
+    diag = -O_plus - O_minus
+    super_diag = O_plus
+    super_diag(grid%M) = 0.
+  end subroutine new_diffusion_coeff
 
 
   subroutine diffusion_nonlocal_fluxes (grid, dt, Kall, gamma, surface_flux, &
@@ -91,35 +138,39 @@ contains
   end subroutine diffusion_nonlocal_fluxes
 
 
-    subroutine diffusion_bot_surf_flux(grid, dt, Kall, surface_flux, &
-       bottom_value, Gvector)
+    subroutine diffusion_bot_surf_flux(grid, dt, K_all, surface_flux, &
+       bottom_value, RHS)
       ! For variables without distributed fluxes and non-local fluxes.
-      ! Initialize the Gvector (part of the RHS Hvector), and calculate
-      ! the diffusive fluxes into the bottom of the grid and at the surface.
+      ! Initialize the RHS vector, and calculate the diffusive fluxes
+      ! into the bottom of the grid and at the surface.
       use precision_defs, only: dp
       use grid_mod, only: grid_
       implicit none
 
       ! Arguments:
-      type(grid_),intent(in):: grid
-      real(kind=dp), intent(in):: dt
-      real(kind=dp), dimension(0:), intent(in):: Kall ! total mixing K
+      type(grid_), intent(in) :: &
+           grid  ! Grid arrays
       real(kind=dp), intent(in) :: &
-           surface_flux, &
-           bottom_value     ! of scalar
-      real(kind=dp), dimension(:), intent(out) :: Gvector
+           dt  ! Time step [s]
+      real(kind=dp), dimension(0:), intent(in) :: &
+           K_all  ! Total diffusion coefficient array
+      real(kind=dp), intent(in) :: &
+           surface_flux, &  ! Surface flux of quantity
+           bottom_value     ! Value of quantity at bottom of grid
+      real(kind=dp), dimension(1:), intent(out) :: &
+           RHS  ! 
 
-      ! Initialize Gvector (part of RHS Hvector, 
-      ! see Large, et al (1994), App. D)
-      Gvector = 0.
+      ! Initialize the diffusion/advection vector of the right-hand
+      ! side of the semi-implicit equations
+      RHS = 0.
 
       ! Calculate grid boundary diffusive fluxes
       ! (Large, et al (1994), pg 398, eqn D10c)
       ! Surface
-      Gvector(1) = - dt / grid%i_space(1) * surface_flux
+      RHS(1) = - dt / grid%i_space(1) * surface_flux
       ! Bottom of grid
-      Gvector(grid%M) = dt / grid%i_space(grid%M) * &
-           (bottom_value * Kall(grid%M) / grid%g_space(grid%M))      
+      RHS(grid%M) = dt / grid%i_space(grid%M) * &
+           (bottom_value * K_all(grid%M) / grid%g_space(grid%M))      
     end subroutine diffusion_bot_surf_flux
 
 end module diffusion
