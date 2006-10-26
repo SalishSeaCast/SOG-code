@@ -75,9 +75,9 @@
 "Micro, Si ratio"	1.	     "Micro, ratio silicon/nitrogen"
 "Nano, Si ratio"	0.	     "Nano, ratio silicon/nitrogen"
 "Micro, nat mort"	0.e-06       "Micro, natural mortality"
-"Nano, nat mort" 	0.e-07        "Nano, natural mortality"
-"Micro, mort"		3.75e-06      "Micro, mort"
-"Nano, mort"		3.75e-06      "Nano, mort"
+"Nano, nat mort" 	0.e-07       "Nano, natural mortality"
+"Micro, graze mort"	3.75e-06     "Micro, grazing mortality"
+"Nano, graze mort"	3.75e-06     "Nano, grazing mortality"
 ! Nutrient values:
 "Nitrate, remineral"	0.	     "NH remineralization to NO rate"
 ! Waste and detritus

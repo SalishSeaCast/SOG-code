@@ -181,8 +181,8 @@ contains
     rate_micro%Rm = getpard('Micro, nat mort')
     rate_nano%Rm = getpard('Nano, nat mort')
     ! mortality rate
-    rate_micro%M_z = getpard('Micro, mort')
-    rate_nano%M_z = getpard('Nano, mort')
+    rate_micro%M_z = getpard('Micro, graze mort')
+    rate_nano%M_z = getpard('Nano, graze mort')
     ! nitrate remineralization rate
     rate_N%r = getpard('Nitrate, remineral')
     
