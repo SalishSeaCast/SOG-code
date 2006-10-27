@@ -17,7 +17,6 @@ program SOG
   use core_variables, only: U, V, T, S, P, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
-  use biological_mod, only: rate_det
   ! *** Temporary until RHS refactoring is completed
   use biology_eqn_builder, only: diff_coeffs_bio, Pmicro_RHS, Pnano_RHS, &
        NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
@@ -54,7 +53,6 @@ program SOG
   use declarations
   use surface_forcing, only: del_o, precision, step_guess, step_min
   use initial_sog, only: initial_mean
-  use IMEX_constants  
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
@@ -697,21 +695,6 @@ Bmatrix%bio%A = diff_coeffs_bio%sub_diag
 Bmatrix%bio%B = diff_coeffs_bio%diag
 Bmatrix%bio%C = diff_coeffs_bio%super_diag
 
-     ! Add sinking of plankton and detritus
-     ! *** Perhaps this subroutine would be better named sinking_advection
-     ! *** Argument order could be consistent w/ vertical_advection() too
-     micro%sink_min = 0.3*1.1574D-05 ! 0.3/m per day
-     micro%sink_max = 1.2*1.1574D-05 ! 1.2/m per day
-     sflux = micro%sink_min*micro%Nlimit + micro%sink_max*(1-micro%Nlimit)
-     call advection(grid, sflux, P%micro, dt, &
-          Gvector_ao%p%micro)
-     call advection(grid, rate_det%sink(1), D%DON, dt, &
-          Gvector_ao%d(1)%bin)
-     call advection(grid, rate_det%sink(2), D%PON, dt, &
-          Gvector_ao%d(2)%bin)
-     call advection(grid, rate_det%sink(3), D%bSi, dt, &
-          Gvector_ao%d(3)%bin)
-     
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
 
@@ -729,7 +712,7 @@ Bmatrix%bio%C = diff_coeffs_bio%super_diag
 
      ! Build the H vectors for the biological quantities
      CALL P_H(grid%M, P%micro, Pmicro_RHS%diff_adv%new, &
-          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Gvector_ao%p%micro, &
+          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
           Bmatrix_o%bio, &
           Hvector%p%micro)
      CALL P_H(grid%M, P%nano, Pnano_RHS%diff_adv%new, &
@@ -746,11 +729,11 @@ Bmatrix%bio%C = diff_coeffs_bio%super_diag
           Si_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%si)  ! null_vector 'cause no sinking
      CALL P_H(grid%M, D%DON, D_DON_RHS%diff_adv%new, &
-          D_DON_RHS%diff_adv%old, D_DON_RHS%bio, Gvector_ao%d(1)%bin, &
+          D_DON_RHS%diff_adv%old, D_DON_RHS%bio, null_vector, &
           Bmatrix_o%bio, &
-          Hvector%d(1)%bin)
+          Hvector%d(1)%bin)  ! null_vector 'cause no sinking
      CALL P_H(grid%M, D%PON, D_PON_RHS%diff_adv%new, &
-          D_PON_RHS%diff_adv%old, D_PON_RHS%bio, Gvector_ao%d(2)%bin, &
+          D_PON_RHS%diff_adv%old, D_PON_RHS%bio, D_PON_RHS%sink, &
           Bmatrix_o%bio, &
           Hvector%d(2)%bin)
      CALL P_H(grid%M, D%refr, D_refr_RHS%diff_adv%new, &
@@ -758,7 +741,7 @@ Bmatrix%bio%C = diff_coeffs_bio%super_diag
           Bmatrix_o%bio, &
           Hvector%d(4)%bin)  ! null_vector 'cause no sinking
      CALL P_H(grid%M, D%bSi, D_bSi_RHS%diff_adv%new, &
-          D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, Gvector_ao%d(3)%bin, &
+          D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, D_bSi_RHS%sink, &
           Bmatrix_o%bio, &
           Hvector%d(3)%bin)
 
