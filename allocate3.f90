@@ -5,7 +5,7 @@ subroutine allocate3(M)
   ! Allocate memory for biological model arrays (at least some of them...)
 
   use malloc, only: alloc_check
-  use declarations, only: D_bins, Gvector, Gvector_o, &
+  use declarations, only: D_bins, &
        Gvector_ao, Hvector
 
   implicit none
@@ -19,7 +19,7 @@ subroutine allocate3(M)
 
   do y_y = 1, D_bins
      msg = "Biology model Gvector bin components arrays"
-     allocate(Gvector%d(y_y)%bin(M), Gvector_o%d(y_y)%bin(M), &
+     allocate(&
           Gvector_ao%d(y_y)%bin(M), &
           stat=allocstat)
      call alloc_check(allocstat, msg)
