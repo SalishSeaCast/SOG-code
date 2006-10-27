@@ -34,6 +34,10 @@ module biology_eqn_builder
   !                              for the diffusion/advection equations for
   !                              the biology quantities.
   !
+  !   new_to_old_bio_RHS -- Copy %new component of the biology *_RHS%diff_adv
+  !                         arrays to the %old component for use by the
+  !                         IMEX semi-impllicit PDE solver.
+  !
   !   alloc_bio_RHS_variables -- Allocate memory for biology RHS arrays
   !
   !   dalloc_bio_RHS_variables -- Deallocate memory for biology RHS arrays
@@ -55,7 +59,7 @@ module biology_eqn_builder
        D_refr_RHS,      &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS,       &  ! Biogenic silicon detritus RHS arrays
        ! Subroutines:
-       build_biology_equations, &
+       build_biology_equations, new_to_old_bio_RHS, &
        alloc_bio_RHS_variables, dalloc_bio_RHS_variables
 
   ! Type Definitions:
@@ -200,6 +204,23 @@ contains
 
 
   end subroutine build_biology_equations
+
+
+  subroutine new_to_old_bio_RHS()
+    ! Copy %new component of the biology *_RHS%diff_adv arrays to the
+    ! %old component for use by the IMEX semi-impllicit PDE solver.
+    implicit none
+
+    Pmicro_RHS%diff_adv%old = Pmicro_RHS%diff_adv%new
+    Pnano_RHS%diff_adv%old = Pnano_RHS%diff_adv%new
+    NO_rhs%diff_adv%old = NO_RHS%diff_adv%new
+    NH_rhs%diff_adv%old = NH_RHS%diff_adv%new
+    Si_rhs%diff_adv%old = Si_RHS%diff_adv%new
+    D_DON_rhs%diff_adv%old = D_DON_RHS%diff_adv%new
+    D_PON_rhs%diff_adv%old = D_PON_RHS%diff_adv%new
+    D_refr_rhs%diff_adv%old = D_refr_RHS%diff_adv%new
+    D_bSi_rhs%diff_adv%old = D_bSi_RHS%diff_adv%new
+  end subroutine new_to_old_bio_RHS
 
 
   subroutine alloc_bio_RHS_variables(M)
