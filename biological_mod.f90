@@ -16,8 +16,6 @@ module biological_mod
   !
   !   derivs_sog --
   !
-  !   unload_PZ --
-  !
   !   dalloc_biology_variables -- Deallocate memory from biology model
   !                               variables.
 
@@ -30,9 +28,10 @@ module biological_mod
   public :: &
        ! Variables:
        PZ, &
+       PZ_bins, &
        rate_det, & !*** for sinking
        ! Subroutines:
-       init_biology, load_PZ, derivs_sog, unload_PZ, &
+       init_biology, load_PZ, derivs_sog, &
        dalloc_biology_variables
 
   ! Private type definitions:
@@ -370,73 +369,6 @@ contains
        PZ(bPz:ePz) = 0.
     endif
   end subroutine load_PZ
-
-
-  subroutine unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
-       D_DON, D_PON, D_refr, D_bSi, &
-       Gvector)
-    ! Unload the biological quantities from the PZ vector into the
-    ! appropriate components of Gvector
-    use precision_defs, only: dp
-    use mean_param, only: UVST
-    implicit none
-    ! Arguments:
-    integer, intent(in) :: M  ! Number of grid points
-    real(kind=dp), dimension(1:), intent(in) :: &
-         PZ  ! Array of biology variables for ODE solver
-    real(kind=dp), dimension(0:), intent(in) :: &
-         Pmicro, &  ! Micro phytoplankton biomass profile array
-         Pnano,  &  ! Nano phytoplankton biomass profile array
-         NO,     &  ! Nitrate concentration profile array
-         NH,     &  ! Ammonium concentration profile array
-         Si,     &  ! Silicon concentration profile array
-         D_DON,  &  ! Dissolved organic nitrogen detritus profile
-         D_PON,  &  ! Particulate organic nitrogen detritus profile
-         D_refr, &  ! Refractory nitrogen detritus profile
-         D_bSi      ! Biogenic silicon detritus profile
-    type(UVST), intent(inout) :: Gvector  ! inout 'cause we're not setting all
-    ! Local Variables
-    integer :: &
-         bPZ, &  ! Beginning index for a quantity in the PZ array
-         ePZ     ! Ending index for a quantity in the PZ array
-
-    ! Unload micro phytoplankton
-    bPZ = (PZ_bins%micro - 1) * M + 1
-    ePZ = PZ_bins%micro * M
-    Gvector%P%micro = PZ(bPZ:ePZ) - Pmicro(1:M)
-    ! Unload nano phytoplankton
-    bPZ = (PZ_bins%nano - 1) * M + 1
-    ePZ = PZ_bins%nano * M
-    Gvector%P%nano = PZ(bPZ:ePZ) - Pnano(1:M)
-    ! Unload nitrate
-    bPZ = (PZ_bins%NO - 1) * M + 1
-    ePZ = PZ_bins%NO * M
-    Gvector%N%O = PZ(bPZ:ePZ) - NO(1:M)
-    ! Unload ammonimum
-    bPZ = (PZ_bins%NH - 1) * M + 1
-    ePZ = PZ_bins%NH * M
-    Gvector%N%H = PZ(bPZ:ePZ) - NH(1:M)
-    ! Unload silicon
-    bPZ = (PZ_bins%Si - 1) * M + 1
-    ePZ = PZ_bins%Si * M
-    Gvector%Si = PZ(bPZ:ePZ) - Si(1:M)
-    ! Unload dissolved organic nitrogen detritus
-    bPz = (PZ_bins%DON - 1) * M + 1
-    ePz = PZ_bins%DON * M
-    Gvector%D(1)%bin = PZ(bPz:ePz) - D_DON(1:M)
-    ! Unload particulate organic nitrogen detritus
-    bPz = (PZ_bins%PON - 1) * M + 1
-    ePz = PZ_bins%PON * M
-    Gvector%D(2)%bin = PZ(bPz:ePz) - D_PON(1:M)
-    ! Unload refractory nitrogen detritus
-    bPz = (PZ_bins%refr - 1) * M + 1
-    ePz = PZ_bins%refr * M
-    Gvector%D(4)%bin = PZ(bPz:ePz) - D_refr(1:M)
-    ! Unload biogenic silicon detritus
-    bPz = (PZ_bins%bSi - 1) * M + 1
-    ePz = PZ_bins%bSi * M
-    Gvector%D(3)%bin = PZ(bPz:ePz) - D_bSi(1:M)
-  end subroutine unload_PZ
 
 
   subroutine p_growth(M, NO, NH, Si, P, I_par, Temp, rate, plank, & 
@@ -827,7 +759,8 @@ contains
           if (detr(kk,ii) > 0) then
              dPZdt(jj) = WasteMicro(ii) * wastedestiny%m(kk)  &
                   + WasteNano(ii) * wastedestiny%s(kk) &
-                  - rate_det%remineral(kk) * detr(kk,ii) 
+                  - rate_det%remineral(kk) * detr(kk,ii)
+!!$                  - Si_remin(ii)
           end if
        end do
        kk = 3
@@ -836,7 +769,8 @@ contains
        if (detr(kk,ii) > 0) then
           dPZdt(jj) = (NatMort_micro(ii) + GrazMort_micro(ii)) &
                * Pmicro(ii) * rate_micro%Si_ratio &
-               - rate_det%remineral(kk) * detr(kk,ii) 
+               - rate_det%remineral(kk) * detr(kk,ii)
+!!$               - Si_remin(ii) 
        end if
   
     end do
