@@ -30,7 +30,6 @@ module declarations
   type(UVST):: Gvector, Gvector_o     ! vert. adv. & nonlocal and surf/bot fluxes
   type(UVST):: Gvector_c, Gvector_co  ! Coriolis and pg forces
   type(UVST):: Gvector_ao             ! Sinking of particles
-  type(UVST):: Gvector_ro             ! Contains effect of biol. model
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano
