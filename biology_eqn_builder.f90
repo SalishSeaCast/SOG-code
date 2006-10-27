@@ -89,6 +89,15 @@ module biology_eqn_builder
           bio, &  ! Biology (growth - mortality) component of RHS
           sink    ! Sinking component of RHS
   end type RHS
+  !
+  ! Sinking velocities of biology quantities
+  type :: sink_vels
+     real(kind=dp) :: &
+          Pmicro_min, &  ! Minimum sinking velocity of micro phytos [m/s]
+          Pmicro_max, &  ! Maximum sinking velocity of micro phytos [m/s]
+          D_PON,      &  ! Sinking velocity of PON detritus [m/s]
+          D_bSi          ! Sinking velocity of biogenic silicon detritus [m/s]
+  end type sink_vels
 
   ! Variable Declarations:
   !
@@ -105,6 +114,12 @@ module biology_eqn_builder
        D_PON_RHS,  &  ! Particulate organic nitro detritus RHS arrays
        D_refr_RHS, &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS      ! Biogenic silicon detritus RHS arrays
+  !
+  ! Private to module:
+  !
+  ! Sinking velocities:
+  type(sink_vels) :: &
+       w_sink  ! Sinking velocities of biology quantities [m/s]
 
 contains
 
@@ -120,6 +135,7 @@ contains
     use grid_mod, only: grid_
     use diffusion, only: new_diffusion_coeff, diffusion_bot_surf_flux
     use find_upwell, only: vertical_advection
+    use declarations, only: micro  ! *** This definitely needs to go away
     implicit none
     ! Arguments:
     type(grid_), intent(in) :: &
@@ -144,7 +160,8 @@ contains
          wupwell  ! Profile of vertical upwelling velocity [m/s]
     ! Local variables:
     real(kind=dp) :: &
-         aflux  ! Surface nutrient flux
+         aflux, &  ! Surface nutrient flux
+         Pmicro_w_sink  !
 
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
@@ -184,26 +201,204 @@ contains
          D_bSi(grid%M+1),                                &   ! in
          D_bSi_RHS%diff_adv%new)                             ! out
 
-     ! Add vertical advection due to upwelling
-     call vertical_advection(grid, dt, Pmicro, wupwell, &
-          Pmicro_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, Pnano, wupwell, &
-          Pnano_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, NO, wupwell, &
-          NO_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, NH, wupwell, &
-          NH_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, Si, wupwell, &
-          Si_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, D_DON, wupwell, &
-          D_DON_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, D_PON, wupwell, &
-          D_PON_RHS%diff_adv%new)
-     call vertical_advection(grid, dt, D_bSi, wupwell, &
-          D_bSi_RHS%diff_adv%new)
+    ! Add vertical advection due to upwelling
+    call vertical_advection(grid, dt, Pmicro, wupwell, &
+         Pmicro_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, Pnano, wupwell, &
+         Pnano_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, NO, wupwell, &
+         NO_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, NH, wupwell, &
+         NH_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, Si, wupwell, &
+         Si_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, D_DON, wupwell, &
+         D_DON_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, D_PON, wupwell, &
+         D_PON_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, D_bSi, wupwell, &
+         D_bSi_RHS%diff_adv%new)
 
-
+    ! Calculate the sinking term for the quantities that sink
+!!$     micro%sink_min = 0.3*1.1574D-05 ! 0.3/m per day
+!!$     micro%sink_max = 1.2*1.1574D-05 ! 1.2/m per day
+     w_sink%Pmicro_min = 0.3 / 86400.
+     w_sink%Pmicro_max = 1.2 / 86400.
+!!$     w_sink%D_PON = rate_det%sink(2)
+!!$     w_sink%D_bSi = rate_det%sink(3)
+     w_sink%D_PON = 1.157d-5
+     w_sink%D_bSi = 2.3d-5
+!!$     sflux = micro%sink_min * micro%Nlimit + micro%sink_max *(1 - micro%Nlimit)
+     Pmicro_w_sink = w_sink%Pmicro_min * micro%Nlimit(1) &
+          + w_sink%Pmicro_max * (1 - micro%Nlimit(1))
+     call sinking_advection(grid, dt, Pmicro, Pmicro_w_sink, &
+          Pmicro_RHS%sink)
+     call sinking_advection(grid, dt, D_PON, w_sink%D_PON, &
+          D_PON_RHS%sink)
+     call sinking_advection(grid, dt, D_bSi, w_sink%D_bSi, &
+          D_bSi_RHS%sink)
   end subroutine build_biology_equations
+
+
+  subroutine sinking_advection(grid, dt, qty, w_sink, RHS)
+    ! Calculate the sinking term of the semi-implicit PDEs for the biology
+    ! quantities that sink (some classes of plankton, and some of detritus).
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    implicit none
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         qty  ! Profile array of sinking quantity
+    real(kind=dp), intent(in) :: &
+         w_sink  ! Sinking velocity [m/s]
+    real(kind=dp), dimension(1:), intent(out) :: &
+         RHS  ! RHS term vector for semi-implicit diffusion/advection PDE
+    ! Local variables:
+    real(kind=dp), dimension(0:grid%M+1) :: &
+         Ru,     &
+         Ru_1,   &
+         Ru_a,   &
+         Ru_b,   &
+         Au_1,   &
+         Au_2,   &
+         delta_1
+    real(kind=dp), dimension(0:grid%M) :: &
+         Fu
+    real(kind=dp), dimension(-1:grid%M) :: &
+         Ru_2,   &
+         delta_2 
+    real(kind=dp), dimension(0:grid%M+1, 0:3) :: &
+         aa  ! for a third order advection scheme
+    integer, dimension(0:grid%M+1) :: &
+         L  ! order as a function of grid spacing
+    INTEGER :: &
+         index, &
+         jk
+
+    Ru_a = qty
+    !Ru_a(0) = 0.
+
+    !Use qty(0) = 0 for upper boundary condition in advection!!!!
+
+    DO index = 0,grid%M+1
+       IF (w_sink >= 0.) THEN
+          Au_1(index) = w_sink   ! trivial for sink = constant
+          Au_2(index) =  0.
+       ELSE
+          Au_1(index) = 0.
+          Au_2(index) = -w_sink     
+       END IF
+    END DO
+
+!!!coefficients for cubic polynomial (3C)***see Easter 1993, Monthly Weather Review 121: pp 297-304!!!
+
+    aa = 0.
+
+    DO index = 2,grid%M-1
+
+       aa(index,0) = (-Ru_a(index+1) + 26.0*Ru_a(index) - Ru_a(index-1))/24.0
+       aa(index,1) = (-5.0*Ru_a(index+2)+34.0*Ru_a(index+1)-34.0*Ru_a(index-1)+5.0*Ru_a(index-2))/48.0
+       aa(index,2) = (Ru_a(index+1)-2.0*Ru_a(index)+Ru_a(index-1))/2.0
+       aa(index,3) = (Ru_a(index+2)-2.0*Ru_a(index+1)+2.0*Ru_a(index-1)-Ru_a(index-2))/12.0
+       L(index) = 3
+
+    END DO
+
+
+
+!!!!Boundary Conditions!!!!!!!!!!!!!!!!!!!!!
+
+    L(0) = 0
+    aa(0,0) = Ru_a(0)
+
+    L(1) = 2
+    aa(1,0) = (-Ru_a(2) + 26.0*Ru_a(1) - Ru_a(0))/24.0
+    aa(1,1) = (Ru_a(2) - Ru_a(0))/2.0
+    aa(1,2) = (Ru_a(2) - 2.0*Ru_a(1) + Ru_a(0))/2.0
+
+    L(grid%M) = 2
+    aa(grid%M,0) = (-Ru_a(grid%M+1) + 26.0*Ru_a(grid%M) - Ru_a(grid%M-1))/24.0
+    aa(grid%M,1) = (Ru_a(grid%M+1) - Ru_a(grid%M-1))/2.0
+    aa(grid%M,2) = (Ru_a(grid%M+1) - 2.0*Ru_a(grid%M) + Ru_a(grid%M-1))/2.0
+
+    L(grid%M+1) = 0
+    aa(grid%M+1,0) = Ru_a(grid%M+1)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    delta_1 = 0.  
+    delta_2 = 0.  
+    Ru_1 = 0.     
+    Ru_2 = 0.
+    Fu = 0.
+
+    do index = 1, grid%M
+       delta_1(index) = Au_1(index) * dt / grid%i_space(index)
+       delta_2(index-1) = Au_2(index-1) * dt/ grid%i_space(index)
+    end do
+
+    do index = 0, grid%M + 1
+       do jk = 0, L(index)
+          if (jk == 0) then
+             Ru_1(index) = Ru_1(index) + aa(index,0)
+             Ru_2(index-1) = Ru_2(index-1) + aa(index,0) 
+          else
+             Ru_1(index) = Ru_1(index) + aa(index,jk) &
+                  / (2.)**(jk+1) / (jk+1)             &
+                  * (1. - (1. - 2. * (delta_1(index)  &
+                  + epsilon(w_sink)))**(jk+1))          &
+                  / (delta_1(index) + epsilon(w_sink))
+             Ru_2(index-1) = Ru_2(index-1) + aa(index,jk) &
+                  / (-2.)**(jk+1) / (jk+1)                &
+                  * ((1. - 2. * (delta_2(index-1)         &
+                  + epsilon(w_sink)))**(jk+1) - 1.)         &
+                  / (delta_2(index-1) + epsilon(w_sink)) 
+          end if
+       end do
+       if (Ru_1(index) < 0.) then
+          Ru_1(index) =  0.
+       end if
+       ! *** Changing index to index-1 in the next 2 statements is a guess
+       ! *** It's consistent with the use of Ru_2 above, and it avoids an
+       ! *** array bound runtime error
+       if (Ru_2(index-1) < 0.) then
+          Ru_2(index-1) = 0.
+       end if
+    end do
+
+    do index = 0, grid%M+1
+       Ru_b(index) = delta_1(index) * Ru_1(index) &
+            + delta_2(index-1) * Ru_2(index-1)
+       Ru(index) = max(epsilon(w_sink), Ru_a(index), Ru_b(index))
+    end do
+
+    !Fu(0) = -Ru_2(0)*Au_2(0)*Ru_a(1)/Ru(1)
+    !Fu(grid%M) = Ru_1(grid%M)*Au_1(grid%M)*Ru_a(grid%M)/Ru(grid%M)
+    do index = 0, grid%M    !1, grid%M-1
+       Fu(index) = Ru_1(index) * Au_1(index) * Ru_a(index) / Ru(index) &
+            - Ru_2(index) * Au_2(index) * Ru_a(index+1) / Ru(index+1)
+    end do
+
+
+
+
+    !TRY!!!
+    Fu(0) = 0.
+    RHS = 0.
+
+
+    DO index = 1, grid%M
+       RHS(index) = -dt/grid%i_space(index)*(Fu(index)-Fu(index-1))
+       !RHS(index) = -dt/grid%i_space(index)/2.0*w_sink*(qty(index+1)-qty(index-1))
+       IF (ABS(RHS(index)) < EPSILON(RHS(index))) THEN
+          RHS(index) = 0.
+       end if
+    end do
+  end subroutine sinking_advection
 
 
   subroutine new_to_old_bio_RHS()
@@ -246,27 +441,27 @@ contains
     call alloc_check(allocstat, msg)
     msg = "Nano phytoplankton RHS arrays"
     allocate(Pnano_RHS%diff_adv%new(1:M), Pnano_RHS%diff_adv%old(1:M), &
-         Pnano_RHS%bio(1:M), Pnano_RHS%sink(1:M), &
+         Pnano_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrate concentration RHS arrays"
     allocate(NO_RHS%diff_adv%new(1:M), NO_RHS%diff_adv%old(1:M), &
-         NO_RHS%bio(1:M), NO_RHS%sink(1:M), &
+         NO_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Ammonium concentration RHS arrays"
     allocate(NH_RHS%diff_adv%new(1:M), NH_RHS%diff_adv%old(1:M), &
-         NH_RHS%bio(1:M), NH_RHS%sink(1:M), &
+         NH_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Silicon concentration RHS arrays"
     allocate(Si_RHS%diff_adv%new(1:M), Si_RHS%diff_adv%old(1:M), &
-         Si_RHS%bio(1:M), Si_RHS%sink(1:M), &
+         Si_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Dissolved organic nitrogen detritus RHS arrays"
     allocate(D_DON_RHS%diff_adv%new(1:M), D_DON_RHS%diff_adv%old(1:M), &
-         D_DON_RHS%bio(1:M), D_DON_RHS%sink(1:M), &
+         D_DON_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Particulate organic nitrogen detritus RHS arrays"
@@ -308,27 +503,27 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Nano phytoplankton RHS arrays"
     deallocate(Pnano_RHS%diff_adv%new, Pnano_RHS%diff_adv%old, &
-         Pnano_RHS%bio, Pnano_RHS%sink, &
+         Pnano_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Nitrate concentration RHS arrays"
     deallocate(NO_RHS%diff_adv%new, NO_RHS%diff_adv%old, &
-         NO_RHS%bio, NO_RHS%sink, &
+         NO_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Ammonium concentration RHS arrays"
     deallocate(NH_RHS%diff_adv%new, NH_RHS%diff_adv%old, &
-         NH_RHS%bio, NH_RHS%sink, &
+         NH_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Silicon concentration RHS arrays"
     deallocate(Si_RHS%diff_adv%new, Si_RHS%diff_adv%old, &
-         Si_RHS%bio, Si_RHS%sink, &
+         Si_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved organic nitrogen detritus RHS arrays"
     deallocate(D_DON_RHS%diff_adv%new, D_DON_RHS%diff_adv%old, &
-         D_DON_RHS%bio, D_DON_RHS%sink, &
+         D_DON_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Particulate organic nitrogen detritus RHS arrays"
