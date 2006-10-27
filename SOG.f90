@@ -689,8 +689,6 @@ program SOG
 Bmatrix%bio%A = diff_coeffs%sub_diag
 Bmatrix%bio%B = diff_coeffs%diag
 Bmatrix%bio%C = diff_coeffs%super_diag
-!*** Should be able to get rid of Bmatrix%NO
-Bmatrix%NO = Bmatrix%bio
 Gvector%p%micro = Pmicro_RHS%diff_adv%new
 Gvector%p%nano = Pnano_RHS%diff_adv%new
 Gvector%n%o = NO_RHS%diff_adv%new
@@ -718,7 +716,6 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
      
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
-     CALL matrix_A (Amatrix%no, Bmatrix%no)
 
      IF (time_step == 1) THEN ! initial estimate is better than 0.
         Bmatrix%null%A = 0. !no diffusion
@@ -729,9 +726,6 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
         Bmatrix_o%bio%A = Bmatrix%bio%A
         Bmatrix_o%bio%B = Bmatrix%bio%B
         Bmatrix_o%bio%C = Bmatrix%bio%C
-        Bmatrix_o%no%A = Bmatrix%no%A
-        Bmatrix_o%no%B = Bmatrix%no%B
-        Bmatrix_o%no%C = Bmatrix%no%C
         Gvector_o%p%micro = Gvector%p%micro 
         Gvector_o%p%nano = Gvector%p%nano !V.flagella.01
         Gvector_o%n%o = Gvector%n%o
@@ -750,16 +744,13 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
           Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
      CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
-          Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
-!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
+          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%n%o)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  N%H, Gvector%n%h, Gvector_o%n%h, &
-          Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
-!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
+          Gvector_ro%n%h, null_vector, Bmatrix_o%bio, &
           Hvector%n%h)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
-          Gvector_ro%si, null_vector, Bmatrix_o%no, &
-!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
+          Gvector_ro%si, null_vector, Bmatrix_o%bio, &
           Hvector%si)  ! null_vector 'cause no sinking
      CALL P_H (grid%M, D%DON, Gvector%d(1)%bin, Gvector_o%d(1)%bin, &
           Gvector_ro%d(1)%bin, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
@@ -779,18 +770,12 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
           Hvector%p%micro, P%micro(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
           Hvector%p%nano, P%nano(1:grid%M))
-     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%o, &
           N%O(1:grid%M))
-     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%h, &
           N%H(1:grid%M))
-     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%si, &
           Si(1:grid%M))
-!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%o, &
-!!$          N%O(1:grid%M))
-!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%h, &
-!!$          N%H(1:grid%M))
-!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%si, &
-!!$          Si(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
           Hvector%d(1)%bin, D%DON(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
