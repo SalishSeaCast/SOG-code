@@ -29,7 +29,7 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use biological_mod, only: init_biology, dalloc_biology_variables
-  use biology_ODE_solver, only: do_biology
+  use biology_ODE_solver, only: solve_biology_ODEs
   use biology_eqn_builder, only: build_biology_equations
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use input_processor, only: init_input_processor, getpars, getpari, &
@@ -678,10 +678,9 @@ program SOG
      ! Solve the biology model ODEs to advance the biology quantity values
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
-     call do_biology(time, day, dt, grid%M, precision, step_guess, step_min,  &
+     call solve_biology_ODEs(time, day, dt, grid%M, precision, step_guess, step_min,  &
           T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
-          D%DON, D%PON, D%refr, D%bSi,                                        &
-          Gvector_ro)
+          D%DON, D%PON, D%refr, D%bSi)
 
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! equations for the biology quantities.
@@ -743,31 +742,31 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
 
      ! Build the H vectors for the biological quantities
      CALL P_H (grid%M, P%micro, Gvector%p%micro, Gvector_o%p%micro, &
-          Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix_o%bio, &
+          Pmicro_RHS%bio, Gvector_ao%p%micro, Bmatrix_o%bio, &
           Hvector%p%micro)
      CALL P_H(grid%M, P%nano, Gvector%p%nano, Gvector_o%p%nano, &
-          Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
+          Pnano_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
      CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
-          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
+          NO_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%n%o)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  N%H, Gvector%n%h, Gvector_o%n%h, &
-          Gvector_ro%n%h, null_vector, Bmatrix_o%bio, &
+          NH_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%n%h)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
-          Gvector_ro%si, null_vector, Bmatrix_o%bio, &
+          Si_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%si)  ! null_vector 'cause no sinking
      CALL P_H (grid%M, D%DON, Gvector%d(1)%bin, Gvector_o%d(1)%bin, &
-          Gvector_ro%d(1)%bin, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
+          D_DON_RHS%bio, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
           Hvector%d(1)%bin)
      CALL P_H (grid%M, D%PON, Gvector%d(2)%bin, Gvector_o%d(2)%bin, &
-          Gvector_ro%d(2)%bin, Gvector_ao%d(2)%bin, Bmatrix_o%bio, &
+          D_PON_RHS%bio, Gvector_ao%d(2)%bin, Bmatrix_o%bio, &
           Hvector%d(2)%bin)
      CALL P_H (grid%M, D%refr, Gvector%d(4)%bin, Gvector_o%d(4)%bin, &
-          Gvector_ro%d(4)%bin, null_vector, Bmatrix_o%bio, &
+          D_refr_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%d(4)%bin)  ! null_vector 'cause no sinking
      CALL P_H (grid%M, D%bSi, Gvector%d(3)%bin, Gvector_o%d(3)%bin, &
-          Gvector_ro%d(3)%bin, Gvector_ao%d(3)%bin, Bmatrix_o%bio, &
+          D_bSi_RHS%bio, Gvector_ao%d(3)%bin, Bmatrix_o%bio, &
           Hvector%d(3)%bin)
 
      ! Solve the tridiagonal system for the biology quantities
