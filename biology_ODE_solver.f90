@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-module do_biology_mod
+module biology_ODE_solver
   ! Biological model execution module.  A wrapper around a bunch of
   ! subroutine calls that advance the biological quantities to the
   ! next time step.
@@ -102,4 +102,4 @@ contains
     endif
   end subroutine check_negative
 
-end module do_biology_mod
+end module biology_ODE_solver

@@ -29,7 +29,7 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use biological_mod, only: init_biology, dalloc_biology_variables
-  use do_biology_mod, only: do_biology
+  use biology_ODE_solver, only: do_biology
   use biology_eqn_builder, only: build_biology_equations
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use input_processor, only: init_input_processor, getpars, getpari, &
