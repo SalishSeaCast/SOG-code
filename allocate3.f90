@@ -6,7 +6,7 @@ subroutine allocate3(M)
 
   use malloc, only: alloc_check
   use declarations, only: D_bins, &
-       Gvector_ao, Hvector
+       Hvector
 
   implicit none
 
@@ -18,11 +18,6 @@ subroutine allocate3(M)
   integer              :: y_y        ! Loop index
 
   do y_y = 1, D_bins
-     msg = "Biology model Gvector bin components arrays"
-     allocate(&
-          Gvector_ao%d(y_y)%bin(M), &
-          stat=allocstat)
-     call alloc_check(allocstat, msg)
      msg = "Biology model Hvector bin component array"
      allocate(Hvector%d(y_y)%bin(M), stat=allocstat)
      call alloc_check(allocstat, msg)

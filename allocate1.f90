@@ -14,7 +14,6 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(&
               Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
-              Gvector_ao%d(D_bins),&
               STAT = alloc_stat(3))
 
       ALLOCATE(w%b(0:M),w%b_err(0:M),&
@@ -56,7 +55,6 @@ subroutine allocate1(M, STAT)
                Gvector_o%u(M),Gvector_o%v(M),&
                Gvector_c%u(M),Gvector_c%v(M),Gvector_co%u(M),&
                Gvector_co%v(M),&
-               Gvector_ao%p%micro(M), &
                Hvector%n%o(M), Hvector%n%h(M), Hvector%si(M), &
                null_vector(M),STAT = alloc_stat(8)) !**&
                
