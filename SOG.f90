@@ -30,7 +30,7 @@ program SOG
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use biological_mod, only: init_biology, dalloc_biology_variables
   use biology_ODE_solver, only: solve_biology_ODEs
-  use biology_eqn_builder, only: build_biology_equations
+  use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
@@ -237,6 +237,9 @@ program SOG
      ! step
      CALL define_sog(time_step)
      call new_to_old_physics()
+     if (time_step > 1) then
+        call new_to_old_bio_RHS()
+     endif
 
      ! Get forcing data
      call get_forcing (year, day, day_time, &
@@ -693,15 +696,6 @@ program SOG
 Bmatrix%bio%A = diff_coeffs_bio%sub_diag
 Bmatrix%bio%B = diff_coeffs_bio%diag
 Bmatrix%bio%C = diff_coeffs_bio%super_diag
-Gvector%p%micro = Pmicro_RHS%diff_adv%new
-Gvector%p%nano = Pnano_RHS%diff_adv%new
-Gvector%n%o = NO_RHS%diff_adv%new
-Gvector%n%h = NH_RHS%diff_adv%new
-Gvector%si = Si_RHS%diff_adv%new
-Gvector%d(1)%bin = D_DON_RHS%diff_adv%new
-Gvector%d(2)%bin = D_PON_RHS%diff_adv%new
-Gvector%d(4)%bin = D_refr_RHS%diff_adv%new
-Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
 
      ! Add sinking of plankton and detritus
      ! *** Perhaps this subroutine would be better named sinking_advection
@@ -730,43 +724,42 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
         Bmatrix_o%bio%A = Bmatrix%bio%A
         Bmatrix_o%bio%B = Bmatrix%bio%B
         Bmatrix_o%bio%C = Bmatrix%bio%C
-        Gvector_o%p%micro = Gvector%p%micro 
-        Gvector_o%p%nano = Gvector%p%nano !V.flagella.01
-        Gvector_o%n%o = Gvector%n%o
-        Gvector_o%n%h = Gvector%n%h
-        Gvector_o%si = Gvector%si
-        DO xx = 1,D_bins
-           Gvector_o%d(xx)%bin = Gvector%d(xx)%bin
-        END DO
+        call new_to_old_bio_RHS()
      END IF ! time_step == 1
 
      ! Build the H vectors for the biological quantities
-     CALL P_H (grid%M, P%micro, Gvector%p%micro, Gvector_o%p%micro, &
-          Pmicro_RHS%bio, Gvector_ao%p%micro, Bmatrix_o%bio, &
+     CALL P_H(grid%M, P%micro, Pmicro_RHS%diff_adv%new, &
+          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Gvector_ao%p%micro, &
+          Bmatrix_o%bio, &
           Hvector%p%micro)
-     CALL P_H(grid%M, P%nano, Gvector%p%nano, Gvector_o%p%nano, &
-          Pnano_RHS%bio, null_vector, Bmatrix_o%bio, &
+     CALL P_H(grid%M, P%nano, Pnano_RHS%diff_adv%new, &
+          Pnano_RHS%diff_adv%old, Pnano_RHS%bio, null_vector, &
+          Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
-     CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
+     CALL P_H(grid%M, N%O, NO_RHS%diff_adv%new, NO_RHS%diff_adv%old, &
           NO_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%n%o)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  N%H, Gvector%n%h, Gvector_o%n%h, &
+     CALL P_H(grid%M,  N%H, NH_RHS%diff_adv%new, NH_RHS%diff_adv%old, &
           NH_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%n%h)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
+     CALL P_H(grid%M,  Si, Si_RHS%diff_adv%new, Si_RHS%diff_adv%old, &
           Si_RHS%bio, null_vector, Bmatrix_o%bio, &
           Hvector%si)  ! null_vector 'cause no sinking
-     CALL P_H (grid%M, D%DON, Gvector%d(1)%bin, Gvector_o%d(1)%bin, &
-          D_DON_RHS%bio, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
+     CALL P_H(grid%M, D%DON, D_DON_RHS%diff_adv%new, &
+          D_DON_RHS%diff_adv%old, D_DON_RHS%bio, Gvector_ao%d(1)%bin, &
+          Bmatrix_o%bio, &
           Hvector%d(1)%bin)
-     CALL P_H (grid%M, D%PON, Gvector%d(2)%bin, Gvector_o%d(2)%bin, &
-          D_PON_RHS%bio, Gvector_ao%d(2)%bin, Bmatrix_o%bio, &
+     CALL P_H(grid%M, D%PON, D_PON_RHS%diff_adv%new, &
+          D_PON_RHS%diff_adv%old, D_PON_RHS%bio, Gvector_ao%d(2)%bin, &
+          Bmatrix_o%bio, &
           Hvector%d(2)%bin)
-     CALL P_H (grid%M, D%refr, Gvector%d(4)%bin, Gvector_o%d(4)%bin, &
-          D_refr_RHS%bio, null_vector, Bmatrix_o%bio, &
+     CALL P_H(grid%M, D%refr, D_refr_RHS%diff_adv%new, &
+          D_refr_RHS%diff_adv%old, D_refr_RHS%bio, null_vector, &
+          Bmatrix_o%bio, &
           Hvector%d(4)%bin)  ! null_vector 'cause no sinking
-     CALL P_H (grid%M, D%bSi, Gvector%d(3)%bin, Gvector_o%d(3)%bin, &
-          D_bSi_RHS%bio, Gvector_ao%d(3)%bin, Bmatrix_o%bio, &
+     CALL P_H(grid%M, D%bSi, D_bSi_RHS%diff_adv%new, &
+          D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, Gvector_ao%d(3)%bin, &
+          Bmatrix_o%bio, &
           Hvector%d(3)%bin)
 
      ! Solve the tridiagonal system for the biology quantities
