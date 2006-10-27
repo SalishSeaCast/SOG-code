@@ -88,7 +88,7 @@ module mean_param
   END TYPE trivector
 
   TYPE :: UVSTmatrix
-     TYPE(trivector)::u, s, t, bio, no, null
+     TYPE(trivector)::u, s, t, bio, null
      DOUBLE PRECISION, DIMENSION(1)::QA,QB
   END TYPE UVSTmatrix
 
