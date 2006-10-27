@@ -122,12 +122,14 @@ contains
   end subroutine dalloc_water_props
 
 
-  subroutine calc_rho_alpha_beta_Cp_profiles(T, S, &  ! in
-       rho_g, alpha_g, beta_g, Cp_g)                  ! out
+  subroutine calc_rho_alpha_beta_Cp_profiles(T, S)
     ! Calculate the profiles of density, thermal expansion
     ! coefficient, salinity expansion coefficient, and specific heat
     ! capacity through the water column at the grid point depths based
     ! on the supplied water temperature and salinity profiles.
+    !
+    ! This calculates the values of the grid point depth arrays (*%g) of
+    ! the 4 water properties.
     !
     ! Based on Rich Pawlowicz's Matlab functions in his OCEANS
     ! toolbox (http://www.eos.ubc.ca/~rich/#OCEANS) with the pressure
@@ -157,12 +159,6 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: &
          T, &    ! Temperature [K]
          S       ! Salinity [-]
-    ! Result:
-    real(kind=dp), dimension(0:size(T) - 1) :: &
-         rho_g,   &  ! Density
-         alpha_g, &  ! Thermal expansion coefficient
-         beta_g,  &  ! Saline contraction coefficient
-         Cp_g        ! Specific heat capacity
     ! Local variables:
     real(kind=dp), dimension(0:size(T) - 1) :: &
          TC,         &  ! Temperature profile in degrees Celcius
@@ -217,15 +213,15 @@ contains
     DVAN = SVA / (V350P * (V350P + SVA))
     SIGMA = DR350 - DVAN
     ! Density at atmospheric pressure
-    rho_g = 1000. + SIGMA
+    rho%g = 1000. + SIGMA
     ! Specific volume at atmospheric pressure
-    V = 1. / rho_g
+    V = 1. / rho%g
     ! Thermal expansion coefficient at atmostpheric pressure
     drho_dT = -V0T / (V ** 2)
-    alpha_g = -(1. / rho_g) * drho_dT
+    alpha%g = -(1. / rho%g) * drho_dT
     ! Saline contraction coefficient at atmospheric pressure
     drho_dS = -V0S / (V ** 2)
-    beta_g = (1. /rho_g) * drho_dS
+    beta%g = (1. /rho%g) * drho_dS
 
     ! Calculate the heat capacity profile at the grid point depths
     ! Specific heat Cp0 for P=0 (Millero, et al; UNESCO 1981)
@@ -233,7 +229,7 @@ contains
     B = (5.148d-5 * TC - 4.07718d-3) * TC + 0.1770383
     C = (((2.093236d-5 * TC - 2.654387d-3) * TC + 0.1412855) &
          * TC - 3.720283) * TC + 4217.4
-    Cp_g = (A + B * sqrtS) * S + C
+    Cp%g = (A + B * sqrtS) * S + C
   end subroutine calc_rho_alpha_beta_Cp_profiles
 
 end module water_properties

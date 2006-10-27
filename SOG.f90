@@ -210,9 +210,10 @@ program SOG
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
-  ! coefficients, and specific heat capacity (Cp)
-  call calc_rho_alpha_beta_Cp_profiles(T%new, S%new, rho%g, alpha%g, &
-       beta%g, Cp%g)
+  ! coefficients, and specific heat capacity (Cp).
+  ! This calculates the values of the grid point depth arrays (*%g) of
+  ! the 4 water properties.
+  call calc_rho_alpha_beta_Cp_profiles(T%new, S%new)
   ! Interpolate the values of density and specific heat capacity at
   ! the grid layer interface depths
   rho%i = interp_i(rho%g)
@@ -541,8 +542,9 @@ program SOG
         ! Update the profiles of the water column properties
         ! Density (rho), thermal expansion (alpha) and saline
         ! contraction (beta) coefficients, and specific heat capacity (Cp)
-        call calc_rho_alpha_beta_Cp_profiles(T%new, S%new, rho%g, alpha%g, &
-             beta%g, Cp%g)
+        ! This calculates the values of the grid point depth arrays (*%g) of
+        ! the 4 water properties.
+        call calc_rho_alpha_beta_Cp_profiles(T%new, S%new)
         ! Interpolate the values of density and specific heat capacity at
         ! the grid layer interface depths
         rho%i = interp_i(rho%g)
