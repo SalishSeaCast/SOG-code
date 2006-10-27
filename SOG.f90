@@ -496,6 +496,13 @@ program SOG
         CALL matrix_A (Amatrix%t, Bmatrix%t) ! now have (D9)
         CALL matrix_A (Amatrix%s, Bmatrix%s)
 
+        ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
+        call phys_Hvector(grid%M, U%old, Gvector%u, Gvector_o%u, &  ! in
+             Gvector_c%u, Gvector_co%u, Bmatrix_o%u,             &  ! in
+             Hvector%u)                                             ! out
+        call phys_Hvector(grid%M, V%old, Gvector%v, Gvector_o%v, &  ! in
+             Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
+             Hvector%v)                                             ! out
         ! Add Xt to H vector (D7)
         call phys_Hvector(grid%M, S%old, Gvector%s, Gvector_o%s, &  ! in
              null_vector, null_vector, Bmatrix_o%s,              &  ! in
@@ -505,13 +512,6 @@ program SOG
              null_vector, null_vector, Bmatrix_o%t,              &  ! in
              ! null_vector because no Coriolis or pressure gradients terms
              Hvector%t)
-        ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
-        call phys_Hvector(grid%M, U%old, Gvector%u, Gvector_o%u, &  ! in
-             Gvector_c%u, Gvector_co%u, Bmatrix_o%u,             &  ! in
-             Hvector%u)                                             ! out
-        call phys_Hvector(grid%M, V%old, Gvector%v, Gvector_o%v, &  ! in
-             Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
-             Hvector%v)                                             ! out
 
         ! Solves tridiagonal system for physics quantities
         call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
