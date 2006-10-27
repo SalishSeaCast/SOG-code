@@ -471,6 +471,17 @@ program SOG
              Gvector_c%v)      
 
         IF (time_step == 1 .AND. count  == 1) THEN
+
+           Bmatrix_o%t%A = Bmatrix%t%A
+           Bmatrix_o%t%B = Bmatrix%t%B
+           Bmatrix_o%t%C = Bmatrix%t%C
+           Bmatrix_o%s%A = Bmatrix%s%A
+           Bmatrix_o%s%B = Bmatrix%s%B
+           Bmatrix_o%s%C = Bmatrix%s%C         
+           Bmatrix_o%u%A = Bmatrix%u%A
+           Bmatrix_o%u%B = Bmatrix%u%B
+           Bmatrix_o%u%C = Bmatrix%u%C
+
            Gvector_o%t = Gvector%t
            Gvector_o%s = Gvector%s
            Gvector_o%u = Gvector%u
@@ -487,19 +498,19 @@ program SOG
 
         ! Add Xt to H vector (D7)
         call phys_Hvector(grid%M, S%old, Gvector%s, Gvector_o%s, &  ! in
-             null_vector, null_vector, Bmatrix%s,                &  ! in
+             null_vector, null_vector, Bmatrix_o%s,              &  ! in
              ! null_vector because no Coriolis or pressure gradients terms
              Hvector%s)                                             ! out
         call phys_Hvector(grid%M, T%old, Gvector%t, Gvector_o%t, &  ! in
-             null_vector, null_vector, Bmatrix%t,                &  ! in
+             null_vector, null_vector, Bmatrix_o%t,              &  ! in
              ! null_vector because no Coriolis or pressure gradients terms
              Hvector%t)
         ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
         call phys_Hvector(grid%M, U%old, Gvector%u, Gvector_o%u, &  ! in
-             Gvector_c%u, Gvector_co%u, Bmatrix%u,               &  ! in
+             Gvector_c%u, Gvector_co%u, Bmatrix_o%u,             &  ! in
              Hvector%u)                                             ! out
         call phys_Hvector(grid%M, V%old, Gvector%v, Gvector_o%v, &  ! in
-             Gvector_c%v, Gvector_co%v, Bmatrix%u,               &  ! in
+             Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
              Hvector%v)                                             ! out
 
         ! Solves tridiagonal system for physics quantities
@@ -659,33 +670,27 @@ program SOG
           D%DON, D%PON, D%bSi, K%u%all, K%t%all, K%s%all, I_par,      &
           U%new, V%new)
 
-     !---------- Biology Model ----------
-     !
-     ! Solve the biology model ODEs to advance the biology quantity values
-     ! to the next time step, and calculate the growth - mortality terms of
-     ! the semi-implicit diffusion/advection equations 
+!------BIOLOGICAL MODEL--------------------------------------------
+
      call do_biology(time, day, dt, grid%M, precision, step_guess, step_min,  &
           T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
           D%DON, D%PON, D%refr, D%bSi,                                        &
           Gvector_ro)
 
-     ! Build the rest of the terms of the semi-implicit diffusion/advection
-     ! equations for the biology quantities
      call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H,    &!in
           Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell,          &!in
-          ! Diffusion coefficients matrix (tridiagonal)
           diff_coeffs%sub_diag, diff_coeffs%diag, diff_coeffs%super_diag, &!out
-          ! Diffusion/advection terms due to surface & bottom fluxes,
-          ! and upwelling advection
-          Pmicro_RHS%diff_adv%new, Pnano_RHS%diff_adv%new,                &!out
-          NO_RHS%diff_adv%new, NH_RHS%diff_adv%new,                       &!out
-          Si_RHS%diff_adv%new, D_DON_RHS%diff_adv%new,                    &!out
-          D_PON_RHS%diff_adv%new, D_refr_RHS%diff_adv%new,                &!out
-          D_bSi_RHS%diff_adv%new)                                          !out
+          Pmicro_RHS%diff_adv%new, Pnano_RHS%diff_adv%new,             & ! out
+          NO_RHS%diff_adv%new, NH_RHS%diff_adv%new,                    & ! out
+          Si_RHS%diff_adv%new, D_DON_RHS%diff_adv%new,                 & ! out
+          D_PON_RHS%diff_adv%new, D_refr_RHS%diff_adv%new,             & ! out
+          D_bSi_RHS%diff_adv%new)                                        ! out
 ! *** Gvector refactoring bridge code
 Bmatrix%bio%A = diff_coeffs%sub_diag
 Bmatrix%bio%B = diff_coeffs%diag
 Bmatrix%bio%C = diff_coeffs%super_diag
+!*** Should be able to get rid of Bmatrix%NO
+Bmatrix%NO = Bmatrix%bio
 Gvector%p%micro = Pmicro_RHS%diff_adv%new
 Gvector%p%nano = Pnano_RHS%diff_adv%new
 Gvector%n%o = NO_RHS%diff_adv%new
@@ -713,16 +718,20 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
      
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
+     CALL matrix_A (Amatrix%no, Bmatrix%no)
 
-     ! *** This is required to prevent A Matrix from being malformed on
-     ! *** the 1st time step.  Can we find another way to avoid checking
-     ! *** for time_step == 1 every time step?
      IF (time_step == 1) THEN ! initial estimate is better than 0.
         Bmatrix%null%A = 0. !no diffusion
         Bmatrix%null%B = 0.
         Bmatrix%null%C = 0.
         Amatrix%null%A = 0. !(M)
         Amatrix%null%B = 1.
+        Bmatrix_o%bio%A = Bmatrix%bio%A
+        Bmatrix_o%bio%B = Bmatrix%bio%B
+        Bmatrix_o%bio%C = Bmatrix%bio%C
+        Bmatrix_o%no%A = Bmatrix%no%A
+        Bmatrix_o%no%B = Bmatrix%no%B
+        Bmatrix_o%no%C = Bmatrix%no%C
         Gvector_o%p%micro = Gvector%p%micro 
         Gvector_o%p%nano = Gvector%p%nano !V.flagella.01
         Gvector_o%n%o = Gvector%n%o
@@ -735,31 +744,34 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
 
      ! Build the H vectors for the biological quantities
      CALL P_H (grid%M, P%micro, Gvector%p%micro, Gvector_o%p%micro, &
-          Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix%bio,      &
+          Gvector_ro%p%micro, Gvector_ao%p%micro, Bmatrix_o%bio, &
           Hvector%p%micro)
      CALL P_H(grid%M, P%nano, Gvector%p%nano, Gvector_o%p%nano, &
-          Gvector_ro%p%nano, null_vector, Bmatrix%bio,          &
+          Gvector_ro%p%nano, null_vector, Bmatrix_o%bio, &
           Hvector%p%nano) ! null_vector 'cause no sinking
      CALL P_H(grid%M, N%O, Gvector%n%o, Gvector_o%n%o, &
-          Gvector_ro%n%o, null_vector, Bmatrix%bio,    &
+          Gvector_ro%n%o, null_vector, Bmatrix_o%no, &
+!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%n%o)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  N%H, Gvector%n%h, Gvector_o%n%h, &
-          Gvector_ro%n%h, null_vector, Bmatrix%bio,     &
+          Gvector_ro%n%h, null_vector, Bmatrix_o%no, &
+!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%n%h)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  Si, Gvector%si, Gvector_o%si, &
-          Gvector_ro%si, null_vector, Bmatrix%bio,   &
+          Gvector_ro%si, null_vector, Bmatrix_o%no, &
+!!$          Gvector_ro%n%o, null_vector, Bmatrix_o%bio, &
           Hvector%si)  ! null_vector 'cause no sinking
      CALL P_H (grid%M, D%DON, Gvector%d(1)%bin, Gvector_o%d(1)%bin, &
-          Gvector_ro%d(1)%bin, Gvector_ao%d(1)%bin, Bmatrix%bio,    &
+          Gvector_ro%d(1)%bin, Gvector_ao%d(1)%bin, Bmatrix_o%bio, &
           Hvector%d(1)%bin)
      CALL P_H (grid%M, D%PON, Gvector%d(2)%bin, Gvector_o%d(2)%bin, &
-          Gvector_ro%d(2)%bin, Gvector_ao%d(2)%bin, Bmatrix%bio,    &
+          Gvector_ro%d(2)%bin, Gvector_ao%d(2)%bin, Bmatrix_o%bio, &
           Hvector%d(2)%bin)
      CALL P_H (grid%M, D%refr, Gvector%d(4)%bin, Gvector_o%d(4)%bin, &
-          Gvector_ro%d(4)%bin, null_vector, Bmatrix%bio,             &
+          Gvector_ro%d(4)%bin, null_vector, Bmatrix_o%bio, &
           Hvector%d(4)%bin)  ! null_vector 'cause no sinking
      CALL P_H (grid%M, D%bSi, Gvector%d(3)%bin, Gvector_o%d(3)%bin, &
-          Gvector_ro%d(3)%bin, Gvector_ao%d(3)%bin, Bmatrix%bio,    &
+          Gvector_ro%d(3)%bin, Gvector_ao%d(3)%bin, Bmatrix_o%bio, &
           Hvector%d(3)%bin)
 
      ! Solve the tridiagonal system for the biology quantities
@@ -767,12 +779,18 @@ Gvector%d(3)%bin = D_bSi_RHS%diff_adv%new
           Hvector%p%micro, P%micro(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
           Hvector%p%nano, P%nano(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%n%o, N%O(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%n%h, N%H(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%si, Si(1:grid%M))
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%o, &
+          N%O(1:grid%M))
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%n%h, &
+          N%H(1:grid%M))
+     call tridiag(Amatrix%no%A, Amatrix%no%B, Amatrix%no%C, Hvector%si, &
+          Si(1:grid%M))
+!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%o, &
+!!$          N%O(1:grid%M))
+!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%h, &
+!!$          N%H(1:grid%M))
+!!$     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%si, &
+!!$          Si(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
           Hvector%d(1)%bin, D%DON(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
