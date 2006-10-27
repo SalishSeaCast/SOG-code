@@ -158,7 +158,7 @@ contains
            surface_flux, &  ! Surface flux of quantity
            bottom_value     ! Value of quantity at bottom of grid
       real(kind=dp), dimension(1:), intent(out) :: &
-           RHS  ! 
+           RHS  ! RHS term vector for semi-implicit diffusion/advection PDE
 
       ! Initialize the diffusion/advection vector of the right-hand
       ! side of the semi-implicit equations
