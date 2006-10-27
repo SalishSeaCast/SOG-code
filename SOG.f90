@@ -18,8 +18,9 @@ program SOG
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
   use biological_mod, only: rate_det
-  use biology_eqn_builder, only: diff_coeffs, Pmicro_RHS, Pnano_RHS, NO_RHS, &
-       NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
+  ! *** Temporary until RHS refactoring is completed
+  use biology_eqn_builder, only: diff_coeffs_bio, Pmicro_RHS, Pnano_RHS, &
+       NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
   !
   ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
@@ -672,25 +673,27 @@ program SOG
           D%DON, D%PON, D%bSi, K%u%all, K%t%all, K%s%all, I_par,      &
           U%new, V%new)
 
-!------BIOLOGICAL MODEL--------------------------------------------
-
+     !---------- Biology Model ----------
+     !
+     ! Solve the biology model ODEs to advance the biology quantity values
+     ! to the next time step, and calculate the growth - mortality terms
+     ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
      call do_biology(time, day, dt, grid%M, precision, step_guess, step_min,  &
           T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
           D%DON, D%PON, D%refr, D%bSi,                                        &
           Gvector_ro)
 
-     call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H,    &!in
-          Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell,          &!in
-          diff_coeffs%sub_diag, diff_coeffs%diag, diff_coeffs%super_diag, &!out
-          Pmicro_RHS%diff_adv%new, Pnano_RHS%diff_adv%new,             & ! out
-          NO_RHS%diff_adv%new, NH_RHS%diff_adv%new,                    & ! out
-          Si_RHS%diff_adv%new, D_DON_RHS%diff_adv%new,                 & ! out
-          D_PON_RHS%diff_adv%new, D_refr_RHS%diff_adv%new,             & ! out
-          D_bSi_RHS%diff_adv%new)                                        ! out
+     ! Build the rest of the terms of the semi-implicit diffusion/advection
+     ! equations for the biology quantities.
+     ! This calculates the values of the diffusion coefficients matrix
+     ! (diff_coeff_bio%*), the RHS diffusion/advection term vectors
+     ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
+     call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H, & ! in
+          Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)         ! in
 ! *** Gvector refactoring bridge code
-Bmatrix%bio%A = diff_coeffs%sub_diag
-Bmatrix%bio%B = diff_coeffs%diag
-Bmatrix%bio%C = diff_coeffs%super_diag
+Bmatrix%bio%A = diff_coeffs_bio%sub_diag
+Bmatrix%bio%B = diff_coeffs_bio%diag
+Bmatrix%bio%C = diff_coeffs_bio%super_diag
 Gvector%p%micro = Pmicro_RHS%diff_adv%new
 Gvector%p%nano = Pnano_RHS%diff_adv%new
 Gvector%n%o = NO_RHS%diff_adv%new
