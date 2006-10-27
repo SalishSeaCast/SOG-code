@@ -6,7 +6,7 @@ SUBROUTINE P_H (M, PropOld, Gvector, Gvector_o, Gvector_ro, Gvector_ao, &
   ! *** Should be renamed to bio_Hvector, by analogy to phys_Hvector.
       
       USE mean_param, only: trivector
-      USE IMEX_constants, only: a_IMEX1
+      USE IMEX_solver, only: a_IMEX1
 
       IMPLICIT NONE
       

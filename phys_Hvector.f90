@@ -9,7 +9,7 @@ subroutine phys_Hvector(M, qty_old, Gvector, Gvector_o, Gvector_c, &
 
   use precision_defs, only: dp
   use mean_param, only: trivector
-  use IMEX_constants, only: a_IMEX1
+  use IMEX_solver, only: a_IMEX1
 
   implicit none
 
