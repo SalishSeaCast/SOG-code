@@ -18,7 +18,7 @@ program SOG
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
   ! *** Temporary until RHS refactoring is completed
-  use biology_eqn_builder, only: diff_coeffs_bio, Pmicro_RHS, Pnano_RHS, &
+  use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, &
        NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
   ! *** Temporary until IMEX refactoring is completed
   use IMEX_solver, only: Hvector
@@ -32,8 +32,10 @@ program SOG
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use biological_mod, only: init_biology, dalloc_biology_variables
   use biology_ODE_solver, only: solve_biology_ODEs
-  use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS
-  use IMEX_solver, only: init_IMEX_solver, dalloc_IMEX_variables
+  use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
+       new_to_old_bio_Bmatrix
+  use IMEX_solver, only: init_IMEX_solver, solve_biology_PDEs, &
+       dalloc_IMEX_variables
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
   use timeseries_output, only: init_timeseries_output, write_timeseries, &
@@ -243,6 +245,7 @@ program SOG
      call new_to_old_physics()
      if (time_step > 1) then
         call new_to_old_bio_RHS()
+        call new_to_old_bio_Bmatrix()
      endif
 
      ! Get forcing data
@@ -690,31 +693,34 @@ program SOG
           D%DON, D%PON, D%refr, D%bSi)
 
      ! Build the rest of the terms of the semi-implicit diffusion/advection
-     ! equations for the biology quantities.
+     ! PDEs for the biology quantities.
      ! This calculates the values of the diffusion coefficients matrix
-     ! (diff_coeff_bio%*), the RHS diffusion/advection term vectors
+     ! (Bmatrix%bio%*), the RHS diffusion/advection term vectors
      ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H, & ! in
           Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)         ! in
 ! *** Gvector refactoring bridge code
-Bmatrix%bio%A = diff_coeffs_bio%sub_diag
-Bmatrix%bio%B = diff_coeffs_bio%diag
-Bmatrix%bio%C = diff_coeffs_bio%super_diag
+Bmatrix%bio%A = nBmatrix%bio%new%sub
+Bmatrix%bio%B = nBmatrix%bio%new%diag
+Bmatrix%bio%C = nBmatrix%bio%new%sup
 
 
      CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
 
      IF (time_step == 1) THEN ! initial estimate is better than 0.
-        Bmatrix%null%A = 0. !no diffusion
-        Bmatrix%null%B = 0.
-        Bmatrix%null%C = 0.
         Amatrix%null%A = 0. !(M)
         Amatrix%null%B = 1.
         Bmatrix_o%bio%A = Bmatrix%bio%A
         Bmatrix_o%bio%B = Bmatrix%bio%B
         Bmatrix_o%bio%C = Bmatrix%bio%C
         call new_to_old_bio_RHS()
+        call new_to_old_bio_Bmatrix()
      END IF ! time_step == 1
+
+!!$     ! Solve the semi-implicit diffusion/advection PDEs for the
+!!$     ! biology quantities.
+!!$     ! *** Do we need a comment here about using Bmatrix%bio%*, etc.?
+!!$     call solve_biology_PDEs(grid%M, P%micro)
 
      ! Build the H vectors for the biological quantities
      CALL P_H(grid%M, P%micro, Pmicro_RHS%diff_adv%new, &
