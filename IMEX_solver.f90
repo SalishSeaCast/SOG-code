@@ -8,13 +8,13 @@ module IMEX_solver
   !
   ! Public Subroutines:
   !
-  !   alloc_IMEX_variables -- Allocate memory for arrays for tridiagonal
-  !                           matrices and right-hand sides of
-  !                           diffusion/advection PDEs.
+  !   init_IMEX_solver -- Initialize IMEX semi-implicit PDE solver variables.
   !
   !   dalloc_IMEX_variables -- Deallocate memory for arrays for tridiagonal
   !                            matrices and right-hand sides of
   !                            diffusion/advection PDEs.
+  !
+  !   solve_biology_PDEs -- 
 
   use precision_defs, only: dp
   implicit none
@@ -27,11 +27,9 @@ module IMEX_solver
        Hvector, &
        nAmatrix, &
        ! Subroutines:
-       init_IMEX_solver, dalloc_IMEX_variables
+       init_IMEX_solver, solve_biology_PDEs, dalloc_IMEX_variables
 
   ! Type Definitions:
-  !
-  ! Public:
   !
   ! Private to module:
   !
@@ -73,8 +71,6 @@ module IMEX_solver
 
   ! Parameter Value Declarations:
   !
-  ! Public:
-  !
   ! Private to module:
   !
   ! Implicit-explicit first order scheme:
@@ -86,8 +82,6 @@ module IMEX_solver
   real(kind=dp), parameter :: a_IMEX1 = 1.0
 
   ! Variable Declarations:
-  !
-  ! Public:
   !
   ! Private to module:
   !
@@ -112,6 +106,97 @@ contains
     nAmatrix%null%diag = 1.
     nAmatrix%null%super_diag = 0.
   end subroutine init_IMEX_solver
+
+
+  subroutine solve_biology_PDEs(M, Pmicro)
+    !
+    use precision_defs, only: dp
+    use biology_eqn_builder, only: nBmatrix, Pmicro_RHS
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(in) :: &
+         Pmicro
+    
+    call bio_Hvector(M, Pmicro, Pmicro_RHS%diff_adv%new, &
+         Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%Pmicro)
+  end subroutine solve_biology_PDEs
+
+
+  subroutine phys_Hvector(M, qty_old, flux, flux_old, C_pg, &
+       C_pg_old, Bmatrix_old_sub, Bmatrix_old_diag, Bmatrix_old_sup, Hvector)
+    ! Calculate RHS (Hvector) of semi-implicit PDE for a physic quantity. 
+    ! It includes the value of the quantity from the previous time step, and
+    ! current time step non-local flux terms, bottom and surface 
+    ! flux terms, and Coriolis and pressure gradient flux terms.  
+    ! Depending on the IMEX scheme being used to solve the PDE values of
+    ! the quanties above, and of the diffusion coefficient matrix from
+    ! the previous time step may also be blended in.
+    use precision_defs, only: dp
+    implicit none
+    ! Arguments:
+    integer :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:) :: &
+         qty_old  ! Profile of the quantity at the previous time step
+    real(kind=dp), dimension(1:), intent(in):: &
+         flux,             &  ! Non-local flux term at current time step
+         flux_old,         &  ! Non-local flux term at previous time step
+         C_pg,             &  ! Coriolis and pressure gradient flux term (cur)
+         C_pg_old,         &  ! Coriolis and pressure gradient flux term (prev)
+         Bmatrix_old_sub,  &  ! Diff coeff matrix sub-diagonal (prev timestep)
+         Bmatrix_old_diag, &  ! Diff coeff matrix sub-diagonal (prev timestep)
+         Bmatrix_old_sup      ! Diff coeff matrix sub-diagonal (prev timestep)
+    real(kind=dp), dimension(1:), intent(out) :: &
+         Hvector  ! RHS of semi-implicit PDE matrix equation
+
+    Hvector = qty_old(1:M)                                      &
+         + (1.0 - a_IMEX1) * (flux_old + C_pg_old               &
+                            + Bmatrix_old_sub * qty_old(0:M-1)  &
+                            + Bmatrix_old_diag * qty_old(1:M)   &
+                            + Bmatrix_old_sup * qty_old(2:M+1)) &
+         + a_IMEX1 * (flux + C_pg)
+  end subroutine phys_Hvector
+
+  
+  subroutine bio_Hvector(M, qty_old, diff_adv, diff_adv_old, bio, sink, &
+       Bmatrix_old_sub, Bmatrix_old_diag, Bmatrix_old_sup, Hvector)
+    ! Calculate RHS (Hvector) of semi-implicit PDE for a biology quantity. 
+    ! It includes the value of the quantity from the previous time step, and
+    ! current time step upwelling flux terms, bottom and surface 
+    ! flux terms, growth - mortality terms, and sinking terms.  
+    ! Depending on the IMEX scheme being used to solve the PDE values of
+    ! the quanties above, and of the diffusion coefficient matrix from
+    ! the previous time step may also be blended in.
+    use precision_defs, only: dp
+    implicit none
+    ! Arguments:
+    integer :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:) :: &
+         qty_old  ! Profile of the quantity at the previous time step
+    real(kind=dp), dimension(1:), intent(in):: &
+         diff_adv,         &  ! Diffusion/advection term (current time step)
+         diff_adv_old,     &  ! Diffusion/advection term (previous time step)
+         bio,              &  ! Growth - mortality term
+         sink,             &  ! Sinking term
+         Bmatrix_old_sub,  &  ! Diff coeff matrix sub-diagonal (prev timestep)
+         Bmatrix_old_diag, &  ! Diff coeff matrix sub-diagonal (prev timestep)
+         Bmatrix_old_sup      ! Diff coeff matrix sub-diagonal (prev timestep)
+    real(kind=dp), dimension(1:), intent(out) :: &
+         Hvector  ! RHS of semi-implicit PDE matrix equation
+
+    Hvector = qty_old(1:M) + bio + sink                           &
+         + (1.0 - a_IMEX1) * (diff_adv_old                        &
+                              + Bmatrix_old_sub * qty_old(0:M-1)  &
+                              + Bmatrix_old_diag * qty_old(1:M)   &
+                              + Bmatrix_old_sup * qty_old(2:M+1)) &
+         + a_IMEX1 * diff_adv
+    where (abs(Hvector) < epsilon(Hvector)) Hvector = 0.
+  end subroutine bio_Hvector
 
 
   subroutine alloc_IMEX_variables(M)
