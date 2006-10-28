@@ -23,7 +23,6 @@ subroutine allocate1(M, STAT)
                Bmatrix_o%s%B(M),Bmatrix_o%s%C(M),&
                Amatrix%bio%A(M),Amatrix%bio%B(M),Amatrix%bio%C(M),&
                Bmatrix%bio%A(M),Bmatrix%bio%B(M),Bmatrix%bio%C(M),&
-               Bmatrix%null%A(M),Bmatrix%null%B(M),Bmatrix%null%C(M),&
                Amatrix%null%A(M),Amatrix%null%B(M),&
                Bmatrix_o%bio%A(M),Bmatrix_o%bio%B(M),Bmatrix_o%bio%C(M),&
                STAT = alloc_stat(4)) !**&
