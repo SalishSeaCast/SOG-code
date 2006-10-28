@@ -26,6 +26,8 @@ module biological_mod
 
   private
   public :: &
+       ! Type definitions:
+       bins, &
        ! Variables:
        PZ, &
        PZ_bins, &
