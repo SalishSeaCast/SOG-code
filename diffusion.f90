@@ -52,7 +52,7 @@ contains
   end subroutine diffusion_coeff
 
 
-  subroutine new_diffusion_coeff(grid, dt, K_all, sub_diag, diag, super_diag)
+  subroutine new_diffusion_coeff(grid, dt, K_all, sub, diag, sup)
     ! Calculate the strength of the diffusion coefficients
     ! and put them in diagonal vectors of a tridiagonal matrix.
     use precision_defs, only: dp
@@ -66,35 +66,28 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: &
          K_all  ! Total diffusion coefficient array
     real(kind=dp), dimension(1:), intent(out) :: &
-         sub_diag,  &  ! Sub-diag vector of diffusion coeff matrix
-         diag,      &  ! Diagonal vector of diffusion coeff matrix
-         super_diag    ! Super-diag vector of diffusion coeff matrix
+         sub,  &  ! Sub-diagonal vector of diffusion coeff matrix
+         diag, &  ! Diagonal vector of diffusion coeff matrix
+         sup      ! Super-diagonal vector of diffusion coeff matrix
     ! Local variables:
-    integer :: index             ! counter through depth
     real(kind=dp), dimension(1:grid%M) :: O_minus, O_plus
     
     ! Calculate Omega+ and Omega-
     ! (Large, et al (1994), pg. 398, eqn D9)
-!!$    do index = 1, grid%M
-!!$       O_minus(index) = dt / grid%i_space(index) * &
-!!$            K_all(index-1) / grid%g_space(index-1)
-!!$       O_plus(index) = dt / grid%i_space(index) * &
-!!$            K_all(index) / grid%g_space(index)
-!!$    enddo
-       O_minus = (dt / grid%i_space) * &
-            (K_all(0:grid%M-1) / grid%g_space(0:grid%M-1))
-       O_plus = (dt / grid%i_space) * &
-            (K_all(1:grid%M) / grid%g_space(1:grid%M))
+    O_minus = (dt / grid%i_space) * &
+         (K_all(0:grid%M-1) / grid%g_space(0:grid%M-1))
+    O_plus = (dt / grid%i_space) * &
+         (K_all(1:grid%M) / grid%g_space(1:grid%M))
 
     ! Initialize diagonal vectors
-    sub_diag = 0.
+    sub = 0.
     diag = 0.
-    super_diag = 0.
+    sup = 0.
     ! Put in the combinations of Omega+ and Omega- terms (eqn D9)
-    sub_diag = O_minus
+    sub = O_minus
     diag = -O_plus - O_minus
-    super_diag = O_plus
-    super_diag(grid%M) = 0.
+    sup = O_plus
+    sup(grid%M) = 0.
   end subroutine new_diffusion_coeff
 
 
