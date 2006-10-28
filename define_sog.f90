@@ -26,10 +26,6 @@ SUBROUTINE define_sog(timestep)
          Bmatrix_o%s%B = Bmatrix%s%B
          Bmatrix_o%s%C = Bmatrix%s%C
 
-         Bmatrix_o%bio%A = Bmatrix%bio%A
-         Bmatrix_o%bio%B = Bmatrix%bio%B
-         Bmatrix_o%bio%C = Bmatrix%bio%C                 
-
          Gvector_o%u = Gvector%u
          Gvector_o%v = Gvector%v
          Gvector_o%s = Gvector%s
