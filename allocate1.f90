@@ -24,7 +24,6 @@ subroutine allocate1(M, STAT)
                Amatrix%bio%A(M),Amatrix%bio%B(M),Amatrix%bio%C(M),&
                Bmatrix%bio%A(M),Bmatrix%bio%B(M),Bmatrix%bio%C(M),&
                Amatrix%null%A(M),Amatrix%null%B(M),&
-               Bmatrix_o%bio%A(M),Bmatrix_o%bio%B(M),Bmatrix_o%bio%C(M),&
                STAT = alloc_stat(4)) !**&
 
       ALLOCATE(K%u%shear(0:M),&
