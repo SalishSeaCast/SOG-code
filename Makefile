@@ -40,7 +40,7 @@ CLFLAGS = -rt
 OBJS = precision_defs.o io_unit_defs.o malloc.o unit_conversions.o \
 datetime.o core_variables.o input_processor.o grid.o \
 \
-mean_param.o declarations.o surface_forcing.o IMEX_solver.o \
+mean_param.o declarations.o surface_forcing.o \
 initial_sog.o \
 \
 profiles_output.o \
@@ -48,6 +48,7 @@ profiles_output.o \
 water_properties.o physics_model.o turbulence.o find_upwell.o diffusion.o \
 timeseries_output.o fitbottom.o \
 biology_eqn_builder.o biological_mod.o rungekutta.o biology_ODE_solver.o \
+IMEX_solver.o \
 forcing.o mixing_layer.o \
 \
 define_flux.o phys_Hvector.o \
