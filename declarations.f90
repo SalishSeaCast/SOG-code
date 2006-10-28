@@ -26,7 +26,6 @@ module declarations
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::phi,omega
   TYPE(MSTscalar)::a2,a3  !shape constants
-  TYPE(UVST)::Hvector
   type(UVST):: Gvector, Gvector_o     ! vert. adv. & nonlocal and surf/bot fluxes
   type(UVST):: Gvector_c, Gvector_co  ! Coriolis and pg forces
   TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o
