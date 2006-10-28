@@ -18,8 +18,7 @@ program SOG
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
   ! *** Temporary until RHS refactoring is completed
-  use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, &
-       NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
+  use biology_eqn_builder, only: nBmatrix
   ! *** Temporary until IMEX refactoring is completed
   use IMEX_solver, only: Hvector
   !
@@ -710,52 +709,14 @@ Bmatrix%bio%C = nBmatrix%bio%new%sup
      IF (time_step == 1) THEN ! initial estimate is better than 0.
         Amatrix%null%A = 0. !(M)
         Amatrix%null%B = 1.
-        Bmatrix_o%bio%A = Bmatrix%bio%A
-        Bmatrix_o%bio%B = Bmatrix%bio%B
-        Bmatrix_o%bio%C = Bmatrix%bio%C
         call new_to_old_bio_RHS()
         call new_to_old_bio_Bmatrix()
      END IF ! time_step == 1
 
-!!$     ! Solve the semi-implicit diffusion/advection PDEs for the
-!!$     ! biology quantities.
-!!$     ! *** Do we need a comment here about using Bmatrix%bio%*, etc.?
-!!$     call solve_biology_PDEs(grid%M, P%micro)
-
-     ! Build the H vectors for the biological quantities
-     CALL P_H(grid%M, P%micro, Pmicro_RHS%diff_adv%new, &
-          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
-          Bmatrix_o%bio, &
-          Hvector%Pmicro)
-     CALL P_H(grid%M, P%nano, Pnano_RHS%diff_adv%new, &
-          Pnano_RHS%diff_adv%old, Pnano_RHS%bio, null_vector, &
-          Bmatrix_o%bio, &
-          Hvector%Pnano) ! null_vector 'cause no sinking
-     CALL P_H(grid%M, N%O, NO_RHS%diff_adv%new, NO_RHS%diff_adv%old, &
-          NO_RHS%bio, null_vector, Bmatrix_o%bio, &
-          Hvector%NO)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  N%H, NH_RHS%diff_adv%new, NH_RHS%diff_adv%old, &
-          NH_RHS%bio, null_vector, Bmatrix_o%bio, &
-          Hvector%NH)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M,  Si, Si_RHS%diff_adv%new, Si_RHS%diff_adv%old, &
-          Si_RHS%bio, null_vector, Bmatrix_o%bio, &
-          Hvector%Si)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M, D%DON, D_DON_RHS%diff_adv%new, &
-          D_DON_RHS%diff_adv%old, D_DON_RHS%bio, null_vector, &
-          Bmatrix_o%bio, &
-          Hvector%D_DON)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M, D%PON, D_PON_RHS%diff_adv%new, &
-          D_PON_RHS%diff_adv%old, D_PON_RHS%bio, D_PON_RHS%sink, &
-          Bmatrix_o%bio, &
-          Hvector%D_PON)
-     CALL P_H(grid%M, D%refr, D_refr_RHS%diff_adv%new, &
-          D_refr_RHS%diff_adv%old, D_refr_RHS%bio, null_vector, &
-          Bmatrix_o%bio, &
-          Hvector%D_refr)  ! null_vector 'cause no sinking
-     CALL P_H(grid%M, D%bSi, D_bSi_RHS%diff_adv%new, &
-          D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, D_bSi_RHS%sink, &
-          Bmatrix_o%bio, &
-          Hvector%D_bSi)
+     ! Solve the semi-implicit diffusion/advection PDEs for the
+     ! biology quantities.
+     call solve_biology_PDEs(grid%M, P%micro, P%nano, N%O, N%H, Si, &
+          D%DON, D%PON, D%refr, D%bSi)
 
      ! Solve the tridiagonal system for the biology quantities
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
