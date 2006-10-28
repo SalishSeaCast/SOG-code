@@ -20,6 +20,8 @@ program SOG
   ! *** Temporary until RHS refactoring is completed
   use biology_eqn_builder, only: diff_coeffs_bio, Pmicro_RHS, Pnano_RHS, &
        NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
+  ! *** Temporary until IMEX refactoring is completed
+  use IMEX_solver, only: Hvector
   !
   ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
@@ -27,10 +29,11 @@ program SOG
        interp_i
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
+  use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use biological_mod, only: init_biology, dalloc_biology_variables
   use biology_ODE_solver, only: solve_biology_ODEs
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS
-  use water_properties, only: calc_rho_alpha_beta_Cp_profiles
+  use IMEX_solver, only: init_IMEX_solver, dalloc_IMEX_variables
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
   use timeseries_output, only: init_timeseries_output, write_timeseries, &
@@ -155,6 +158,10 @@ program SOG
   ! Initialize the biology model
   call init_biology(grid%M)
 
+  ! Initialize the IMEX semi-implicit PDE solver
+  ! *** This should eventually go into init_numerics()
+  call init_IMEX_solver(grid%M)
+
   ! Allocate memory
   ! *** It would be nice if everything in allocate[13] could end up in 
   ! *** alloc_* subroutines private to various modules, and called by 
@@ -167,7 +174,6 @@ program SOG
         STOP
      END IF
   END DO
-  CALL allocate3(grid%M)
 
   ! Length of forcing data files (move to be read in)
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
@@ -502,28 +508,28 @@ program SOG
         ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
         call phys_Hvector(grid%M, U%old, Gvector%u, Gvector_o%u, &  ! in
              Gvector_c%u, Gvector_co%u, Bmatrix_o%u,             &  ! in
-             Hvector%u)                                             ! out
+             Hvector%U)                                             ! out
         call phys_Hvector(grid%M, V%old, Gvector%v, Gvector_o%v, &  ! in
              Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
-             Hvector%v)                                             ! out
+             Hvector%V)                                             ! out
         ! Add Xt to H vector (D7)
-        call phys_Hvector(grid%M, S%old, Gvector%s, Gvector_o%s, &  ! in
-             null_vector, null_vector, Bmatrix_o%s,              &  ! in
-             ! null_vector because no Coriolis or pressure gradients terms
-             Hvector%s)                                             ! out
         call phys_Hvector(grid%M, T%old, Gvector%t, Gvector_o%t, &  ! in
              null_vector, null_vector, Bmatrix_o%t,              &  ! in
              ! null_vector because no Coriolis or pressure gradients terms
-             Hvector%t)
+             Hvector%T)
+        call phys_Hvector(grid%M, S%old, Gvector%s, Gvector_o%s, &  ! in
+             null_vector, null_vector, Bmatrix_o%s,              &  ! in
+             ! null_vector because no Coriolis or pressure gradients terms
+             Hvector%S)                                             ! out
 
         ! Solves tridiagonal system for physics quantities
-        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%u, &
+        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%U, &
              U%new(1:grid%M))
-        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%v, &
+        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%V, &
              V%new(1:grid%M))
-        call tridiag(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%t, &
+        call tridiag(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%T, &
              T%new(1:grid%M))
-        call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%s, &
+        call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%S, &
              S%new(1:grid%M))
 
         ! Update boundary conditions at surface, and bottom of grid
@@ -714,56 +720,56 @@ Bmatrix%bio%C = diff_coeffs_bio%super_diag
      CALL P_H(grid%M, P%micro, Pmicro_RHS%diff_adv%new, &
           Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
           Bmatrix_o%bio, &
-          Hvector%p%micro)
+          Hvector%Pmicro)
      CALL P_H(grid%M, P%nano, Pnano_RHS%diff_adv%new, &
           Pnano_RHS%diff_adv%old, Pnano_RHS%bio, null_vector, &
           Bmatrix_o%bio, &
-          Hvector%p%nano) ! null_vector 'cause no sinking
+          Hvector%Pnano) ! null_vector 'cause no sinking
      CALL P_H(grid%M, N%O, NO_RHS%diff_adv%new, NO_RHS%diff_adv%old, &
           NO_RHS%bio, null_vector, Bmatrix_o%bio, &
-          Hvector%n%o)  ! null_vector 'cause no sinking
+          Hvector%NO)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  N%H, NH_RHS%diff_adv%new, NH_RHS%diff_adv%old, &
           NH_RHS%bio, null_vector, Bmatrix_o%bio, &
-          Hvector%n%h)  ! null_vector 'cause no sinking
+          Hvector%NH)  ! null_vector 'cause no sinking
      CALL P_H(grid%M,  Si, Si_RHS%diff_adv%new, Si_RHS%diff_adv%old, &
           Si_RHS%bio, null_vector, Bmatrix_o%bio, &
-          Hvector%si)  ! null_vector 'cause no sinking
+          Hvector%Si)  ! null_vector 'cause no sinking
      CALL P_H(grid%M, D%DON, D_DON_RHS%diff_adv%new, &
           D_DON_RHS%diff_adv%old, D_DON_RHS%bio, null_vector, &
           Bmatrix_o%bio, &
-          Hvector%d(1)%bin)  ! null_vector 'cause no sinking
+          Hvector%D_DON)  ! null_vector 'cause no sinking
      CALL P_H(grid%M, D%PON, D_PON_RHS%diff_adv%new, &
           D_PON_RHS%diff_adv%old, D_PON_RHS%bio, D_PON_RHS%sink, &
           Bmatrix_o%bio, &
-          Hvector%d(2)%bin)
+          Hvector%D_PON)
      CALL P_H(grid%M, D%refr, D_refr_RHS%diff_adv%new, &
           D_refr_RHS%diff_adv%old, D_refr_RHS%bio, null_vector, &
           Bmatrix_o%bio, &
-          Hvector%d(4)%bin)  ! null_vector 'cause no sinking
+          Hvector%D_refr)  ! null_vector 'cause no sinking
      CALL P_H(grid%M, D%bSi, D_bSi_RHS%diff_adv%new, &
           D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, D_bSi_RHS%sink, &
           Bmatrix_o%bio, &
-          Hvector%d(3)%bin)
+          Hvector%D_bSi)
 
      ! Solve the tridiagonal system for the biology quantities
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%p%micro, P%micro(1:grid%M))
+          Hvector%Pmicro, P%micro(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%p%nano, P%nano(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%o, &
+          Hvector%Pnano, P%nano(1:grid%M))
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%NO, &
           N%O(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%n%h, &
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%NH, &
           N%H(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%si, &
+     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%Si, &
           Si(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%d(1)%bin, D%DON(1:grid%M))
+          Hvector%D_DON, D%DON(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%d(2)%bin, D%PON(1:grid%M))
+          Hvector%D_PON, D%PON(1:grid%M))
      call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
-          Hvector%d(4)%bin, D%refr(1:grid%M))
+          Hvector%D_refr, D%refr(1:grid%M))
      call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%d(3)%bin, D%bSi(1:grid%M))
+          Hvector%D_bSi, D%bSi(1:grid%M))
 
      ! Update boundary conditions at surface, and deal with negative
      ! values in biological model quantities
@@ -858,5 +864,6 @@ Bmatrix%bio%C = diff_coeffs_bio%super_diag
   call dalloc_core_variables
   call dalloc_physics_variables
   call dalloc_biology_variables
+  call dalloc_IMEX_variables
 
 end program SOG
