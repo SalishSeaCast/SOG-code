@@ -12,10 +12,6 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(&
-              Hvector%d(D_bins),Gvector%d(D_bins),Gvector_o%d(D_bins),&
-              STAT = alloc_stat(3))
-
       ALLOCATE(w%b(0:M),w%b_err(0:M),&
            w%t(0:M),w%s(0:M),w%u(0:M),&
                w%v(0:M),w%p%micro(0:M),Amatrix%u%A(M),Amatrix%u%B(M),&
@@ -49,13 +45,11 @@ subroutine allocate1(M, STAT)
       ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), &
            STAT = alloc_stat(7))
 
-      ALLOCATE(Hvector%s(M),Hvector%t(M),Hvector%u(M),Hvector%v(M),&
-           Hvector%p%micro(M),Hvector%p%nano(M),&
+      ALLOCATE(&
                Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),Gvector_o%s(M),Gvector_o%t(M),&
                Gvector_o%u(M),Gvector_o%v(M),&
                Gvector_c%u(M),Gvector_c%v(M),Gvector_co%u(M),&
                Gvector_co%v(M),&
-               Hvector%n%o(M), Hvector%n%h(M), Hvector%si(M), &
                null_vector(M),STAT = alloc_stat(8)) !**&
                
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
