@@ -89,6 +89,8 @@ module IMEX_solver
        nAmatrix  ! LHS matrices (A) for semi-implicit PDE matrix eqns
   type(RHS) :: &
        Hvector  ! RHS vectors (H) for semi-implicit PDE matrix eqns
+  real(kind=dp), dimension(:), allocatable :: &
+       null_vector  ! Vector of zeros; used for quantities that don't sink
 
 contains
 
@@ -105,24 +107,79 @@ contains
     nAmatrix%null%sub_diag = 0.
     nAmatrix%null%diag = 1.
     nAmatrix%null%super_diag = 0.
+    ! Initialize the null vector of zeros used for non-sinking quantities
+    null_vector = 0.
   end subroutine init_IMEX_solver
 
 
-  subroutine solve_biology_PDEs(M, Pmicro)
+  subroutine solve_biology_PDEs(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi)
     !
     use precision_defs, only: dp
-    use biology_eqn_builder, only: nBmatrix, Pmicro_RHS
+    use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, &
+       NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
     implicit none
     ! Arguments:
     integer, intent(in) :: &
          M  ! Number of grid points
     real(kind=dp), dimension(0:), intent(in) :: &
-         Pmicro
+         Pmicro, &  ! Micro phytoplankton
+         Pnano,  &  ! Nano phytoplankton
+         NO,     &  ! Nitrate
+         NH,     &  ! Ammonium
+         Si,     &  ! Silicon
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
     
+    ! Build the RHS vectors (H) for the biology semi-implicit PDEs
+    !
+    ! Micro phytoplankton (diatoms)
     call bio_Hvector(M, Pmicro, Pmicro_RHS%diff_adv%new, &
          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
          nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
          Hvector%Pmicro)
+    ! Nano phytoplankton (flagellates); non-sinking
+    call bio_Hvector(M, Pnano, Pnano_RHS%diff_adv%new, &
+         Pnano_RHS%diff_adv%old, Pnano_RHS%bio, null_vector, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%Pnano)
+    ! Nitrate; non-sinking
+    call bio_Hvector(M, NO, NO_RHS%diff_adv%new, &
+         NO_RHS%diff_adv%old, NO_RHS%bio, null_vector, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%NO)
+    ! Ammonium; non-sinking
+    call bio_Hvector(M, NH, NH_RHS%diff_adv%new, &
+         NH_RHS%diff_adv%old, NH_RHS%bio, null_vector, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%NH)
+    ! Silicon; non-sinking
+    call bio_Hvector(M, Si, Si_RHS%diff_adv%new, &
+         Si_RHS%diff_adv%old, Si_RHS%bio, null_vector, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%Si)
+    ! Dissolved organic nitrogen detritus; non-sinking
+    call bio_Hvector(M, D_DON, D_DON_RHS%diff_adv%new, &
+         D_DON_RHS%diff_adv%old, D_DON_RHS%bio, null_vector, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%D_DON)
+    ! Particulate organic nitrogen detritus
+    call bio_Hvector(M, D_PON, D_PON_RHS%diff_adv%new, &
+         D_PON_RHS%diff_adv%old, D_PON_RHS%bio, D_PON_RHS%sink, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%D_PON)
+    ! Refractory nitrogen detritus
+    call bio_Hvector(M, D_refr, D_refr_RHS%diff_adv%new, &
+         D_refr_RHS%diff_adv%old, D_refr_RHS%bio, D_refr_RHS%sink, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%D_refr)
+    ! Biogenic silicon detritus
+    call bio_Hvector(M, D_bSi, D_bSi_RHS%diff_adv%new, &
+         D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, D_bSi_RHS%sink, &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag, nBmatrix%bio%old%sup, &
+         Hvector%D_bSi)
   end subroutine solve_biology_PDEs
 
 
@@ -231,6 +288,10 @@ contains
          Hvector%D_bSi(1:M),                                          &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "IMEX solver null vector"
+    allocate(null_vector(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_IMEX_variables
 
 
@@ -262,6 +323,10 @@ contains
          Hvector%NO, Hvector%NH, Hvector%Si,           &
          Hvector%D_DON, Hvector%D_PON, Hvector%D_refr, &
          Hvector%D_bSi,                                &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "IMEX solver null vector"
+    deallocate(null_vector, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_IMEX_variables
