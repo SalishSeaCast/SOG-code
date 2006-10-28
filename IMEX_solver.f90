@@ -24,8 +24,10 @@ module IMEX_solver
        ! Parameter values:
        ! *** Temporary for refactoring
        a_IMEX1, &
+       Hvector, &
+       nAmatrix, &
        ! Subroutines:
-       alloc_IMEX_variables, dalloc_IMEX_variables
+       init_IMEX_solver, dalloc_IMEX_variables
 
   ! Type Definitions:
   !
@@ -47,7 +49,8 @@ module IMEX_solver
           vel, &  ! Velocity LHS matrix
           T,   &  ! Temperature LHS matrix
           S,   &  ! Salinity LHS matrix
-          bio     ! Biology quantity LHS matrix
+          bio, &  ! Biology quantity LHS matrix
+          null    ! Identity LHS matrix for non-diffusing quantities
   end type matrices
   !
   ! Semi-implicit diffusion/advection PDE right-hand side (RHS) arrays
@@ -89,11 +92,27 @@ module IMEX_solver
   ! Private to module:
   !
   type(matrices) :: &
-       Amatrix  ! LHS matrices (A) for semi-implicit PDE matrix eqns
+       nAmatrix  ! LHS matrices (A) for semi-implicit PDE matrix eqns
   type(RHS) :: &
        Hvector  ! RHS vectors (H) for semi-implicit PDE matrix eqns
 
 contains
+
+  subroutine init_IMEX_solver(M)
+    ! Initialize IMEX semi-implicit PDE solver variables.
+    implicit none
+    ! Argument:
+    integer :: M  ! Number of grid points
+
+    ! Allocate memory for IMEX solver variables
+    call alloc_IMEX_variables(M)
+    ! Initialize the identity Amatrix component vecctors used for
+    ! non-diffusing quantities (e.g. refractory nitrogen detritus)
+    nAmatrix%null%sub_diag = 0.
+    nAmatrix%null%diag = 1.
+    nAmatrix%null%super_diag = 0.
+  end subroutine init_IMEX_solver
+
 
   subroutine alloc_IMEX_variables(M)
     ! Allocate memory for arrays for tridiagonal matrices and
@@ -107,14 +126,16 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "LHS matrices (A) for semi-implicit PDE matrix eqns"
-    allocate(Amatrix%vel%sub_diag(1:M), Amatrix%vel%diag(1:M), &
-         Amatrix%vel%super_diag(1:M),                          &
-         Amatrix%T%sub_diag(1:M), Amatrix%T%diag(1:M),         &
-         Amatrix%T%super_diag(1:M),                            &
-         Amatrix%S%sub_diag(1:M), Amatrix%S%diag(1:M),         &
-         Amatrix%S%super_diag(1:M),                            &
-         Amatrix%bio%sub_diag(1:M), Amatrix%bio%diag(1:M),     &
-         Amatrix%bio%super_diag(1:M),                          &
+    allocate(nAmatrix%vel%sub_diag(1:M), nAmatrix%vel%diag(1:M), &
+         nAmatrix%vel%super_diag(1:M),                          &
+         nAmatrix%T%sub_diag(1:M), nAmatrix%T%diag(1:M),         &
+         nAmatrix%T%super_diag(1:M),                            &
+         nAmatrix%S%sub_diag(1:M), nAmatrix%S%diag(1:M),         &
+         nAmatrix%S%super_diag(1:M),                            &
+         nAmatrix%bio%sub_diag(1:M), nAmatrix%bio%diag(1:M),     &
+         nAmatrix%bio%super_diag(1:M),                          &
+         nAmatrix%null%sub_diag(1:M), nAmatrix%null%diag(1:M),   &
+         nAmatrix%null%super_diag(1:M),                         &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "RHS vectors (H) for semi-implicit PDE matrix eqns"
@@ -138,20 +159,22 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "LHS matrices (A) for semi-implicit PDE matrix eqns"
-    deallocate(Amatrix%vel%sub_diag, Amatrix%vel%diag, &
-         Amatrix%vel%super_diag,                       &
-         Amatrix%T%sub_diag, Amatrix%T%diag,           &
-         Amatrix%T%super_diag,                         &
-         Amatrix%S%sub_diag, Amatrix%S%diag,           &
-         Amatrix%S%super_diag,                         &
-         Amatrix%bio%sub_diag, Amatrix%bio%diag,       &
-         Amatrix%bio%super_diag,                       &
+    deallocate(nAmatrix%vel%sub_diag, nAmatrix%vel%diag, &
+         nAmatrix%vel%super_diag,                       &
+         nAmatrix%T%sub_diag, nAmatrix%T%diag,           &
+         nAmatrix%T%super_diag,                         &
+         nAmatrix%S%sub_diag, nAmatrix%S%diag,           &
+         nAmatrix%S%super_diag,                         &
+         nAmatrix%bio%sub_diag, nAmatrix%bio%diag,       &
+         nAmatrix%bio%super_diag,                       &
+         nAmatrix%null%sub_diag, nAmatrix%null%diag,     &
+         nAmatrix%null%super_diag,                      &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "RHS vectors (H) for semi-implicit PDE matrix eqns"
     deallocate(Hvector%U, Hvector%V, Hvector%T,        &
          Hvector%S, Hvector%Pmicro, Hvector%Pnano,     &
-         Hvector%NO, Hvector%NH, Hvector%Si,          &
+         Hvector%NO, Hvector%NH, Hvector%Si,           &
          Hvector%D_DON, Hvector%D_PON, Hvector%D_refr, &
          Hvector%D_bSi,                                &
          stat=dallocstat)
