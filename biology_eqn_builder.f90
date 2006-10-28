@@ -8,7 +8,7 @@ module biology_eqn_builder
   !
   ! Public Variables:
   !
-  !   diff_coeffs_bio -- Tridiagonal matrix of diffusion coefficient values
+  !   Bmatrix -- Tridiagonal matrix of diffusion coefficient values
   !
   !   Pmicro_RHS -- Micro phytoplankton (diatoms) right-hand side arrays
   !
@@ -38,6 +38,10 @@ module biology_eqn_builder
   !                         arrays to the %old component for use by the
   !                         IMEX semi-impllicit PDE solver.
   !
+  !   new_to_old_bio_Bmatrix -- Copy %new component of the Bmatrix%bio
+  !                             arrays to the %old component for use by the
+  !                             IMEX semi-impllicit PDE solver.
+  !
   !   alloc_bio_RHS_variables -- Allocate memory for biology RHS arrays
   !
   !   dalloc_bio_RHS_variables -- Deallocate memory for biology RHS arrays
@@ -48,7 +52,7 @@ module biology_eqn_builder
   private
   public :: &
        ! Variables:
-       diff_coeffs_bio, &  ! Tridiagonal matrix of diffusion coefficient values
+       nBmatrix, &  ! Tridiagonal matrix of diffusion coefficient values
        Pmicro_RHS,      &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,       &  ! Nano phytoplankton (flagellates) RHS arrays
        NO_RHS,          &  ! Nitrate concentration RHS arrays
@@ -59,7 +63,7 @@ module biology_eqn_builder
        D_refr_RHS,      &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS,       &  ! Biogenic silicon detritus RHS arrays
        ! Subroutines:
-       build_biology_equations, new_to_old_bio_RHS, &
+       build_biology_equations, new_to_old_bio_RHS, new_to_old_bio_Bmatrix, &
        alloc_bio_RHS_variables, dalloc_bio_RHS_variables
 
   ! Type Definitions:
@@ -69,21 +73,34 @@ module biology_eqn_builder
   ! Tridiagnonal matrix:
   type :: tridiag
      real(kind=dp), dimension(:), allocatable :: &
-          sub_diag, &  ! Sub-diagonal vector of a tridiagonal matrix
-          diag,     &  ! Diagonal vector of a tridiagonal matrix
-          super_diag   ! Super-diagonal vector of a tridiagonal matrix
+          sub,  &  ! Sub-diagonal vector of a tridiagonal matrix
+          diag, &  ! Diagonal vector of a tridiagonal matrix
+          sup      ! Super-diagonal vector of a tridiagonal matrix
   end type tridiag
   !
-  ! New/old array components:
+  ! New/old tridiagonal matrix components:
   type :: new_old
-     real(kind=dp), dimension(:), allocatable :: &
+     type(tridiag) :: &
           new, &  ! Current time step values
           old     ! Previous time step values
   end type new_old
   !
+  ! Diffusion coefficient matrix type:
+  type :: diff_coeffs_matrix
+     type(new_old) :: &
+          bio  ! Biology quantities diffusion coefficients matrix
+  end type diff_coeffs_matrix
+  !
+  ! New/old array components:
+  type :: new_old_arrays
+     real(kind=dp), dimension(:), allocatable :: &
+          new, &  ! Current time step values
+          old     ! Previous time step values
+  end type new_old_arrays
+  !
   ! Semi-implicit diffusion/advection equation right-hand side (RHS) arrays
   type :: RHS
-     type(new_old) :: &
+     type(new_old_arrays) :: &
           diff_adv  ! Diffusion/advection component of RHS
      real(kind=dp), dimension(:), allocatable :: &
           bio, &  ! Biology (growth - mortality) component of RHS
@@ -102,8 +119,15 @@ module biology_eqn_builder
   ! Variable Declarations:
   !
   ! Public:
-  type(tridiag) :: &
-       diff_coeffs_bio  ! Tridiagonal matrix of diffusion coefficient values
+  type(diff_coeffs_matrix) :: &
+       nBmatrix  ! Tridiagonal matrix of diffusion coefficient values
+                ! Components:
+                !   Bmatrix%bio
+                !              %new
+                !              %old
+                !                  %sub
+                !                  %diag
+                !                  %sup
   type(RHS) :: &
        Pmicro_RHS, &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,  &  ! Nano phytoplankton (flagellates) RHS arrays
@@ -166,8 +190,8 @@ contains
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
     call new_diffusion_coeff(grid, dt, K_all,            & ! in
-         diff_coeffs_bio%sub_diag, diff_coeffs_bio%diag, & ! out
-         diff_coeffs_bio%super_diag)                       ! out
+         nBmatrix%bio%new%sub, nBmatrix%bio%new%diag, & ! out
+         nBmatrix%bio%new%sup)                       ! out
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
@@ -418,6 +442,17 @@ contains
   end subroutine new_to_old_bio_RHS
 
 
+  subroutine new_to_old_bio_Bmatrix()
+    ! Copy %new component of the Bmatrix%bio arrays to the
+    ! %old component for use by the IMEX semi-impllicit PDE solver.
+    implicit none
+
+    nBmatrix%bio%old%sub = nBmatrix%bio%new%sub
+    nBmatrix%bio%old%diag = nBmatrix%bio%new%diag
+    nBmatrix%bio%old%sup = nBmatrix%bio%new%sup
+  end subroutine new_to_old_bio_Bmatrix
+
+
   subroutine alloc_bio_RHS_variables(M)
     ! Allocate memory for arrays for right-hand sides of
     ! diffusion/advection equations for the biology model.
@@ -430,8 +465,10 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Diffusion coefficients tridiagonal matrix arrays"
-    allocate(diff_coeffs_bio%sub_diag(1:M), diff_coeffs_bio%diag(1:M), &
-         diff_coeffs_bio%super_diag(1:M), &
+    allocate(nBmatrix%bio%new%sub(1:M), nBmatrix%bio%new%diag(1:M), &
+         nBmatrix%bio%new%sup(1:M),                                &
+         nBmatrix%bio%old%sub(1:M), nBmatrix%bio%old%diag(1:M),     &
+         nBmatrix%bio%old%sup(1:M),                                &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Micro phytoplankton RHS arrays"
@@ -492,8 +529,10 @@ contains
     character(len=80) :: msg         ! Allocation failure message prefix
 
     msg = "Diffusion coefficients tridiagonal matrix arrays"
-    deallocate(diff_coeffs_bio%sub_diag, diff_coeffs_bio%diag, &
-         diff_coeffs_bio%super_diag, &
+    deallocate(nBmatrix%bio%new%sub, nBmatrix%bio%new%diag, &
+         nBmatrix%bio%new%sup,                             &
+         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag,       &
+         nBmatrix%bio%old%sup,                             &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Micro phytoplankton RHS arrays"
