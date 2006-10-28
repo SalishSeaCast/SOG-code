@@ -760,7 +760,6 @@ contains
              dPZdt(jj) = WasteMicro(ii) * wastedestiny%m(kk)  &
                   + WasteNano(ii) * wastedestiny%s(kk) &
                   - rate_det%remineral(kk) * detr(kk,ii)
-!!$                  - Si_remin(ii)
           end if
        end do
        kk = 3
@@ -769,8 +768,7 @@ contains
        if (detr(kk,ii) > 0) then
           dPZdt(jj) = (NatMort_micro(ii) + GrazMort_micro(ii)) &
                * Pmicro(ii) * rate_micro%Si_ratio &
-               - rate_det%remineral(kk) * detr(kk,ii)
-!!$               - Si_remin(ii) 
+               - Si_remin(ii) 
        end if
   
     end do
