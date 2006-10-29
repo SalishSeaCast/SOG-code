@@ -17,8 +17,6 @@ program SOG
   use core_variables, only: U, V, T, S, P, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
-  ! *** Temporary until RHS refactoring is completed
-  use biology_eqn_builder, only: nBmatrix
   ! *** Temporary until IMEX refactoring is completed
   use IMEX_solver, only: Hvector
   !
@@ -698,17 +696,8 @@ program SOG
      ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H, & ! in
           Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)         ! in
-! *** Gvector refactoring bridge code
-Bmatrix%bio%A = nBmatrix%bio%new%sub
-Bmatrix%bio%B = nBmatrix%bio%new%diag
-Bmatrix%bio%C = nBmatrix%bio%new%sup
-
-
-     CALL matrix_A (Amatrix%bio, Bmatrix%bio)   !define Amatrix%A,%B,%C
 
      IF (time_step == 1) THEN ! initial estimate is better than 0.
-        Amatrix%null%A = 0. !(M)
-        Amatrix%null%B = 1.
         call new_to_old_bio_RHS()
         call new_to_old_bio_Bmatrix()
      END IF ! time_step == 1
@@ -717,26 +706,6 @@ Bmatrix%bio%C = nBmatrix%bio%new%sup
      ! biology quantities.
      call solve_biology_PDEs(grid%M, P%micro, P%nano, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi)
-
-     ! Solve the tridiagonal system for the biology quantities
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%Pmicro, P%micro(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%Pnano, P%nano(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%NO, &
-          N%O(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%NH, &
-          N%H(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, Hvector%Si, &
-          Si(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%D_DON, D%DON(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%D_PON, D%PON(1:grid%M))
-     call tridiag(Amatrix%null%A, Amatrix%null%B, Amatrix%null%A, &
-          Hvector%D_refr, D%refr(1:grid%M))
-     call tridiag(Amatrix%bio%A, Amatrix%bio%B, Amatrix%bio%C, &
-          Hvector%D_bSi, D%bSi(1:grid%M))
 
      ! Update boundary conditions at surface, and deal with negative
      ! values in biological model quantities
