@@ -47,6 +47,7 @@ module biology_eqn_builder
   !   dalloc_bio_RHS_variables -- Deallocate memory for biology RHS arrays
 
   use precision_defs, only: dp
+  use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
   implicit none
 
   private
@@ -69,14 +70,6 @@ module biology_eqn_builder
   ! Type Definitions:
   !
   ! Private to module:
-  !
-  ! Tridiagnonal matrix:
-  type :: tridiag
-     real(kind=dp), dimension(:), allocatable :: &
-          sub,  &  ! Sub-diagonal vector of a tridiagonal matrix
-          diag, &  ! Diagonal vector of a tridiagonal matrix
-          sup      ! Super-diagonal vector of a tridiagonal matrix
-  end type tridiag
   !
   ! New/old tridiagonal matrix components:
   type :: new_old
