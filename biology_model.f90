@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-module biology_ODE_solver
+module biology_model
   ! Biological model execution module.  A wrapper around a bunch of
   ! subroutine calls that advance the biological quantities to the
   ! next time step.
@@ -140,4 +140,4 @@ contains
     D_bSi_RHS%bio = PZ(bPz:ePz) - D_bSi(1:M)
   end subroutine unload_PZ
 
-end module biology_ODE_solver
+end module biology_model
