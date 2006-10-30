@@ -8,7 +8,6 @@ module mean_param
   ! hierarchy is more evident.
 
   use precision_defs, only: dp
-  use grid_mod, only: grid_
 
   implicit none
 
@@ -17,22 +16,9 @@ module mean_param
      real(kind=dp), dimension(:), pointer :: micro, nano
   end type phyto
 
-  ! Nitrogen compounds component of UVST type
-  type :: nut
-     real(kind=dp), dimension(:), pointer :: o, h
-  end type nut
-
-  ! Detritus component of UVST type
-  type :: det
-     real(kind=dp), dimension(:), pointer :: bin  !bin(M)
-  end type det
-
   ! Type for Gvectors and Hvector used in implicit solver
   type :: UVST              
-     real(kind=dp), dimension(:), pointer :: u, v, s, t, si
-     type(phyto) :: p 
-     type(nut) :: n
-     type(det), dimension(:), pointer :: d !d(D_bins)
+     real(kind=dp), dimension(:), pointer :: u, v, s, t
   end type UVST
 
   ! Grow component of plankton2 type
@@ -118,6 +104,7 @@ module mean_param
 CONTAINS
 
   SUBROUTINE find_jmax_g(hh, d)
+    use grid_mod, only: grid_
 
     TYPE(height), INTENT(IN OUT)::hh !mixed layer depth
     TYPE(grid_), INTENT(IN)::d 
@@ -143,6 +130,7 @@ CONTAINS
   END SUBROUTINE find_jmax_g
 
   SUBROUTINE find_jmax_i(h1, d1)
+    use grid_mod, only: grid_
 
     TYPE(height), INTENT(IN OUT)::h1 !depth
     TYPE(grid_), INTENT(IN)::d1
