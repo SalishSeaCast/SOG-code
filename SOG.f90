@@ -284,15 +284,14 @@ program SOG
         if (Fw_surface) then
            F_n = 0.
         else
-!!$           Fw_depth = h%old
-           Fw = Ft * exp(-grid%d_i / Fw_depth)
+           Fw = Ft * exp(-grid%d_i / (Fw_depth * h_old))
            F_n = S%new * Fw
         endif
 
 !!$        ! Store the surface buoyancy forcing value from the previous
 !!$        ! iteration so we can use it to blend with the new value to
 !!$        ! help the implicit solver converge more quickly
-!!$        Bf_old = Bf
+        Bf_old = Bf !!$
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
@@ -301,7 +300,7 @@ program SOG
 
 !!$        ! Blend the values of the surface buoyancy forcing from current
 !!$        ! and previous iteration to help convergence
-!!$        Bf = (count * Bf_old + (niter - count) * Bf) / niter
+        Bf = (count * Bf_old + (niter - count) * Bf) / niter !!$
 
 !!$        ! Calculate baroclinic pressure gradient components
 !!$        ! *** This might be a better place to calculate these gradients
@@ -458,7 +457,7 @@ program SOG
              Gvector%v)                                               ! out
 
         ! Calculate profile of upwelling velocity
-        call upwell_profile(grid, upwell, wupwell)
+        call upwell_profile(grid, Qinter, upwell, wupwell)
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
         call vertical_advection (grid, dt, S%new, wupwell, &
@@ -660,12 +659,13 @@ program SOG
         endif
      enddo  !---------- End of the implicit solver loop ----------
 
+!SEA     write (*,*) time/3600., S_riv, 0.5*(S%new(2)+S%new(3))
      ! Write time series results
      call write_timeseries(time / 3600., grid, &
        ! Variables for standard physical model output
        count, h%new, T%new, S%new, &
        ! User-defined physical model output variables
-!!$       &
+!SEA       dPdx_b, dPdy_b, unow, vnow, u%new, v%new, &
        ! Variables for standard biological model output
        N%O , N%H, Si, P%micro, P%nano, D%DON, D%PON, D%bSi &
        ! User-defined biological model output variables
@@ -737,7 +737,8 @@ program SOG
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
      scount = scount + 1
-     sumS = sumS + S%new(1)
+     !*** should compare to 1 m value... fix this to be grid independent
+     sumS = sumS + 0.5*(S%new(2)+S%new(3))
      sumSriv = sumSriv + S_riv
   end do  !--------- End of time loop ----------
 
