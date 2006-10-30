@@ -31,7 +31,7 @@ program SOG
   use biology_ODE_solver, only: solve_biology_ODEs
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
        new_to_old_bio_Bmatrix
-  use IMEX_solver, only: init_IMEX_solver, solve_biology_PDEs, &
+  use IMEX_solver, only: init_IMEX_solver, solve_bio_eqns, &
        dalloc_IMEX_variables
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
@@ -240,10 +240,8 @@ program SOG
      ! step
      CALL define_sog(time_step)
      call new_to_old_physics()
-     if (time_step > 1) then
-        call new_to_old_bio_RHS()
-        call new_to_old_bio_Bmatrix()
-     endif
+     call new_to_old_bio_RHS()
+     call new_to_old_bio_Bmatrix()
 
      ! Get forcing data
      call get_forcing (year, day, day_time, &
@@ -697,14 +695,18 @@ program SOG
      call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H, & ! in
           Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)         ! in
 
-     IF (time_step == 1) THEN ! initial estimate is better than 0.
+     ! Store %new components of RHS and Bmatrix variables in %old
+     ! their components for use by the IMEX solver.  Necessary for the
+     ! 1st time step because the values just calculated are a better
+     ! estimate than zero.
+     if (time_step == 1) then ! initial estimate is better than 0.
         call new_to_old_bio_RHS()
         call new_to_old_bio_Bmatrix()
-     END IF ! time_step == 1
+     endif
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
-     call solve_biology_PDEs(grid%M, P%micro, P%nano, N%O, N%H, Si, &
+     call solve_bio_eqns(grid%M, P%micro, P%nano, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi)
 
      ! Update boundary conditions at surface, and deal with negative
