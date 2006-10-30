@@ -102,9 +102,6 @@ module declarations
   ! Vertical profile of the entrainment velocity
   real(kind=dp), dimension(:), allocatable :: wupwell
 
-  !Detritus variables
-  INTEGER::D_bins  !number of detrital compartments  see input/biology.dat
-
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
 
   ! An empty vector
