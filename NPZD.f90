@@ -6,13 +6,17 @@ module NPZD
   !
   ! Public variables:
   !
+  ! Public Variables:
+  !
+  !   flagellates -- Can flagellates can influence other biology?
+  !
+  !   remineralization -- Is there a remineralization loop?
+  !
   !   rate_det --
   !
   ! Public subroutines:
   !
   !   init_biology -- Initialize biology model.
-  !
-  !   load_PZ --
   !
   !   derivs_sog --
   !
@@ -20,7 +24,7 @@ module NPZD
   !                               variables.
 
   use precision_defs, only: dp
-  use declarations, only: D_bins, M2 ! hopefully can get these out of everything else
+  use declarations, only: M2 ! hopefully can get these out of everything else
 
   implicit none
 
@@ -32,8 +36,10 @@ module NPZD
        PZ, &
        PZ_bins, &
        rate_det, & !*** for sinking
+       flagellates, &       ! Can flagellates can influence other biology?
+       remineralization, &  ! Is there a remineralization loop?
        ! Subroutines:
-       init_biology, load_PZ, derivs_sog, &
+       init_NPZD, derivs_sog, &
        dalloc_biology_variables
 
   ! Private type definitions:
@@ -72,7 +78,8 @@ module NPZD
   !
   ! Rate parameters for detritus
   type :: rate_detritus
-     real(kind=dp), dimension(:), pointer :: remineral, sink
+     real(kind=dp), dimension(:), pointer :: remineral
+!!$, sink
   end type rate_detritus
   !
   ! Nitrogen compound uptake diagnostics
@@ -85,6 +92,11 @@ module NPZD
 
   ! Public variable declarations:
   type(rate_detritus) :: rate_det
+  !
+  ! Biological model logicals (turned parts of the model on or off)
+  logical :: &
+       flagellates, &    ! Can flagellates can influence other biology?
+       remineralization  ! Is there a remineralization loop?
 
 
   ! Private variable declarations:
@@ -106,10 +118,6 @@ module NPZD
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
   !
-  ! Biological model logicals (turned parts of the model on or off)
-  logical :: flagellates  ! whether flagellates can influence other biology
-  logical :: remineralization !whether there is a remineralization loop
-  !
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano
   type(rate_para_nutrient) :: rate_N
@@ -123,9 +131,11 @@ module NPZD
        remin_NH, &  ! Total remineralization to ammonium
        NH_oxid      ! Bacterial oxidation of NH4 to NO3
 
+  integer :: D_bins
+
 contains
 
-  subroutine init_biology(M)
+  subroutine init_NPZD(M)
     ! Initialize biological model.
     ! *** Incomplete...
     use input_processor, only: getpard, getparl, getpari
@@ -148,8 +158,11 @@ contains
     ! diffusion/advection equations for the biology model.
     call alloc_bio_RHS_variables(M)
 
+    ! Read the values of the flagellates and remineralization loop
+    ! selector flags
     flagellates = getparl('flagellates_on')
     remineralization = getparl('remineralization')
+
 
     ! Biological rate parameters
     ! max growth rate for light limitation
@@ -203,14 +216,12 @@ contains
        wastedestiny%m(xx) = getpard('frac waste m')
        wastedestiny%s(xx) = getpard('frac waste s')
        rate_det%remineral(xx) = getpard("Remineral. rate")
-       rate_det%sink(xx) = getpard("Sinking rate")
     enddo
     wastedestiny%m(0) = 1. - wastedestiny%m(1) - wastedestiny%m(2) - &
          wastedestiny%m(D_bins)
     wastedestiny%s(0) = 1. - wastedestiny%s(1) - wastedestiny%s(2) - &
          wastedestiny%s(D_bins)
-
-  end subroutine init_biology
+  end subroutine init_NPZD
 
 
   subroutine alloc_biology_variables(M)
@@ -232,7 +243,7 @@ contains
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Detritus params (biology model timestep initial conditions) array"
-    allocate(rate_det%remineral(1:D_bins), rate_det%sink(1:D_bins), &
+    allocate(rate_det%remineral(1:D_bins), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrogen compounds uptake diagnostic arrays"
@@ -264,7 +275,7 @@ contains
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Detritus params (biology model timestep initial conditions) array"
-    deallocate(rate_det%remineral, rate_det%sink, &
+    deallocate(rate_det%remineral, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Nitrogen compounds uptake diagnostic arrays"
@@ -279,98 +290,6 @@ contains
     ! diffusion/advection equations for the biology model.
     call dalloc_bio_RHS_variables()
   end subroutine dalloc_biology_variables
-
-
-  SUBROUTINE load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
-       D_DON, D_PON, D_refr, D_bSi, &
-       PZ)
-    ! Load all of the separate biology variables (microplankton,
-    ! nanoplankton, nitrate, ammonium, silicon, and detritus
-    ! sequentially into the PZ vector for the ODE solver to use.
-    use precision_defs, only: dp
-    implicit none
-    ! Arguments:
-    integer, intent(in) :: M  ! Number of grid points
-    real(kind=dp), dimension(0:), intent(in) :: &
-         Pmicro, &  ! Micro phytoplankton biomass profile array
-         Pnano,  &  ! Nano phytoplankton biomass profile array
-         NO,     &  ! Nitrate concentration profile array
-         NH,     &  ! Ammonium concentration profile array
-         Si,     &  ! Silicon concentration profile array
-         D_DON,  &  ! Dissolved organic nitrogen detritus profile
-         D_PON,  &  ! Particulate organic nitrogen detritus profile
-         D_refr, &  ! Refractory nitrogen detritus profile
-         D_bSi      ! Biogenic silicon detritus profile
-    real(kind=dp), dimension (1:), intent (out) :: &
-         PZ  ! Array of biology variables for ODE solver
-    ! Local Variables
-    integer :: &
-         bPZ, &  ! Beginning index for a quantity in the PZ array
-         ePZ     ! Ending index for a quantity in the PZ array
-
-    ! Initialize PZ array
-    PZ = 0.
-    ! Load micro phytoplankton
-    bPz = (PZ_bins%micro - 1) * M + 1
-    ePZ = PZ_bins%micro * M
-    PZ(bPZ:ePZ) = Pmicro(1:M)
-    ! Load nano phytoplankton
-    bPz = (PZ_bins%nano - 1) * M + 1
-    ePZ = PZ_bins%nano * M
-    if (flagellates) then
-       PZ(bPZ:ePZ) = Pnano(1:M)
-    else
-       PZ(bPZ:ePZ) = 0.
-    endif
-    ! Load nitrate
-    bPz = (PZ_bins%NO - 1) * M + 1
-    ePZ = PZ_bins%NO * M
-    PZ(bPZ:ePZ) = NO(1:M)
-    ! Load ammonium
-    bPz = (PZ_bins%NH - 1) * M + 1
-    ePZ = PZ_bins%NH * M
-    if (remineralization) then
-       PZ(bPZ:ePZ) = NH(1:M)
-    else
-       PZ(bPZ:ePZ) = 0
-    endif
-    ! Load silicon
-    bPz = (PZ_bins%Si - 1) * M + 1
-    ePZ = PZ_bins%Si * M
-    PZ(bPZ:ePZ) = Si(1:M)
-    ! Load dissolved organic nitrogen detritus
-    bPz = (PZ_bins%DON - 1) * M + 1
-    ePz = PZ_bins%DON * M
-    if (remineralization) then
-       PZ(bPz:ePz) = D_DON(1:M)
-    else
-       PZ(bPz:ePz) = 0.
-    endif
-    ! Load particulate organic nitrogen detritus
-    bPz = (PZ_bins%PON - 1) * M + 1
-    ePz = PZ_bins%PON * M
-    if (remineralization) then
-       PZ(bPz:ePz) = D_PON(1:M)
-    else
-       PZ(bPz:ePz) = 0.
-    endif
-    ! Load refractory nitrogen detritus
-    bPz = (PZ_bins%refr - 1) * M + 1
-    ePz = PZ_bins%refr * M
-    if (remineralization) then
-       PZ(bPz:ePz) = D_refr(1:M)
-    else
-       PZ(bPz:ePz) = 0.
-    endif
-    ! Load biogenic silicon detritus
-    bPz = (PZ_bins%bSi - 1) * M + 1
-    ePz = PZ_bins%bSi * M
-    if (remineralization) then
-       PZ(bPz:ePz) = D_bSi(1:M)
-    else
-       PZ(bPz:ePz) = 0.
-    endif
-  end subroutine load_PZ
 
 
   subroutine p_growth(M, NO, NH, Si, P, I_par, Temp, rate, plank, & 
@@ -519,7 +438,7 @@ contains
 
     use precision_defs, only: dp
     use mean_param, only: plankton2
-    use declarations, only: D_bins, micro, nano, &
+    use declarations, only: micro, nano, &
          f_ratio
 
     implicit none
