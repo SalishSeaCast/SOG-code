@@ -284,7 +284,7 @@ program SOG
         if (Fw_surface) then
            F_n = 0.
         else
-           Fw = Ft * exp(-grid%d_i / (Fw_depth * h_old))
+           Fw = Ft * exp(-grid%d_i / (Fw_depth * h%old))
            F_n = S%new * Fw
         endif
 
