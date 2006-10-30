@@ -27,10 +27,10 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
-  use NPZD, only: init_biology, dalloc_biology_variables
-  use biology_model, only: solve_biology_ODEs
+  use biology_model, only: init_biology, calc_bio_rate
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
        new_to_old_bio_Bmatrix
+  use NPZD, only: dalloc_biology_variables
   use IMEX_solver, only: init_IMEX_solver, solve_bio_eqns, &
        dalloc_IMEX_variables
   use input_processor, only: init_input_processor, getpars, getpari, &
@@ -683,7 +683,7 @@ program SOG
      ! Solve the biology model ODEs to advance the biology quantity values
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
-     call solve_biology_ODEs(time, day, dt, grid%M, precision, step_guess, step_min,  &
+     call calc_bio_rate(time, day, dt, grid%M, precision, step_guess, step_min,  &
           T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
           D%DON, D%PON, D%refr, D%bSi)
 
