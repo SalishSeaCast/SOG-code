@@ -27,8 +27,8 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
-  use biological_mod, only: init_biology, dalloc_biology_variables
-  use biology_ODE_solver, only: solve_biology_ODEs
+  use NPZD, only: init_biology, dalloc_biology_variables
+  use biology_model, only: solve_biology_ODEs
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
        new_to_old_bio_Bmatrix
   use IMEX_solver, only: init_IMEX_solver, solve_bio_eqns, &

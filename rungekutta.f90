@@ -21,7 +21,7 @@ contains
        step_min, N_ok, N_bad, Temp, I_par, day)
 
     use precision_defs, only: dp
-    use biological_mod, only: derivs_sog
+    use NPZD, only: derivs_sog
 
     implicit none
 
@@ -175,7 +175,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
   subroutine rkck (PZ, dPZdt, M, M2, step, PZout, PZerr, Temp, I_par, day)
 
     use precision_defs, only: dp
-    use biological_mod, only: derivs_sog
+    use NPZD, only: derivs_sog
     
     implicit none
 

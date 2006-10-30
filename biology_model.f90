@@ -26,7 +26,7 @@ contains
     use precision_defs, only: dp
     use declarations, only: M2   ! need to get rid of these
     use rungekutta, only: odeint
-    use biological_mod, only: PZ, load_PZ
+    use NPZD, only: PZ, load_PZ
     use numerics, only: check_negative
     implicit none
 
@@ -79,7 +79,7 @@ contains
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate *_RHS%bio arrays.
     use precision_defs, only: dp
-    use biological_mod, only: PZ_bins
+    use NPZD, only: PZ_bins
     use biology_eqn_builder, only: Pmicro_RHS, Pnano_RHS, NO_RHS, NH_RHS, &
          Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
     implicit none
