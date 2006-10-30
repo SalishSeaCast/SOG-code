@@ -707,68 +707,20 @@ program SOG
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
      call solve_bio_eqns(grid%M, P%micro, P%nano, N%O, N%H, Si, &
-          D%DON, D%PON, D%refr, D%bSi)
+          D%DON, D%PON, D%refr, D%bSi, day, time)
+     !
+     !---------- End of Biology Model ----------
 
-     ! Update boundary conditions at surface, and deal with negative
-     ! values in biological model quantities
-     ! *** This is refactored code from find_new() that needs to go
-     ! *** somewhere else
+     ! Update boundary conditions at surface
      P%micro(0) = P%micro(1)
-     if (any(P%micro < 0.)) then
-        where (P%micro < 0.) P%micro = 0.
-        write(stdout, *) "Warning: negative value(s) in P%micro ", &
-             "were set to zero."
-     endif
      P%nano(0) = P%nano(1)
-     if (any(P%nano < 0.)) then
-        where (P%nano < 0.) P%nano = 0.
-        write(stdout, *) "Warning: negative value(s) in P%nano ", &
-             "were set to zero."
-     endif
      N%O(0) = N%O(1)
-     if (any(N%O < 0.)) then
-        where (N%O < 0.) N%O = 0.
-        write(stdout, *) "Warning: negative value(s) in N%O ", &
-             "were set to zero."
-     endif
      N%H(0) = N%H(1)
-     if (any(N%H < 0.)) then
-        where (N%H < 0.) N%H = 0.
-        write(stdout, *) "Warning: negative value(s) in N%H ", &
-             "were set to zero."
-     endif
      Si(0) = Si(1)
-     if (any(Si < 0.)) then
-        where (Si < 0.) Si = 0.
-        write(stdout, *) "Warning: negative value(s) in Si ", &
-             "were set to zero."
-     endif
      D%DON(0) = D%DON(1)
-     if (any(D%DON < 0.)) then
-        where (D%DON < 0.) D%DON = 0.
-        write(stdout, *) "Warning: negative value(s) in D%DON ", &
-             "were set to zero."
-     endif
      D%PON(0) = D%PON(1)
-     if (any(D%PON < 0.)) then
-        where (D%PON < 0.) D%PON = 0.
-        write(stdout, *) "Warning: negative value(s) in D%PON ", &
-             "were set to zero."
-     endif
      D%refr(0) = D%refr(1)
-     if (any(D%refr < 0.)) then
-        where (D%refr < 0.) D%refr = 0.
-        write(stdout, *) "Warning: negative value(s) in D%refr ", &
-             "were set to zero."
-     endif
      D%bSi(0) = D%bSi(1)
-     if (any(D%bSi < 0.)) then
-        where (D%bSi < 0.) D%bSi = 0.
-        write(stdout, *) "Warning: negative value(s) in D%bSi ", &
-             "were set to zero."
-     endif
-
-     !-----END BIOLOGY------------------------------------------------
 
      !--------bottom boundaries--------------------------
      ! Update boundary conditions at bottom of grid
