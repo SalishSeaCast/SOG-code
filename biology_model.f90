@@ -2,23 +2,78 @@
 ! $Source$
 
 module biology_model
-  ! Biological model execution module.  A wrapper around a bunch of
-  ! subroutine calls that advance the biological quantities to the
-  ! next time step.
+  ! Type definitions, variable & parameter value declarations, and
+  ! subroutines related to the biolgy model in the SOG code.
+  !
+  ! Public Type Definitions:
+  !
+  !   cheese -- Description
+  !
+  ! Public Parameters:
+  !
+  !   spam -- Description
+  !
   !
   ! Public subroutine:
   !
-  !   solve_biology_ODEs -- A wrapper around a bunch of subroutine calls that
+  !   calc_bio_rate -- A wrapper around a bunch of subroutine calls that
   !               advance the biological quantities to the next time step.
 
   implicit none
 
   private
-  public :: solve_biology_ODEs
+  public :: &
+       ! Type definitions:
+!!$       cheese, &
+       ! Parameter values:
+!!$       spam, &
+       ! Subroutines:
+       init_biology, calc_bio_rate
+
+  ! Type Definitions:
+  !
+  ! Public:
+  !
+  ! Private to module:
+
+  ! Parameter Value Declarations:
+  !
+  ! Public:
+  !
+  ! Private to module:
+  !
+  ! Variable Declarations:
+  !
+  ! Public:
+  !
+  ! Private to module:
 
 contains
 
-  subroutine solve_biology_ODEs(time, day, dt, M, precision, step_guess, step_min,    &
+  subroutine init_biology(M)
+    ! Initialize the biology model.
+    use NPZD, only: init_NPZD
+    use biology_eqn_builder, only: read_sink_params
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+
+!!$    call read_biology_params()
+    call init_NPZD(M)
+    call read_sink_params()
+  end subroutine init_biology
+  
+
+!!$  subroutine read_biology_params
+!!$    ! Read the biology model parameters from the input file
+!!$    use input_processor, only: getpari, getpard
+!!$    implicit none
+!!$
+!!$  end subroutine read_biology_params
+
+
+  subroutine calc_bio_rate(time, day, dt, M, precision, step_guess, step_min,    &
        T_new, I_par, Pmicro, Pnano, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the biology model ODEs to advance the biology quantity values
     ! to the next time step, and calculate the growth - mortality terms
@@ -26,7 +81,7 @@ contains
     use precision_defs, only: dp
     use declarations, only: M2   ! need to get rid of these
     use rungekutta, only: odeint
-    use NPZD, only: PZ, load_PZ
+    use NPZD, only: PZ
     use numerics, only: check_negative
     implicit none
 
@@ -71,7 +126,100 @@ contains
     ! appropriate components of Gvector
     call unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
          D_DON, D_PON, D_refr, D_bSi)
-  end subroutine solve_biology_ODEs
+  end subroutine calc_bio_rate
+
+
+  subroutine load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi, &
+       PZ)
+    ! Load all of the separate biology variables (microplankton,
+    ! nanoplankton, nitrate, ammonium, silicon, and detritus
+    ! sequentially into the PZ vector for the ODE solver to use.
+    use precision_defs, only: dp
+    use NPZD, only: PZ_bins, flagellates, remineralization
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(in) :: &
+         Pmicro, &  ! Micro phytoplankton biomass profile array
+         Pnano,  &  ! Nano phytoplankton biomass profile array
+         NO,     &  ! Nitrate concentration profile array
+         NH,     &  ! Ammonium concentration profile array
+         Si,     &  ! Silicon concentration profile array
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
+    real(kind=dp), dimension (1:), intent (out) :: &
+         PZ  ! Array of biology variables for ODE solver
+    ! Local Variables
+    integer :: &
+         bPZ, &  ! Beginning index for a quantity in the PZ array
+         ePZ     ! Ending index for a quantity in the PZ array
+
+    ! Initialize PZ array
+    PZ = 0.
+    ! Load micro phytoplankton
+    bPz = (PZ_bins%micro - 1) * M + 1
+    ePZ = PZ_bins%micro * M
+    PZ(bPZ:ePZ) = Pmicro(1:M)
+    ! Load nano phytoplankton
+    bPz = (PZ_bins%nano - 1) * M + 1
+    ePZ = PZ_bins%nano * M
+    if (flagellates) then
+       PZ(bPZ:ePZ) = Pnano(1:M)
+    else
+       PZ(bPZ:ePZ) = 0.
+    endif
+    ! Load nitrate
+    bPz = (PZ_bins%NO - 1) * M + 1
+    ePZ = PZ_bins%NO * M
+    PZ(bPZ:ePZ) = NO(1:M)
+    ! Load ammonium
+    bPz = (PZ_bins%NH - 1) * M + 1
+    ePZ = PZ_bins%NH * M
+    if (remineralization) then
+       PZ(bPZ:ePZ) = NH(1:M)
+    else
+       PZ(bPZ:ePZ) = 0
+    endif
+    ! Load silicon
+    bPz = (PZ_bins%Si - 1) * M + 1
+    ePZ = PZ_bins%Si * M
+    PZ(bPZ:ePZ) = Si(1:M)
+    ! Load dissolved organic nitrogen detritus
+    bPz = (PZ_bins%DON - 1) * M + 1
+    ePz = PZ_bins%DON * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_DON(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+    ! Load particulate organic nitrogen detritus
+    bPz = (PZ_bins%PON - 1) * M + 1
+    ePz = PZ_bins%PON * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_PON(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+    ! Load refractory nitrogen detritus
+    bPz = (PZ_bins%refr - 1) * M + 1
+    ePz = PZ_bins%refr * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_refr(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+    ! Load biogenic silicon detritus
+    bPz = (PZ_bins%bSi - 1) * M + 1
+    ePz = PZ_bins%bSi * M
+    if (remineralization) then
+       PZ(bPz:ePz) = D_bSi(1:M)
+    else
+       PZ(bPz:ePz) = 0.
+    endif
+  end subroutine load_PZ
 
 
   subroutine unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
