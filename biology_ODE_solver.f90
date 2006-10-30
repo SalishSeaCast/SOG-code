@@ -27,6 +27,7 @@ contains
     use declarations, only: M2   ! need to get rid of these
     use rungekutta, only: odeint
     use biological_mod, only: PZ, load_PZ
+    use numerics, only: check_negative
     implicit none
 
     ! Arguments:
@@ -57,14 +58,14 @@ contains
     call load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
          D_DON, D_PON, D_refr, D_bSi, &
          PZ)                                               ! out
-    call check_negative(PZ, 'after define_PZ', time, day)
+    call check_negative(1, PZ, "PZ after load_PZ()", day, time)
 
     ! Solve the biological model for values at the next time step
     next_time = time + dt
     call odeint(PZ, M, M2, time, next_time, precision, step_guess, &
          step_min, &
          N_ok, N_bad, T_new, I_par, day)
-    call check_negative(PZ, 'after odeint', time, day)
+    call check_negative(1, PZ, "PZ after odeint()", day, time)
 
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
@@ -138,31 +139,5 @@ contains
     ePz = PZ_bins%bSi * M
     D_bSi_RHS%bio = PZ(bPz:ePz) - D_bSi(1:M)
   end subroutine unload_PZ
-
-
-  subroutine check_negative(PZ, msg, time, day)
-    ! Check for negative values in PZ vector, a fatal error.
-    use precision_defs, only: dp
-    use io_unit_defs, only: stderr
-    implicit none
-    ! Arguments:
-    real(kind=dp), dimension(:), intent(in) :: PZ
-    character(len=*) :: msg
-    real(kind=dp), intent(in) :: time
-    integer, intent(in) :: day
-
-    integer :: i ! counter
-
-    if (minval(PZ) < 0.) then
-       write(stderr, *) "do_biology: Negative value in PZ ", &
-            msg, " day = ", day, " time = ", time
-       do i = 1, size(PZ)
-          if (PZ(i) < 0.) then
-             write (stderr, *) "Value at index, ",i
-          endif
-       enddo
-       stop
-    endif
-  end subroutine check_negative
 
 end module biology_ODE_solver
