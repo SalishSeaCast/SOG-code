@@ -14,7 +14,9 @@ module IMEX_solver
   !                            matrices and right-hand sides of
   !                            diffusion/advection PDEs.
   !
-  !   solve_biology_PDEs -- 
+  !   solve_bio_eqns -- Solve the semi-implicit diffusion/advection
+  !                     PDEs for the biology quantities.
+
 
   use precision_defs, only: dp
   use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
@@ -29,7 +31,7 @@ module IMEX_solver
        ! *** Temporary for refactoring
        Hvector, &
        ! Subroutines:
-       init_IMEX_solver, solve_biology_PDEs, dalloc_IMEX_variables
+       init_IMEX_solver, solve_bio_eqns, dalloc_IMEX_variables
 
   ! Type Definitions:
   !
@@ -100,10 +102,46 @@ contains
   end subroutine init_IMEX_solver
 
 
-  subroutine solve_biology_PDEs(M, Pmicro, Pnano, NO, NH, Si, &
+  subroutine solve_bio_eqns(M, Pmicro, Pnano, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
     ! Solve the semi-implicit diffusion/advection PDEs for the
     ! biology quantities.
+    use precision_defs, only: dp
+    use biology_eqn_builder, only: nBmatrix
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(inout) :: &
+         Pmicro, &  ! Micro phytoplankton
+         Pnano,  &  ! Nano phytoplankton
+         NO,     &  ! Nitrate
+         NH,     &  ! Ammonium
+         Si,     &  ! Silicon
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
+    
+    ! Build the RHS vectors (h) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h
+    call build_bio_Hvectors(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi)
+
+    ! Build the LHS matrix (A) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h
+    call build_Amatrix(nBmatrix%bio%new, nAmatrix%bio)
+
+    ! Solve the discretized semi-implicit PDE matrix equations Aq = h
+    call solve_bio_tridiags(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi)
+  end subroutine solve_bio_eqns
+
+
+  subroutine build_bio_Hvectors(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi)
+    ! Build the RHS vectors (h) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h
     use precision_defs, only: dp
     use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, &
        NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
@@ -122,9 +160,6 @@ contains
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
     
-    ! Build the RHS vectors (h) for the discretized semi-implicit PDE
-    ! matrix equations Aq = h
-    !
     ! Micro phytoplankton (diatoms)
     call bio_Hvector(M, Pmicro, Pmicro_RHS%diff_adv%new, &
          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
@@ -170,13 +205,28 @@ contains
          D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, D_bSi_RHS%sink, &
          nBmatrix%bio%old, &
          Hvector%D_bSi)
+  end subroutine build_bio_Hvectors
 
-    ! Build the LHS matrix (A) for the discretized semi-implicit PDE
-    ! matrix equations Aq = h
-    call build_Amatrix(nBmatrix%bio%new, nAmatrix%bio)
 
+    subroutine solve_bio_tridiags(M, Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi)
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
-    !
+    use precision_defs, only: dp
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(inout) :: &
+         Pmicro, &  ! Micro phytoplankton
+         Pnano,  &  ! Nano phytoplankton
+         NO,     &  ! Nitrate
+         NH,     &  ! Ammonium
+         Si,     &  ! Silicon
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
+    
     ! Micro phytoplankton (diatoms)
     call solve_tridiag(nAmatrix%bio, Hvector%Pmicro, Pmicro(1:M))
     ! Nano phytoplankton (flagellates)
@@ -195,7 +245,7 @@ contains
     call solve_tridiag(nAmatrix%bio, Hvector%D_refr, D_refr(1:M))
     ! Biogenic silicon detritus
     call solve_tridiag(nAmatrix%bio, Hvector%D_bSi, D_bSi(1:M))
-  end subroutine solve_biology_PDEs
+  end subroutine solve_bio_tridiags
 
 
   subroutine phys_Hvector(M, qty_old, flux, flux_old, C_pg, &
