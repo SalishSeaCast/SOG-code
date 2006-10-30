@@ -8,9 +8,9 @@ module find_upwell
   !
   ! Public Subroutines:
   !
-  ! upwell_profile(grid, S, upwell, wupwell)
+  ! upwell_profile(grid, Qriver, upwell, wupwell)
   !   -Calculate the vertical profile of the entrainment velocity based
-  !    on the salinity profile, and the maximum upwelling velocity.
+  !    on the strength of the River, and the maximum upwelling velocity.
   !
   ! vertical_advection(grid, dt, property, wupwell, gvector)
   !   -Calculate the vertical advection of a quantity based on the
@@ -23,22 +23,26 @@ module find_upwell
 
 contains
 
-  subroutine upwell_profile(grid, upwell, wupwell)
+  subroutine upwell_profile(grid, Qriver, upwell, wupwell)
     ! Calculate the vertical profile of the entrainment velocity based
-    ! on the salinity profile, and the maximum upwelling velocity.
+    ! on the Fraser River flow, and the maximum upwelling velocity.
     ! The latter is a function of the Fraser River flow, and is
     ! calculated in the surface_flux subroutine.  The details of the
     ! model to do this are in the the document entrainment.pdf written
     ! in late June 2006.
 
-    use precision_defs, only: dp
+    ! type definitions
+    use precision_defs, only: dp, sp
     use grid_mod, only: grid_
+    ! subroutines
+    use grid_mod, only: interp_value
 
     implicit none
 
     ! Arguments:
     type(grid_), intent(in) :: grid                 ! Grid properties
     real(kind=dp), intent(in) :: upwell            ! Maximum upwelling velocity
+    real(kind=sp), intent(in) :: Qriver            ! River flow
     ! Vertical upwelling velocity profile
     real(kind=dp), intent(out), dimension(1:) :: wupwell 
 
@@ -47,10 +51,11 @@ contains
     real(kind=dp) :: d25    ! 2.5 d, depth of upwelling variation
     integer :: index        ! counter through depth
 
-    ! Set the depth of 68% fresh water content to a constant
-    ! using a variable values was less stable.  To go back to
+    ! Set the depth of 68% fresh water content to the fit found
+    ! in entrainment.pdf. Using a value based on the current salinity
+    ! profile was less stable. For 
     ! calculating d from the salinity, see code version 1.8
-    d = 11.7
+    d = 11.7 * (Qriver/2720.)**(-0.23)
 
     ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5*d
