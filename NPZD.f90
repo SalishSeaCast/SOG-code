@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-module biological_mod
+module NPZD
   ! Type definitions, and subroutines for the biological model.
   !
   ! Public variables:
@@ -778,4 +778,4 @@ contains
 
   end subroutine derivs_sog
 
-end module biological_mod
+end module NPZD
