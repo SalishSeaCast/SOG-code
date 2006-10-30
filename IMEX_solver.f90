@@ -103,7 +103,7 @@ contains
 
 
   subroutine solve_bio_eqns(M, Pmicro, Pnano, NO, NH, Si, &
-       D_DON, D_PON, D_refr, D_bSi)
+       D_DON, D_PON, D_refr, D_bSi, day, time)
     ! Solve the semi-implicit diffusion/advection PDEs for the
     ! biology quantities.
     use precision_defs, only: dp
@@ -122,6 +122,11 @@ contains
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
+    integer, intent(in) :: &
+         day   ! Year-day of current time step
+    real(kind=dp), intent(in) :: &
+         time  ! Time of current time step [s since start of run]
+
     
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
@@ -135,6 +140,11 @@ contains
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
     call solve_bio_tridiags(M, Pmicro, Pnano, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
+
+    ! Check for negative values in results, and stop with a fatal
+    ! error message if any are found
+    call check_bio_negatives(Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.true.)
   end subroutine solve_bio_eqns
 
 
@@ -247,6 +257,60 @@ contains
     call solve_tridiag(nAmatrix%bio, Hvector%D_bSi, D_bSi(1:M))
   end subroutine solve_bio_tridiags
 
+
+  subroutine check_bio_negatives(Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
+    ! Check for negative values in results.
+    use precision_defs, only: dp
+    use numerics, only: check_negative
+    implicit none
+    ! Arguments:
+    real(kind=dp), dimension(0:), intent(inout) :: &
+         Pmicro, &  ! Micro phytoplankton
+         Pnano,  &  ! Nano phytoplankton
+         NO,     &  ! Nitrate
+         NH,     &  ! Ammonium
+         Si,     &  ! Silicon
+         D_DON,  &  ! Dissolved organic nitrogen detritus profile
+         D_PON,  &  ! Particulate organic nitrogen detritus profile
+         D_refr, &  ! Refractory nitrogen detritus profile
+         D_bSi      ! Biogenic silicon detritus profile
+    integer, intent(in) :: &
+         day   ! Year-day of current time step
+    real(kind=dp), intent(in) :: &
+         time  ! Time of current time step [s since start of run]
+    logical, intent(in), optional :: &
+         fatal
+
+    ! Micro phytoplankton (diatoms)
+    call check_negative(0, Pmicro, "P%micro after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Nano phytoplankton (flagellates)
+    call check_negative(0, Pnano, "P%nano after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Nitrate
+    call check_negative(0, NO, "N%O after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Ammonium
+    call check_negative(0, NH, "N%H after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Silicon
+    call check_negative(0, Si, "Si after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Dissolved organic nitrogen detritus
+    call check_negative(0, D_DON, "D%DON after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Particulate organic nitrogen detritus
+    call check_negative(0, D_PON, "D%PON after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Refractory nitrogen detritus
+    call check_negative(0, D_refr, "D%refr after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Biogenic silicon detritus
+    call check_negative(0, D_bSi, "D%bSi after solve_bio_eqns()", &
+         day, time, fatal)
+  end subroutine check_bio_negatives
+  
 
   subroutine phys_Hvector(M, qty_old, flux, flux_old, C_pg, &
        C_pg_old, Bmatrix, Hvector)
