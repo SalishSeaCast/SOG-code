@@ -30,6 +30,8 @@ module biology_eqn_builder
   !
   ! Public Subroutines:
   !
+  !   read_sink_params -- 
+  !
   !   build_biology_equations -- Build the right-hand side (RHS) arrays
   !                              for the diffusion/advection equations for
   !                              the biology quantities.
@@ -64,7 +66,8 @@ module biology_eqn_builder
        D_refr_RHS,      &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS,       &  ! Biogenic silicon detritus RHS arrays
        ! Subroutines:
-       build_biology_equations, new_to_old_bio_RHS, new_to_old_bio_Bmatrix, &
+       read_sink_params, build_biology_equations, &
+       new_to_old_bio_RHS, new_to_old_bio_Bmatrix, &
        alloc_bio_RHS_variables, dalloc_bio_RHS_variables
 
   ! Type Definitions:
@@ -106,6 +109,7 @@ module biology_eqn_builder
           Pmicro_min, &  ! Minimum sinking velocity of micro phytos [m/s]
           Pmicro_max, &  ! Maximum sinking velocity of micro phytos [m/s]
           D_PON,      &  ! Sinking velocity of PON detritus [m/s]
+          D_refr,     &  ! Sinking velocity of refractorydetritus [m/s]
           D_bSi          ! Sinking velocity of biogenic silicon detritus [m/s]
   end type sink_vels
 
@@ -139,6 +143,24 @@ module biology_eqn_builder
        w_sink  ! Sinking velocities of biology quantities [m/s]
 
 contains
+
+  subroutine read_sink_params()
+    ! Read the sinking rate parameter values from the infile.
+    use input_processor, only: getpard
+    implicit none
+
+    ! Micro phytoplankton (diatoms) minimum sinking rate [m/d]
+    w_sink%Pmicro_min = getpard("Micro min sink rate") / 86400.
+    ! Micro phytoplankton (diatoms) maximum sinking rate [m/d]
+    w_sink%Pmicro_max = getpard("Micro max sink rate") / 86400.
+    ! Particulate organic nitrogen (PON) detritus sinking rate [m/s]
+    w_sink%D_PON = getpard("PON sink rate")
+    ! Refractory nitrogen detritus sinking rate [m/s]
+    w_sink%D_refr = getpard("refr sink rate")
+    ! Biogenic silicon detritus sinking rate [m/s]
+    w_sink%D_bSi = getpard("bSi sink rate")
+  end subroutine read_sink_params
+  
 
   subroutine build_biology_equations(grid, dt, Pmicro, Pnano, NO, NH,  & ! in
        Si, D_DON, D_PON, D_refr, D_bSi, Ft, K_all, wupwell)
@@ -237,21 +259,16 @@ contains
          D_bSi_RHS%diff_adv%new)
 
     ! Calculate the sinking term for the quantities that sink
-!!$     micro%sink_min = 0.3*1.1574D-05 ! 0.3/m per day
-!!$     micro%sink_max = 1.2*1.1574D-05 ! 1.2/m per day
-     w_sink%Pmicro_min = 0.3 / 86400.
-     w_sink%Pmicro_max = 1.2 / 86400.
-!!$     w_sink%D_PON = rate_det%sink(2)
-!!$     w_sink%D_bSi = rate_det%sink(3)
-     w_sink%D_PON = 1.157d-5
-     w_sink%D_bSi = 2.3d-5
-!!$     sflux = micro%sink_min * micro%Nlimit + micro%sink_max *(1 - micro%Nlimit)
+    ! *** There is a problem here: micro%Nlimit is a profile
+    ! *** but sinking_advection() only accepts a scalar rate.
      Pmicro_w_sink = w_sink%Pmicro_min * micro%Nlimit(1) &
           + w_sink%Pmicro_max * (1 - micro%Nlimit(1))
      call sinking_advection(grid, dt, Pmicro, Pmicro_w_sink, &
           Pmicro_RHS%sink)
      call sinking_advection(grid, dt, D_PON, w_sink%D_PON, &
           D_PON_RHS%sink)
+     call sinking_advection(grid, dt, D_refr, w_sink%D_refr, &
+          D_refr_RHS%sink)
      call sinking_advection(grid, dt, D_bSi, w_sink%D_bSi, &
           D_bSi_RHS%sink)
   end subroutine build_biology_equations
