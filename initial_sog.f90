@@ -20,7 +20,7 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, &
+  subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, Z, &
        NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
        hi, pbx, pby, d, cruise_id)       
     ! *** What's it do?
@@ -36,6 +36,7 @@ contains
          S_new,  &  ! Salinity profile
          Pmicro, &  ! Micro phytoplankton profile
          Pnano,  &  ! Nano phytoplankton profile
+         Z,      &  ! Microzooplankton profile
          NO,     &  ! Nitrate profile
          NH,     &  ! Ammonium profile
          Si,     &  ! Silicon profile
@@ -149,6 +150,7 @@ contains
        T_new(i) = T_new(i) + 273.15
        Pmicro(i) = 5.0/6.0*Pmicro(i)
        Pnano(i) = 1.0/5.0*Pmicro(i)
+       Z(i) = 0.5*Pmicro(i)
     enddo
     close(46)
 
@@ -156,6 +158,7 @@ contains
     S_new(0) = S_new(1)  !Boundary
     Pmicro(0) = Pmicro(1)
     Pnano(0) = Pnano(1)
+    Z(0) = Z(1)
     NH(0) = NH(1)
 
     ! assuming dz = 0.5
@@ -167,12 +170,14 @@ contains
           S_new(i) = S_new(j)
           Pmicro(i) = Pmicro(j) 
           Pnano(i) = Pnano(j)
+          Z(i) = Z(j)
        else
           ! *** This looks like a job for a arith_mean function
           T_new(i) = T_new(j) * 0.5 + T_new(j+1) * 0.5
           S_new(i) = S_new(j) * 0.5 + S_new(j+1) * 0.5
           Pmicro(i) = Pmicro(j) * 0.5 + Pmicro(j+1) * 0.5
           Pnano(i) = Pnano(j) * 0.5 + Pnano(j+1) * 0.5
+          Z(i) = Z(j) * 0.5 + Z(j+1) * 0.5
        endif
     enddo
 
