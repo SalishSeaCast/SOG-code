@@ -120,7 +120,7 @@ contains
     integer :: j  ! Loop index over depth of grid
 
     ! Read the grid parameters
-    call read_grid
+    call read_grid_params
     ! Allocate memory for grid arrays
     call alloc_grid
 
@@ -170,7 +170,7 @@ contains
   end subroutine init_grid
 
 
-  subroutine read_grid
+  subroutine read_grid_params
     ! Read the grid parameters from the input file
     use input_processor, only: getpari, getpard
     implicit none
@@ -180,7 +180,7 @@ contains
     grid%D = getpard("maxdepth")
     grid%M = getpari("gridsize")
     lambda = getpard("lambda")
-  end subroutine read_grid
+  end subroutine read_grid_params
 
 
   subroutine alloc_grid
