@@ -46,7 +46,7 @@ initial_sog.o \
 profiles_output.o \
 \
 water_properties.o physics_model.o turbulence.o find_upwell.o diffusion.o \
-timeseries_output.o fitbottom.o \
+timeseries_output.o fitbottom.o freshwater.o\
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
 forcing.o mixing_layer.o \
