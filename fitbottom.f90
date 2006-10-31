@@ -11,7 +11,7 @@ module fitbottom
   !  -- Calculate the values at the bottom of the grid for those
   !     quantities that we have data for from an annual fit.
   !
-  ! bot_bound_uniform (M, NH, Detritus)
+  ! bot_bound_uniform (M, Z, NH, Detritus)
   !  -- Set the values at the bottom of the grid for those quantities
   ! that we don't have time series data for.
 
@@ -119,7 +119,7 @@ contains
   end subroutine bot_bound_time
   
 
-  subroutine bot_bound_uniform (M, NH, D_DON, D_PON, D_refr, D_bSi)
+  subroutine bot_bound_uniform (M, Z, NH, D_DON, D_PON, D_refr, D_bSi)
     ! Set the values at the bottom of the grid for those
     ! quantities that we don't have time series data for.
     use precision_defs, only: dp
@@ -127,12 +127,14 @@ contains
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), intent(inout), dimension(0:) :: &
+         Z,      &  ! microzooplantkon
          NH,     &  ! Ammonium concentration profile array
          D_DON,  &  ! Dissolved organic nitrogen concentration profile array
          D_PON,  &  ! Particulate organic nitrogen concentration profile array
          D_refr, &  ! Refractory nitrogen concentration profile array
          D_bSi      ! Biogenic silicon concentration profile array
 
+    Z(M+1) = min(Z(M), 5.0d0)
     NH(M+1) = min(NH(M), 0.5d0)
     D_DON(M+1) = D_DON(M)
     D_PON(M+1) = D_PON(M)
