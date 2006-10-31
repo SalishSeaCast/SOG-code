@@ -19,7 +19,7 @@ module timeseries_output
   !    ! User-defined physical model output variables
   !    &
   !    ! Variables for standard biological model output
-  !    NO, NH, Pmicro, Pnano &
+  !    NO, NH, Pmicro, Pnano, Z &
   !    , D_bins, detritus, &
   !    ! User-defined biological model output variables
   !    )
@@ -113,6 +113,7 @@ contains
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a/,                                  &
+!SEA         "*FieldNames: time, ut, vt"/, &
          "*FieldNames: time"/, &
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
@@ -146,11 +147,12 @@ contains
          "surface silicon concentration, ",                             &
          "surface micro phytoplankton biomass, ",                       &
          "surface nano phytoplankton biomass, ",                        &
+         "surface micro zooplankton biomass, ",                         &
          "dissolved detritus at 20 m, ",                                &
          "sinking detritus at 20 m, ",                                  &
          "lost detritus at 20 m"/,                                      &
          "*FieldUnits: hr since ", a, " LST, uM N, uM N, uM, uM N, ",   &
-         "uM N, uM N, uM N, uM N"/,                                     &
+         "uM N, uM N, uM N, uM N, uM N"/,                                     &
          "*EndOfHeader")
 
 
@@ -172,7 +174,10 @@ contains
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a/,                                  &
-         "*FieldNames: time"/, &
+!SEA         "*FieldNames: time, Avg (0-3m) microplankton biomass, "       &
+         "*FieldNames: time"/,       &
+!SEA         "Avg (0-3m) nanoplankton biomass"/, &
+!SEA         "*FieldUnits: hr since ", a, " LST, uM N, uM N"/, &
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
 
@@ -183,10 +188,10 @@ contains
        ! Variables for standard physical model output
        iter_cnt, h, T, S, &
        ! User-defined physical model output variables
-!!$       &
+!SEA       dPdx_b, dPdy_b, unow, vnow, u, v, &
        ! Variables for standard biological model output
-       NO, NH, Si, Pmicro, Pnano, remin_Detritus, sink_Detritus, &
-       mort_Detritus &
+       NO, NH, Si, Pmicro, Pnano, Z, remin_Detritus, sink_Detritus, &
+       BSi_Detritus &
 !!$       &
        ! User-defined biological model output variables
        )
@@ -195,31 +200,45 @@ contains
 
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
-    use grid_mod, only: grid_, interp_value
+    use grid_mod, only: grid_, interp_value, depth_average
+    use physics_model, only: ut, vt
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: time                ! [hr aftr start midnight]
     type(grid_), intent(in) :: grid                  ! Grid arrays
     integer, intent(in) :: iter_cnt                  ! Timestep iteration count
-    real(kind=dp), intent(in) :: h                   ! Mixed layer depth [m]
+!SEA    real(kind=dp), intent(in) :: h, &                   ! Mixed layer depth [m]
+    real(kind=dp), intent(in) :: h,                    ! Mixed layer depth [m]
+!SEA         unow, &
+!SEA         vnow
     real(kind=dp), dimension(0:), intent(in) :: &
          T, &               ! Temperature [K]
          S, &               ! Salinity [-]
+!SEA         u, &
+!SEA         v, &
          NO, &              ! Nitrate conc [uM N]
          NH, &              ! Ammonium conc [uM N]
          Si, &              ! Silicon conc [uM Si]
          Pmicro, &          ! Micro phytoplankton biomass [uM N]
          Pnano, &           ! Nano phytoplankton biomass [uM N]
+         Z, &               ! Micro zooplankton biomass [uM N]
          remin_Detritus, &  ! Remineralized detritus biomass [uM N]
          sink_Detritus, &   ! Sinking detritus biomass [uM N]
-         mort_Detritus      ! Mortality detritus biomass [uM N]
+         BSi_Detritus       ! Biogenic Si detritus biomass [uM Si]
+!SEA    real(kind=dp), dimension(1:), intent(in) :: &
+!SEA         dPdx_b, &
+!SEA         dPdy_b
+
 
     ! Local variables:
     real(kind=dp) :: &
          remin_D_20m, &  ! Remineralized detritus at 20 m [uM N]
          sink_D_20m, &   ! Sinking detritus at 20 m [uM N]
-         mort_D_20m      ! Mortality detritus at 20 m [uM N]
+         BSi_D_20m, &   ! Mortality detritus at 20 m [uM N]
+!SEA         avg_Pmicro_0_3, & ! Average micro plankton biomass 0-3 m [uM N]
+!SEA         avg_Pnano_0_3  ! Average nano plankton biomass 0-3 m [uM N]
     integer :: j_below   ! Index of result found by interp_value()
+   
 
     ! Standard physics model time series results
     ! !!! Please don't change this unless you have a good reason to !!!
@@ -242,14 +261,16 @@ contains
     ! !!! special, debugging, etc. output !!!
     ! !!! Please don't commit this file if you only make personal !!!
     ! !!! changes here. !!!
-    !
+    !v
     ! !!! This write statement must be kept in sync with the *FieldNames, !!!
     ! !!! and *FieldUnits parts of the header in timeseries_output_open() !!!
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! above, or compareSOG plotting will fail. !!!
     !
     ! time
-    write(user_phys_timeseries, 101) time
+!SEA    write(user_phys_timeseries, 102) time, & 
+    write(user_phys_timeseries, 101) time,
+!SEA    unow, vnow, u(1), v(1), ut%new(1), vt%new(1), dPdx_b(1)*1e5, dPdy_b(1)*1e5
 101 format(f10.4)
 
 
@@ -268,9 +289,9 @@ contains
     ! biomasses of detritus at 20 m depth
     call interp_value(20.0d0, grid%d_g, remin_Detritus, remin_D_20m, j_below)
     call interp_value(20.0d0, grid%d_g, sink_Detritus, sink_D_20m, j_below)
-    call interp_value(20.0d0, grid%d_g, mort_Detritus, mort_D_20m, j_below)
+    call interp_value(20.0d0, grid%d_g, Bsi_Detritus, Bsi_D_20m, j_below)
     write(std_bio_timeseries, 102) time, NO(0), NH(0), Si(0),      &
-         Pmicro(0), Pnano(0), remin_D_20m, sink_D_20m, mort_D_20m
+         Pmicro(0), Pnano(0), Z(0), remin_D_20m, sink_D_20m, Bsi_D_20m
 102 format(f10.4, 80(2x, f8.4))
 
 
@@ -285,7 +306,10 @@ contains
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! above, or compareSOG plotting will fail. !!!
     !
-    ! time
+    ! time, avg_Pmicro_0_3, avg_Pnano_0_3
+!SEA    avg_Pmicro_0_3 = depth_average(Pmicro, 0.d0, 3.d0)
+!SEA    avg_Pnano_0_3 = depth_average(Pnano, 0.d0, 3.d0)
+!SEA    write(user_bio_timeseries, 102) time,avg_Pmicro_0_3, avg_Pnano_0_3
     write(user_bio_timeseries, 103) time
 103 format(f10.4)
 
