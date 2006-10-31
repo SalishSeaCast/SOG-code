@@ -493,45 +493,69 @@ contains
     Pmicro = PZ(bPZ:ePZ)
     where (Pmicro < 0.) Pmicro = 0.
     ! Nano phytoplankton
-    bPZ = (PZ_bins%nano - 1) * M + 1
-    ePZ = PZ_bins%nano * M
-    Pnano = PZ(bPZ:ePZ)
-    where (Pnano < 0.) Pnano = 0.
+    if (flagellates) then
+       bPZ = (PZ_bins%nano - 1) * M + 1
+       ePZ = PZ_bins%nano * M
+       Pnano = PZ(bPZ:ePZ)
+       where (Pnano < 0.) Pnano = 0.
+    else
+       Pnano = 0.
+    endif
     ! Nitrate
     bPZ = (PZ_bins%NO - 1) * M + 1
     ePZ = PZ_bins%NO * M
     NO = PZ(bPZ:ePZ)
     where (NO < 0.) NO = 0.
     ! Ammonium
-    bPZ = (PZ_bins%NH - 1) * M + 1
-    ePZ = PZ_bins%NH * M
-    NH = PZ(bPZ:ePZ)
-    where (NH < 0.) NH = 0.
+    if (remineralization) then
+       bPZ = (PZ_bins%NH - 1) * M + 1
+       ePZ = PZ_bins%NH * M
+       NH = PZ(bPZ:ePZ)
+       where (NH < 0.) NH = 0.
+    else
+       NH = 0.
+    endif
     ! Silicon
     bPZ = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M
     Si = PZ(bPZ:ePZ)
     where (Si < 0.) Si = 0.
     ! Dissolved organic nitrogen detritus
-    bPZ = (PZ_bins%D_DON - 1) * M + 1
-    ePZ = PZ_bins%D_DON * M
-    D_DON = PZ(bPZ:ePZ)
-    where (D_DON < 0.) D_DON = 0.
+    if (remineralization) then
+       bPZ = (PZ_bins%D_DON - 1) * M + 1
+       ePZ = PZ_bins%D_DON * M
+       D_DON = PZ(bPZ:ePZ)
+       where (D_DON < 0.) D_DON = 0.
+    else
+       D_DON = 0.
+    endif
     ! Particulate organic nitrogen detritus
-    bPZ = (PZ_bins%D_PON - 1) * M + 1
-    ePZ = PZ_bins%D_PON * M
-    D_PON = PZ(bPZ:ePZ)
-    where (D_PON < 0.) D_PON = 0.
+    if (remineralization) then
+       bPZ = (PZ_bins%D_PON - 1) * M + 1
+       ePZ = PZ_bins%D_PON * M
+       D_PON = PZ(bPZ:ePZ)
+       where (D_PON < 0.) D_PON = 0.
+    else
+       D_PON = 0.
+    endif
     ! Refractory nitrogen detritus
-    bPZ = (PZ_bins%D_refr - 1) * M + 1
-    ePZ = PZ_bins%D_refr * M
-    D_refr = PZ(bPZ:ePZ)
-    where (D_refr < 0.) D_refr = 0.
+    if (remineralization) then
+       bPZ = (PZ_bins%D_refr - 1) * M + 1
+       ePZ = PZ_bins%D_refr * M
+       D_refr = PZ(bPZ:ePZ)
+       where (D_refr < 0.) D_refr = 0.
+    else
+       D_refr = 0.
+    endif
     ! Biogenic silicon detritus
-    bPZ = (PZ_bins%D_bSi - 1) * M + 1
-    ePZ = PZ_bins%D_bSi * M
-    D_bSi = PZ(bPZ:ePZ)
-    where (D_bSi < 0.) D_bSi = 0.
+    if (remineralization) then
+       bPZ = (PZ_bins%D_bSi - 1) * M + 1
+       ePZ = PZ_bins%D_bSi * M
+       D_bSi = PZ(bPZ:ePZ)
+       where (D_bSi < 0.) D_bSi = 0.
+    else
+       D_bSi = 0.
+    endif
 
     ! Initialize transfer rates between the pools
     uptake%NO = 0.
