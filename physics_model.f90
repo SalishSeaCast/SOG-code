@@ -52,6 +52,7 @@ module physics_model
        B,      &  ! Buoyancy profile array
        dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
        dPdy_b, &  ! Baroclinic pressure gradient y (along-strait) component
+       ut, vt, &
        ! Subroutines:
        init_physics, double_diffusion, baroclinic_P_gradient, &
        new_to_old_physics, dalloc_physics_variables
@@ -230,7 +231,7 @@ contains
          dPdy_b     ! Baroclinic pressure gradient y (along-strait) component
     ! Local variables:
     real(kind=dp) :: sumu, sumv, sumpbx, sumpby, tol, oLx, oLy, gorLx, gorLy, &
-         cz
+         cz, decayscale
     integer :: yy, ii
 
     ! Remove barotropic mode from velocity field
@@ -257,22 +258,26 @@ contains
     !    u * grid%i_space * dt = ut * grid*i_space * Lx / 2
     ! Thus, ut(j) is the fraction of the jth grid layer that the u velocity
     ! changes the isopicnal by.
-    ! *** The 0.95 relaxation factor is a hack to deal with the fact that
+    ! *** The decayscale relaxation factor is a hack to deal with the fact that
     ! *** ut & vt grow too large.
         oLx = 2./(20e3)
         oLy = 2./(60e3)
         gorLx = g / (1025.*20e3)
         gorLy = g / (1025.*60e3)
 
+        decayscale = 1./(3*86400.)
         sumu = 0
         sumv = 0
-        do yy=1,grid%M
-           ut%new(yy) = ut%old(yy)*0.95+U_new(yy)*dt*oLx
-           vt%new(yy) = vt%old(yy)*0.95+V_new(yy)*dt*oLy 
-        enddo
+
+        ! calculate the added thickness of each layer at the "east" and
+        ! "north" side of basin, respectively.  In units of layer thickness
+        ut%new = ut%old * (1-decayscale*dt) + U_new * dt * oLx
+        vt%new = vt%old * (1-decayscale*dt) + V_new * dt * oLy 
 !!$    ut%new = ut%old * 0.95 + U_new * dt / (Lx / 2.)
 !!$    vt%new = vt%old * 0.95 + V_new * dt / (Ly / 2.)
-    ! Calculate the depths of the distorted isopicnals
+
+        ! Calculate the depths of the distorted isopycnals
+        ! in unit of layer thickness
         dzx(1) = ut%new(1)+1
         dzy(1) = vt%new(1)+1
 
@@ -280,6 +285,7 @@ contains
            dzx(yy) = dzx(yy-1) + (ut%new(yy)+1)
            dzy(yy) = dzy(yy-1) + (vt%new(yy)+1)
         enddo
+
 !!$    dpx(1) = (ut%new(1) + 1.) * grid%i_space(1)
 !!$    dpy(1) = (vt%new(1) + 1.) * grid%i_space(1)
 !!$    dpx(2:) = dpx(1:grid%M-1) + (ut%new(2:) + 1.) * grid%i_space(2:)
@@ -332,11 +338,10 @@ contains
            dPdx_b(yy) = (dPdx_b(yy) - sumpbx) * gorLx * grid%i_space(yy) &
                 + stress_u / (1025. * grid%M * grid%i_space(yy))
            dPdy_b(yy) = (dPdy_b(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                + stress_v / (1025. * grid%M * grid%i_space(yy))     
+                + stress_v / (1025. * grid%M * grid%i_space(yy))
         enddo
     
   end subroutine baroclinic_P_gradient
-
 
   subroutine alloc_physics_variables(M)
     ! Allocate memory for physics model variables arrays.
