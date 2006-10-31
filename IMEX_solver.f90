@@ -55,6 +55,7 @@ module IMEX_solver
           S,      &  ! Salinity RHS array
           Pmicro, &  ! Micro phytoplankton (diatoms) RHS array
           Pnano,  &  ! Nano phytoplankton (flagellates) RHS array
+          Z,      &  ! Micro zooplankton RHS array
           NO,     &  ! Nitrate concentration RHS array
           NH,     &  ! Ammonium concentration RHS array
           Si,     &  ! Silicon concentration RHS array
@@ -102,7 +103,7 @@ contains
   end subroutine init_IMEX_solver
 
 
-  subroutine solve_bio_eqns(M, Pmicro, Pnano, NO, NH, Si, &
+  subroutine solve_bio_eqns(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time)
     ! Solve the semi-implicit diffusion/advection PDEs for the
     ! biology quantities.
@@ -115,6 +116,7 @@ contains
     real(kind=dp), dimension(0:), intent(inout) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano,  &  ! Nano phytoplankton
+         Z,      &  ! Micro Zooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
@@ -130,7 +132,7 @@ contains
     
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
-    call build_bio_Hvectors(M, Pmicro, Pnano, NO, NH, Si, &
+    call build_bio_Hvectors(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
 
     ! Build the LHS matrix (A) for the discretized semi-implicit PDE
@@ -138,22 +140,22 @@ contains
     call build_Amatrix(nBmatrix%bio%new, nAmatrix%bio)
 
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
-    call solve_bio_tridiags(M, Pmicro, Pnano, NO, NH, Si, &
+    call solve_bio_tridiags(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
 
     ! Check for negative values in results, and stop with a fatal
     ! error message if any are found
-    call check_bio_negatives(Pmicro, Pnano, NO, NH, Si, &
+    call check_bio_negatives(Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.true.)
   end subroutine solve_bio_eqns
 
 
-  subroutine build_bio_Hvectors(M, Pmicro, Pnano, NO, NH, Si, &
+  subroutine build_bio_Hvectors(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
     use precision_defs, only: dp
-    use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, &
+    use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, Z_RHS, &
        NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
     implicit none
     ! Arguments:
@@ -162,6 +164,7 @@ contains
     real(kind=dp), dimension(0:), intent(inout) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano,  &  ! Nano phytoplankton
+         Z,      &  ! Microzooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
@@ -169,7 +172,7 @@ contains
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
-    
+
     ! Micro phytoplankton (diatoms)
     call bio_Hvector(M, Pmicro, Pmicro_RHS%diff_adv%new, &
          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
@@ -180,6 +183,11 @@ contains
          Pnano_RHS%diff_adv%old, Pnano_RHS%bio, null_vector, &
          nBmatrix%bio%old, &
          Hvector%Pnano)
+    ! Microzooplankton: non-sinking
+    call bio_Hvector(M, Z, Z_RHS%diff_adv%new, &
+         Z_RHS%diff_adv%old, Z_RHS%bio, null_vector, &
+         nBmatrix%bio%old, &
+         Hvector%Z)
     ! Nitrate; non-sinking
     call bio_Hvector(M, NO, NO_RHS%diff_adv%new, &
          NO_RHS%diff_adv%old, NO_RHS%bio, null_vector, &
@@ -218,7 +226,7 @@ contains
   end subroutine build_bio_Hvectors
 
 
-    subroutine solve_bio_tridiags(M, Pmicro, Pnano, NO, NH, Si, &
+    subroutine solve_bio_tridiags(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
     use precision_defs, only: dp
@@ -229,6 +237,7 @@ contains
     real(kind=dp), dimension(0:), intent(inout) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano,  &  ! Nano phytoplankton
+         Z,      &  ! Micro zooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
@@ -241,6 +250,8 @@ contains
     call solve_tridiag(nAmatrix%bio, Hvector%Pmicro, Pmicro(1:M))
     ! Nano phytoplankton (flagellates)
     call solve_tridiag(nAmatrix%bio, Hvector%Pnano, Pnano(1:M))
+    ! Microzooplantkon
+    call solve_tridiag(nAmatrix%bio, Hvector%Z, Z(1:M))
     ! Nitrate
     call solve_tridiag(nAmatrix%bio, Hvector%NO, NO(1:M))
     ! Ammonium
@@ -258,7 +269,7 @@ contains
   end subroutine solve_bio_tridiags
 
 
-  subroutine check_bio_negatives(Pmicro, Pnano, NO, NH, Si, &
+  subroutine check_bio_negatives(Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
     ! Check for negative values in results.
     use precision_defs, only: dp
@@ -268,6 +279,7 @@ contains
     real(kind=dp), dimension(0:), intent(inout) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano,  &  ! Nano phytoplankton
+         Z,      &  ! Microzooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
@@ -287,6 +299,9 @@ contains
          day, time, fatal)
     ! Nano phytoplankton (flagellates)
     call check_negative(0, Pnano, "P%nano after solve_bio_eqns()", &
+         day, time, fatal)
+    ! Micro zooplankton 
+    call check_negative (0, Z, "Z after solve_bio_eqns()", &
          day, time, fatal)
     ! Nitrate
     call check_negative(0, NO, "N%O after solve_bio_eqns()", &
@@ -473,6 +488,7 @@ contains
     msg = "RHS vectors (H) for semi-implicit PDE matrix eqns"
     allocate(Hvector%U(1:M), Hvector%V(1:M), Hvector%T(1:M),          &
          Hvector%S(1:M), Hvector%Pmicro(1:M), Hvector%Pnano(1:M),     &
+         Hvector%Z(1:M),                                              &
          Hvector%NO(1:M), Hvector%NH(1:M), Hvector%Si(1:M),           &
          Hvector%D_DON(1:M), Hvector%D_PON(1:M), Hvector%D_refr(1:M), &
          Hvector%D_bSi(1:M),                                          &
@@ -508,6 +524,7 @@ contains
     msg = "RHS vectors (H) for semi-implicit PDE matrix eqns"
     deallocate(Hvector%U, Hvector%V, Hvector%T,        &
          Hvector%S, Hvector%Pmicro, Hvector%Pnano,     &
+         Hvector%Z,                                    &
          Hvector%NO, Hvector%NH, Hvector%Si,           &
          Hvector%D_DON, Hvector%D_PON, Hvector%D_refr, &
          Hvector%D_bSi,                                &
