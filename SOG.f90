@@ -14,7 +14,7 @@ program SOG
   !
   ! Variables:
   use grid_mod, only: grid
-  use core_variables, only: U, V, T, S, P, N, Si, D
+  use core_variables, only: U, V, T, S, P, Z, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
   ! *** Temporary until IMEX refactoring is completed
@@ -197,7 +197,7 @@ program SOG
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
-       N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
+       Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
        h%new, dPdx_b, dPdy_b, grid, cruise_id)
 
   ! Read the iteration count limit for the physics model implicit
@@ -659,22 +659,21 @@ program SOG
         endif
      enddo  !---------- End of the implicit solver loop ----------
 
-!SEA     write (*,*) time/3600., S_riv, 0.5*(S%new(2)+S%new(3))
      ! Write time series results
      call write_timeseries(time / 3600., grid, &
        ! Variables for standard physical model output
        count, h%new, T%new, S%new, &
        ! User-defined physical model output variables
-!SEA       dPdx_b, dPdy_b, unow, vnow, u%new, v%new, &
+       dPdx_b, dPdy_b, unow, vnow, u%new, v%new, &
        ! Variables for standard biological model output
-       N%O , N%H, Si, P%micro, P%nano, D%DON, D%PON, D%bSi &
+       N%O , N%H, Si, P%micro, P%nano, Z, D%DON, D%PON, D%bSi &
        ! User-defined biological model output variables
 !!$       &
        )
 
      call write_profiles(codeId, datetime_str(runDatetime),            &
           datetime_str(startDatetime), year, day, day_time, dt, grid,  &
-          T%new, S%new, rho%g, P%micro, P%nano, N%O, N%H, Si,          &
+          T%new, S%new, rho%g, P%micro, P%nano, Z, N%O, N%H, Si,       &
           D%DON, D%PON, D%bSi, K%u%all, K%t%all, K%s%all, I_par,      &
           U%new, V%new)
 
@@ -684,7 +683,7 @@ program SOG
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
      call calc_bio_rate(time, day, dt, grid%M, precision, step_guess, step_min,  &
-          T%new(0:grid%M), I_Par, P%micro, P%nano, N%O, N%H, Si,              &
+          T%new(0:grid%M), I_Par, P%micro, P%nano, Z, N%O, N%H, Si,              &
           D%DON, D%PON, D%refr, D%bSi)
 
      ! Build the rest of the terms of the semi-implicit diffusion/advection
@@ -692,7 +691,7 @@ program SOG
      ! This calculates the values of the diffusion coefficients matrix
      ! (Bmatrix%bio%*), the RHS diffusion/advection term vectors
      ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
-     call build_biology_equations(grid, dt, P%micro, P%nano, N%O, N%H, & ! in
+     call build_biology_equations(grid, dt, P%micro, P%nano, Z, N%O, N%H, &! in
           Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)         ! in
 
      ! Store %new components of RHS and Bmatrix variables in %old
@@ -706,7 +705,7 @@ program SOG
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
-     call solve_bio_eqns(grid%M, P%micro, P%nano, N%O, N%H, Si, &
+     call solve_bio_eqns(grid%M, P%micro, P%nano, Z, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi, day, time)
      !
      !---------- End of Biology Model ----------
@@ -714,6 +713,7 @@ program SOG
      ! Update boundary conditions at surface
      P%micro(0) = P%micro(1)
      P%nano(0) = P%nano(1)
+     Z(0) = Z(1)
      N%O(0) = N%O(1)
      N%H(0) = N%H(1)
      Si(0) = Si(1)
@@ -732,7 +732,7 @@ program SOG
           Si(grid%M+1), P%micro(grid%M+1), P%nano(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
-     call bot_bound_uniform(grid%M, N%H, D%DON, D%PON, D%refr, D%bSi)
+     call bot_bound_uniform(grid%M, Z, N%H, D%DON, D%PON, D%refr, D%bSi)
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
