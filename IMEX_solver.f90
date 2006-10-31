@@ -145,8 +145,8 @@ contains
 
     ! Check for negative values in results, and stop with a fatal
     ! error message if any are found
-    call check_bio_negatives(Pmicro, Pnano, Z, NO, NH, Si, &
-       D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.true.)
+    call check_bio_negatives(Pmicro, Pnano, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.false.)
   end subroutine solve_bio_eqns
 
 
@@ -295,34 +295,34 @@ contains
          fatal
 
     ! Micro phytoplankton (diatoms)
-    call check_negative(0, Pmicro, "P%micro after solve_bio_eqns()", &
+    call check_negative(0, Pmicro, "P%micro after solve_tridiag()", &
          day, time, fatal)
     ! Nano phytoplankton (flagellates)
-    call check_negative(0, Pnano, "P%nano after solve_bio_eqns()", &
+    call check_negative(0, Pnano, "P%nano after solve_tridiag()", &
          day, time, fatal)
     ! Micro zooplankton 
     call check_negative (0, Z, "Z after solve_bio_eqns()", &
          day, time, fatal)
     ! Nitrate
-    call check_negative(0, NO, "N%O after solve_bio_eqns()", &
+    call check_negative(0, NO, "N%O after solve_tridiag()", &
          day, time, fatal)
     ! Ammonium
-    call check_negative(0, NH, "N%H after solve_bio_eqns()", &
+    call check_negative(0, NH, "N%H after solve_tridiag()", &
          day, time, fatal)
     ! Silicon
-    call check_negative(0, Si, "Si after solve_bio_eqns()", &
+    call check_negative(0, Si, "Si after solve_tridiag()", &
          day, time, fatal)
     ! Dissolved organic nitrogen detritus
-    call check_negative(0, D_DON, "D%DON after solve_bio_eqns()", &
+    call check_negative(0, D_DON, "D%DON after solve_tridiag()", &
          day, time, fatal)
     ! Particulate organic nitrogen detritus
-    call check_negative(0, D_PON, "D%PON after solve_bio_eqns()", &
+    call check_negative(0, D_PON, "D%PON after solve_tridiag()", &
          day, time, fatal)
     ! Refractory nitrogen detritus
-    call check_negative(0, D_refr, "D%refr after solve_bio_eqns()", &
+    call check_negative(0, D_refr, "D%refr after solve_tridiag()", &
          day, time, fatal)
     ! Biogenic silicon detritus
-    call check_negative(0, D_bSi, "D%bSi after solve_bio_eqns()", &
+    call check_negative(0, D_bSi, "D%bSi after solve_tridiag()", &
          day, time, fatal)
   end subroutine check_bio_negatives
   
