@@ -208,7 +208,7 @@ contains
     type(grid_), intent(in) :: grid                  ! Grid arrays
     integer, intent(in) :: iter_cnt                  ! Timestep iteration count
 !SEA    real(kind=dp), intent(in) :: h, &                   ! Mixed layer depth [m]
-    real(kind=dp), intent(in) :: h,                    ! Mixed layer depth [m]
+    real(kind=dp), intent(in) :: h                    ! Mixed layer depth [m]
 !SEA         unow, &
 !SEA         vnow
     real(kind=dp), dimension(0:), intent(in) :: &
@@ -234,7 +234,8 @@ contains
     real(kind=dp) :: &
          remin_D_20m, &  ! Remineralized detritus at 20 m [uM N]
          sink_D_20m, &   ! Sinking detritus at 20 m [uM N]
-         BSi_D_20m, &   ! Mortality detritus at 20 m [uM N]
+!SEA         BSi_D_20m, &   ! Mortality detritus at 20 m [uM N]
+         BSi_D_20m   ! Mortality detritus at 20 m [uM N]
 !SEA         avg_Pmicro_0_3, & ! Average micro plankton biomass 0-3 m [uM N]
 !SEA         avg_Pnano_0_3  ! Average nano plankton biomass 0-3 m [uM N]
     integer :: j_below   ! Index of result found by interp_value()
@@ -269,7 +270,7 @@ contains
     !
     ! time
 !SEA    write(user_phys_timeseries, 102) time, & 
-    write(user_phys_timeseries, 101) time,
+    write(user_phys_timeseries, 101) time
 !SEA    unow, vnow, u(1), v(1), ut%new(1), vt%new(1), dPdx_b(1)*1e5, dPdy_b(1)*1e5
 101 format(f10.4)
 
