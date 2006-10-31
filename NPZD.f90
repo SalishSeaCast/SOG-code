@@ -12,6 +12,8 @@ module NPZD
   !
   !   remineralization -- Is there a remineralization loop?
   !
+  !   microzooplankton -- are they eating things?
+  !
   ! Public subroutines:
   !
   !   init_biology -- Initialize biology model.
@@ -35,6 +37,7 @@ module NPZD
        PZ_bins, &
        flagellates, &       ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
+       microzooplankton, &  ! Active or not
        ! Subroutines:
        init_NPZD, derivs, &
        dalloc_biology_variables
@@ -44,7 +47,7 @@ module NPZD
   ! Indices for quantities in PZ vector
   TYPE :: bins
      INTEGER :: &
-          Quant, micro, nano, NO, NH, Si, det, D_DON, D_PON, D_refr, D_bSi
+          Quant, micro, nano, zoo, NO, NH, Si, det, D_DON, D_PON, D_refr, D_bSi
   END TYPE bins
   !
   ! Rate parameters for phytoplankton
@@ -91,8 +94,8 @@ module NPZD
   ! Biological model logicals (turned parts of the model on or off)
   logical :: &
        flagellates, &    ! Can flagellates can influence other biology?
-       remineralization  ! Is there a remineralization loop?
-
+       remineralization, &  ! Is there a remineralization loop?
+       microzooplankton ! use a microzooplantkon pool?
 
   ! Private variable declarations:
   !
@@ -101,17 +104,18 @@ module NPZD
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
   type(bins):: PZ_bins
-  data PZ_bins%Quant /5/    ! Size of the biology (Quantities and Detritus)
+  data PZ_bins%Quant /6/    ! Size of the biology (Quantities and Detritus)
   data PZ_bins%micro /1/    ! Position of Diatoms (micro plankton)
   data PZ_bins%nano  /2/    ! Position of Flagellates (nano plankton)
-  data PZ_bins%NO    /3/    ! Position of Nitrate
-  data PZ_bins%NH    /4/    ! Position of Ammonium
-  data PZ_bins%Si    /5/    ! Position of Silicon
-  data PZ_bins%det   /6/    ! Start of detritus
-  data PZ_bins%D_DON   /6/  ! Position of dissolved organic nitrogen detritus
-  data PZ_bins%D_PON   /7/  ! Position of particulate organic nitrogen detritus
-  data PZ_bins%D_refr  /9/  ! Position of refractory nitrogen detritus
-  data PZ_bins%D_bSi   /8/  ! Position of dissolved biogenic silcon detritus
+  data PZ_bins%zoo   /3/    ! Position of microzooplankton
+  data PZ_bins%NO    /4/    ! Position of Nitrate
+  data PZ_bins%NH    /5/    ! Position of Ammonium
+  data PZ_bins%Si    /6/    ! Position of Silicon
+  data PZ_bins%det   /7/    ! Start of detritus
+  data PZ_bins%D_DON   /7/  ! Position of dissolved organic nitrogen detritus
+  data PZ_bins%D_PON   /8/  ! Position of particulate organic nitrogen detritus
+  data PZ_bins%D_refr  /10/  ! Position of refractory nitrogen detritus
+  data PZ_bins%D_bSi   /9/  ! Position of dissolved biogenic silcon detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
@@ -159,6 +163,7 @@ contains
     ! selector flags
     flagellates = getparl('flagellates_on')
     remineralization = getparl('remineralization')
+    microzooplankton = getparl('use microzooplankton')
 
 
     ! Biological rate parameters
@@ -457,6 +462,7 @@ contains
     real(kind=dp), dimension(1:M) :: &
           Pmicro,         &  ! Micro phytoplankton (diatoms) profile
           Pnano,          &  ! Nano phytoplankton (flagellates) profile
+          Z,              &  ! Micro zooplankton profile
           NO,             &  ! Nitrate concentrationy
           NH,             &  ! Ammonium concentration profile
           Si,             &  ! Silicon concentration profile
@@ -611,6 +617,10 @@ contains
        dPZdt(bPZ:ePZ) = (nano%growth%new - NatMort_nano &
                - GrazMort_nano) * Pnano
     endwhere
+    ! Microzooplantkon
+    bPZ = (PZ_bins%zoo - 1) * M + 1
+    ePZ = PZ_bins%zoo *M
+    dPZdt(bPZ:ePZ) = 0.
     ! Nitrate
     bPZ = (PZ_bins%NO - 1) * M + 1
     ePZ = PZ_bins%NO * M
