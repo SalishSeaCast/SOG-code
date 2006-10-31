@@ -19,6 +19,8 @@ module core_variables
   !          P%micro -- Micro phytoplankton (diatoms) [uM N]
   !          P%nano -- Nano phytoplankton (flagellates) [uM N]
   !
+  !   Z -- Microzooplankton biomass [uM N]
+  !
   !   N -- Nitrogen compounds concentrations:
   !          N%O -- Nitrate concentration [uM N]
   !          N%H -- Ammonium concentration [uM N]
@@ -48,6 +50,7 @@ module core_variables
        T,  &  ! Temperature profile arrays
        S,  &  ! Salinity profile arrays
        P,  &  ! Micro & nano phytoplankton profile arrays
+       Z,  &  ! Microzooplankton profile array
        N,  &  ! Nitrate & ammonium concentation profile arrays
        Si, &  ! Silicon concentration profile arrays
        D,  &  ! Detritus concentration profile arrays
@@ -96,6 +99,8 @@ module core_variables
        S     ! Salinity profile arrays
   type(plankton) :: &
        P  ! Micro & nano phytoplankton biomass profile arrays
+  real(kind=dp), dimension(:), allocatable :: &
+       Z  ! Microzooplankton concentration profile array
   type(nitrogen) :: &
        N  ! Nitrate & ammonium concentration profile arrays
   real(kind=dp), dimension(:), allocatable :: &
@@ -137,6 +142,10 @@ contains
     call alloc_check(allocstat, msg)
     msg = "Nano phytoplankton biomass profile array"
     allocate(P%nano(0:M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Microzooplankton concentration profile array"
+    allocate(Z(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrate concentration profile array"
@@ -200,6 +209,10 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Nano phytoplankton biomass profile array"
     deallocate(P%nano, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Microzooplankton concentration profile array"
+    deallocate(Z, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Nitrate concentration profile array"
