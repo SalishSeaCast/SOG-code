@@ -14,7 +14,8 @@ ifeq "$(HOST)" "coho"
   F90 = pgf90
   # Don't compile with optimization until the code runs properly without it
   # and always revert to -O0 and all checks when adding new features 
-  FFLAGS = -O0 -g -Mbounds -Mdclchk -Mstandard -Minform=warn
+  FFLAGS-DEV = -O0 -g -Mbounds -Mdclchk -Mstandard -Minform=warn
+  FFLAGS-PROD = -O2 -Mdclchk -Mstandard -Minform=warn
   LD = pgf90
   LDFLAGS = -o
 else
@@ -22,7 +23,8 @@ else
   F90 = g95
   # Don't compile with optimization until the code runs properly without it
   # and always revert to -O0 and all checks when adding new features
-  FFLAGS = -O0 -g -fimplicit-none -fbounds-check -ftrace=full -Wall
+  FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -ftrace=full -Wall
+  FFLAGS-PROD = -O3 -fimplicit-none -Wall
   LD = g95
   LDFLAGS = -o
 endif
@@ -67,6 +69,9 @@ new_year.o SOG.o
 # The executable is the default target that is built by "make"
 # It depends on all of the objects which are built from the
 # dependencies list by the suffix-based rules below
+# The compiler is set to -O0, and lots of checking flags
+# (i.e. for development and testing)
+$(EXEC): FFLAGS = $(FFLAGS-DEV)
 $(EXEC): $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $@
 
@@ -88,6 +93,21 @@ clean:
 .PHONY: changelog
 changelog:
 	$(CVS2CL) $(CLFLAGS)
+
+# "make SOG-dev" does a clean build with the compiler flags set to
+# -O0, and lots of checking (i.e. appropriate for development and testing)
+$(EXEC)-dev: FFLAGS = $(FFLAGS-DEV)
+$(EXEC)-dev: clean $(OBJS)
+	$(LD) $(OBJS) $(LDFLAGS) $@
+
+#  "make SOG-prod" does a clean build with the compiler flags set
+# for faster execution.  *** Don't use this until you've sure the code
+# is working in development mode, and you've compared the results of a
+# few production and development builds to ensure that the code is stable
+# with optimization enabled. ***  Consider yourself warned!
+$(EXEC)-prod: FFLAGS = $(FFLAGS-PROD)
+$(EXEC)-prod: clean $(OBJS)
+	$(LD) $(OBJS) $(LDFLAGS) $@
 
 # Suffix-based compilation rules
 .SUFFIXES: 		# Delete built-in implicit suffix-based rules
