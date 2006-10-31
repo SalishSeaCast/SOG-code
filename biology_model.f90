@@ -74,7 +74,7 @@ contains
 
 
   subroutine calc_bio_rate(time, day, dt, M, precision, step_guess, step_min,    &
-       T_new, I_par, Pmicro, Pnano, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
+       T_new, I_par, Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the biology model ODEs to advance the biology quantity values
     ! to the next time step, and calculate the growth - mortality terms
     ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
@@ -97,6 +97,7 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano, &   ! Nano phytoplankton
+         Z, &  ! Micro zooplankton
          NO, &      ! Nitrate
          NH, &      ! Ammonium
          Si, &      ! Silicon
@@ -110,7 +111,7 @@ contains
 
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on
-    call load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
+    call load_PZ(M, Pmicro, Pnano, Z, NO, NH, Si, &
          D_DON, D_PON, D_refr, D_bSi, &
          PZ)                                               ! out
     call check_negative(1, PZ, "PZ after load_PZ()", day, time)
@@ -124,25 +125,26 @@ contains
 
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
-    call unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
+    call unload_PZ(M, PZ, Pmicro, Pnano, Z, NO, NH, Si, &
          D_DON, D_PON, D_refr, D_bSi)
   end subroutine calc_bio_rate
 
 
-  subroutine load_PZ(M, Pmicro, Pnano, NO, NH, Si, &
+  subroutine load_PZ(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, &
        PZ)
     ! Load all of the separate biology variables (microplankton,
     ! nanoplankton, nitrate, ammonium, silicon, and detritus
     ! sequentially into the PZ vector for the ODE solver to use.
     use precision_defs, only: dp
-    use NPZD, only: PZ_bins, flagellates, remineralization
+    use NPZD, only: PZ_bins, flagellates, remineralization, microzooplankton
     implicit none
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton biomass profile array
          Pnano,  &  ! Nano phytoplankton biomass profile array
+         Z, &  ! Micro zooplankton
          NO,     &  ! Nitrate concentration profile array
          NH,     &  ! Ammonium concentration profile array
          Si,     &  ! Silicon concentration profile array
@@ -170,6 +172,14 @@ contains
        PZ(bPZ:ePZ) = Pnano(1:M)
     else
        PZ(bPZ:ePZ) = 0.
+    endif
+    ! Load micro zooplankton
+    bPz = (PZ_bins%zoo - 1) * M + 1
+    ePz = PZ_bins%zoo * M
+    if (microzooplankton) then
+       PZ(bPZ:ePz) = Z(1:M)
+    else
+       PZ(bPZ:ePz) = 0.
     endif
     ! Load nitrate
     bPz = (PZ_bins%NO - 1) * M + 1
@@ -222,13 +232,14 @@ contains
   end subroutine load_PZ
 
 
-  subroutine unload_PZ(M, PZ, Pmicro, Pnano, NO, NH, Si, &
+  subroutine unload_PZ(M, PZ, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate *_RHS%bio arrays.
     use precision_defs, only: dp
     use NPZD, only: PZ_bins
-    use biology_eqn_builder, only: Pmicro_RHS, Pnano_RHS, NO_RHS, NH_RHS, &
+    use biology_eqn_builder, only: Pmicro_RHS, Pnano_RHS, Z_RHS, &
+         NO_RHS, NH_RHS, &
          Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
     implicit none
     ! Arguments:
@@ -238,6 +249,7 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton biomass profile array
          Pnano,  &  ! Nano phytoplankton biomass profile array
+         Z, &  ! Micro zooplankton biomass profile array
          NO,     &  ! Nitrate concentration profile array
          NH,     &  ! Ammonium concentration profile array
          Si,     &  ! Silicon concentration profile array
@@ -258,6 +270,10 @@ contains
     bPZ = (PZ_bins%nano - 1) * M + 1
     ePZ = PZ_bins%nano * M
     Pnano_RHS%bio = PZ(bPZ:ePZ) - Pnano(1:M)
+    ! Unlaod micro zooplankton
+    bPZ = (PZ_bins%zoo - 1) * M + 1
+    ePZ = PZ_bins%zoo * M
+    Z_RHS%bio = PZ(bPZ:ePZ) - Z(1:M)
     ! Unload nitrate
     bPZ = (PZ_bins%NO - 1) * M + 1
     ePZ = PZ_bins%NO * M
