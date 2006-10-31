@@ -172,9 +172,11 @@ contains
     ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
     use precision_defs, only: dp
     use grid_mod, only: grid_
-    use diffusion, only: new_diffusion_coeff, diffusion_bot_surf_flux
+    use diffusion, only: new_diffusion_coeff, diffusion_bot_surf_flux, &
+         diffusion_nonlocal_fluxes
     use find_upwell, only: vertical_advection
     use declarations, only: micro  ! *** This definitely needs to go away
+    use freshwater, only: freshwater_bio
     implicit none
     ! Arguments:
     type(grid_), intent(in) :: &
@@ -201,6 +203,10 @@ contains
     real(kind=dp) :: &
          aflux, &  ! Surface nutrient flux
          Pmicro_w_sink  !
+    real(kind=dp), dimension(0:grid%M):: distrib_flux!distributed nutrient flux
+    real(kind=dp), dimension(0:grid%M):: null ! null vector
+
+    null = 0.d0
 
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
@@ -210,6 +216,7 @@ contains
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
+
     aflux = -Ft * (0. - Pmicro(1)) 
     call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
          Pmicro(grid%M+1),                               &   ! in
@@ -218,9 +225,10 @@ contains
     call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
          Pnano(grid%M+1),                                &   ! in
          Pnano_RHS%diff_adv%new)                             ! out
-    aflux = -Ft * (6.4 - NO(1)) 
-    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
-         NO(grid%M+1),                                   &   ! in
+    call freshwater_bio ('nitrate', NO(0:grid%M),        &
+         distrib_flux)
+    call diffusion_nonlocal_fluxes (grid, dt, K_all, null, & ! in
+         0.d0, distrib_flux, NO(grid%M+1),               &   ! in
          NO_RHS%diff_adv%new)                                ! out
     call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
          NH(grid%M+1),                                   &   ! in
