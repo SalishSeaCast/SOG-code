@@ -126,7 +126,7 @@ contains
 
 
   subroutine write_profiles(codeId, str_runDatetime, str_CTDdatetime,    &
-       year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, NO, NH,  &
+       year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Z, NO, NH,  &
        Si, dissolved_detritus, sinking_detritus, lost_Detritus, Ku, Kt, &
        Ks, I_par, U, V)
     ! Check to see if the time is right to write a profiles output
@@ -152,6 +152,7 @@ contains
          rho(0:), &     ! Density [kg/M^3]
          Pmicro(0:), &  ! Micro phytoplankton (diatoms) [uM N]
          Pnano(0:), &   ! Nano phytoplankton (flagellates) [uM N]
+         Z(0:), &       ! Micro zooplankton (uM N)
          NO(0:), &      ! Nitrates [uM N]
          NH(0:), &      ! Ammonium [uM N]
          Si(0:), &      ! Silicon [uM]
@@ -217,6 +218,7 @@ contains
                str_CTDdatetime, str_proDatetime, derS, dep
 200       format("! Profiles of Temperature, Salinity, Density, ",           &
                "Phytoplankton (micro & nano),"/,                             &
+               "Micro zooplankton,"/,                                        &
                "! Nitrate, Ammonium, Silicon and Detritus (dissolved, ",     &
                "sinking, and mortality),"/,                                  &
                "! Total Eddy Diffusivities (momentum, temperature, & ",      &
@@ -226,8 +228,8 @@ contains
                "*RunDateTime: ", a/,                                         &
                "*InitialCTDDateTime: ", a/,                                  &
                "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
-               "micro phytoplankton, nano phytoplankton, nitrate, ",         &
-               "ammonium, silicon, ",                                        &
+               "micro phytoplankton, nano phytoplankton, micro zooplantkon, ",&
+               "nitrate, ammonium, silicon, ",                               &
                "dissolved detritus, ",                                       &
                "sinking detritus, lost detritus, ",                          &
                "total momentum eddy diffusivity, ",                          &
@@ -235,7 +237,7 @@ contains
                "total salinity eddy diffusivity, ",                          &
                "photosynthetic available radiation, ",                       &
                "u velocity, v velocity"/,                                    &
-               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
+               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, uM N, ",&
                "uM, uM N, uM N, uM N, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s"/,&
                "*ProfileDateTime: ", a/,                                     &
                "*HaloclineMagnitude: ", f6.3, " m^-1"/,                      &
@@ -245,7 +247,7 @@ contains
           do i = 0, grid%M
              sigma_t = rho(i) - 1000.
              write(profiles, 201) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
-                  Pmicro(i), Pnano(i), NO(i), NH(i), Si(i),              &
+                  Pmicro(i), Pnano(i), Z(i), NO(i), NH(i), Si(i),         &
                   dissolved_detritus(i), sinking_detritus(i),             &
                   lost_detritus(i), Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
           enddo
@@ -254,7 +256,7 @@ contains
           sigma_t = rho(grid%M+1) - 1000.
           write(profiles, 201) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),    &
                S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1),  &
-               NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),                 &
+               Z(grid%M+1), NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),    &
                dissolved_detritus(grid%M+1), sinking_detritus(grid%M+1), &
                lost_detritus(grid%M+1), Ku(grid%M), Kt(grid%M),          &
                Ks(grid%M), I_par(grid%M), U(grid%M+1), V(grid%M+1)
