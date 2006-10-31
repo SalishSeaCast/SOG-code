@@ -217,13 +217,15 @@ contains
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
 
-    aflux = -Ft * (0. - Pmicro(1)) 
-    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
-         Pmicro(grid%M+1),                               &   ! in
+    call freshwater_bio ('Pmicro', Pmicro(0:grid%M),     &
+         distrib_flux)
+    call diffusion_nonlocal_fluxes (grid, dt, K_all, null, &   ! in
+         0.d0, distrib_flux, Pmicro(grid%M+1),           &   ! in
          Pmicro_RHS%diff_adv%new)                            ! out
-    aflux = -Ft * (0. - Pnano(1)) 
-    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
-         Pnano(grid%M+1),                                &   ! in
+    call freshwater_bio ('Pnano', Pnano(0:grid%M),       &
+         distrib_flux)
+    call diffusion_nonlocal_fluxes(grid, dt, K_all, null, &   ! in
+         0.d0, distrib_flux, Pnano(grid%M+1),             &   ! in
          Pnano_RHS%diff_adv%new)                             ! out
     call freshwater_bio ('nitrate', NO(0:grid%M),        &
          distrib_flux)
