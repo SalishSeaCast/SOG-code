@@ -14,6 +14,8 @@ module biology_eqn_builder
   !
   !   Pnano_RHS -- Nano phytoplankton (flagellates) right-hand side arrays
   !
+  !   Z_RHS -- Micro zooplankton right-hand side arrays
+  !
   !   NO_RHS -- Nitrate concentration right-hand side arrays
   !
   !   NH_RHS -- Ammonium concentration right-hand side arrays
@@ -58,6 +60,7 @@ module biology_eqn_builder
        nBmatrix, &  ! Tridiagonal matrix of diffusion coefficient values
        Pmicro_RHS,      &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,       &  ! Nano phytoplankton (flagellates) RHS arrays
+       Z_RHS,           &  ! Zooplankton (micro) RHS arrays
        NO_RHS,          &  ! Nitrate concentration RHS arrays
        NH_RHS,          &  ! Ammonium concentration RHS arrays
        Si_RHS,          &  ! Silicon concentration RHS arrays
@@ -128,6 +131,7 @@ module biology_eqn_builder
   type(RHS) :: &
        Pmicro_RHS, &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,  &  ! Nano phytoplankton (flagellates) RHS arrays
+       Z_RHS,      &  ! micro Zooplankton RHS arrays
        NO_RHS,     &  ! Nitrate concentration RHS arrays
        NH_RHS,     &  ! Ammonium concentration RHS arrays
        Si_RHS,     &  ! Silicon concentration RHS arrays
@@ -162,7 +166,7 @@ contains
   end subroutine read_sink_params
   
 
-  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, NO, NH,  & ! in
+  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Z, NO, NH, & ! in
        Si, D_DON, D_PON, D_refr, D_bSi, Ft, K_all, wupwell)
     ! Build the right-hand side (RHS) arrays for the
     ! diffusion/advection equations for the biology quantities.
@@ -186,6 +190,7 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano,  &  ! Nano phytoplankton
+         Z,      &  ! Micro Zooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
@@ -226,7 +231,10 @@ contains
          distrib_flux)
     call diffusion_nonlocal_fluxes(grid, dt, K_all, null, &   ! in
          0.d0, distrib_flux, Pnano(grid%M+1),             &   ! in
-         Pnano_RHS%diff_adv%new)                             ! out
+         Pnano_RHS%diff_adv%new)                              ! out
+    call diffusion_bot_surf_flux (grid, dt, K_all, 0.d0, &    ! in
+         Z(grid%M+1),                                    &    ! in
+         Z_RHS%diff_adv%new)                                  ! out
     call freshwater_bio ('nitrate', NO(0:grid%M),        &
          distrib_flux)
     call diffusion_nonlocal_fluxes (grid, dt, K_all, null, & ! in
@@ -255,6 +263,8 @@ contains
          Pmicro_RHS%diff_adv%new)
     call vertical_advection(grid, dt, Pnano, wupwell, &
          Pnano_RHS%diff_adv%new)
+    call vertical_advection(grid, dt, Z, wupwell, &
+         Z_RHS%diff_adv%new)
     call vertical_advection(grid, dt, NO, wupwell, &
          NO_RHS%diff_adv%new)
     call vertical_advection(grid, dt, NH, wupwell, &
@@ -452,6 +462,7 @@ contains
 
     Pmicro_RHS%diff_adv%old = Pmicro_RHS%diff_adv%new
     Pnano_RHS%diff_adv%old = Pnano_RHS%diff_adv%new
+    Z_RHS%diff_adv%old = Z_RHS%diff_adv%new
     NO_rhs%diff_adv%old = NO_RHS%diff_adv%new
     NH_rhs%diff_adv%old = NH_RHS%diff_adv%new
     Si_rhs%diff_adv%old = Si_RHS%diff_adv%new
@@ -499,6 +510,11 @@ contains
     msg = "Nano phytoplankton RHS arrays"
     allocate(Pnano_RHS%diff_adv%new(1:M), Pnano_RHS%diff_adv%old(1:M), &
          Pnano_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Micro zooplankton RHS arrays"
+    allocate(Z_RHS%diff_adv%new(1:M), Z_RHS%diff_adv%old(1:M), &
+         Z_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrate concentration RHS arrays"
@@ -563,6 +579,11 @@ contains
     msg = "Nano phytoplankton RHS arrays"
     deallocate(Pnano_RHS%diff_adv%new, Pnano_RHS%diff_adv%old, &
          Pnano_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Micro zooplankton RHS arrays"
+    deallocate(Z_RHS%diff_adv%new, Z_RHS%diff_adv%old, &
+         Z_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Nitrate concentration RHS arrays"
