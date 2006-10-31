@@ -664,7 +664,7 @@ program SOG
        ! Variables for standard physical model output
        count, h%new, T%new, S%new, &
        ! User-defined physical model output variables
-       dPdx_b, dPdy_b, unow, vnow, u%new, v%new, &
+!SEA       dPdx_b, dPdy_b, unow, vnow, u%new, v%new, &
        ! Variables for standard biological model output
        N%O , N%H, Si, P%micro, P%nano, Z, D%DON, D%PON, D%bSi &
        ! User-defined biological model output variables
