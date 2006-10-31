@@ -188,32 +188,32 @@ contains
     ePZ = PZ_bins%Si * M
     PZ(bPZ:ePZ) = Si(1:M)
     ! Load dissolved organic nitrogen detritus
-    bPz = (PZ_bins%DON - 1) * M + 1
-    ePz = PZ_bins%DON * M
+    bPz = (PZ_bins%D_DON - 1) * M + 1
+    ePz = PZ_bins%D_DON * M
     if (remineralization) then
        PZ(bPz:ePz) = D_DON(1:M)
     else
        PZ(bPz:ePz) = 0.
     endif
     ! Load particulate organic nitrogen detritus
-    bPz = (PZ_bins%PON - 1) * M + 1
-    ePz = PZ_bins%PON * M
+    bPz = (PZ_bins%D_PON - 1) * M + 1
+    ePz = PZ_bins%D_PON * M
     if (remineralization) then
        PZ(bPz:ePz) = D_PON(1:M)
     else
        PZ(bPz:ePz) = 0.
     endif
     ! Load refractory nitrogen detritus
-    bPz = (PZ_bins%refr - 1) * M + 1
-    ePz = PZ_bins%refr * M
+    bPz = (PZ_bins%D_refr - 1) * M + 1
+    ePz = PZ_bins%D_refr * M
     if (remineralization) then
        PZ(bPz:ePz) = D_refr(1:M)
     else
        PZ(bPz:ePz) = 0.
     endif
     ! Load biogenic silicon detritus
-    bPz = (PZ_bins%bSi - 1) * M + 1
-    ePz = PZ_bins%bSi * M
+    bPz = (PZ_bins%D_bSi - 1) * M + 1
+    ePz = PZ_bins%D_bSi * M
     if (remineralization) then
        PZ(bPz:ePz) = D_bSi(1:M)
     else
@@ -271,20 +271,20 @@ contains
     ePZ = PZ_bins%Si * M
     Si_RHS%bio = PZ(bPZ:ePZ) - Si(1:M)
     ! Unload dissolved organic nitrogen detritus
-    bPz = (PZ_bins%DON - 1) * M + 1
-    ePz = PZ_bins%DON * M
+    bPz = (PZ_bins%D_DON - 1) * M + 1
+    ePz = PZ_bins%D_DON * M
     D_DON_RHS%bio = PZ(bPz:ePz) - D_DON(1:M)
     ! Unload particulate organic nitrogen detritus
-    bPz = (PZ_bins%PON - 1) * M + 1
-    ePz = PZ_bins%PON * M
+    bPz = (PZ_bins%D_PON - 1) * M + 1
+    ePz = PZ_bins%D_PON * M
     D_PON_RHS%bio = PZ(bPz:ePz) - D_PON(1:M)
     ! Unload refractory nitrogen detritus
-    bPz = (PZ_bins%refr - 1) * M + 1
-    ePz = PZ_bins%refr * M
+    bPz = (PZ_bins%D_refr - 1) * M + 1
+    ePz = PZ_bins%D_refr * M
     D_refr_RHS%bio = PZ(bPz:ePz) - D_refr(1:M)
     ! Unload biogenic silicon detritus
-    bPz = (PZ_bins%bSi - 1) * M + 1
-    ePz = PZ_bins%bSi * M
+    bPz = (PZ_bins%D_bSi - 1) * M + 1
+    ePz = PZ_bins%D_bSi * M
     D_bSi_RHS%bio = PZ(bPz:ePz) - D_bSi(1:M)
   end subroutine unload_PZ
 
