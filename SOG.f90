@@ -27,6 +27,7 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
+  use air_sea_fluxes, only: wind_stress
   use biology_model, only: init_biology, calc_bio_rate
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
        new_to_old_bio_Bmatrix
@@ -65,7 +66,6 @@ program SOG
 
   implicit none
 
-  real(kind=dp) :: sflux(80)
   real(kind=dp) :: &
        upwell
   ! Upwelling constant (tuned parameter)
@@ -274,6 +274,8 @@ program SOG
              atemp_value, humid_value, Qinter, stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
+        call wind_stress (unow, vnow, rho%g(1), &
+             stress, w%u(0), w%v(0))
 
         ! Calculate nonturbulent heat flux profile
         Q_n = I / (Cp%i * rho%i)
