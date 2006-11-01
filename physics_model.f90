@@ -209,7 +209,7 @@ contains
 
 
   subroutine baroclinic_P_gradient(grid, dt, U_new, V_new, rho_g, &
-       stress_u, stress_v, dPdx_b, dPdy_b)
+       w_u, w_v, dPdx_b, dPdy_b)
     ! Calculate the baroclinic pressure gradient components.
     use precision_defs, only: dp
     use grid_mod, only: grid_, depth_average
@@ -224,8 +224,8 @@ contains
          V_new, &  ! V component (along-strait, 305 deg) velocity profile [m/s]
          rho_g     ! Density profile at grid point depths [kg/m^3]
     real(kind=dp), intent(in) :: &
-         stress_u, &
-         stress_v
+         w_u, &  ! wind stress/rho or momentum flux
+         w_v
     real(kind=dp), dimension(1:), intent(out) :: &
          dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
          dPdy_b     ! Baroclinic pressure gradient y (along-strait) component
@@ -271,8 +271,8 @@ contains
 
         ! calculate the added thickness of each layer at the "east" and
         ! "north" side of basin, respectively.  In units of layer thickness
-        ut%new = ut%old * (1-decayscale*dt) + U_new * dt * oLx
-        vt%new = vt%old * (1-decayscale*dt) + V_new * dt * oLy 
+        ut%new = ut%old * (1 - decayscale * dt) + U_new * dt * oLx
+        vt%new = vt%old * (1 - decayscale * dt) + V_new * dt * oLy 
 !!$    ut%new = ut%old * 0.95 + U_new * dt / (Lx / 2.)
 !!$    vt%new = vt%old * 0.95 + V_new * dt / (Ly / 2.)
 
@@ -282,8 +282,8 @@ contains
         dzy(1) = vt%new(1)+1
 
         do yy=2,grid%M
-           dzx(yy) = dzx(yy-1) + (ut%new(yy)+1)
-           dzy(yy) = dzy(yy-1) + (vt%new(yy)+1)
+           dzx(yy) = dzx(yy-1) + (ut%new(yy) + 1)
+           dzy(yy) = dzy(yy-1) + (vt%new(yy) + 1)
         enddo
 
 !!$    dpx(1) = (ut%new(1) + 1.) * grid%i_space(1)
@@ -292,17 +292,22 @@ contains
 !!$    dpy(2:) = dpy(1:grid%M-1) + (vt%new(2:) + 1.) * grid%i_space(2:)
         ! Calculate the baroclinic pressure gradient
         ! *** Should this tolerance be read in as a run parameter?
-        tol=1e-6
+        tol = 1e-6
         sumpbx = 0.
         cz = 0.
-        ii=1
-        do yy=1,grid%M
+        ii = 1
+        ! dPdx_b = P(eastern side) - P(center)
+        ! P(center) = sum rho_g * layer depth
+        ! P(eastern side) = sum rho_g * eastern side thickness
+        ! but note that this second sum must go down to the depth yy and not
+        ! below
+        do yy = 1,grid%M
            if (yy == 1) then
               dPdx_b(yy) = -rho_g(yy)
            else
-              dPdx_b(yy) = dPdx_b(yy-1)-rho_g(yy)
+              dPdx_b(yy) = dPdx_b(yy-1) - rho_g(yy)
            endif
-           do while ((dzx(ii)-yy) < -tol .and. ii < grid%M)
+           do while ((dzx(ii) - yy) < -tol .and. ii < grid%M)
               dPdx_b(yy) = dPdx_b(yy) + rho_g(ii)*(dzx(ii)-cz)
               cz = dzx(ii)
               ii = ii + 1
@@ -336,9 +341,9 @@ contains
 
         do yy = 1, grid%M
            dPdx_b(yy) = (dPdx_b(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                + stress_u / (1025. * grid%M * grid%i_space(yy))
+                + w_u / (grid%M * grid%i_space(yy))
            dPdy_b(yy) = (dPdy_b(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                + stress_v / (1025. * grid%M * grid%i_space(yy))
+                + w_v / (grid%M * grid%i_space(yy))
         enddo
     
   end subroutine baroclinic_P_gradient
