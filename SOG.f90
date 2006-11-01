@@ -645,7 +645,7 @@ program SOG
 
         ! Calculate baroclinic pressure gradient components
         call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
-             stress%u%new, stress%v%new, dPdx_b, dPdy_b)
+             w%u(0), w%v(0), dPdx_b, dPdy_b)
 
         ! Calculate convergence metric for velocity field
         delu = abs(U%new(1)-uprev)/0.01
