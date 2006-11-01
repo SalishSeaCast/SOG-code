@@ -6,14 +6,11 @@ module air_sea_fluxes
   public :: wind_stress
   
   real(kind=dp), parameter :: rho_atm = 1.25 ! kg/m3
-  real(kind=dp), UU ! surface wind-speed (calc in wind-stress used in heat flux)
+  real(kind=dp) :: UU ! surface wind-speed (calc in wind-stress used in heat flux)
 contains
   subroutine wind_stress (unow, vnow, rho, &
-       stress, w_u, w_v)
+       w_u, w_v)
     ! subroutine to calculate the wind-stress
-
-    !*** eliminate this windstress type
-    use mean_param, only: windstress
 
     implicit none
     ! Arguments :
@@ -21,27 +18,25 @@ contains
     real(kind=dp), intent(in) :: unow, vnow, &
          ! surface water density (doesn't have to be current value)
          rho
-    !*** both in/out because only part is set
-    type(windstress), intent(in out) :: stress
     real(kind=dp), intent(out) :: w_u, w_v ! surface momentum flux components
 
     ! local variables
-    real(kind=dp) :: C_D ! drag coefficient (Large and Pond)
-
+    real(kind=dp) :: C_D, & ! drag coefficient (Large and Pond)
+         stress_u, stress_v  ! wind stress
     UU = SQRT(unow**2 + vnow**2)   
 
     if (UU /= 0.) then
        C_D = 1.0D-03 * (2.70 / UU + 0.142 + 0.0764 * UU)
-       stress%u%new = unow / UU * C_D * rho_atm * UU**2
-       stress%v%new = vnow / UU * C_D * rho_atm * UU**2
+       stress_u = unow / UU * C_D * rho_atm * UU**2
+       stress_v = vnow / UU * C_D * rho_atm * UU**2
     else
-       stress%u%new = 0.
-       stress%v%new = 0.
+       stress_u = 0.
+       stress_v = 0.
     endif
 
     ! Momentum (eq'ns A2a & A2b)
-    w_u = -stress%u%new / rho  ! w%u(0)
-    w_v = -stress%v%new / rho  ! w%v(0)
+    w_u = -stress_u / rho  ! w%u(0)
+    w_v = -stress_v / rho  ! w%v(0)
 
   end subroutine wind_stress
 
