@@ -341,9 +341,9 @@ contains
 
         do yy = 1, grid%M
            dPdx_b(yy) = (dPdx_b(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                + w_u / (grid%M * grid%i_space(yy))
+                - w_u / (grid%M * grid%i_space(yy))
            dPdy_b(yy) = (dPdy_b(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                + w_v / (grid%M * grid%i_space(yy))
+                - w_v / (grid%M * grid%i_space(yy))
         enddo
     
   end subroutine baroclinic_P_gradient
