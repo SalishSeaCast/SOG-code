@@ -206,8 +206,8 @@ contains
          wupwell  ! Profile of vertical upwelling velocity [m/s]
     ! Local variables:
     real(kind=dp) :: &
-         aflux, &  ! Surface nutrient flux
-         Pmicro_w_sink  !
+         Pmicro_w_sink, &  !
+         surf_flux ! surface nutrient flux when all the river water on surface
     real(kind=dp), dimension(0:grid%M):: distrib_flux!distributed nutrient flux
     real(kind=dp), dimension(0:grid%M):: null ! null vector
 
@@ -223,29 +223,32 @@ contains
     ! fluxes at the bottom and top of the grid
 
     call freshwater_bio ('Pmicro', Pmicro(0:grid%M),     &
-         distrib_flux)
+         surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes (grid, dt, K_all, null, &   ! in
-         0.d0, distrib_flux, Pmicro(grid%M+1),           &   ! in
+         surf_flux, distrib_flux, Pmicro(grid%M+1),           &   ! in
          Pmicro_RHS%diff_adv%new)                            ! out
     call freshwater_bio ('Pnano', Pnano(0:grid%M),       &
-         distrib_flux)
+         surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(grid, dt, K_all, null, &   ! in
-         0.d0, distrib_flux, Pnano(grid%M+1),             &   ! in
+         surf_flux, distrib_flux, Pnano(grid%M+1),             &   ! in
          Pnano_RHS%diff_adv%new)                              ! out
-    call diffusion_bot_surf_flux (grid, dt, K_all, 0.d0, &    ! in
-         Z(grid%M+1),                                    &    ! in
+    call freshwater_bio ('Zoo', Z(0:grid%M),             &
+         surf_flux, distrib_flux)
+    call diffusion_nonlocal_fluxes (grid, dt, K_all, null, &    ! in
+         surf_flux, distrib_flux, Z(grid%M+1),             &    ! in
          Z_RHS%diff_adv%new)                                  ! out
     call freshwater_bio ('nitrate', NO(0:grid%M),        &
-         distrib_flux)
+         surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes (grid, dt, K_all, null, & ! in
-         0.d0, distrib_flux, NO(grid%M+1),               &   ! in
+         surf_flux, distrib_flux, NO(grid%M+1),               &   ! in
          NO_RHS%diff_adv%new)                                ! out
     call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
          NH(grid%M+1),                                   &   ! in
          NH_RHS%diff_adv%new)                                ! out
-    aflux = -Ft * (60.0 - Si(1)) 
-    call diffusion_bot_surf_flux(grid, dt, K_all, aflux, &   ! in
-         Si(grid%M+1),                                   &   ! in
+    call freshwater_bio ('silicon', Si(0:grid%M),        &
+         surf_flux, distrib_flux)
+    call diffusion_nonlocal_fluxes (grid, dt, K_all, null, &   ! in
+         surf_flux, distrib_flux, Si(grid%M+1),                 &   ! in
          Si_RHS%diff_adv%new)                                ! out
     call diffusion_bot_surf_flux(grid, dt, K_all, 0.d0,  &   ! in
          D_DON(grid%M+1),                                &   ! in
