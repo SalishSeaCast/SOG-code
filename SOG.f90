@@ -275,7 +275,7 @@ program SOG
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
         call wind_stress (unow, vnow, rho%g(1), &
-             stress, w%u(0), w%v(0))
+             w%u(0), w%v(0))
 
         ! Calculate nonturbulent heat flux profile
         Q_n = I / (Cp%i * rho%i)
