@@ -145,7 +145,7 @@ contains
 
     ! Check for negative values in results, and stop with a fatal
     ! error message if any are found
-    call check_bio_negatives(Pmicro, Pnano, NO, NH, Si, &
+    call check_bio_negatives(Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.false.)
   end subroutine solve_bio_eqns
 
