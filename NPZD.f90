@@ -299,11 +299,10 @@ contains
   end subroutine dalloc_biology_variables
 
 
-  subroutine p_growth(M, NO, NH, Si, P, I_par, Temp, rate, plank, & 
-       NatMort, GrazMort) 
+  subroutine p_growth(M, NO, NH, Si, P, I_par, temp_effect, rate, plank) 
     ! Calculate the growth (light limited
-    ! or nutrient limited) natural mortality and grazing mortality
-    ! of either phytoplankton class.  All three
+    ! or nutrient limited) 
+    ! of either phytoplankton class which 
     ! are functions of temperature
     use precision_defs, only: dp
     use mean_param, only: plankton2
@@ -316,12 +315,11 @@ contains
     ! plankton concentraton (either Pmicro or Pnano)
     real(kind=dp), dimension(1:M), intent(in) :: P
     real(kind=dp), dimension(0:M), intent(in) :: I_par  ! light
-    real(kind=dp), dimension(0:M), intent(in) :: Temp  ! temperature
+    real(kind=dp), dimension(1:M), intent(in) :: temp_effect  ! Q10 temp effect
     ! parameters of the growth equations
     type(rate_para_phyto), intent(in) :: rate
     ! out are the growth values
     type(plankton2), intent(out) :: plank ! either micro or nano 
-    real(kind=dp), dimension(1:M), intent(out) :: NatMort, GrazMort
 
     ! Local variables:
     integer :: j ! counter through depth
@@ -329,7 +327,6 @@ contains
     real(kind=dp), dimension(1:M) :: Oup_cell ! NO uptake assuming full light
     real(kind=dp), dimension(1:M) :: Hup_cell ! NH uptake assuming full light
     real(kind=dp), dimension(1:M) :: Rmax ! maximum growth rate for given Temp
-    real(kind=dp) :: temp_effect ! temperature limitation
     real(kind=dp) :: NH_effect ! ammonium effect on nutrient uptake
 
 !!!!!!!!!!!Define growth Due to I_par!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -345,13 +342,9 @@ contains
     DO j = 1,M
 
        ! biological process impactedby Q10 temperature effect
-       temp_effect = 1.88**(0.1*(Temp(j)-273.15-20.)) 
 
        ! maximum growth rate (before light/nutrient limitation)
-       Rmax(j)=rate%R*temp_effect 
-
-       NatMort(j)=(rate%Rm)*temp_effect 
-       GrazMort(j)=(rate%M_z)*temp_effect
+       Rmax(j)=rate%R*temp_effect(j)
 
        plank%growth%light(j) = Rmax(j)*(1.0-EXP(-rate%sigma*I_par(j)/Rmax(j)))
 
@@ -444,6 +437,7 @@ contains
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
     use declarations, only: micro, nano, f_ratio
+    use unit_conversions, only: KtoC
     implicit none
     ! Arguments:
     integer, intent(in) :: &
@@ -477,6 +471,7 @@ contains
           WasteMicro,     &  ! Profile of micro phytos converted to waste
           WasteNano,      &  ! Profile of nano phytos converted to waste
           Si_remin           ! Profile of dissolution of biogenic Si detritus
+    real(kind=dp), dimension(1:M) :: temp_effect
     integer :: &
          bPZ, &  ! Beginning index for a quantity in the PZ array
          ePZ     ! Ending index for a quantity in the PZ array
@@ -500,6 +495,15 @@ contains
        where (Pnano < 0.) Pnano = 0.
     else
        Pnano = 0.
+    endif
+    ! Microzooplankton
+    if (microzooplankton) then
+       bPZ = (PZ_bins%zoo - 1) * M + 1
+       ePZ = PZ_bins%zoo * M
+       Z = PZ(bPZ:ePZ)
+       where (Z < 0.) Z = 0.
+    else
+       Z = 0.
     endif
     ! Nitrate
     bPZ = (PZ_bins%NO - 1) * M + 1
@@ -564,16 +568,21 @@ contains
     WasteNano = 0.
     remin_NH = 0.
 
+    ! all biological processes are impacted by Q10 temp effect
+    ! calculate it
+    temp_effect = 1.88**(0.1 * (KtoC(Temp(1:M)) - 20.)) 
+
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of micro plankton
     ! I_par is light, Temp is temperature 
     ! N ammonium and nitrate uptake rates (IN and OUT) incremented
     ! micro is the growth parameters for micro plankton (IN) and the growth rates 
     ! (OUT)
-    ! NatMort is physiological death, GrazMort is grazing mortality
 
-    call p_growth(M, NO, NH, Si, Pmicro, I_par, Temp, & ! in
-         rate_micro, micro, &         ! in and out, in, out
-         NatMort_micro, GrazMort_micro)                    ! out
+    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_effect, & ! in
+         rate_micro, micro)         ! in and out, in, out
+
+    NatMort_micro=(rate_micro%Rm)*temp_effect
+    GrazMort_micro=(rate_micro%M_z)*temp_effect
 
     ! put microplankton mortality into the medium detritus flux
 !SEA    GrazMort_micro = (1.0 + 5.0 * exp(-(day-150.)**2/60.**2) + &
@@ -589,9 +598,11 @@ contains
     ! (OUT)
     ! NatMort_nano is physiological death, GrazMort_nano is grazing mortality
 
-    call p_growth(M, NO, NH, Si, Pnano, I_par, Temp, & ! in
-         rate_nano, nano, &             ! in and out, in, out
-         NatMort_nano, GrazMort_nano)                     ! out
+    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_effect, & ! in
+         rate_nano, nano)              ! in and out, in, out
+
+    NatMort_nano = (rate_nano%Rm) * temp_effect
+    GrazMort_nano = (rate_nano%M_z) * temp_effect
 
 !SEA    GrazMort_nano = GrazMort_nano*Pnano ! ie propto the square
     WasteNano = WasteNano + (GrazMort_nano+NatMort_nano)*Pnano
@@ -644,6 +655,7 @@ contains
     ! Microzooplantkon
     bPZ = (PZ_bins%zoo - 1) * M + 1
     ePZ = PZ_bins%zoo *M
+!    dPZdt(bPZ:ePZ) = GrazMort_nano * Pnano - 0.1 * Z
     dPZdt(bPZ:ePZ) = 0.
     ! Nitrate
     bPZ = (PZ_bins%NO - 1) * M + 1
