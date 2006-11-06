@@ -79,6 +79,9 @@ module physics_model
        B, &       ! Buoyancy profile array
        dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
        dPdy_b     ! Baroclinic pressure gradient y (along-strait) component
+  type(profiles) :: &
+       ut, &  ! Integral of u (cross-strait) velocity component over time
+       vt     ! Integral of v (along-strait) velocity component over time
 
   ! Private parameter value declarations:
   real(kind=dp) :: &
@@ -86,11 +89,6 @@ module physics_model
        Ly = 60.0d3     ! Semi-major axis (along-strait) of model domain [m]
   
   ! Private variable declarations:
-  !
-  ! Velocity component integrals for baroclinic pressure gradient calculation
-  type(profiles) :: &
-       ut, &  ! Integral of u (cross-strait) velocity component over time
-       vt     ! Integral of v (along-strait) velocity component over time
   real(kind=dp), dimension(:), allocatable :: &
        dzx, &
        dzy
