@@ -45,13 +45,13 @@ datetime.o core_variables.o input_processor.o grid.o numerics.o \
 mean_param.o declarations.o surface_forcing.o \
 initial_sog.o \
 \
-profiles_output.o \
-\
 water_properties.o physics_model.o turbulence.o find_upwell.o diffusion.o \
-timeseries_output.o fitbottom.o freshwater.o\
+fitbottom.o freshwater.o\
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
 forcing.o mixing_layer.o \
+\
+timeseries_output.o profiles_output.o \
 \
 define_flux.o phys_Hvector.o \
 allocate1.o	\
@@ -98,7 +98,7 @@ changelog:
 # -O0, and lots of checking (i.e. appropriate for development and testing)
 $(EXEC)-dev: FFLAGS = $(FFLAGS-DEV)
 $(EXEC)-dev: clean $(OBJS)
-	$(LD) $(OBJS) $(LDFLAGS) $@
+	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
 
 #  "make SOG-prod" does a clean build with the compiler flags set
 # for faster execution.  *** Don't use this until you've sure the code
@@ -107,7 +107,7 @@ $(EXEC)-dev: clean $(OBJS)
 # with optimization enabled. ***  Consider yourself warned!
 $(EXEC)-prod: FFLAGS = $(FFLAGS-PROD)
 $(EXEC)-prod: clean $(OBJS)
-	$(LD) $(OBJS) $(LDFLAGS) $@
+	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
 
 # Suffix-based compilation rules
 .SUFFIXES: 		# Delete built-in implicit suffix-based rules
