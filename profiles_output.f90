@@ -16,11 +16,11 @@ module profiles_output
   !                         haloclines output file to be written, open it,
   !                         and write its header.
   !
-  ! write_profiles -- Check to see if the time is right to write a
-  !                   profiles output file.  If so, open the file,
-  !                   write the profile results, and close it.  Also
-  !                   write a line of data to the haloclines output
-  !                   file.
+  ! write_std_profiles -- Check to see if the time is right to write a
+  !                       profiles output file.  If so, open the file,
+  !                       write the profile results, and close it.  Also
+  !                       write a line of data to the haloclines output
+  !                       file.
   !
   ! profiles_output_close -- Close the haloclines output file.
 
@@ -30,7 +30,7 @@ module profiles_output
   implicit none
 
   private
-  public init_profiles_output, write_profiles, profiles_output_close
+  public init_profiles_output, write_std_profiles, profiles_output_close
 
   ! Private variable declarations:
   !
@@ -125,10 +125,9 @@ contains
   end subroutine init_profiles_output
 
 
-  subroutine write_profiles(codeId, str_runDatetime, str_CTDdatetime,    &
+  subroutine write_std_profiles(codeId, str_run_Datetime, str_CTD_Datetime, &
        year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Z, NO, NH,  &
-       Si, dissolved_detritus, sinking_detritus, lost_Detritus, Ku, Kt, &
-       Ks, I_par, U, V)
+       Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
     ! close it.  Also write a line of data to the haloclines output
@@ -140,31 +139,32 @@ contains
     use grid_mod, only: grid_
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId           ! Code identity string
-    character(len=19), intent(in) :: str_runDatetime  ! Date/time of code run
-    character(len=19), intent(in) :: str_CTDdatetime  ! Date/time of CTD init
+    character(len=70), intent(in) :: codeId            ! Code identity string
+    character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
+    character(len=19), intent(in) :: str_CTD_Datetime  ! Date/time of CTD init
     integer, intent(in) :: year, day
     real(kind=dp), intent(in) :: day_time, dt ! can't expect exact time match
     type(grid_), intent(in) :: grid
     real(kind=dp), intent (in) :: &
-         T(0:), &       ! Temperature [K]
-         S(0:), &       ! Salinity [-]
-         rho(0:), &     ! Density [kg/M^3]
-         Pmicro(0:), &  ! Micro phytoplankton (diatoms) [uM N]
-         Pnano(0:), &   ! Nano phytoplankton (flagellates) [uM N]
-         Z(0:), &       ! Micro zooplankton (uM N)
-         NO(0:), &      ! Nitrates [uM N]
-         NH(0:), &      ! Ammonium [uM N]
-         Si(0:), &      ! Silicon [uM]
-         dissolved_detritus(0:), &  ! Dissolved detritus [uM N]
-         sinking_detritus(0:),   &  ! Dissolved detritus [uM N]
-         lost_detritus(0:),      &  ! Dissolved detritus [uM N]
-         Ku(0:), &      ! Total momentum eddy diffusivity [m^2/s]
-         Kt(0:), &      ! Total temperature eddy diffusivity [m^2/s]
-         Ks(0:), &      ! Total salinity eddy diffusivity [m^2/s]
-         I_par(0:), &   ! Photosynthetic available radiation [W/m^2]
-         U(0:), &       ! U velocity component [m/s]
-         V(0:)          ! U velocity component [m/s]
+         T(0:),       &  ! Temperature [K]
+         S(0:),       &  ! Salinity [-]
+         rho(0:),     &  ! Density [kg/M^3]
+         Pmicro(0:),  &  ! Micro phytoplankton (diatoms) [uM N]
+         Pnano(0:),   &  ! Nano phytoplankton (flagellates) [uM N]
+         Z(0:),       &  ! Micro zooplankton (uM N)
+         NO(0:),      &  ! Nitrates [uM N]
+         NH(0:),      &  ! Ammonium [uM N]
+         Si(0:),      &  ! Silicon [uM]
+         D_DON(0:),   &  ! Dissolved organic nitrogen detritus [uM N]
+         D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
+         D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
+         D_bSi(0:),   &  ! Biogenic silicon detritus [uM N]
+         Ku(0:),      &  ! Total momentum eddy diffusivity [m^2/s]
+         Kt(0:),      &  ! Total temperature eddy diffusivity [m^2/s]
+         Ks(0:),      &  ! Total salinity eddy diffusivity [m^2/s]
+         I_par(0:),   &  ! Photosynthetic available radiation [W/m^2]
+         U(0:),       &  ! U velocity component [m/s]
+         V(0:)           ! U velocity component [m/s]
     ! Local variables:
     integer :: i  ! Loop index over grid depth
     real(kind=dp) :: &
@@ -174,7 +174,7 @@ contains
     ! Temporary storage for formated datetime string.  Needed to work around
     ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
     ! calls in write statements
-    character(len=19) :: str_proDatetime
+    character(len=19) :: str_pro_Datetime
     ! sigma-t quantity calculated from density for profile results output
     double precision :: sigma_t
 
@@ -213,32 +213,33 @@ contains
           ! Write the profile results file header
           ! Avoid a pgf90 idiocyncracy by getting datetimes formatted into
           ! string here rather than in the write statement
-          str_proDatetime = datetime_str(profileDatetime(iprof))
-          write(profiles, 200) trim(codeId), str_runDatetime, &
-               str_CTDdatetime, str_proDatetime, derS, dep
+          str_pro_Datetime = datetime_str(profileDatetime(iprof))
+          write(profiles, 200) trim(codeId), str_run_datetime, &
+               str_CTD_datetime, str_pro_datetime, derS, dep
 200       format("! Profiles of Temperature, Salinity, Density, ",           &
                "Phytoplankton (micro & nano),"/,                             &
-               "Micro zooplankton,"/,                                        &
-               "! Nitrate, Ammonium, Silicon and Detritus (dissolved, ",     &
-               "sinking, and mortality),"/,                                  &
-               "! Total Eddy Diffusivities (momentum, temperature, & ",      &
-               "salinity, Photosynthetic"/,                                  &
-               "! Available Radiation, and Mean Velocity Components (u & v)"/,&
+               "! Micro zooplankton, Nitrate, Ammonium, Silicon, and ",      &
+               "Detritus (DON, PON, "/,                                      &
+               "! refractory N & biogenic Si), Total Eddy Diffusivities ",   &
+               "(momentum, "/,                                               &
+               "! temperature & salinity), Photosynthetic Available ",       &
+               "Radiation, and ",                                            &
+               "! Mean Velocity Components (u & v)"/,                        &
                "*FromCode: ", a/,                                            &
                "*RunDateTime: ", a/,                                         &
                "*InitialCTDDateTime: ", a/,                                  &
                "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
-               "micro phytoplankton, nano phytoplankton, micro zooplantkon, ",&
-               "nitrate, ammonium, silicon, ",                               &
-               "dissolved detritus, ",                                       &
-               "sinking detritus, lost detritus, ",                          &
-               "total momentum eddy diffusivity, ",                          &
+               "micro phytoplankton, nano phytoplankton, ",                  &
+               "micro zooplankton, nitrate, ammonium, silicon, ",            &
+               "DON detritus, PON detritus, refractory N detritus, ",        &
+               "biogenic Si detritus, total momentum eddy diffusivity, ",    &
                "total temperature eddy diffusivity, ",                       &
                "total salinity eddy diffusivity, ",                          &
                "photosynthetic available radiation, ",                       &
                "u velocity, v velocity"/,                                    &
-               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, uM N, ",&
-               "uM, uM N, uM N, uM N, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s"/,&
+               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
+               "uM N, uM, uM N, uM N, uM N, uM, m^2/s, m^2/s, m^2/s, ",      &
+               "W/m^2, m/s, m/s"/,&
                "*ProfileDateTime: ", a/,                                     &
                "*HaloclineMagnitude: ", f6.3, " m^-1"/,                      &
                "*HaloclineDepth: ", f6.2, " m"/,                             &
@@ -248,8 +249,8 @@ contains
              sigma_t = rho(i) - 1000.
              write(profiles, 201) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
                   Pmicro(i), Pnano(i), Z(i), NO(i), NH(i), Si(i),         &
-                  dissolved_detritus(i), sinking_detritus(i),             &
-                  lost_detritus(i), Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
+                  D_DON(i), D_PON(i), D_refr(i), D_bSi(i),                &
+                  Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
           enddo
           ! Write the values at the bottom grid boundary.  Some quantities are
           ! not defined there, so use their values at the Mth grid point.
@@ -257,9 +258,9 @@ contains
           write(profiles, 201) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),    &
                S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1),  &
                Z(grid%M+1), NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),    &
-               dissolved_detritus(grid%M+1), sinking_detritus(grid%M+1), &
-               lost_detritus(grid%M+1), Ku(grid%M), Kt(grid%M),          &
-               Ks(grid%M), I_par(grid%M), U(grid%M+1), V(grid%M+1)
+               D_DON(grid%M+1), D_PON(grid%M+1), D_refr(grid%M+1),       &
+               D_bSi(grid%M+1), Ku(grid%M), Kt(grid%M), Ks(grid%M),      &
+               I_par(grid%M), U(grid%M+1), V(grid%M+1)
 201       format(f7.3, 80(2x, f8.4))
           close(profiles)          
 
@@ -267,7 +268,7 @@ contains
 
        endif
     endif
-  end subroutine write_profiles
+  end subroutine write_std_profiles
 
 
   subroutine profiles_output_close
