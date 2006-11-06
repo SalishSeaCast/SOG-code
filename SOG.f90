@@ -36,10 +36,11 @@ program SOG
        dalloc_IMEX_variables
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
-  use timeseries_output, only: init_timeseries_output, write_timeseries, &
+  use timeseries_output, only: init_timeseries_output, write_std_timeseries, &
        timeseries_output_close
-  use profiles_output, only: init_profiles_output, write_profiles, &
+  use profiles_output, only: init_profiles_output, write_std_profiles, &
        profiles_output_close
+  use user_output, only: write_user_timeseries, write_user_profiles
   use mixing_layer, only: find_mixing_layer_depth
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
@@ -661,24 +662,6 @@ program SOG
         endif
      enddo  !---------- End of the implicit solver loop ----------
 
-     ! Write time series results
-     call write_timeseries(time / 3600., grid, &
-       ! Variables for standard physical model output
-       count, h%new, T%new, S%new, &
-       ! User-defined physical model output variables
-!SEA       dPdx_b, dPdy_b, unow, vnow, u%new, v%new, &
-       ! Variables for standard biological model output
-       N%O , N%H, Si, P%micro, P%nano, Z, D%DON, D%PON, D%bSi &
-       ! User-defined biological model output variables
-!!$       &
-       )
-
-     call write_profiles(codeId, datetime_str(runDatetime),            &
-          datetime_str(startDatetime), year, day, day_time, dt, grid,  &
-          T%new, S%new, rho%g, P%micro, P%nano, Z, N%O, N%H, Si,       &
-          D%DON, D%PON, D%bSi, K%u%all, K%t%all, K%s%all, I_par,      &
-          U%new, V%new)
-
      !---------- Biology Model ----------
      !
      ! Solve the biology model ODEs to advance the biology quantity values
@@ -735,6 +718,41 @@ program SOG
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform(grid%M, Z, N%H, D%DON, D%PON, D%refr, D%bSi)
+
+     ! Write standard time series results
+     ! !!! Please don't change this argument list without good reason. !!!
+     ! !!! If it is changed, the change should be committed to CVS.    !!!
+     ! !!! For exploratory, debugging, etc. output use                 !!!
+     ! !!! write_user_timeseries() below.                              !!!
+     call write_std_timeseries(time / 3600., grid,                    &
+       ! Variables for standard physics model output
+       count, h%new, U%new, V%new, T%new, S%new,                      &
+       ! Variables for standard biology model output
+       N%O , N%H, Si, P%micro, P%nano, Z, D%DON, D%PON, D%refr, D%bSi)
+
+     ! Write user-specified time series results
+     ! !!! Please don't add arguments to this call.           !!!
+     ! !!! Instead put use statements in your local copy of   !!!
+     ! !!! write_user_timeseries() in the user_output module. !!!
+     call write_user_timeseries(time / 3600., grid)
+     
+     ! Write standard profiles results
+     ! !!! Please don't change this argument list without good reason. !!!
+     ! !!! If it is changed, the change should be committed to CVS.    !!!
+     ! !!! For exploratory, debugging, etc. output use                 !!!
+     ! !!! write_user_timeseries() below.                              !!!
+     call write_std_profiles(codeId, datetime_str(runDatetime),       &
+          datetime_str(startDatetime), year, day, day_time, dt, grid, &
+          T%new, S%new, rho%g, P%micro, P%nano, Z, N%O, N%H, Si,      &
+          D%DON, D%PON, D%refr, D%bSi, K%u%all, K%t%all, K%s%all,     &
+          I_par, U%new, V%new)
+
+     ! Write user-specified profiles results
+     ! !!! Please don't add arguments to this call.           !!!
+     ! !!! Instead put use statements in your local copy of   !!!
+     ! !!! write_user_profiles() in the user_output module.   !!!
+     call write_user_profiles(codeId, datetime_str(runDatetime),      &
+          datetime_str(startDatetime), year, day, day_time, dt, grid)
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
