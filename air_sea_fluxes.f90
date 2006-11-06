@@ -67,7 +67,7 @@ contains
     ! Sensible heat flux
     real(kind=dp), parameter :: Cs = 1.3e-3, & ! sensible heat transfer coeff.
          Cp = 1003 ! specific heat of air
-    real(kind=dp), h_sens ! sensible heat flux
+    real(kind=dp) :: h_sens ! sensible heat flux
 
     ! Latent heat flux 
     ! vapour pressure consts
