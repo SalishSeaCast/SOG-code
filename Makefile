@@ -51,7 +51,7 @@ biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
 forcing.o mixing_layer.o \
 \
-timeseries_output.o profiles_output.o \
+user_output.o timeseries_output.o profiles_output.o \
 \
 define_flux.o phys_Hvector.o \
 allocate1.o	\
