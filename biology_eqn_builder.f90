@@ -174,15 +174,16 @@ contains
 
   subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Z, NO, NH, & ! in
        Si, D_DON, D_PON, D_refr, D_bSi, Ft, K_all, wupwell)
-    ! Build the right-hand side (RHS) arrays for the
-    ! diffusion/advection equations for the biology quantities.
+    ! Build the terms for the diffusion/advection equations for the
+    ! biology quantities.
     !
-    ! This calculates the values of the diffusion coefficients matrix
-    ! (diff_coeff_bio%*), the RHS diffusion/advection term vectors
-    ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
+    ! This calculates the values of the precursor diffusion
+    ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
+    ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
+    ! vectors (*_RHS%sink).
     use precision_defs, only: dp
     use grid_mod, only: grid_
-    use diffusion, only: new_diffusion_coeff, diffusion_bot_surf_flux, &
+    use diffusion, only: diffusion_coeff, diffusion_bot_surf_flux, &
          diffusion_nonlocal_fluxes
     use find_upwell, only: vertical_advection
     use declarations, only: micro  ! *** This definitely needs to go away
@@ -224,9 +225,8 @@ contains
 
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
-    call new_diffusion_coeff(grid, dt, K_all,            & ! in
-         nBmatrix%bio%new%sub, nBmatrix%bio%new%diag, & ! out
-         nBmatrix%bio%new%sup)                       ! out
+    call diffusion_coeff(grid, dt, K_all, & ! in
+         nBmatrix%bio%new)                  ! out
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
