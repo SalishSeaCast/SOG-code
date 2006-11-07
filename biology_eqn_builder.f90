@@ -202,16 +202,19 @@ contains
          Ft  ! Total fresh water flux
     real(kind=dp), dimension(0:), intent(in) :: &
          K_all  ! Total diffusion coefficient array
-    real(kind=dp), dimension(1:), intent(in) :: &
+    real(kind=dp), dimension(0:), intent(in) :: &
          wupwell  ! Profile of vertical upwelling velocity [m/s]
     ! Local variables:
     real(kind=dp) :: &
-         Pmicro_w_sink, &  !
          surf_flux ! surface nutrient flux when all the river water on surface
     real(kind=dp), dimension(0:grid%M):: distrib_flux!distributed nutrient flux
     real(kind=dp), dimension(0:grid%M):: null ! null vector
+    real(kind=dp), dimension(1:grid%M):: unit ! unit vector
+    ! sinking defined by nutrient status
+    real(kind=dp), dimension(1:grid%M):: Pmicro_w_sink 
 
     null = 0.d0
+    unit = 1.d0
 
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
@@ -282,17 +285,16 @@ contains
          D_bSi_RHS%diff_adv%new)
 
     ! Calculate the sinking term for the quantities that sink
-    ! *** There is a problem here: micro%Nlimit is a profile
-    ! *** but sinking_advection() only accepts a scalar rate.
-     Pmicro_w_sink = w_sink%Pmicro_min * micro%Nlimit(1) &
-          + w_sink%Pmicro_max * (1 - micro%Nlimit(1))
+    ! to  calculate sinking at the interfaces used the values above
+     Pmicro_w_sink = w_sink%Pmicro_min * micro%Nlimit &
+          + w_sink%Pmicro_max * (1 - micro%Nlimit)
      call sinking_advection(grid, dt, Pmicro, Pmicro_w_sink, &
           Pmicro_RHS%sink)
-     call sinking_advection(grid, dt, D_PON, w_sink%D_PON, &
+     call sinking_advection(grid, dt, D_PON, w_sink%D_PON*unit, &
           D_PON_RHS%sink)
-     call sinking_advection(grid, dt, D_refr, w_sink%D_refr, &
+     call sinking_advection(grid, dt, D_refr, w_sink%D_refr*unit, &
           D_refr_RHS%sink)
-     call sinking_advection(grid, dt, D_bSi, w_sink%D_bSi, &
+     call sinking_advection(grid, dt, D_bSi, w_sink%D_bSi*unit, &
           D_bSi_RHS%sink)
   end subroutine build_biology_equations
 
@@ -300,6 +302,8 @@ contains
   subroutine sinking_advection(grid, dt, qty, w_sink, RHS)
     ! Calculate the sinking term of the semi-implicit PDEs for the biology
     ! quantities that sink (some classes of plankton, and some of detritus).
+    ! use upwind advection
+
     use precision_defs, only: dp
     use grid_mod, only: grid_
     implicit none
@@ -310,152 +314,35 @@ contains
          dt  ! Time step [s]
     real(kind=dp), dimension(0:), intent(in) :: &
          qty  ! Profile array of sinking quantity
-    real(kind=dp), intent(in) :: &
-         w_sink  ! Sinking velocity [m/s]
+    real(kind=dp), dimension(1:), intent(in) :: &
+         w_sink  ! Sinking velocity [m/s] on interfaces
     real(kind=dp), dimension(1:), intent(out) :: &
          RHS  ! RHS term vector for semi-implicit diffusion/advection PDE
-    ! Local variables:
-    real(kind=dp), dimension(0:grid%M+1) :: &
-         Ru,     &
-         Ru_1,   &
-         Ru_a,   &
-         Ru_b,   &
-         Au_1,   &
-         Au_2,   &
-         delta_1
-    real(kind=dp), dimension(0:grid%M) :: &
-         Fu
-    real(kind=dp), dimension(-1:grid%M) :: &
-         Ru_2,   &
-         delta_2 
-    real(kind=dp), dimension(0:grid%M+1, 0:3) :: &
-         aa  ! for a third order advection scheme
-    integer, dimension(0:grid%M+1) :: &
-         L  ! order as a function of grid spacing
-    INTEGER :: &
-         index, &
-         jk
 
-    Ru_a = qty
-    !Ru_a(0) = 0.
+    ! local variables
+    integer :: ii ! interface index
+    integer :: ig ! grid index 
+    real(kind=dp), dimension(0:grid%M) :: flux ! positive is upward
 
-    !Use qty(0) = 0 for upper boundary condition in advection!!!!
+    flux(0) = 0. ! no flux in or out from above
 
-    DO index = 0,grid%M+1
-       IF (w_sink >= 0.) THEN
-          Au_1(index) = w_sink   ! trivial for sink = constant
-          Au_2(index) =  0.
-       ELSE
-          Au_1(index) = 0.
-          Au_2(index) = -w_sink     
-       END IF
-    END DO
+    do ii = 1,grid%M
+       if (w_sink(ii).lt.0) then
+          write (*,*) "Youve got biology sinking upward!"
+          stop
+       else
+          ig = ii
+          flux(ii) = - w_sink(ii) * qty(ig)
+       endif
+    enddo
 
-!!!coefficients for cubic polynomial (3C)***see Easter 1993, Monthly Weather Review 121: pp 297-304!!!
+    do ig = 1,grid%M
+       ii = ig
+       RHS(ig) = - dt * (flux(ii-1) - flux(ii))/grid%i_space(ii)
+    enddo
 
-    aa = 0.
-
-    DO index = 2,grid%M-1
-
-       aa(index,0) = (-Ru_a(index+1) + 26.0*Ru_a(index) - Ru_a(index-1))/24.0
-       aa(index,1) = (-5.0*Ru_a(index+2)+34.0*Ru_a(index+1)-34.0*Ru_a(index-1)+5.0*Ru_a(index-2))/48.0
-       aa(index,2) = (Ru_a(index+1)-2.0*Ru_a(index)+Ru_a(index-1))/2.0
-       aa(index,3) = (Ru_a(index+2)-2.0*Ru_a(index+1)+2.0*Ru_a(index-1)-Ru_a(index-2))/12.0
-       L(index) = 3
-
-    END DO
-
-
-
-!!!!Boundary Conditions!!!!!!!!!!!!!!!!!!!!!
-
-    L(0) = 0
-    aa(0,0) = Ru_a(0)
-
-    L(1) = 2
-    aa(1,0) = (-Ru_a(2) + 26.0*Ru_a(1) - Ru_a(0))/24.0
-    aa(1,1) = (Ru_a(2) - Ru_a(0))/2.0
-    aa(1,2) = (Ru_a(2) - 2.0*Ru_a(1) + Ru_a(0))/2.0
-
-    L(grid%M) = 2
-    aa(grid%M,0) = (-Ru_a(grid%M+1) + 26.0*Ru_a(grid%M) - Ru_a(grid%M-1))/24.0
-    aa(grid%M,1) = (Ru_a(grid%M+1) - Ru_a(grid%M-1))/2.0
-    aa(grid%M,2) = (Ru_a(grid%M+1) - 2.0*Ru_a(grid%M) + Ru_a(grid%M-1))/2.0
-
-    L(grid%M+1) = 0
-    aa(grid%M+1,0) = Ru_a(grid%M+1)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    delta_1 = 0.  
-    delta_2 = 0.  
-    Ru_1 = 0.     
-    Ru_2 = 0.
-    Fu = 0.
-
-    do index = 1, grid%M
-       delta_1(index) = Au_1(index) * dt / grid%i_space(index)
-       delta_2(index-1) = Au_2(index-1) * dt/ grid%i_space(index)
-    end do
-
-    do index = 0, grid%M + 1
-       do jk = 0, L(index)
-          if (jk == 0) then
-             Ru_1(index) = Ru_1(index) + aa(index,0)
-             Ru_2(index-1) = Ru_2(index-1) + aa(index,0) 
-          else
-             Ru_1(index) = Ru_1(index) + aa(index,jk) &
-                  / (2.)**(jk+1) / (jk+1)             &
-                  * (1. - (1. - 2. * (delta_1(index)  &
-                  + epsilon(w_sink)))**(jk+1))          &
-                  / (delta_1(index) + epsilon(w_sink))
-             Ru_2(index-1) = Ru_2(index-1) + aa(index,jk) &
-                  / (-2.)**(jk+1) / (jk+1)                &
-                  * ((1. - 2. * (delta_2(index-1)         &
-                  + epsilon(w_sink)))**(jk+1) - 1.)         &
-                  / (delta_2(index-1) + epsilon(w_sink)) 
-          end if
-       end do
-       if (Ru_1(index) < 0.) then
-          Ru_1(index) =  0.
-       end if
-       ! *** Changing index to index-1 in the next 2 statements is a guess
-       ! *** It's consistent with the use of Ru_2 above, and it avoids an
-       ! *** array bound runtime error
-       if (Ru_2(index-1) < 0.) then
-          Ru_2(index-1) = 0.
-       end if
-    end do
-
-    do index = 0, grid%M+1
-       Ru_b(index) = delta_1(index) * Ru_1(index) &
-            + delta_2(index-1) * Ru_2(index-1)
-       Ru(index) = max(epsilon(w_sink), Ru_a(index), Ru_b(index))
-    end do
-
-    !Fu(0) = -Ru_2(0)*Au_2(0)*Ru_a(1)/Ru(1)
-    !Fu(grid%M) = Ru_1(grid%M)*Au_1(grid%M)*Ru_a(grid%M)/Ru(grid%M)
-    do index = 0, grid%M    !1, grid%M-1
-       Fu(index) = Ru_1(index) * Au_1(index) * Ru_a(index) / Ru(index) &
-            - Ru_2(index) * Au_2(index) * Ru_a(index+1) / Ru(index+1)
-    end do
-
-
-
-
-    !TRY!!!
-    Fu(0) = 0.
-    RHS = 0.
-
-
-    DO index = 1, grid%M
-       RHS(index) = -dt/grid%i_space(index)*(Fu(index)-Fu(index-1))
-       !RHS(index) = -dt/grid%i_space(index)/2.0*w_sink*(qty(index+1)-qty(index-1))
-       IF (ABS(RHS(index)) < EPSILON(RHS(index))) THEN
-          RHS(index) = 0.
-       end if
-    end do
   end subroutine sinking_advection
+
 
 
   subroutine new_to_old_bio_RHS()
