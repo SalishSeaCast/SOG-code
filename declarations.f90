@@ -37,7 +37,7 @@ module declarations
   !                                        avgdata_u, avgdata_v
   DOUBLE PRECISION, DIMENSION(0:366)::smooth_u, smooth_v
   DOUBLE PRECISION::begin_hour,end_hour  ! used in interpolate_dt
-  DOUBLE PRECISION :: time, h_i, del, dummy_time, del_p
+  DOUBLE PRECISION :: time, h_i, del, del_p
 
   ! Surface buoyancy forcing
   real(kind=dp) :: &
@@ -70,9 +70,9 @@ module declarations
   DOUBLE PRECISION::Br
   CHARACTER::ignored_input
   INTEGER, DIMENSION(20)::alloc_stat  !***
-  INTEGER :: steps, time_step, index,xx, xx2, year, month, jmax_i,    &
+  INTEGER :: steps, time_step, index,xx, xx2, year, jmax_i,    &
        count, yy, yy2, gg, jmaxg, cloud_type, day, stable,  &
-       water_type, neg_count
+       water_type
   REAL::D_test
   DOUBLE PRECISION :: w_star,L_star, day_time, Io, h_Ekman  !depth
   !friction vel, convective vel scale
