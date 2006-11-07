@@ -6,17 +6,24 @@ module diffusion
   implicit none
 
   private
-  public :: diffusion_coeff, new_diffusion_coeff, diffusion_nonlocal_fluxes, &
+  public :: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
 
 contains
 
-  subroutine diffusion_coeff(grid, dt, K_all, Bmatrix)
+  subroutine diffusion_coeff(grid, dt, K_all, &  ! in
+       Bmatrix)                                  ! out
     ! Calculate the strength of the diffusion coefficients
     ! and put them in diagonal vectors of a tridiagonal matrix.
+    !
+    ! This is an interim step on the way to the calculation of the A
+    ! matrices in Large, et al (1994) App. D.  The difference is that
+    ! we are using the IMEX scheme to solve the semi-implicit
+    ! equations, and some additional manipulation of the diffusion
+    ! coefficients is required to facilitate that.
     use precision_defs, only: dp
     use grid_mod, only: grid_
-    use mean_param, only: trivector
+    use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
     implicit none
     ! Arguments:
     type(grid_), intent(in) :: &
@@ -25,50 +32,8 @@ contains
          dt  ! Time step [s]
     real(kind=dp), dimension(0:), intent(in) :: &
          K_all  ! Total diffusion coefficient array
-    type(trivector), intent(out) :: &
-         Bmatrix
-    ! Local variables:
-    integer :: index             ! counter through depth
-    real(kind=dp), dimension(grid%M) :: O_minus, O_plus
-    
-    ! Calculate Omega+ and Omega-
-    ! (Large, et al (1994), pg. 398, eqn D9)
-    do index = 1, grid%M
-       O_minus(index) = dt / grid%i_space(index) * &
-            K_all(index-1) / grid%g_space(index-1)
-       O_plus(index) = dt / grid%i_space(index) * &
-            K_all(index) / grid%g_space(index)
-    enddo
-
-    ! Initialize diagonal vectors
-    Bmatrix%A = 0.
-    Bmatrix%B = 0.
-    Bmatrix%C = 0.
-    ! Put in the combinations of Omega+ and Omega- terms (eqn D9)
-    Bmatrix%B = -O_plus -O_minus
-    Bmatrix%C = O_plus
-    Bmatrix%A = O_minus
-    Bmatrix%C(grid%M) = 0.
-  end subroutine diffusion_coeff
-
-
-  subroutine new_diffusion_coeff(grid, dt, K_all, sub, diag, sup)
-    ! Calculate the strength of the diffusion coefficients
-    ! and put them in diagonal vectors of a tridiagonal matrix.
-    use precision_defs, only: dp
-    use grid_mod, only: grid_
-    implicit none
-    ! Arguments:
-    type(grid_), intent(in) :: &
-         grid  ! Grid arrays
-    real(kind=dp), intent(in) :: &
-         dt  ! Time step [s]
-    real(kind=dp), dimension(0:), intent(in) :: &
-         K_all  ! Total diffusion coefficient array
-    real(kind=dp), dimension(1:), intent(out) :: &
-         sub,  &  ! Sub-diagonal vector of diffusion coeff matrix
-         diag, &  ! Diagonal vector of diffusion coeff matrix
-         sup      ! Super-diagonal vector of diffusion coeff matrix
+    type(tridiag) :: &
+         Bmatrix  ! Diffusion coefficient matrix
     ! Local variables:
     real(kind=dp), dimension(1:grid%M) :: O_minus, O_plus
     
@@ -80,15 +45,15 @@ contains
          (K_all(1:grid%M) / grid%g_space(1:grid%M))
 
     ! Initialize diagonal vectors
-    sub = 0.
-    diag = 0.
-    sup = 0.
+    Bmatrix%sub = 0.
+    Bmatrix%diag = 0.
+    Bmatrix%sup = 0.
     ! Put in the combinations of Omega+ and Omega- terms (eqn D9)
-    sub = O_minus
-    diag = -O_plus - O_minus
-    sup = O_plus
-    sup(grid%M) = 0.
-  end subroutine new_diffusion_coeff
+    Bmatrix%sub = O_minus
+    Bmatrix%diag = -O_plus - O_minus
+    Bmatrix%sup = O_plus
+    Bmatrix%sup(grid%M) = 0.
+  end subroutine diffusion_coeff
 
 
   subroutine diffusion_nonlocal_fluxes (grid, dt, Kall, gamma, surface_flux, &
