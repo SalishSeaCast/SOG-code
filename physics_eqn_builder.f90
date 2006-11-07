@@ -56,7 +56,7 @@ module physics_eqn_builder
        T_RHS,   &  ! Temperature right-hand side arrays
        S_RHS,   &  ! Salinity right-hand side arrays
        ! Subroutines:
-!!$       build_physics_equations, &
+       build_physics_equations, &
 !!$       new_to_old_phys_RHS, new_to_old_phys_Bmatrix, &
        alloc_phys_RHS_variables, dalloc_phys_RHS_variables
 
@@ -118,6 +118,75 @@ module physics_eqn_builder
   ! Private to module:
 
 contains
+
+  subroutine build_physics_equations(grid, dt, U, V, T, S, K_vel, K_T, K_S)
+    ! Build the terms for the diffusion/advection/Coriolis/baroclinic
+    ! pressure gradient equations for the physics quantities.
+    !
+    ! This calculates the values of the precursor diffusion
+    ! coefficients matrices (Bmatrix%vel%*, Bmatrix%T%*, and
+    ! Bmatrix%S%*), the RHS diffusion/advection term vectors
+    ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
+    ! pressure gradient term vectors (*_RHS%C_pg).
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    implicit none
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         U, &  ! U velocity component(cross-strait) profile
+         V, &  ! V velocity component(along-strait) profile
+         T, &  ! Temperature profile
+         S
+    real(kind=dp), dimension(0:), intent(in) :: &
+         K_vel, &  ! Total velocity diffusion coefficient profile
+         K_T,   &  ! Total temperature diffusion coefficient profile
+         K_S       ! Total salinity diffusion coefficient profile
+
+    ! Calculate the precursor diffusion coefficients matrices for the
+    ! physics model quantities.
+    call calc_phys_Bmatrices(grid, dt, K_vel, K_T, K_S, &  ! in
+         nBmatrix%vel%new, nBmatrix%T%new, nBmatrix%S%new) ! out
+  end subroutine build_physics_equations
+
+
+  subroutine calc_phys_Bmatrices(grid, dt, K_vel, K_T, K_S, &  ! in
+       Bmatrix_vel, Bmatrix_T, Bmatrix_S)                      ! out
+    ! Calculate the precursor diffusion coefficients matrices for the
+    ! physics model quantities.
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    use numerics, only: tridiag
+    use diffusion, only: diffusion_coeff
+    implicit none
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         K_vel, &  ! Total velocity diffusion coefficient profile
+         K_T,   &  ! Total temperature diffusion coefficient profile
+         K_S       ! Total salinity diffusion coefficient profile
+    type(tridiag) ::  &
+         Bmatrix_vel, &  ! Velocity diffusion coefficient matrix
+         Bmatrix_T,   &  ! Temperature diffusion coefficient matrix
+         Bmatrix_S       ! Salinity diffusion coefficient matrix
+
+    ! Velocity components
+    call diffusion_coeff(grid, dt, K_vel, & ! in
+         Bmatrix_vel)                       ! out
+    ! Temperature
+    call diffusion_coeff(grid, dt, K_T, & ! in
+         Bmatrix_T)                       ! out
+    ! Salinity
+    call diffusion_coeff(grid, dt, K_S, & ! in
+         Bmatrix_S)                       ! out
+  end subroutine calc_phys_Bmatrices
+
 
   subroutine alloc_phys_RHS_variables(M)
     ! Allocate memory for arrays for right-hand sides of
