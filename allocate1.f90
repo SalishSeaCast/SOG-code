@@ -50,7 +50,7 @@ subroutine allocate1(M, STAT)
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
            nano%growth%light(M), nano%growth%new(M), &
            micro%Nlimit(M), nano%Nlimit(M), &
-           wupwell(1:M+1), &
+           wupwell(0:M), &
            STAT = alloc_stat(10))
 
       ALLOCATE(f_ratio(M), &
