@@ -450,8 +450,7 @@ program SOG
         ! Bmatrix%S%*), the RHS diffusion/advection term vectors
         ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
         ! pressure gradient term vectors (*_RHS%C_pg).
-        call build_physics_equations(grid, dt, U%new, V%new, &  ! in
-             T%new, S%new, K%U%all, K%T%all, K%S%all)           ! in
+        call build_physics_equations(grid, dt, U%new, V%new, T%new, S%new) ! in
      
 !!$        ! Calculate matrix B (changed to Amatrix later) 
 !!$        call diffusion_coeff(grid, dt, K%t%all, &
@@ -506,7 +505,6 @@ Bmatrix%S%C = nBmatrix%S%new%sup
              Gvector_c%v)      
 
         IF (time_step == 1 .AND. count  == 1) THEN
-
            Bmatrix_o%t%A = Bmatrix%t%A
            Bmatrix_o%t%B = Bmatrix%t%B
            Bmatrix_o%t%C = Bmatrix%t%C
@@ -525,8 +523,23 @@ Bmatrix%S%C = nBmatrix%S%new%sup
            Gvector_co%u = Gvector_c%u
            Gvector_co%v = Gvector_c%v
         END IF
+!!$        ! Store %new components of RHS and Bmatrix variables in %old
+!!$        ! their components for use by the IMEX solver.  Necessary for the
+!!$        ! 1st time step because the values just calculated are a better
+!!$        ! estimate than zero.
+!!$        if (time_step == 1) then
+!!$           call new_to_old_phys_RHS()
+!!$           call new_to_old_phys_Bmatrix()
+!!$        endif
 
 !!!!! IMEX SCHEME !!!!   
+
+!!$        ! Solve the semi-implicit diffusion/advection PDEs with
+!!$        ! Coriolis and baroclinic pressure gradient terms for the
+!!$        ! physics quantities.
+!!$        call solve_phys_eqns(grid%M, U%new, V%new, T%new, S%new, &  ! in
+!!$             day, time)                                             ! in
+
         CALL matrix_A (Amatrix%u, Bmatrix%u) ! changed from Bmatrix to Amatrix
         CALL matrix_A (Amatrix%t, Bmatrix%t) ! now have (D9)
         CALL matrix_A (Amatrix%s, Bmatrix%s)
@@ -705,13 +718,13 @@ Bmatrix%S%C = nBmatrix%S%new%sup
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, Z, N%O, N%H, &! in
-          Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)           ! in
+          Si, D%DON, D%PON, D%refr, D%bSi, Ft, wupwell)                    ! in
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
      ! 1st time step because the values just calculated are a better
      ! estimate than zero.
-     if (time_step == 1) then ! initial estimate is better than 0.
+     if (time_step == 1) then
         call new_to_old_bio_RHS()
         call new_to_old_bio_Bmatrix()
      endif
