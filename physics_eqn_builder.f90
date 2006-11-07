@@ -90,9 +90,8 @@ module physics_eqn_builder
   ! gradient equation right-hand side (RHS) arrays
   type :: RHS
      type(new_old_arrays) :: &
-          diff_adv  ! Diffusion/advection component of RHS
-     real(kind=dp), dimension(:), allocatable :: &
-          C_pg      ! Coriolis and baroclinic pressure grad component of RHS
+          diff_adv, &  ! Diffusion/advection component of RHS
+          C_pg         ! Coriolis and baroclinic pressure grad component of RHS
   end type RHS
 
   ! Variable Declarations:
@@ -119,7 +118,7 @@ module physics_eqn_builder
 
 contains
 
-  subroutine build_physics_equations(grid, dt, U, V, T, S, K_vel, K_T, K_S)
+  subroutine build_physics_equations(grid, dt, U, V, T, S)  ! in
     ! Build the terms for the diffusion/advection/Coriolis/baroclinic
     ! pressure gradient equations for the physics quantities.
     !
@@ -129,7 +128,7 @@ contains
     ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
     ! pressure gradient term vectors (*_RHS%C_pg).
     use precision_defs, only: dp
-    use grid_mod, only: grid_
+    use grid_mod, only: grid_ 
     implicit none
     ! Arguments:
     type(grid_), intent(in) :: &
@@ -141,25 +140,39 @@ contains
          V, &  ! V velocity component(along-strait) profile
          T, &  ! Temperature profile
          S
-    real(kind=dp), dimension(0:), intent(in) :: &
-         K_vel, &  ! Total velocity diffusion coefficient profile
-         K_T,   &  ! Total temperature diffusion coefficient profile
-         K_S       ! Total salinity diffusion coefficient profile
 
     ! Calculate the precursor diffusion coefficients matrices for the
     ! physics model quantities.
-    call calc_phys_Bmatrices(grid, dt, K_vel, K_T, K_S, &  ! in
-         nBmatrix%vel%new, nBmatrix%T%new, nBmatrix%S%new) ! out
+    call calc_phys_Bmatrices(grid, dt)  ! in
+
+!!$    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
+!!$    ! fluxes at the bottom and top of the grid
+!!$    call init_phys_RHS_fluxes(grid, dt, U(grid%M+1), V(grid%M+1),     &  ! in
+!!$         T(grid%M+1), S(grid%M+1), K_vel, K_T, K_S, gamma%T, gamma%S, &  ! in
+!!$         w%U(0), w%V(0), w%T(0), w%S(0), Q_n, F_n)                       ! in
+!!$
+!!$    ! Calculate profile of upwelling velocity
+!!$    call upwell_profile(grid, Qinter, upwell, wupwell)
+!!$    ! Add vertical advection due to upwelling to velocity components,
+!!$    ! temperature, and salinity RHS arrays
+!!$    call calc_phys_upwell_advection(grid, dt, U, V, T, S)
+!!$
+!!$    ! Calculate the Coriolis and baroclinic pressure gradient
+!!$    ! components of the RHS arrays for the velocity components
+!!$    call Coriolis_and_pg(dt, V, &   ! in
+!!$         U_RHS%C_pg%new)            ! out
+!!$    call Coriolis_and_pg(dt, -U, &  ! in
+!!$         V_RHS%C_pg%new)            ! out
+
   end subroutine build_physics_equations
 
 
-  subroutine calc_phys_Bmatrices(grid, dt, K_vel, K_T, K_S, &  ! in
-       Bmatrix_vel, Bmatrix_T, Bmatrix_S)                      ! out
+  subroutine calc_phys_Bmatrices(grid, dt)  !  in
     ! Calculate the precursor diffusion coefficients matrices for the
     ! physics model quantities.
     use precision_defs, only: dp
     use grid_mod, only: grid_
-    use numerics, only: tridiag
+    use declarations, only: K  ! *** Should change to use turbulence
     use diffusion, only: diffusion_coeff
     implicit none
     ! Arguments:
@@ -167,25 +180,84 @@ contains
          grid  ! Grid arrays
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]
-    real(kind=dp), dimension(0:), intent(in) :: &
-         K_vel, &  ! Total velocity diffusion coefficient profile
-         K_T,   &  ! Total temperature diffusion coefficient profile
-         K_S       ! Total salinity diffusion coefficient profile
-    type(tridiag) ::  &
-         Bmatrix_vel, &  ! Velocity diffusion coefficient matrix
-         Bmatrix_T,   &  ! Temperature diffusion coefficient matrix
-         Bmatrix_S       ! Salinity diffusion coefficient matrix
 
     ! Velocity components
-    call diffusion_coeff(grid, dt, K_vel, & ! in
-         Bmatrix_vel)                       ! out
+    call diffusion_coeff(grid, dt, K%u%all, & ! in
+         nBmatrix%vel%new)                     ! out
     ! Temperature
-    call diffusion_coeff(grid, dt, K_T, & ! in
-         Bmatrix_T)                       ! out
+    call diffusion_coeff(grid, dt, K%T%all, & ! in
+         nBmatrix%T%new)                       ! out
     ! Salinity
-    call diffusion_coeff(grid, dt, K_S, & ! in
-         Bmatrix_S)                       ! out
+    call diffusion_coeff(grid, dt, K%S%all, & ! in
+         nBmatrix%S%new)                       ! out
   end subroutine calc_phys_Bmatrices
+
+
+!!$  subroutine init_phys_RHS_fluxes(grid, dt, U(grid%M+1), V(grid%M+1), & ! in
+!!$       T(grid%M+1), S(grid%M+1), K_vel, K_T, K_S, gamma%T, gamma%S, &   ! in
+!!$       w%U(0), w%V(0), w%T(0), w%S(0), Q_n, F_n)                        ! in
+!!$    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
+!!$    ! fluxes at the bottom and top of the grid
+!!$    implicit none
+!!$    ! Arguments:
+!!$    type(grid_), intent(in) :: &
+!!$         grid  ! Grid arrays
+!!$    real(kind=dp), intent(in) :: &
+!!$         dt  ! Time step [s]
+!!$    real(kind=dp), dimension(0:), intent(in) :: &
+!!$         U, &  ! U velocity component(cross-strait) profile
+!!$         V, &  ! V velocity component(along-strait) profile
+!!$         T, &  ! Temperature profile
+!!$         S
+!!$
+!!$    ! Velocity components
+!!$    call diffusion_bot_surf_flux (grid, dt, K_vel, w%u(0), &    ! in
+!!$         U%new(grid%M+1), &                                       ! in
+!!$         U_RHS%diff_adv%new)                                    ! out
+!!$    call diffusion_bot_surf_flux (grid, dt, K_vel, w%v(0), &    ! in
+!!$         V%new(grid%M+1), &                                       ! in
+!!$         V_RHS%diff_adv%new)                                    ! out
+!!$    ! Temperature
+!!$    call diffusion_nonlocal_fluxes(grid, dt, K_T, gamma%t, &   ! in
+!!$         w%t(0), -Q_n, T%new(grid%M+1), &                          ! in
+!!$         T_RHS%diff_adv%new)                                    ! out
+!!$    ! Salinity
+!!$    call diffusion_nonlocal_fluxes(grid, dt, K_S, gamma%s, &   ! in
+!!$         w%s(0), F_n, S%new(grid%M+1), &                           ! in
+!!$         S_RHS%diff_adv%new)                                    ! out
+!!$  end subroutine init_phys_RHS_fluxes
+!!$
+!!$
+!!$  subroutine calc_phys_upwell_advection(grid, dt, U, V, T, S)
+!!$    ! Add vertical advection due to upwelling to velocity components,
+!!$    ! temperature, and salinity RHS arrays
+!!$    use precision_defs, only: dp
+!!$    use grid_mod, only: grid_
+!!$    use upwelling, only: upwelling_advection
+!!$    implicit none
+!!$    ! Arguments:
+!!$    type(grid_), intent(in) :: &
+!!$         grid  ! Grid arrays
+!!$    real(kind=dp), intent(in) :: &
+!!$         dt  ! Time step [s]
+!!$    real(kind=dp), dimension(0:), intent(in) :: &
+!!$         U, &  ! U velocity component(cross-strait) profile
+!!$         V, &  ! V velocity component(along-strait) profile
+!!$         T, &  ! Temperature profile
+!!$         S
+!!$
+!!$    ! Velocity components
+!!$    call upwelling_advection (grid, dt, U, &  ! in
+!!$         U_RHS%diff_adv%new)                  ! out
+!!$    call upwelling_advection (grid, dt, V, &  ! in
+!!$         V_RHS%diff_adv%new)                  ! out
+!!$    ! Temperature
+!!$    call upwelling_advection (grid, dt, S, &  ! in
+!!$         T_RHS%diff_adv%new)                  ! out
+!!$    ! Salinity
+!!$    call upwelling_advection (grid, dt, T, &  ! in
+!!$         S_RHS%diff_adv%new)                  ! out
+!!$  end subroutine calc_phys_upwell_advection
 
 
   subroutine alloc_phys_RHS_variables(M)
@@ -216,22 +288,20 @@ contains
     call alloc_check(allocstat, msg)
     msg = "U velocity component (cross-strait) RHS arrays"
     allocate(U_RHS%diff_adv%new(1:M), U_RHS%diff_adv%old(1:M), &
-         U_RHS%C_pg(1:M),                                      &
+         U_RHS%C_pg%new(1:M), U_RHS%C_pg%old(1:M),             &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "V velocity component (cross-strait) RHS arrays"
     allocate(V_RHS%diff_adv%new(1:M), V_RHS%diff_adv%old(1:M), &
-         V_RHS%C_pg(1:M),                                      &
+         V_RHS%C_pg%new(1:M), V_RHS%C_pg%old(1:M),             &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Temperature RHS arrays"
     allocate(T_RHS%diff_adv%new(1:M), T_RHS%diff_adv%old(1:M), &
-         T_RHS%C_pg(1:M),                                      &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Salinity RHS arrays"
     allocate(S_RHS%diff_adv%new(1:M), S_RHS%diff_adv%old(1:M), &
-         S_RHS%C_pg(1:M),                                      &
          stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_phys_RHS_variables
@@ -263,22 +333,20 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "U velocity component (cross-strait) RHS arrays"
     deallocate(U_RHS%diff_adv%new, U_RHS%diff_adv%old, &
-         U_RHS%C_pg,                                   &
+         U_RHS%C_pg%new, U_RHS%C_pg%old,               &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "V velocity component (cross-strait) RHS arrays"
     deallocate(V_RHS%diff_adv%new, V_RHS%diff_adv%old, &
-         V_RHS%C_pg,                                   &
+         V_RHS%C_pg%new, V_RHS%C_pg%old,               &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Temperature RHS arrays"
     deallocate(T_RHS%diff_adv%new, T_RHS%diff_adv%old, &
-         T_RHS%C_pg,                                   &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Salinity RHS arrays"
     deallocate(S_RHS%diff_adv%new, S_RHS%diff_adv%old, &
-         S_RHS%C_pg,                                   &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_phys_RHS_variables
