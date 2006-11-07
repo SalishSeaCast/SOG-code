@@ -3,12 +3,17 @@
 
 module biology_eqn_builder
   ! Type definitions, variable declarations, and subroutines related
-  ! to building the semi-implicit diffusion/advection equations for
-  ! the biology quantities in the SOG code.
+  ! to building the semi-implicit diffusion/advection PDEs for the
+  ! biology quantities in the SOG code.
   !
   ! Public Variables:
   !
-  !   Bmatrix -- Tridiagonal matrix of diffusion coefficient values
+  !   Bmatrix -- Tridiagonal matrix of diffusion coefficient values;
+  !              precursor to the LHS A matrix in the Aq = h matrix
+  !              equation (see Large, et al (1994), App. D, pg 398)
+  !
+  !   Right-hand side vector arrays; precursor to the RHS h vector in
+  !   the Aq = h matrix equation (see Large, et al (1994), App. D, pg 398):
   !
   !   Pmicro_RHS -- Micro phytoplankton (diatoms) right-hand side arrays
   !
@@ -32,7 +37,8 @@ module biology_eqn_builder
   !
   ! Public Subroutines:
   !
-  !   read_sink_params -- 
+  !   read_sink_params -- Read the sinking rate parameter values from
+  !                       the infile.
   !
   !   build_biology_equations -- Build the right-hand side (RHS) arrays
   !                              for the diffusion/advection equations for
@@ -57,7 +63,7 @@ module biology_eqn_builder
   private
   public :: &
        ! Variables:
-       nBmatrix, &  ! Tridiagonal matrix of diffusion coefficient values
+       nBmatrix,         &  ! Tridiagonal matrix of diffusion coefficient values
        Pmicro_RHS,      &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,       &  ! Nano phytoplankton (flagellates) RHS arrays
        Z_RHS,           &  ! Zooplankton (micro) RHS arrays
