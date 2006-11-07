@@ -291,18 +291,18 @@ program SOG
            F_n = S%new * Fw
         endif
 
-!!$        ! Store the surface buoyancy forcing value from the previous
-!!$        ! iteration so we can use it to blend with the new value to
-!!$        ! help the implicit solver converge more quickly
-        Bf_old = Bf !!$
+        ! Store the surface buoyancy forcing value from the previous
+        ! iteration so we can use it to blend with the new value to
+        ! help the implicit solver converge more quickly
+        Bf_old = Bf
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,       &  ! in
              B, Bf)                                             ! out
 
-!!$        ! Blend the values of the surface buoyancy forcing from current
-!!$        ! and previous iteration to help convergence
+        ! Blend the values of the surface buoyancy forcing from current
+        ! and previous iteration to help convergence
         Bf = (count * Bf_old + (niter - count) * Bf) / niter !!$
 
 !!$        ! Calculate baroclinic pressure gradient components
