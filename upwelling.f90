@@ -44,7 +44,7 @@ contains
     real(kind=dp), intent(in) :: upwell            ! Maximum upwelling velocity
     real(kind=sp), intent(in) :: Qriver            ! River flow
     ! Vertical upwelling velocity profile
-    real(kind=dp), intent(out), dimension(1:) :: wupwell 
+    real(kind=dp), intent(out), dimension(0:) :: wupwell 
 
     ! Local variables:
     real(kind=dp) :: d      ! depth in m, of 68% fwc
@@ -60,10 +60,10 @@ contains
     ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5*d
 
-    ! Set vertical velocity profile
-    do index = 1, grid%M + 1
+    ! Set vertical velocity profile (on interfaces!)
+    do index = 0, grid%M
        if (grid%d_g(index) < d25) then
-          wupwell(index)= upwell * (1. - ( (1.- grid%d_g(index) / d25)**2) )
+          wupwell(index)= upwell * (1. - ( (1.- grid%d_i(index) / d25)**2) )
        else
           wupwell(index) = upwell
        endif
@@ -86,22 +86,24 @@ contains
     type(grid_), intent(in) :: grid 
     real(kind=dp), intent(in) :: dt ! time step
     real(kind=dp), dimension (0:), intent(in) :: qty ! quantity to be advected
-    real(kind=dp), intent(in), dimension(1:) :: wupwell
+    real(kind=dp), intent(in), dimension(0:) :: wupwell
     real(kind=dp), intent(inout), dimension(1:) :: Gvector
 
     ! Local variables:
     integer :: index  ! counter through depth
     real(kind=dp) :: inbottom, outtop, squashing, valuelost
 
+    outtop = 0.
     do index = 1, grid%M
-       inbottom = wupwell(index+1) * qty(index+1) ! upwind scheme
-       outtop = wupwell(index) * qty(index)       ! upwind scheme
-       squashing = wupwell(index+1) - wupwell(index)
-       valuelost = qty(index) * (grid%i_space(index) &
-            - wupwell(index) * dt) + qty(index+1) * (wupwell(index+1) * dt)
+       inbottom = wupwell(index) * qty(index+1) ! upwind scheme
+       squashing = wupwell(index) - wupwell(index-1)
+       valuelost = ( qty(index) * & 
+            (grid%i_space(index) - wupwell(index-1) * dt) + & 
+            qty(index+1) * (wupwell(index) * dt) ) / &
+            (grid%i_space(index) + squashing * dt)
        Gvector(index) = Gvector(index) + dt / grid%i_space(index) &
-            * (inbottom - outtop & 
-            - squashing * valuelost / (grid%i_space(index) + squashing * dt))
+            * (inbottom - outtop - squashing * valuelost)
+       outtop = inbottom    ! of previous cell
     enddo
   end subroutine vertical_advection
 
