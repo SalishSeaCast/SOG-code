@@ -45,8 +45,9 @@ datetime.o core_variables.o input_processor.o grid.o numerics.o \
 mean_param.o declarations.o surface_forcing.o \
 initial_sog.o \
 \
+turbulence.o diffusion.o \
 physics_eqn_builder.o water_properties.o physics_model.o \
-turbulence.o find_upwell.o diffusion.o \
+find_upwell.o \
 fitbottom.o freshwater.o\
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
