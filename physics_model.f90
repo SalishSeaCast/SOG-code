@@ -98,6 +98,7 @@ contains
   subroutine init_physics(M)
     ! Initialize physics model.
     use water_properties, only: alloc_water_props
+    use physics_eqn_builder, only: alloc_phys_RHS_variables
     implicit none
     ! Argument:
     integer :: M  ! Number of grid points
@@ -106,6 +107,10 @@ contains
     call alloc_physics_variables(M)
     ! Allocate memory for water property arrays
     call alloc_water_props(M)
+    ! Allocate memory for arrays for right-hand sides of
+    ! diffusion/advection/Coriolis/baroclinic pressure gradient
+    ! equations for the physics model.
+    call alloc_phys_RHS_variables(M)
     ! Initialize velocity component integrals for baroclinic pressure
     ! gradient calculations
     ut%new = 0.
@@ -114,7 +119,6 @@ contains
     ! *** This must be calculated because pgf90 will not accept an
     ! *** intrinsic in parameter statement
     f = 2. * (2. * pi / 86400.) * sin(pi * latitude / 180.)
-!!$    f = 1.1d-4
   end subroutine init_physics
 
 
@@ -379,6 +383,7 @@ contains
     ! Deallocate memory from physics model variables arrays.
     use malloc, only: dalloc_check
     use water_properties, only: dalloc_water_props
+    use physics_eqn_builder, only: dalloc_phys_RHS_variables
     implicit none
     ! Local variables:
     integer           :: dallocstat  ! Allocation return status
@@ -400,7 +405,12 @@ contains
     deallocate(dzx, dzy, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+    ! Deallocate memory for water property arrays
     call dalloc_water_props
+    ! Deallocate memory from arrays for right-hand sides of
+    ! diffusion/advection/Coriolis/baroclinic pressure gradient
+    ! equations for the physics model.
+    call dalloc_phys_RHS_variables()
   end subroutine dalloc_physics_variables
 
 end module physics_model
