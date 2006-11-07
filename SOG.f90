@@ -19,6 +19,8 @@ program SOG
   use physics_model, only: B, dPdx_b, dPdy_b
   ! *** Temporary until IMEX refactoring is completed
   use IMEX_solver, only: Hvector
+  ! *** Temporary until physics equations refactoring is completed
+  use physics_eqn_builder, only: nBmatrix
   !
   ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
@@ -27,6 +29,7 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
+  use physics_eqn_builder, only: build_physics_equations
   use air_sea_fluxes, only: wind_stress
   use biology_model, only: init_biology, calc_bio_rate
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
@@ -436,14 +439,37 @@ program SOG
         !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
         CALL define_flux(grid, U%grad_i, V%grad_i, T%grad_i, S%grad_i, &
              alpha, beta)
+! *** End of turbulence code???
 
-        ! Calculate matrix B (changed to Amatrix later) 
-        call diffusion_coeff(grid, dt, K%t%all, &
-             Bmatrix%t)
-        call diffusion_coeff(grid, dt, K%s%all, &
-             Bmatrix%s)
-        call diffusion_coeff(grid, dt, K%u%all, &
-             Bmatrix%u)
+        ! Build the terms of the semi-implicit diffusion/advection
+        ! PDEs with Coriolis and baroclinic pressure gradient terms for
+        ! the physics quantities.
+        !
+        ! This calculates the values of the precursor diffusion
+        ! coefficients matrices (Bmatrix%vel%*, Bmatrix%T%*, and
+        ! Bmatrix%S%*), the RHS diffusion/advection term vectors
+        ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
+        ! pressure gradient term vectors (*_RHS%C_pg).
+        call build_physics_equations(grid, dt, U%new, V%new, &  ! in
+             T%new, S%new, K%U%all, K%T%all, K%S%all)           ! in
+     
+!!$        ! Calculate matrix B (changed to Amatrix later) 
+!!$        call diffusion_coeff(grid, dt, K%t%all, &
+!!$             Bmatrix%t)
+!!$        call diffusion_coeff(grid, dt, K%s%all, &
+!!$             Bmatrix%s)
+!!$        call diffusion_coeff(grid, dt, K%u%all, &
+!!$             Bmatrix%u)
+! *** Physics equations refactoring bridge code
+Bmatrix%u%A = nBmatrix%vel%new%sub
+Bmatrix%u%B = nBmatrix%vel%new%diag
+Bmatrix%u%C = nBmatrix%vel%new%sup
+Bmatrix%T%A = nBmatrix%T%new%sub
+Bmatrix%T%B = nBmatrix%T%new%diag
+Bmatrix%T%C = nBmatrix%T%new%sup
+Bmatrix%S%A = nBmatrix%S%new%sub
+Bmatrix%S%B = nBmatrix%S%new%diag
+Bmatrix%S%C = nBmatrix%S%new%sup
 
         ! Start calculation of RHS called Gvector (D9) (D10)
         call diffusion_nonlocal_fluxes(grid, dt, K%t%all, gamma%t, &   ! in
@@ -673,11 +699,13 @@ program SOG
 
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
-     ! This calculates the values of the diffusion coefficients matrix
-     ! (Bmatrix%bio%*), the RHS diffusion/advection term vectors
-     ! (*_RHS%diff_adv%new), and the RHS sinking term vectors (*_RHS%sink).
+     !
+     ! This calculates the values of the precursor diffusion
+     ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
+     ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
+     ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, Z, N%O, N%H, &! in
-          Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)         ! in
+          Si, D%DON, D%PON, D%refr, D%bSi, Ft, K%s%all, wupwell)           ! in
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
