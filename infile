@@ -43,6 +43,14 @@
 "proftime"	43200.		"day-sec for profile"
 "haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
 "profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
+! Hoffmueller diagram output (a collection of profiles at time intervals
+! for contour or colourmap plotting)
+"Hoffmueller file"	"profiles/Hoffmueller"	"file for Hoffmueller results"
+"Hoffmueller start day"	294			"yr-day to start Hoff output"
+"Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
+"Hoffmueller end day"	300			"yr-day to end Hoff output"
+"Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
+"Hoffmueller interval"	2.			"days between Hoff outputs"
 
 ! Grid parameters:
 "maxdepth"	40.	"depth of modelled domain [m]"
@@ -53,7 +61,7 @@
 ! Model complexity flags:
 "flagellates_on"	.true.	"include flagellates in model?"
 "remineralization"	.true.	"include remineralization loop in model?"
-"use microzooplankton"      .true.  "include microzooplankton in model?"
+"use microzooplankton"  .true.  "include microzooplankton in model?"
 ! Phytoplankton values:
 "Micro, max growth"	3.3e-05      "micro maximum growth under light limit"
 "Nano, max growth"      1.65e-05      "nano maximum growth under light limit"
