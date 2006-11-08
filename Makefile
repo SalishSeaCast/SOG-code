@@ -77,6 +77,15 @@ $(EXEC): FFLAGS = $(FFLAGS-DEV)
 $(EXEC): $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $@
 
+# "make install" builds with the compiler flags set to -O0, and lots
+# of checking (i.e. appropriate for development and testing), and
+# creates the directories that the code expects to find
+.PHONY: install
+install: FFLAGS = $(FFLAGS-DEV)
+install: clean $(OBJS)
+	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
+	mkdir infiles outfiles profiles timeseries
+
 # "make tags" builds a list of tags for subroutines, modules, etc. to
 # make source file navigation in Emacs easier.  By convention the tags
 # are stored in a file called TAGS
