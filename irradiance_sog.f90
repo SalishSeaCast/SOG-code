@@ -143,9 +143,6 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
               + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK - 0.0879))
       end do
 
-open(556,file="output/light.dat")
-write(556,*)KK
-
 
 !----------------------------------------------------------
  
