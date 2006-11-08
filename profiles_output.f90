@@ -12,15 +12,19 @@ module profiles_output
   ! init_profiles_output -- Get the number of profiles output files
   !                         (different times) to be written, the base file 
   !                         name, and the times at which they are to be 
-  !                         written from stdin.  Also get the name of the 
+  !                         written from stdin.  Get the name of the 
   !                         haloclines output file to be written, open it,
-  !                         and write its header.
+  !                         and write its header.  Get the start date/time,
+  !                         time interval, and end date/time for profile
+  !                         results output to the Hoffmueller output file.
   !
   ! write_std_profiles -- Check to see if the time is right to write a
   !                       profiles output file.  If so, open the file,
   !                       write the profile results, and close it.  Also
   !                       write a line of data to the haloclines output
-  !                       file.
+  !                       file.  Check to see if the time is right to add
+  !                       results to the Hoffmueller output file, if so, 
+  !                       write the results.
   !
   ! profiles_output_close -- Close the haloclines output file.
 
@@ -30,54 +34,88 @@ module profiles_output
   implicit none
 
   private
-  public init_profiles_output, write_std_profiles, profiles_output_close
+  public :: &
+       ! Subroutines:
+  init_profiles_output, write_std_profiles, profiles_output_close
+
+  ! Private parameter declarations:
+  !
+  ! Maximum number of profiles (related to storage for date/times)
+  integer, parameter :: &
+       maxprofiles = 20  ! Maximum number of profiles
+  ! (related to storage for date/times)
 
   ! Private variable declarations:
   !
-  ! Maximum number of profiles (related to storage for date/times)
-  integer, parameter :: maxprofiles = 20
-  ! Dates/times to write profiles results at
-  type(datetime_), dimension(maxprofiles) :: profileDatetime
+  integer :: &
+       noprof  ! Number of profiles output files to be written
+  character(len=80) :: &
+       profilesBase_fn, &  ! Profiles results files base file name
+       ! (profile date/time gets appended)
+  Hoffmueller_fn      ! Hoffmueler results file name
+  type(datetime_), dimension(maxprofiles) :: &
+       profileDatetime  ! Dates/times to write profiles results at
   ! Temporary storage arrays for profile dates/times (year-days, and
   ! day-seconds)
   !  *** This should go away when we refactor to read
-  ! calendar-dates, and clock-times
-  integer, dimension(maxprofiles) :: profday
-  real(kind=dp), dimension(maxprofiles) :: proftime
-  ! Number of profiles output files to be written
-  integer :: noprof  
-  ! Profiles results files base file name (profile date/time gets appended)
-  character(len=80) :: profilesBase_fn
-
-  integer :: iprof ! counter, current profile
-  real(kind=dp) :: sumHaloDepth, sumHaloStrength ! to calculate average values
+  !  *** calendar-dates, and clock-times
+  integer, dimension(maxprofiles) :: &
+       profday
+  real(kind=dp), dimension(maxprofiles) :: &
+       proftime
+  integer :: &
+       Hoff_startday, &  ! Year-day to start Hoffmueller results output at
+       Hoff_startsec, &  ! Day-second to start Hoffmueller results output at
+       Hoff_endday,   &  ! Year-day to end Hoffmueller results output at
+       Hoff_endsec       ! Day-second to end Hoffmueller results output at
+  real(kind=dp) :: &
+       Hoff_interval  ! Time interval between Hoffmueller results [day]
+  integer :: &
+       iprof, &     ! Counter, current profile
+       Hoff_day, &  ! Counter: Next Hoffmueller output yr-day
+       Hoff_sec     ! Counter: Next Hoffmueller output day-sec
+  real(kind=dp) :: &
+       sumHaloDepth, sumHaloStrength  ! To calculate average values
 
 contains
 
-  subroutine init_profiles_output(codeId, str_runDatetime, CTDdatetime)
+  subroutine init_profiles_output(codeId, str_run_Datetime, CTD_Datetime)
     ! Get the number of profiles output files (different times) to be
     ! written, the base file name, and the times at which they are to
     ! be written from stdin.  Also get the name of the haloclines
     ! output file to be written, open it, and write its header.
-    use io_unit_defs, only: haloclines, stderr
+    ! Get the start date/time, time interval, and end date/time for
+    ! profile results output to the Hoffmueller output file.
+    !
+    ! The Hoffmueller results file is a series of profile results
+    ! written to 1 file so that they can be plotted as a contour or
+    ! colourmap plot.
+    use io_unit_defs, only: haloclines, Hoffmueller, stderr
     use datetime, only: datetime_, datetime_str
-    use input_processor, only: getpars, getpari, getpariv, getpardv
+    use input_processor, only: getpars, getpari, getpariv, getpardv, getpard
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId           ! Code identity string
-    character(len=19), intent(in) :: str_runDatetime  ! Date/time of code run
-    ! Date/time of CTD profile that initialized the run
-    type(datetime_), intent(in)   :: CTDdatetime      
+    character(len=70), intent(in) :: &
+         codeId  ! Code identity string
+    character(len=19), intent(in) :: &
+         str_run_Datetime  ! Date/time of code run
+    type(datetime_), intent(in)   :: &
+         CTD_Datetime  ! Date/time of CTD profile that initialized the run      
     ! Local variables:
-    character(len=80) :: haloclines_fn  ! halocline results file name
+    character(len=80) :: &
+         haloclines_fn  ! halocline results file name
     ! Temporary storage for formated datetime string.  Needed to work around
     ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
     ! calls in write statements
-    character(len=19) :: str_CTDdatetime    ! CTD profile date/time
+    character(len=19) :: &
+         str_CTD_Datetime  ! CTD profile date/time
 
-    ! initialize averaging variables
+    ! Initialize profile counter, and averaging variables
+    iprof = 1
     sumHaloDepth = 0
     sumHaloStrength = 0
+    ! Convert the initial CTD profile date/time to a string
+    str_CTD_Datetime = datetime_str(CTD_Datetime)
 
     ! Read the number of profiles results files to be written, and
     ! validate it
@@ -87,42 +125,116 @@ contains
             "profiles is ", maxprofiles, ".  ", noprof, " requested."
        stop
     endif
-
     if (noprof > 0) then
-       ! Convert the initial CTD profile date/time to a string
-       str_CTDdatetime = datetime_str(CTDdatetime)
-
        ! Read the arrays of profile dates/times (year-days, and
        ! day-seconds), and load them into the datetime array
        call getpariv("profday", noprof, profday)
        call getpardv("proftime", noprof, proftime)
        profileDatetime%yr_day = profday
        profileDatetime%day_sec = proftime
-
        ! Read the haloclines results file name, open it, and write its
        ! header
        haloclines_fn = getpars("haloclinefile")
        open(unit=haloclines, file=haloclines_fn, status="replace", &
             action="write")
-       write(haloclines, 100) trim(codeId), str_runDatetime, &
-            str_CTDdatetime
-100    format("! Halocline depths and magnitudes",/                    &
-         "*FromCode: ", a/,                                            &
-         "*RunDateTime: ", a/,                                         &
-         "*InitialCTDDateTime: ", a/,                                  &
-         "*FieldNames: year, month, day, year-day, hour, minute, ",    &
-         "second, day-seconds, halocline depth, halocline magnitude, ",&
-         "1 m salinity",/,                                             &
-         "*FieldUnits: yr, mo, d, yrday, hr, min, s, d-s, m, m^-1, none"/,   &
-         "*EndOfHeader")
-
+       call write_haloclines_header(trim(codeId), str_run_Datetime, &
+            str_CTD_Datetime)
        ! Read the profiles results file base-name
        profilesBase_fn = getpars("profile_base")
     endif
 
-    iprof = 1
-
+    ! Read the Hoffmueller results file name, its start/end
+    ! days/times, and its output interval
+    Hoffmueller_fn = getpars("Hoffmueller file")
+    Hoff_startday = getpari("Hoffmueller start day")
+    Hoff_startsec = getpari("Hoffmueller start sec")
+    Hoff_endday = getpari("Hoffmueller end day")
+    Hoff_endsec = getpari("Hoffmueller end sec")
+    Hoff_interval = getpard("Hoffmueller interval")
+    ! Initialize Hoffmueller output yr-day, and day-sec counters
+    Hoff_day = Hoff_startday
+    Hoff_sec = Hoff_startsec
+    ! Open the Hoffmueller output results file, and write its header
+    open(unit=Hoffmueller, file=Hoffmueller_fn, status="replace", &
+         action="write")
+    call write_Hoffmueller_header(trim(codeId), str_run_Datetime, &
+         str_CTD_datetime)
   end subroutine init_profiles_output
+
+
+  subroutine write_haloclines_header(codeId, str_run_Datetime, &
+       str_CTD_Datetime)
+    ! Write the haloclines results file header
+    use io_unit_defs, only: haloclines
+    implicit none
+    ! Arguments:
+    character(len=*), intent(in) :: &
+         codeId  ! Code identity string
+    character(len=*), intent(in) :: &
+         str_run_Datetime,   &  ! Date/time of code run as a string
+         str_CTD_Datetime       ! CTD profile date/time as a string
+
+    write(haloclines, 100)
+100 format("! Halocline depths and magnitudes")
+    call write_cmn_hdr_id(haloclines, codeId, str_run_Datetime, &
+         str_CTD_Datetime)
+    write(haloclines, 110)
+110 format("*FieldNames: year, month, day, year-day, hour, minute, ",   &
+         "second, day-seconds, halocline depth, halocline magnitude, ", &
+         "1 m salinity",/,                                              &
+         "*FieldUnits: yr, mo, d, yrday, hr, min, s, d-s, m, m^-1, none"/,   &
+         "*EndOfHeader")
+  end subroutine write_haloclines_header
+
+
+  subroutine write_Hoffmueller_header(codeId, str_run_Datetime, &
+       str_CTD_datetime)
+    ! Write the Hoffmueller results file header
+    use io_unit_defs, only: Hoffmueller
+    implicit none
+    ! Arguments:
+    character(len=*), intent(in) :: &
+         codeId  ! Code identity string
+    character(len=*), intent(in) :: &
+         str_run_Datetime,   &  ! Date/time of code run as a string
+         str_CTD_Datetime       ! CTD profile date/time as a string
+
+    write(Hoffmueller, 200)
+200 format("! Profiles for Hoffmueller diagram")
+    call write_cmn_hdr_id(Hoffmueller, codeId, str_run_Datetime, &
+         str_CTD_Datetime)
+    call write_cmn_hdr_fields(Hoffmueller)
+    ! *** Incomplete - need to write the rest of the header
+    write(Hoffmueller, 210) Hoff_startday, Hoff_startsec, Hoff_endday, &
+         Hoff_endsec, Hoff_interval
+210 format("*HoffmuellerStartDay: ", i3/, &
+         "*HoffmuellerStartSec: :", i5/,  &
+         "*HoffmuellerEndDay: ", i3/,     &
+         "*HoffmuellerEndSec: :", i5/,    &
+         "*HoffmuellerInterval: ", f7.3/, &
+         "*EndOfHeader")
+  end subroutine write_Hoffmueller_header
+
+
+  subroutine write_cmn_hdr_id(unit, codeId, str_run_Datetime, &
+       str_CTD_Datetime)
+    ! Write the common code and run identification header lines.  This
+    ! is broken out to reduce code duplication.
+    implicit none
+    ! Arguments:
+    integer :: &
+         unit  ! I/O unit to write to
+    character(len=*), intent(in) :: &
+         codeId  ! Code identity string
+    character(len=*), intent(in) :: &
+         str_run_Datetime,   &  ! Date/time of code run as a string
+         str_CTD_Datetime       ! CTD profile date/time as a string
+
+    write(unit, 300) codeId, str_run_Datetime, str_CTD_Datetime
+300 format("*FromCode: ", a/,                                          &
+         "*RunDateTime: ", a/,                                         &
+         "*InitialCTDDateTime: ", a)
+  end subroutine write_cmn_hdr_id
 
 
   subroutine write_std_profiles(codeId, str_run_Datetime, str_CTD_Datetime, &
@@ -133,7 +245,7 @@ contains
     ! close it.  Also write a line of data to the haloclines output
     ! file.
     use precision_defs, only: dp
-    use io_unit_defs, only: profiles, haloclines
+    use io_unit_defs, only: profiles, haloclines, Hoffmueller
     use datetime, only: calendar_date, clock_time, datetime_str
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_
@@ -166,7 +278,8 @@ contains
          U(0:),       &  ! U velocity component [m/s]
          V(0:)           ! U velocity component [m/s]
     ! Local variables:
-    integer :: i  ! Loop index over grid depth
+    integer :: &
+         i  ! Loop index over grid depth
     real(kind=dp) :: &
          delS, &  ! delta S between two depth points
          dep,  &  ! depth half way between them
@@ -175,8 +288,6 @@ contains
     ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
     ! calls in write statements
     character(len=19) :: str_pro_Datetime
-    ! sigma-t quantity calculated from density for profile results output
-    double precision :: sigma_t
 
     ! Check the day and the time
     if (iprof <= noprof .and. day == profday(iprof)) then
@@ -197,9 +308,9 @@ contains
              endif
           enddo
           ! Write the halocline results
-          write(haloclines, 100) profileDatetime(iprof), dep, derS, &
+          write(haloclines, 400) profileDatetime(iprof), dep, derS, &
                0.5*(S(2)+S(3))
-100       format(i4, 2(1x, i2), 1x, i3, 3(1x, i2), 1x, i5, 2x, f6.2, 2x, &
+400       format(i4, 2(1x, i2), 1x, i3, 3(1x, i2), 1x, i5, 2x, f6.2, 2x, &
                f6.3, 2x, f6.2)
           ! Add to the averaging variables
           sumHaloDepth = sumHaloDepth + dep
@@ -211,69 +322,182 @@ contains
                time_sep='q'), &
                status='replace', action='write')
           ! Write the profile results file header
-          ! Avoid a pgf90 idiocyncracy by getting datetimes formatted into
-          ! string here rather than in the write statement
-          str_pro_Datetime = datetime_str(profileDatetime(iprof))
-          write(profiles, 200) trim(codeId), str_run_datetime, &
-               str_CTD_datetime, str_pro_datetime, derS, dep
-200       format("! Profiles of Temperature, Salinity, Density, ",           &
-               "Phytoplankton (micro & nano),"/,                             &
-               "! Micro zooplankton, Nitrate, Ammonium, Silicon, and ",      &
-               "Detritus (DON, PON, "/,                                      &
-               "! refractory N & biogenic Si), Total Eddy Diffusivities ",   &
-               "(momentum, "/,                                               &
-               "! temperature & salinity), Photosynthetic Available ",       &
-               "Radiation, and ",                                            &
-               "! Mean Velocity Components (u & v)"/,                        &
-               "*FromCode: ", a/,                                            &
-               "*RunDateTime: ", a/,                                         &
-               "*InitialCTDDateTime: ", a/,                                  &
-               "*FieldNames: depth, temperature, salinity, sigma-t, ",       &
-               "micro phytoplankton, nano phytoplankton, ",                  &
-               "micro zooplankton, nitrate, ammonium, silicon, ",            &
-               "DON detritus, PON detritus, refractory N detritus, ",        &
-               "biogenic Si detritus, total momentum eddy diffusivity, ",    &
-               "total temperature eddy diffusivity, ",                       &
-               "total salinity eddy diffusivity, ",                          &
-               "photosynthetic available radiation, ",                       &
-               "u velocity, v velocity"/,                                    &
-               "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
-               "uM N, uM, uM N, uM N, uM N, uM, m^2/s, m^2/s, m^2/s, ",      &
-               "W/m^2, m/s, m/s"/,&
-               "*ProfileDateTime: ", a/,                                     &
-               "*HaloclineMagnitude: ", f6.3, " m^-1"/,                      &
-               "*HaloclineDepth: ", f6.2, " m"/,                             &
-               "*EndOfHeader")
-          ! Write the profile values at the surface, and at all grid points
-          do i = 0, grid%M
-             sigma_t = rho(i) - 1000.
-             write(profiles, 201) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
-                  Pmicro(i), Pnano(i), Z(i), NO(i), NH(i), Si(i),         &
-                  D_DON(i), D_PON(i), D_refr(i), D_bSi(i),                &
-                  Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
-          enddo
-          ! Write the values at the bottom grid boundary.  Some quantities are
-          ! not defined there, so use their values at the Mth grid point.
-          sigma_t = rho(grid%M+1) - 1000.
-          write(profiles, 201) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),    &
-               S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1),  &
-               Z(grid%M+1), NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),    &
-               D_DON(grid%M+1), D_PON(grid%M+1), D_refr(grid%M+1),       &
-               D_bSi(grid%M+1), Ku(grid%M), Kt(grid%M), Ks(grid%M),      &
-               I_par(grid%M), U(grid%M+1), V(grid%M+1)
-201       format(f7.3, 80(2x, f8.4))
+          call write_profiles_header(codeId, str_run_Datetime, &
+               str_CTD_Datetime, profileDatetime(iprof), derS, dep)
+          ! Write the profiles numbers, and close the profiles file
+          call write_profiles_numbers(profiles, grid, T, S, rho,   &
+               Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr, &
+               D_bSi, Ku, Kt, Ks, I_par, U, V)
           close(profiles)          
+          ! Increment profile counter
+          iprof = iprof + 1
+       endif
+    endif
 
-          iprof = iprof+1
-
+    ! Check to see if we're in a Hoffmueller results output time step
+    if (day == Hoff_day) then
+       if (abs(day_time - Hoff_sec) < 0.5 * dt) then
+          ! Write the profiles numbers
+          call write_profiles_numbers(Hoffmueller, grid, T, S, rho, &
+               Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
+               D_bSi, Ku, Kt, Ks, I_par, U, V)
+          ! Add empty line as separator
+          write(Hoffmueller, '("")')
+          ! Increment the Hoffmueller output counters
+          Hoff_day = Hoff_day + int(Hoff_interval)
+          Hoff_sec = Hoff_sec + int(mod(Hoff_interval, 1.0d0) * 86400.)
+          if (Hoff_sec == 86400) then
+             Hoff_sec = 0
+             Hoff_day = Hoff_day + 1
+          endif
+          ! Check to see if we're beyond the end of the Hoffmueller
+          ! output time interval
+          if (Hoff_day > Hoff_endday &
+               .or. (Hoff_day == Hoff_endday &
+               .and. Hoff_sec > Hoff_endsec)) then
+             ! Set the Hoffmueller day counter to a day we're already
+             ! past so that we won't trigger anymore writing
+             Hoff_day = day - 1
+          endif
        endif
     endif
   end subroutine write_std_profiles
 
 
+  subroutine write_profiles_header(codeId, str_run_Datetime, &
+       str_CTD_Datetime, pro_Datetime, derS, dep)
+    ! Write the profile results file header.
+    use precision_defs, only: dp
+    use io_unit_defs, only: profiles
+    use datetime, only: datetime_, datetime_str
+    implicit none
+    ! Arguments:
+    character(len=70), intent(in) :: &
+         codeId            ! Code identity string
+    character(len=19), intent(in) :: &
+         str_run_Datetime, &  ! Date/time of code run
+         str_CTD_Datetime     ! Date/time of CTD init
+    type(datetime_) :: &
+         pro_Datetime  ! Profile date/time
+    real(kind=dp) :: &
+         derS,  &  ! Halocline magnitude
+         dep       ! halocline depth
+    ! Local variable:
+    ! Temporary storage for formated datetime string.  Needed to work around
+    ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
+    ! calls in write statements
+    character(len=19) :: str_pro_Datetime
+
+    str_pro_Datetime = datetime_str(pro_Datetime)
+    write(profiles, 400)
+400 format("! Profiles of Temperature, Salinity, Density, ",           &
+         "Phytoplankton (micro & nano),"/,                             &
+         "! Micro zooplankton, Nitrate, Ammonium, Silicon, and ",      &
+         "Detritus (DON, PON, "/,                                      &
+         "! refractory N & biogenic Si), Total Eddy Diffusivities ",   &
+         "(momentum, "/,                                               &
+         "! temperature & salinity), Photosynthetic Available ",       &
+         "Radiation, and ",                                            &
+         "! Mean Velocity Components (u & v)")
+    call write_cmn_hdr_id(profiles, trim(codeId), str_run_Datetime, &
+         str_CTD_Datetime)
+    call write_cmn_hdr_fields(profiles)
+    write(profiles, 410) str_pro_datetime, derS, dep
+410 format("*ProfileDateTime: ", a/,              &
+         "*HaloclineMagnitude: ", f6.3, " m^-1"/, &
+         "*HaloclineDepth: ", f6.2, " m"/,        &
+         "*EndOfHeader")
+  end subroutine write_profiles_header
+
+
+  subroutine write_cmn_hdr_fields(unit)
+    ! Write the fieldNames, and FieldUnits part of the profiles
+    ! header.  This is broken out to reduce code duplications.
+    implicit none
+    ! Argument:
+    integer :: &
+         unit  ! I/O unit to write to
+
+    write(unit, 500)
+500 format("*FieldNames: depth, temperature, salinity, sigma-t, ",     &
+         "micro phytoplankton, nano phytoplankton, ",                  &
+         "micro zooplankton, nitrate, ammonium, silicon, ",            &
+         "DON detritus, PON detritus, refractory N detritus, ",        &
+         "biogenic Si detritus, total momentum eddy diffusivity, ",    &
+         "total temperature eddy diffusivity, ",                       &
+         "total salinity eddy diffusivity, ",                          &
+         "photosynthetic available radiation, ",                       &
+         "u velocity, v velocity"/,                                    &
+         "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
+         "uM N, uM, uM N, uM N, uM N, uM, m^2/s, m^2/s, m^2/s, ",      &
+         "W/m^2, m/s, m/s")
+  end subroutine write_cmn_hdr_fields
+
+
+  subroutine write_profiles_numbers(unit, grid, T, S, rho, Pmicro,    &
+       Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, &
+       I_par, U, V)
+    ! Write the profiles numbers.  This is broken out to reduce code
+    ! duplications.
+    use precision_defs, only: dp
+    use io_unit_defs, only: profiles
+    use unit_conversions, only: KtoC
+    use grid_mod, only: grid_
+    implicit none
+    ! Arguments:
+    integer :: &
+         unit  ! I/O unit to write to
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent (in) :: &
+         T(0:),       &  ! Temperature [K]
+         S(0:),       &  ! Salinity [-]
+         rho(0:),     &  ! Density [kg/M^3]
+         Pmicro(0:),  &  ! Micro phytoplankton (diatoms) [uM N]
+         Pnano(0:),   &  ! Nano phytoplankton (flagellates) [uM N]
+         Z(0:),       &  ! Micro zooplankton (uM N)
+         NO(0:),      &  ! Nitrates [uM N]
+         NH(0:),      &  ! Ammonium [uM N]
+         Si(0:),      &  ! Silicon [uM]
+         D_DON(0:),   &  ! Dissolved organic nitrogen detritus [uM N]
+         D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
+         D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
+         D_bSi(0:),   &  ! Biogenic silicon detritus [uM N]
+         Ku(0:),      &  ! Total momentum eddy diffusivity [m^2/s]
+         Kt(0:),      &  ! Total temperature eddy diffusivity [m^2/s]
+         Ks(0:),      &  ! Total salinity eddy diffusivity [m^2/s]
+         I_par(0:),   &  ! Photosynthetic available radiation [W/m^2]
+         U(0:),       &  ! U velocity component [m/s]
+         V(0:)           ! U velocity component [m/s]
+    ! Local variables:
+    integer :: i  ! Loop index over grid depth
+    real(kind=dp) :: &
+         sigma_t  ! sigma-t quantity calculated from density
+
+    ! Write the profile values at the surface, and at all grid points
+    do i = 0, grid%M
+       sigma_t = rho(i) - 1000.
+       write(unit, 600) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
+            Pmicro(i), Pnano(i), Z(i), NO(i), NH(i), Si(i),     &
+            D_DON(i), D_PON(i), D_refr(i), D_bSi(i),            &
+            Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
+    enddo
+    ! Write the values at the bottom grid boundary.  Some quantities are
+    ! not defined there, so use their values at the Mth grid point.
+    sigma_t = rho(grid%M+1) - 1000.
+    write(unit, 600) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),       &
+         S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1), &
+         Z(grid%M+1), NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),   &
+         D_DON(grid%M+1), D_PON(grid%M+1), D_refr(grid%M+1),      &
+         D_bSi(grid%M+1), Ku(grid%M), Kt(grid%M), Ks(grid%M),     &
+         I_par(grid%M), U(grid%M+1), V(grid%M+1)
+600 format(f7.3, 80(2x, f8.4))
+  end subroutine write_profiles_numbers
+
+
   subroutine profiles_output_close
-    ! Close the haloclines output file
-    use io_unit_defs, only: haloclines
+    ! Close the haloclines and Hoffmueller output files.
+    use io_unit_defs, only: haloclines, Hoffmueller
     implicit none
 
     ! write out average values
@@ -284,6 +508,7 @@ contains
          SumHaloStrength/(iprof-1)
 
     close(haloclines)
+    close(Hoffmueller)
   end subroutine profiles_output_close
 
 end module profiles_output
