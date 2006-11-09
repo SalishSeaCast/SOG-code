@@ -14,7 +14,7 @@ contains
     use precision_defs, only: dp
     use grid_mod, only: grid_
     use water_properties, only: water_property
-    use physics_model, only: g
+    use fundamental_constants, only: g
     USE declarations, only: K, w, gamma, h
 
     implicit none

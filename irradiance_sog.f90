@@ -6,7 +6,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_
-  use physics_model, only: pi, latitude
+  use fundamental_constants, only: pi, latitude
       USE mean_param, only: entrain
       USE surface_forcing, only: albedo, Q_o
 

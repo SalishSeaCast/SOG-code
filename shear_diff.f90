@@ -6,7 +6,7 @@ SUBROUTINE shear_diff(mm, U_grad_i, V_grad_i, rho, nu_s)
   use precision_defs, only: dp
   use grid_mod, only: grid_
   use water_properties, only: water_property
-  use physics_model, only: g
+  use fundamental_constants, only: g
       USE surface_forcing, only: nu_o, Ri_o, p_1
 
       IMPLICIT NONE

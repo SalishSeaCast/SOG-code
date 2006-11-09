@@ -94,7 +94,7 @@ contains
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
     use unit_conversions, only: CtoK
-    use physics_model, only: pi
+    use fundamental_constants, only: pi
     implicit none
     ! Arguments:
     integer, intent(in) :: day

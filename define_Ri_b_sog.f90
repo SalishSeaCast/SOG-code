@@ -10,7 +10,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, U_new, V_new, rho_g, Rib, &
 
   use precision_defs, only: dp
   use grid_mod, only: grid_, depth_average
-  use physics_model, only: g
+  use fundamental_constants, only: g
   USE mean_param, only: height
   USE surface_forcing, only: ep
 

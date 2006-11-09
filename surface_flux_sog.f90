@@ -10,7 +10,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
                          count)
   ! *** Check whether wt_r is needed
   
-  use physics_model, only: g
+  use fundamental_constants, only: g
       USE mean_param
   implicit none
   ! Arguments:
