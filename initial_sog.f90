@@ -22,7 +22,7 @@ contains
 
   subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, Z, &
        NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
-       hi, pbx, pby, d, cruise_id)       
+       hi, d, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_
@@ -46,7 +46,6 @@ contains
          D_bSi      ! Biogenic silicon detritus profile
     real(kind=dp), intent(out) :: hi !h%new
     type(grid_), intent(in) :: d
-    real(kind=dp), dimension(d%M), intent(out) :: pbx, pby
     character*4  cruise_id           ! cruise_id
 
     ! Local variables:
@@ -187,10 +186,6 @@ contains
     !tp reevaluate M+1 values:
     V_new(0) = V_new(1)  !Conditions
     U_new(0) = U_new(1)
-
-    ! Initialize baroclinic pressure gradient component arrays
-       pbx = 0.
-       pby = 0.
   end subroutine initial_mean
 
 end module initial_sog
