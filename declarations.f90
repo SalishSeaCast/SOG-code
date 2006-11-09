@@ -28,7 +28,6 @@ module declarations
   TYPE(MSTscalar)::a2,a3  !shape constants
   type(UVST):: Gvector, Gvector_o     ! vert. adv. & nonlocal and surf/bot fluxes
   type(UVST):: Gvector_c, Gvector_co  ! Coriolis and pg forces
-  TYPE(UVSTmatrix)::Amatrix, Bmatrix, Bmatrix_o
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
@@ -103,9 +102,5 @@ module declarations
   real(kind=dp), dimension(:), allocatable :: wupwell
 
   DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
-
-  ! An empty vector
-  real(kind=dp), dimension(:), allocatable :: null_vector
-
 
 end module declarations
