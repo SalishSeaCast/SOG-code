@@ -50,7 +50,7 @@ module physics_eqn_builder
   private
   public :: &
        ! Variables:
-       nBmatrix, &  ! Tridiagonal matrix of diffusion coefficient values
+       Bmatrix, &  ! Tridiagonal matrix of diffusion coefficient values
        U_RHS,   &  ! U velocity component (cross-strait) right-hand side arrays
        V_RHS,   &  ! V velocity component (along-strait) right-hand side arrays
        T_RHS,   &  ! Temperature right-hand side arrays
@@ -98,7 +98,7 @@ module physics_eqn_builder
   !
   ! Public:
   type(diff_coeffs_matrix) :: &
-       nBmatrix  ! Tridiagonal matrix of diffusion coefficient values
+       Bmatrix  ! Tridiagonal matrix of diffusion coefficient values
                 ! Components:
                 !   Bmatrix%vel
                 !          %T
@@ -196,13 +196,13 @@ contains
 
     ! Velocity components
     call diffusion_coeff(grid, dt, K%u%all, & ! in
-         nBmatrix%vel%new)                     ! out
+         Bmatrix%vel%new)                     ! out
     ! Temperature
     call diffusion_coeff(grid, dt, K%T%all, & ! in
-         nBmatrix%T%new)                       ! out
+         Bmatrix%T%new)                       ! out
     ! Salinity
     call diffusion_coeff(grid, dt, K%S%all, & ! in
-         nBmatrix%S%new)                       ! out
+         Bmatrix%S%new)                       ! out
   end subroutine calc_phys_Bmatrices
 
 
@@ -328,15 +328,15 @@ contains
     ! %old component for use by the IMEX semi-impllicit PDE solver.
     implicit none
 
-    nBmatrix%vel%old%sub = nBmatrix%vel%new%sub
-    nBmatrix%vel%old%diag = nBmatrix%vel%new%diag
-    nBmatrix%vel%old%sup = nBmatrix%vel%new%sup
-    nBmatrix%T%old%sub = nBmatrix%T%new%sub
-    nBmatrix%T%old%diag = nBmatrix%T%new%diag
-    nBmatrix%T%old%sup = nBmatrix%T%new%sup
-    nBmatrix%S%old%sub = nBmatrix%S%new%sub
-    nBmatrix%S%old%diag = nBmatrix%S%new%diag
-    nBmatrix%S%old%sup = nBmatrix%S%new%sup
+    Bmatrix%vel%old%sub = Bmatrix%vel%new%sub
+    Bmatrix%vel%old%diag = Bmatrix%vel%new%diag
+    Bmatrix%vel%old%sup = Bmatrix%vel%new%sup
+    Bmatrix%T%old%sub = Bmatrix%T%new%sub
+    Bmatrix%T%old%diag = Bmatrix%T%new%diag
+    Bmatrix%T%old%sup = Bmatrix%T%new%sup
+    Bmatrix%S%old%sub = Bmatrix%S%new%sub
+    Bmatrix%S%old%diag = Bmatrix%S%new%diag
+    Bmatrix%S%old%sup = Bmatrix%S%new%sup
   end subroutine new_to_old_phys_Bmatrix
 
 
@@ -352,18 +352,18 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Diffusion coefficients tridiagonal matrix arrays"
-    allocate(nBmatrix%vel%new%sub(1:M), nBmatrix%vel%new%diag(1:M), &
-         nBmatrix%vel%new%sup(1:M),                                &
-         nBmatrix%vel%old%sub(1:M), nBmatrix%vel%old%diag(1:M),     &
-         nBmatrix%vel%old%sup(1:M),                                &
-         nBmatrix%T%new%sub(1:M), nBmatrix%T%new%diag(1:M),         &
-         nBmatrix%T%new%sup(1:M),                                  &
-         nBmatrix%T%old%sub(1:M), nBmatrix%T%old%diag(1:M),         &
-         nBmatrix%T%old%sup(1:M),                                  &
-         nBmatrix%S%new%sub(1:M), nBmatrix%S%new%diag(1:M),         &
-         nBmatrix%S%new%sup(1:M),                                  &
-         nBmatrix%S%old%sub(1:M), nBmatrix%S%old%diag(1:M),         &
-         nBmatrix%S%old%sup(1:M),                                  &
+    allocate(Bmatrix%vel%new%sub(1:M), Bmatrix%vel%new%diag(1:M), &
+         Bmatrix%vel%new%sup(1:M),                                &
+         Bmatrix%vel%old%sub(1:M), Bmatrix%vel%old%diag(1:M),     &
+         Bmatrix%vel%old%sup(1:M),                                &
+         Bmatrix%T%new%sub(1:M), Bmatrix%T%new%diag(1:M),         &
+         Bmatrix%T%new%sup(1:M),                                  &
+         Bmatrix%T%old%sub(1:M), Bmatrix%T%old%diag(1:M),         &
+         Bmatrix%T%old%sup(1:M),                                  &
+         Bmatrix%S%new%sub(1:M), Bmatrix%S%new%diag(1:M),         &
+         Bmatrix%S%new%sup(1:M),                                  &
+         Bmatrix%S%old%sub(1:M), Bmatrix%S%old%diag(1:M),         &
+         Bmatrix%S%old%sup(1:M),                                  &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "U velocity component (cross-strait) RHS arrays"
@@ -397,18 +397,18 @@ contains
     character(len=80) :: msg         ! Allocation failure message prefix
 
     msg = "Diffusion coefficients tridiagonal matrix arrays"
-    deallocate(nBmatrix%vel%new%sub, nBmatrix%vel%new%diag, &
-         nBmatrix%vel%new%sup,                             &
-         nBmatrix%vel%old%sub, nBmatrix%vel%old%diag,       &
-         nBmatrix%vel%old%sup,                             &
-         nBmatrix%T%new%sub, nBmatrix%T%new%diag,           &
-         nBmatrix%T%new%sup,                               &
-         nBmatrix%T%old%sub, nBmatrix%T%old%diag,           &
-         nBmatrix%T%old%sup,                               &
-         nBmatrix%S%new%sub, nBmatrix%S%new%diag,           &
-         nBmatrix%S%new%sup,                               &
-         nBmatrix%S%old%sub, nBmatrix%S%old%diag,           &
-         nBmatrix%S%old%sup,                               &
+    deallocate(Bmatrix%vel%new%sub, Bmatrix%vel%new%diag, &
+         Bmatrix%vel%new%sup,                             &
+         Bmatrix%vel%old%sub, Bmatrix%vel%old%diag,       &
+         Bmatrix%vel%old%sup,                             &
+         Bmatrix%T%new%sub, Bmatrix%T%new%diag,           &
+         Bmatrix%T%new%sup,                               &
+         Bmatrix%T%old%sub, Bmatrix%T%old%diag,           &
+         Bmatrix%T%old%sup,                               &
+         Bmatrix%S%new%sub, Bmatrix%S%new%diag,           &
+         Bmatrix%S%new%sup,                               &
+         Bmatrix%S%old%sub, Bmatrix%S%old%diag,           &
+         Bmatrix%S%old%sup,                               &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "U velocity component (cross-strait) RHS arrays"

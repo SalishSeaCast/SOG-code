@@ -63,7 +63,7 @@ module biology_eqn_builder
   private
   public :: &
        ! Variables:
-       nBmatrix,         &  ! Tridiagonal matrix of diffusion coefficient values
+       Bmatrix,         &  ! Tridiagonal matrix of diffusion coefficient values
        Pmicro_RHS,      &  ! Micro phytoplankton (diatoms) RHS arrays
        Pnano_RHS,       &  ! Nano phytoplankton (flagellates) RHS arrays
        Z_RHS,           &  ! Zooplankton (micro) RHS arrays
@@ -126,7 +126,7 @@ module biology_eqn_builder
   !
   ! Public:
   type(diff_coeffs_matrix) :: &
-       nBmatrix  ! Tridiagonal matrix of diffusion coefficient values
+       Bmatrix  ! Tridiagonal matrix of diffusion coefficient values
                 ! Components:
                 !   Bmatrix%bio
                 !              %new
@@ -225,7 +225,7 @@ contains
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
     call diffusion_coeff(grid, dt, K%S%all, & ! in
-         nBmatrix%bio%new)                    ! out
+         Bmatrix%bio%new)                    ! out
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
@@ -348,7 +348,6 @@ contains
   end subroutine sinking_advection
 
 
-
   subroutine new_to_old_bio_RHS()
     ! Copy %new component of the biology *_RHS%diff_adv arrays to the
     ! %old component for use by the IMEX semi-impllicit PDE solver.
@@ -372,9 +371,9 @@ contains
     ! %old component for use by the IMEX semi-impllicit PDE solver.
     implicit none
 
-    nBmatrix%bio%old%sub = nBmatrix%bio%new%sub
-    nBmatrix%bio%old%diag = nBmatrix%bio%new%diag
-    nBmatrix%bio%old%sup = nBmatrix%bio%new%sup
+    Bmatrix%bio%old%sub = Bmatrix%bio%new%sub
+    Bmatrix%bio%old%diag = Bmatrix%bio%new%diag
+    Bmatrix%bio%old%sup = Bmatrix%bio%new%sup
   end subroutine new_to_old_bio_Bmatrix
 
 
@@ -390,10 +389,10 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Diffusion coefficients tridiagonal matrix arrays"
-    allocate(nBmatrix%bio%new%sub(1:M), nBmatrix%bio%new%diag(1:M), &
-         nBmatrix%bio%new%sup(1:M),                                &
-         nBmatrix%bio%old%sub(1:M), nBmatrix%bio%old%diag(1:M),     &
-         nBmatrix%bio%old%sup(1:M),                                &
+    allocate(Bmatrix%bio%new%sub(1:M), Bmatrix%bio%new%diag(1:M), &
+         Bmatrix%bio%new%sup(1:M),                                &
+         Bmatrix%bio%old%sub(1:M), Bmatrix%bio%old%diag(1:M),     &
+         Bmatrix%bio%old%sup(1:M),                                &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Micro phytoplankton RHS arrays"
@@ -459,10 +458,10 @@ contains
     character(len=80) :: msg         ! Allocation failure message prefix
 
     msg = "Diffusion coefficients tridiagonal matrix arrays"
-    deallocate(nBmatrix%bio%new%sub, nBmatrix%bio%new%diag, &
-         nBmatrix%bio%new%sup,                             &
-         nBmatrix%bio%old%sub, nBmatrix%bio%old%diag,       &
-         nBmatrix%bio%old%sup,                             &
+    deallocate(Bmatrix%bio%new%sub, Bmatrix%bio%new%diag, &
+         Bmatrix%bio%new%sup,                             &
+         Bmatrix%bio%old%sub, Bmatrix%bio%old%diag,       &
+         Bmatrix%bio%old%sup,                             &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Micro phytoplankton RHS arrays"
