@@ -20,7 +20,7 @@ program SOG
   ! *** Temporary until IMEX refactoring is completed
   use IMEX_solver, only: Hvector
   ! *** Temporary until physics equations refactoring is completed
-  use physics_eqn_builder, only: nBmatrix
+  use physics_eqn_builder, only: nBmatrix, U_RHS, V_RHS, T_RHS, S_RHS
   !
   ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
@@ -29,7 +29,8 @@ program SOG
   use physics_model, only: init_physics, double_diffusion, &
        baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
-  use physics_eqn_builder, only: build_physics_equations
+  use physics_eqn_builder, only: build_physics_equations, &
+       new_to_old_phys_RHS, new_to_old_phys_Bmatrix
   use air_sea_fluxes, only: wind_stress
   use biology_model, only: init_biology, calc_bio_rate
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
@@ -470,19 +471,24 @@ Bmatrix%S%A = nBmatrix%S%new%sub
 Bmatrix%S%B = nBmatrix%S%new%diag
 Bmatrix%S%C = nBmatrix%S%new%sup
 
-        ! Start calculation of RHS called Gvector (D9) (D10)
-        call diffusion_nonlocal_fluxes(grid, dt, K%t%all, gamma%t, &   ! in
-             w%t(0), -Q_n, T%new(grid%M+1), &                          ! in
-             Gvector%t)                                                ! out
-        call diffusion_nonlocal_fluxes(grid, dt, K%s%all, gamma%s, &   ! in
-             w%s(0), F_n, S%new(grid%M+1), &                           ! in
-             Gvector%s)                                                ! out
-        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%u(0), &    ! in
-             U%new(grid%M+1), &                                       ! in
-             Gvector%u)                                               ! out
-        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%v(0), &    ! in
-             V%new(grid%M+1), &                                       ! in
-             Gvector%v)                                               ! out
+!!$        ! Start calculation of RHS called Gvector (D9) (D10)
+!!$        call diffusion_nonlocal_fluxes(grid, dt, K%t%all, gamma%t, &   ! in
+!!$             w%t(0), -Q_n, T%new(grid%M+1), &                          ! in
+!!$             Gvector%t)                                                ! out
+!!$        call diffusion_nonlocal_fluxes(grid, dt, K%s%all, gamma%s, &   ! in
+!!$             w%s(0), F_n, S%new(grid%M+1), &                           ! in
+!!$             Gvector%s)                                                ! out
+!!$        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%u(0), &    ! in
+!!$             U%new(grid%M+1), &                                       ! in
+!!$             Gvector%u)                                               ! out
+!!$        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%v(0), &    ! in
+!!$             V%new(grid%M+1), &                                       ! in
+!!$             Gvector%v)                                               ! out
+! *** Physics equations refactoring bridge code
+Gvector%u = U_RHS%diff_adv%new
+Gvector%v = V_RHS%diff_adv%new
+Gvector%t = T_RHS%diff_adv%new
+Gvector%s = S_RHS%diff_adv%new
 
         ! Calculate profile of upwelling velocity
         call upwell_profile(grid, Qinter, upwell, wupwell)
@@ -503,6 +509,11 @@ Bmatrix%S%C = nBmatrix%S%new%sup
              Gvector_c%u)
         call Coriolis_and_pg(dt, -U%new, dPdy_b, &
              Gvector_c%v)      
+!!$! *** Physics equations refactoring bridge code
+!!$Gvector_c%u = U_RHS%C_pg%new
+!!$Gvector_c%v = V_RHS%C_pg%new
+!!$Gvector_c%t = T_RHS%C_pg%new
+!!$Gvector_c%s = S_RHS%C_pg%new
 
         IF (time_step == 1 .AND. count  == 1) THEN
            Bmatrix_o%t%A = Bmatrix%t%A
@@ -523,14 +534,14 @@ Bmatrix%S%C = nBmatrix%S%new%sup
            Gvector_co%u = Gvector_c%u
            Gvector_co%v = Gvector_c%v
         END IF
-!!$        ! Store %new components of RHS and Bmatrix variables in %old
-!!$        ! their components for use by the IMEX solver.  Necessary for the
-!!$        ! 1st time step because the values just calculated are a better
-!!$        ! estimate than zero.
-!!$        if (time_step == 1) then
-!!$           call new_to_old_phys_RHS()
-!!$           call new_to_old_phys_Bmatrix()
-!!$        endif
+        ! Store %new components of RHS and Bmatrix variables in %old
+        ! their components for use by the IMEX solver.  Necessary for the
+        ! 1st time step because the values just calculated are a better
+        ! estimate than zero.
+        if (time_step == 1) then
+           call new_to_old_phys_RHS()
+           call new_to_old_phys_Bmatrix()
+        endif
 
 !!!!! IMEX SCHEME !!!!   
 
