@@ -134,9 +134,9 @@ contains
     use precision_defs, only: dp
     use grid_mod, only: grid_
     ! Variable Declarations:
-!!$    use physics_model, only: &
-!!$         dPdx_b, &  ! Cross-strait component of baroclinic pressure gradient
-!!$         dPdy_b     ! Along-strait component of baroclinic pressure gradient
+    use baroclinic_pressure, only: &
+         dPdx_b, &  ! Cross-strait component of baroclinic pressure gradient
+         dPdy_b     ! Along-strait component of baroclinic pressure gradient
 
     implicit none
 
@@ -163,12 +163,12 @@ contains
 !!$    ! temperature, and salinity RHS arrays
 !!$    call calc_phys_upwell_advection(grid, dt, U, V, T, S)
 
-!!$    ! Calculate the Coriolis and baroclinic pressure gradient
-!!$    ! components of the RHS arrays for the velocity components
-!!$    call Coriolis_and_pg(dt, -U, dPdx_b&  ! in
-!!$         V_RHS%C_pg%new)                  ! out
-!!$    call Coriolis_and_pg(dt, V, dPdy_b&   ! in
-!!$         U_RHS%C_pg%new)                  ! out
+    ! Calculate the Coriolis and baroclinic pressure gradient
+    ! components of the RHS arrays for the velocity components
+    call Coriolis_and_pg(dt, -U, dPdy_b, &  ! in
+         V_RHS%C_pg%new)                  ! out
+    call Coriolis_and_pg(dt, V, dPdx_b, &   ! in
+         U_RHS%C_pg%new)                  ! out
   end subroutine build_physics_equations
 
 
@@ -288,23 +288,23 @@ contains
 !!$  end subroutine calc_phys_upwell_advection
 
 
-!!$  subroutine Coriolis_and_pg(dt, vel, P_grad, RHS)
-!!$    ! Calculate the Coriolis and baroclinic pressure gradient
-!!$    ! components of the RHS vector for the specified velocity component.
-!!$    use physics_model, only: f
-!!$    implicit none
-!!$    ! Arguments:
-!!$    real(kind=dp), intent(in) :: &
-!!$         dt  ! Time step [s]
-!!$    real(kind=dp), dimension(0:), intent(in) :: &
-!!$         vel  ! Velocity component profile
-!!$    real(kind=dp), dimension(1:), intent(in) :: &
-!!$         P_grad  ! Baroclinic pressure gradient component profile
-!!$    real(kind=dp), dimension(1:), intent(out) :: &
-!!$         RHS  ! Velocity component right-hand side array
-!!$
-!!$    RHS = (f * vel(1:) - P_grad) * dt
-!!$  end subroutine Coriolis_and_pg
+  subroutine Coriolis_and_pg(dt, vel, P_grad, RHS)
+    ! Calculate the Coriolis and baroclinic pressure gradient
+    ! components of the RHS vector for the specified velocity component.
+    use fundamental_constants, only: f
+    implicit none
+    ! Arguments:
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         vel  ! Velocity component profile
+    real(kind=dp), dimension(1:), intent(in) :: &
+         P_grad  ! Baroclinic pressure gradient component profile
+    real(kind=dp), dimension(1:), intent(out) :: &
+         RHS  ! Velocity component right-hand side array
+
+    RHS = (f * vel(1:) - P_grad) * dt
+  end subroutine Coriolis_and_pg
 
 
   subroutine new_to_old_phys_RHS()
