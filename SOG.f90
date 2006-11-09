@@ -10,20 +10,18 @@ program SOG
   use datetime, only: datetime_
   !
   ! Parameter values:
-  use fundamental_constants, only: g
-  use physics_model, only: f
+  use fundamental_constants, only: g, f
   !
   ! Variables:
   use grid_mod, only: grid
   use core_variables, only: U, V, T, S, P, Z, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B
-  ! *** Temporary
-  use baroclinic_pressure, only: dPdx_b, dPdy_b
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   !
   ! Subroutines and functions:
+  use fundamental_constants, only: init_constants
   use core_variables, only: alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
@@ -54,7 +52,7 @@ program SOG
        diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
-  use precision_defs, only: dp
+  use precision_defs, only: dp, sp
   use io_unit_defs, only: stripped_infile, stdout
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
@@ -68,7 +66,6 @@ program SOG
   ! (Wrapping subroutines and functions in modules provides compile-time
   !  checking of number and type of arguments - but not order!)
   ! *** These should eventually end up in refactored modules
-  use Coriolis_and_pg_mod
   use define_flux_mod
 
   implicit none
@@ -125,6 +122,11 @@ program SOG
   ! (read from stdin) to be read by the init_* subroutines called
   ! below.
   call init_input_processor(datetime_str(runDatetime))
+
+  ! Initialize fundamental constants
+  ! *** This is here because of the pgf90 bug that prevents f from
+  ! *** being a parameter
+  call init_constants()
 
   ! Read the run start date/time, duration, and time step
   ! *** Not sure where these should go?
@@ -484,18 +486,6 @@ U_RHS%diff_adv%new = Gvector%u
 V_RHS%diff_adv%new = Gvector%v
 T_RHS%diff_adv%new = Gvector%t
 S_RHS%diff_adv%new = Gvector%s
-
-        ! Calculate the Coriolis and baroclinic pressure gradient
-        ! components of the G vector for each velocity component
-        call Coriolis_and_pg(dt, V%new, dPdx_b, &
-             Gvector_c%u)
-        call Coriolis_and_pg(dt, -U%new, dPdy_b, &
-             Gvector_c%v)      
-!!$! *** Physics equations refactoring bridge code
-!!$Gvector_c%u = U_RHS%C_pg%new
-!!$Gvector_c%v = V_RHS%C_pg%new
-U_RHS%C_pg%new = Gvector_c%u
-V_RHS%C_pg%new = Gvector_c%v
 
         ! Store %new components of RHS and Bmatrix variables in %old
         ! their components for use by the IMEX solver.  Necessary for the
