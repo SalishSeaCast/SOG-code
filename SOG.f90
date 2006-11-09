@@ -10,13 +10,16 @@ program SOG
   use datetime, only: datetime_
   !
   ! Parameter values:
-  use physics_model, only: f, g
+  use fundamental_constants, only: g
+  use physics_model, only: f
   !
   ! Variables:
   use grid_mod, only: grid
   use core_variables, only: U, V, T, S, P, Z, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
-  use physics_model, only: B, dPdx_b, dPdy_b
+  use physics_model, only: B
+  ! *** Temporary
+  use baroclinic_pressure, only: dPdx_b, dPdy_b
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   !
@@ -25,10 +28,12 @@ program SOG
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
   use physics_model, only: init_physics, double_diffusion, &
-       baroclinic_P_gradient, new_to_old_physics, dalloc_physics_variables
+       new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use physics_eqn_builder, only: build_physics_equations, &
        new_to_old_phys_RHS, new_to_old_phys_Bmatrix
+  use baroclinic_pressure, only: new_to_old_vel_integrals, &
+       baroclinic_P_gradient
   use air_sea_fluxes, only: wind_stress
   use biology_model, only: init_biology, calc_bio_rate
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
@@ -200,7 +205,7 @@ program SOG
   cruise_id = getpars("cruise_id")
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
-       h%new, dPdx_b, dPdy_b, grid, cruise_id)
+       h%new, grid, cruise_id)
 
   ! Read the iteration count limit for the physics model implicit
   ! solver
@@ -243,6 +248,7 @@ program SOG
 !!$     CALL define_sog(time_step)
      h%old = h%new
      call new_to_old_physics()
+     call new_to_old_vel_integrals()
      call new_to_old_phys_RHS()
      call new_to_old_phys_Bmatrix()
      call new_to_old_bio_RHS()
@@ -310,10 +316,12 @@ program SOG
         Bf = (count * Bf_old + (niter - count) * Bf) / niter !!$
 
 !!$        ! Calculate baroclinic pressure gradient components
+!!$        !
+!!$        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
 !!$        ! *** This might be a better place to calculate these gradients
 !!$        ! *** than at the end of the implicit loop.
 !!$        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
-!!$             stress%u%new, stress%v%new, dPdx_b, dPdy_b)
+!!$             stress%u%new, stress%v%new)
 
         CALL fun_constants(u_star, w_star, L_star, w, Bf, h%new)   !test conv
 
@@ -618,8 +626,10 @@ V_RHS%C_pg%new = Gvector_c%v
         CALL find_jmax_g(h,grid)
 
         ! Calculate baroclinic pressure gradient components
+        !
+        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
         call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
-             w%u(0), w%v(0), dPdx_b, dPdy_b)
+             w%u(0), w%v(0))
 
         ! Calculate convergence metric for velocity field
         delu = abs(U%new(1)-uprev)/0.01
