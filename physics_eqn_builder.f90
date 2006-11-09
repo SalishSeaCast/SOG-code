@@ -57,7 +57,7 @@ module physics_eqn_builder
        S_RHS,   &  ! Salinity right-hand side arrays
        ! Subroutines:
        build_physics_equations, &
-!!$       new_to_old_phys_RHS, new_to_old_phys_Bmatrix, &
+       new_to_old_phys_RHS, new_to_old_phys_Bmatrix, &
        alloc_phys_RHS_variables, dalloc_phys_RHS_variables
 
   ! Type Definitions:
@@ -127,9 +127,19 @@ contains
     ! Bmatrix%S%*), the RHS diffusion/advection term vectors
     ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
     ! pressure gradient term vectors (*_RHS%C_pg).
+
+    ! Element from other modules:
+    !
+    ! Type Definitions:
     use precision_defs, only: dp
-    use grid_mod, only: grid_ 
+    use grid_mod, only: grid_
+    ! Variable Declarations:
+!!$    use physics_model, only: &
+!!$         dPdx_b, &  ! Cross-strait component of baroclinic pressure gradient
+!!$         dPdy_b     ! Along-strait component of baroclinic pressure gradient
+
     implicit none
+
     ! Arguments:
     type(grid_), intent(in) :: &
          grid  ! Grid arrays
@@ -145,36 +155,39 @@ contains
     ! physics model quantities.
     call calc_phys_Bmatrices(grid, dt)  ! in
 
-!!$    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
-!!$    ! fluxes at the bottom and top of the grid
-!!$    call init_phys_RHS_fluxes(grid, dt, U(grid%M+1), V(grid%M+1),     &  ! in
-!!$         T(grid%M+1), S(grid%M+1), K_vel, K_T, K_S, gamma%T, gamma%S, &  ! in
-!!$         w%U(0), w%V(0), w%T(0), w%S(0), Q_n, F_n)                       ! in
-!!$
-!!$    ! Calculate profile of upwelling velocity
-!!$    call upwell_profile(grid, Qinter, upwell, wupwell)
+    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
+    ! fluxes at the bottom and top of the grid
+    call init_phys_RHS_fluxes(grid, dt, U, V, T, S)  ! in
+
 !!$    ! Add vertical advection due to upwelling to velocity components,
 !!$    ! temperature, and salinity RHS arrays
 !!$    call calc_phys_upwell_advection(grid, dt, U, V, T, S)
-!!$
+
 !!$    ! Calculate the Coriolis and baroclinic pressure gradient
 !!$    ! components of the RHS arrays for the velocity components
-!!$    call Coriolis_and_pg(dt, V, &   ! in
-!!$         U_RHS%C_pg%new)            ! out
-!!$    call Coriolis_and_pg(dt, -U, &  ! in
-!!$         V_RHS%C_pg%new)            ! out
-
+!!$    call Coriolis_and_pg(dt, -U, dPdx_b&  ! in
+!!$         V_RHS%C_pg%new)                  ! out
+!!$    call Coriolis_and_pg(dt, V, dPdy_b&   ! in
+!!$         U_RHS%C_pg%new)                  ! out
   end subroutine build_physics_equations
 
 
   subroutine calc_phys_Bmatrices(grid, dt)  !  in
     ! Calculate the precursor diffusion coefficients matrices for the
     ! physics model quantities.
+
+    ! Element from other modules:
+    !
+    ! Type Definitions:
     use precision_defs, only: dp
     use grid_mod, only: grid_
+    ! Variable Declarations:
     use declarations, only: K  ! *** Should change to use turbulence
+    ! Subroutines:
     use diffusion, only: diffusion_coeff
+    
     implicit none
+
     ! Arguments:
     type(grid_), intent(in) :: &
          grid  ! Grid arrays
@@ -193,47 +206,58 @@ contains
   end subroutine calc_phys_Bmatrices
 
 
-!!$  subroutine init_phys_RHS_fluxes(grid, dt, U(grid%M+1), V(grid%M+1), & ! in
-!!$       T(grid%M+1), S(grid%M+1), K_vel, K_T, K_S, gamma%T, gamma%S, &   ! in
-!!$       w%U(0), w%V(0), w%T(0), w%S(0), Q_n, F_n)                        ! in
-!!$    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
-!!$    ! fluxes at the bottom and top of the grid
-!!$    implicit none
-!!$    ! Arguments:
-!!$    type(grid_), intent(in) :: &
-!!$         grid  ! Grid arrays
-!!$    real(kind=dp), intent(in) :: &
-!!$         dt  ! Time step [s]
-!!$    real(kind=dp), dimension(0:), intent(in) :: &
-!!$         U, &  ! U velocity component(cross-strait) profile
-!!$         V, &  ! V velocity component(along-strait) profile
-!!$         T, &  ! Temperature profile
-!!$         S
-!!$
-!!$    ! Velocity components
-!!$    call diffusion_bot_surf_flux (grid, dt, K_vel, w%u(0), &    ! in
-!!$         U%new(grid%M+1), &                                       ! in
-!!$         U_RHS%diff_adv%new)                                    ! out
-!!$    call diffusion_bot_surf_flux (grid, dt, K_vel, w%v(0), &    ! in
-!!$         V%new(grid%M+1), &                                       ! in
-!!$         V_RHS%diff_adv%new)                                    ! out
-!!$    ! Temperature
-!!$    call diffusion_nonlocal_fluxes(grid, dt, K_T, gamma%t, &   ! in
-!!$         w%t(0), -Q_n, T%new(grid%M+1), &                          ! in
-!!$         T_RHS%diff_adv%new)                                    ! out
-!!$    ! Salinity
-!!$    call diffusion_nonlocal_fluxes(grid, dt, K_S, gamma%s, &   ! in
-!!$         w%s(0), F_n, S%new(grid%M+1), &                           ! in
-!!$         S_RHS%diff_adv%new)                                    ! out
-!!$  end subroutine init_phys_RHS_fluxes
-!!$
-!!$
+  subroutine init_phys_RHS_fluxes(grid, dt, U, V, T, S)  ! in
+    ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
+    ! fluxes at the bottom and top of the grid
+
+    ! Element from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    ! Variable Declarations:
+    use declarations, only: K, w, gamma  ! *** Should change to use turbulence
+    use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
+    ! Subroutines:
+    use diffusion, only: diffusion_bot_surf_flux, diffusion_nonlocal_fluxes
+    
+    implicit none
+    
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid arrays
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         U, &  ! U velocity component(cross-strait) profile
+         V, &  ! V velocity component(along-strait) profile
+         T, &  ! Temperature profile
+         S
+
+    ! Velocity components
+    call diffusion_bot_surf_flux (grid, dt, K%U%all, w%u(0), &  ! in
+         U(grid%M+1), &                                         ! in
+         U_RHS%diff_adv%new)                                    ! out
+    call diffusion_bot_surf_flux (grid, dt, K%U%all, w%v(0), &  ! in
+         V(grid%M+1),                                        &  ! in
+         V_RHS%diff_adv%new)                                    ! out
+    ! Temperature
+    call diffusion_nonlocal_fluxes(grid, dt, K%T%all, gamma%t, &  ! in
+         w%T(0), -Q_n, T(grid%M+1),                            &  ! in
+         T_RHS%diff_adv%new)                                      ! out
+    ! Salinity
+    call diffusion_nonlocal_fluxes(grid, dt, K%S%all, gamma%s, &  ! in
+         w%s(0), F_n, S(grid%M+1),                             &  ! in
+         S_RHS%diff_adv%new)                                      ! out
+  end subroutine init_phys_RHS_fluxes
+
+
 !!$  subroutine calc_phys_upwell_advection(grid, dt, U, V, T, S)
 !!$    ! Add vertical advection due to upwelling to velocity components,
 !!$    ! temperature, and salinity RHS arrays
 !!$    use precision_defs, only: dp
 !!$    use grid_mod, only: grid_
-!!$    use upwelling, only: upwelling_advection
+!!$    use upwelling, only: upwell_profile, upwelling_advection
 !!$    implicit none
 !!$    ! Arguments:
 !!$    type(grid_), intent(in) :: &
@@ -246,6 +270,10 @@ contains
 !!$         T, &  ! Temperature profile
 !!$         S
 !!$
+!!$    ! Calculate profile of upwelling velocity
+!!$    call upwell_profile(grid)
+!!$    ! Apply upwelling advection
+!!$    !
 !!$    ! Velocity components
 !!$    call upwelling_advection (grid, dt, U, &  ! in
 !!$         U_RHS%diff_adv%new)                  ! out
@@ -258,6 +286,58 @@ contains
 !!$    call upwelling_advection (grid, dt, T, &  ! in
 !!$         S_RHS%diff_adv%new)                  ! out
 !!$  end subroutine calc_phys_upwell_advection
+
+
+!!$  subroutine Coriolis_and_pg(dt, vel, P_grad, RHS)
+!!$    ! Calculate the Coriolis and baroclinic pressure gradient
+!!$    ! components of the RHS vector for the specified velocity component.
+!!$    use physics_model, only: f
+!!$    implicit none
+!!$    ! Arguments:
+!!$    real(kind=dp), intent(in) :: &
+!!$         dt  ! Time step [s]
+!!$    real(kind=dp), dimension(0:), intent(in) :: &
+!!$         vel  ! Velocity component profile
+!!$    real(kind=dp), dimension(1:), intent(in) :: &
+!!$         P_grad  ! Baroclinic pressure gradient component profile
+!!$    real(kind=dp), dimension(1:), intent(out) :: &
+!!$         RHS  ! Velocity component right-hand side array
+!!$
+!!$    RHS = (f * vel(1:) - P_grad) * dt
+!!$  end subroutine Coriolis_and_pg
+
+
+  subroutine new_to_old_phys_RHS()
+    ! Copy %new component of the physics *_RHS%* arrays to the
+    ! %old component for use by the IMEX semi-impllicit PDE solver.
+    implicit none
+
+    ! Diffusion/advection components
+    U_RHS%diff_adv%old = U_RHS%diff_adv%new
+    V_RHS%diff_adv%old = V_RHS%diff_adv%new
+    T_RHS%diff_adv%old = T_RHS%diff_adv%new
+    S_rhs%diff_adv%old = S_RHS%diff_adv%new
+    ! Coriolis and baroclinic pressure gradient components
+    U_RHS%C_pg%old = U_RHS%C_pg%new
+    V_RHS%C_pg%old = V_RHS%C_pg%new
+  end subroutine new_to_old_phys_RHS
+
+
+  subroutine new_to_old_phys_Bmatrix()
+    ! Copy %new component of the physics Bmatrix%* arrays to the
+    ! %old component for use by the IMEX semi-impllicit PDE solver.
+    implicit none
+
+    nBmatrix%vel%old%sub = nBmatrix%vel%new%sub
+    nBmatrix%vel%old%diag = nBmatrix%vel%new%diag
+    nBmatrix%vel%old%sup = nBmatrix%vel%new%sup
+    nBmatrix%T%old%sub = nBmatrix%T%new%sub
+    nBmatrix%T%old%diag = nBmatrix%T%new%diag
+    nBmatrix%T%old%sup = nBmatrix%T%new%sup
+    nBmatrix%S%old%sub = nBmatrix%S%new%sub
+    nBmatrix%S%old%diag = nBmatrix%S%new%diag
+    nBmatrix%S%old%sup = nBmatrix%S%new%sup
+  end subroutine new_to_old_phys_Bmatrix
 
 
   subroutine alloc_phys_RHS_variables(M)
