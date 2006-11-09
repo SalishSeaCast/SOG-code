@@ -125,7 +125,21 @@ contains
   subroutine new_to_old_physics()
     ! Copy %new component of physics variables to %old component for
     ! use at next time step.
+
+    ! Variables from other modules:
+    use core_variables, only: &
+         U,  &  ! Cross-strait (35 deg) velocity component arrays
+         V,  &  ! Along-strait (305 deg) velocity component arrays
+         T,  &  ! Temperature profile arrays
+         S      ! Salinity profile arrays
+
     implicit none
+
+    ! Physics core variables
+    U%old = U%new
+    V%old = V%new
+    T%old = T%new
+    S%old = S%new
     ! Velocity component integrals for baroclinic pressure gradient
     ! calculations
     ut%old = ut%new
