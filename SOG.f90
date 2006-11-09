@@ -17,10 +17,8 @@ program SOG
   use core_variables, only: U, V, T, S, P, Z, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B, dPdx_b, dPdy_b
-  ! *** Temporary until IMEX refactoring is completed
-  use IMEX_solver, only: Hvector
   ! *** Temporary until physics equations refactoring is completed
-  use physics_eqn_builder, only: nBmatrix, U_RHS, V_RHS, T_RHS, S_RHS
+  use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   !
   ! Subroutines and functions:
   use core_variables, only: alloc_core_variables, dalloc_core_variables
@@ -36,7 +34,7 @@ program SOG
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
        new_to_old_bio_Bmatrix
   use NPZD, only: dalloc_biology_variables
-  use IMEX_solver, only: init_IMEX_solver, solve_bio_eqns, &
+  use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
   use input_processor, only: init_input_processor, getpars, getpari, &
        getpard, getparl
@@ -67,7 +65,6 @@ program SOG
   ! *** These should eventually end up in refactored modules
   use Coriolis_and_pg_mod
   use define_flux_mod
-  use tridiag_mod
 
   implicit none
 
@@ -243,8 +240,11 @@ program SOG
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
      ! step
-     CALL define_sog(time_step)
+!!$     CALL define_sog(time_step)
+     h%old = h%new
      call new_to_old_physics()
+     call new_to_old_phys_RHS()
+     call new_to_old_phys_Bmatrix()
      call new_to_old_bio_RHS()
      call new_to_old_bio_Bmatrix()
 
@@ -453,37 +453,6 @@ program SOG
         ! pressure gradient term vectors (*_RHS%C_pg).
         call build_physics_equations(grid, dt, U%new, V%new, T%new, S%new) ! in
      
-!!$        ! Calculate matrix B (changed to Amatrix later) 
-!!$        call diffusion_coeff(grid, dt, K%t%all, &
-!!$             Bmatrix%t)
-!!$        call diffusion_coeff(grid, dt, K%s%all, &
-!!$             Bmatrix%s)
-!!$        call diffusion_coeff(grid, dt, K%u%all, &
-!!$             Bmatrix%u)
-! *** Physics equations refactoring bridge code
-Bmatrix%u%A = nBmatrix%vel%new%sub
-Bmatrix%u%B = nBmatrix%vel%new%diag
-Bmatrix%u%C = nBmatrix%vel%new%sup
-Bmatrix%T%A = nBmatrix%T%new%sub
-Bmatrix%T%B = nBmatrix%T%new%diag
-Bmatrix%T%C = nBmatrix%T%new%sup
-Bmatrix%S%A = nBmatrix%S%new%sub
-Bmatrix%S%B = nBmatrix%S%new%diag
-Bmatrix%S%C = nBmatrix%S%new%sup
-
-!!$        ! Start calculation of RHS called Gvector (D9) (D10)
-!!$        call diffusion_nonlocal_fluxes(grid, dt, K%t%all, gamma%t, &   ! in
-!!$             w%t(0), -Q_n, T%new(grid%M+1), &                          ! in
-!!$             Gvector%t)                                                ! out
-!!$        call diffusion_nonlocal_fluxes(grid, dt, K%s%all, gamma%s, &   ! in
-!!$             w%s(0), F_n, S%new(grid%M+1), &                           ! in
-!!$             Gvector%s)                                                ! out
-!!$        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%u(0), &    ! in
-!!$             U%new(grid%M+1), &                                       ! in
-!!$             Gvector%u)                                               ! out
-!!$        call diffusion_bot_surf_flux (grid, dt, K%u%all, w%v(0), &    ! in
-!!$             V%new(grid%M+1), &                                       ! in
-!!$             Gvector%v)                                               ! out
 ! *** Physics equations refactoring bridge code
 Gvector%u = U_RHS%diff_adv%new
 Gvector%v = V_RHS%diff_adv%new
@@ -502,6 +471,11 @@ Gvector%s = S_RHS%diff_adv%new
              Gvector%u)
         call vertical_advection (grid, dt, V%new, wupwell, &
              Gvector%v)
+! *** Physics equations refactoring bridge code
+U_RHS%diff_adv%new = Gvector%u
+V_RHS%diff_adv%new = Gvector%v
+T_RHS%diff_adv%new = Gvector%t
+S_RHS%diff_adv%new = Gvector%s
 
         ! Calculate the Coriolis and baroclinic pressure gradient
         ! components of the G vector for each velocity component
@@ -512,28 +486,9 @@ Gvector%s = S_RHS%diff_adv%new
 !!$! *** Physics equations refactoring bridge code
 !!$Gvector_c%u = U_RHS%C_pg%new
 !!$Gvector_c%v = V_RHS%C_pg%new
-!!$Gvector_c%t = T_RHS%C_pg%new
-!!$Gvector_c%s = S_RHS%C_pg%new
+U_RHS%C_pg%new = Gvector_c%u
+V_RHS%C_pg%new = Gvector_c%v
 
-        IF (time_step == 1 .AND. count  == 1) THEN
-           Bmatrix_o%t%A = Bmatrix%t%A
-           Bmatrix_o%t%B = Bmatrix%t%B
-           Bmatrix_o%t%C = Bmatrix%t%C
-           Bmatrix_o%s%A = Bmatrix%s%A
-           Bmatrix_o%s%B = Bmatrix%s%B
-           Bmatrix_o%s%C = Bmatrix%s%C         
-           Bmatrix_o%u%A = Bmatrix%u%A
-           Bmatrix_o%u%B = Bmatrix%u%B
-           Bmatrix_o%u%C = Bmatrix%u%C
-
-           Gvector_o%t = Gvector%t
-           Gvector_o%s = Gvector%s
-           Gvector_o%u = Gvector%u
-           Gvector_o%v = Gvector%v
-
-           Gvector_co%u = Gvector_c%u
-           Gvector_co%v = Gvector_c%v
-        END IF
         ! Store %new components of RHS and Bmatrix variables in %old
         ! their components for use by the IMEX solver.  Necessary for the
         ! 1st time step because the values just calculated are a better
@@ -543,44 +498,12 @@ Gvector%s = S_RHS%diff_adv%new
            call new_to_old_phys_Bmatrix()
         endif
 
-!!!!! IMEX SCHEME !!!!   
-
-!!$        ! Solve the semi-implicit diffusion/advection PDEs with
-!!$        ! Coriolis and baroclinic pressure gradient terms for the
-!!$        ! physics quantities.
-!!$        call solve_phys_eqns(grid%M, U%new, V%new, T%new, S%new, &  ! in
-!!$             day, time)                                             ! in
-
-        CALL matrix_A (Amatrix%u, Bmatrix%u) ! changed from Bmatrix to Amatrix
-        CALL matrix_A (Amatrix%t, Bmatrix%t) ! now have (D9)
-        CALL matrix_A (Amatrix%s, Bmatrix%s)
-
-        ! Add in Coriolis term (Gvector_c) and previous value to H vector (D7)
-        call phys_Hvector(grid%M, U%old, Gvector%u, Gvector_o%u, &  ! in
-             Gvector_c%u, Gvector_co%u, Bmatrix_o%u,             &  ! in
-             Hvector%U)                                             ! out
-        call phys_Hvector(grid%M, V%old, Gvector%v, Gvector_o%v, &  ! in
-             Gvector_c%v, Gvector_co%v, Bmatrix_o%u,             &  ! in
-             Hvector%V)                                             ! out
-        ! Add Xt to H vector (D7)
-        call phys_Hvector(grid%M, T%old, Gvector%t, Gvector_o%t, &  ! in
-             null_vector, null_vector, Bmatrix_o%t,              &  ! in
-             ! null_vector because no Coriolis or pressure gradients terms
-             Hvector%T)
-        call phys_Hvector(grid%M, S%old, Gvector%s, Gvector_o%s, &  ! in
-             null_vector, null_vector, Bmatrix_o%s,              &  ! in
-             ! null_vector because no Coriolis or pressure gradients terms
-             Hvector%S)                                             ! out
-
-        ! Solves tridiagonal system for physics quantities
-        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%U, &
-             U%new(1:grid%M))
-        call tridiag(Amatrix%u%A, Amatrix%u%B, Amatrix%u%C, Hvector%V, &
-             V%new(1:grid%M))
-        call tridiag(Amatrix%t%A, Amatrix%t%B, Amatrix%t%C, Hvector%T, &
-             T%new(1:grid%M))
-        call tridiag(Amatrix%s%A, Amatrix%s%B, Amatrix%s%C, Hvector%S, &
-             S%new(1:grid%M))
+        ! Solve the semi-implicit diffusion/advection PDEs with
+        ! Coriolis and baroclinic pressure gradient terms for the
+        ! physics quantities.
+        call solve_phys_eqns(grid%M, day, time, &  ! in
+             U%old, V%old, T%old, S%old,        &  ! in
+             U%new, V%new, T%new, S%new)           ! out
 
         ! Update boundary conditions at surface, and bottom of grid
         U%new(0) = U%new(1)
