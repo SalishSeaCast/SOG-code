@@ -7,28 +7,15 @@ module physics_model
   !
   ! Public Parameters:
   !
-  !   g -- Acceleration due to gravity [m/s^2]
-  !
   !   f -- Coriolis factor
   !
-  !   pi -- Ratio of circumference to diameter of a circle [-]
-  ! 
   ! Public Variables:
   !
   !   B -- Water column buoyancy [m/s^2]
   !
-  !   dPdx_b -- Baroclinic pressure gradient x (cross-strait) component 
-  !             [kg/m^2 . s^2]
-  !
-  !   dPdy_b -- Baroclinic pressure gradient y (along-strait) component 
-  !             [kg/m^2 . s^2]
-  !
   ! Public Subroutines:
   !
   !   init_physics -- Initialize physics model.
-  !
-  !   baroclinic_P_gradient -- Calculate baroclinic pressure gradient
-  !                            components.
   !
   !   double_diffusion -- Calculate double diffusion mixing.
   !
@@ -44,62 +31,36 @@ module physics_model
   private
   public :: &
        ! Parameter values:
-       f,        &  ! Coriolis factor
-       g,        &  ! Acceleration due to gravity [m/s^2]
-       latitude, &  ! Station S3 latitude [deg]
-       pi,       &
+       f, &  !  Coriolis factor
        ! Variables:
        B,      &  ! Buoyancy profile array
-       dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
-       dPdy_b, &  ! Baroclinic pressure gradient y (along-strait) component
-       ut, vt, &
        ! Subroutines:
-       init_physics, double_diffusion, baroclinic_P_gradient, &
+       init_physics, double_diffusion, &
        new_to_old_physics, dalloc_physics_variables
-
-  ! Private module type definitions:
-  !
-  ! Profiles:
-  type :: profiles
-     real(kind=dp), dimension(:), allocatable :: &
-          new, &  ! Profile of quantity at current time setp
-          old     ! Profile of quantity at previous time step
-  end type profiles
 
   ! Public parameter declarations:
   real(kind=dp) :: &
-       f  ! Coriolis factor (would be a parameter bit for a pgf90 bug)
-  real(kind=dp), parameter :: &
-       g = 9.80665, &  ! Acceleration due to gravity [m/s^2]
-       latitude = 49. + 7.517 / 60., & ! Station S3 latitude [deg]
-       pi = 3.141592653589793
+       f  ! Coriolis factor (would be a parameter but for a pgf90 bug)
 
   ! Public variable declarations:
   real(kind=dp), dimension(:), allocatable :: &
-       B, &       ! Buoyancy profile array
-       dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
-       dPdy_b     ! Baroclinic pressure gradient y (along-strait) component
-  type(profiles) :: &
-       ut, &  ! Integral of u (cross-strait) velocity component over time
-       vt     ! Integral of v (along-strait) velocity component over time
-
-  ! Private parameter value declarations:
-  real(kind=dp) :: &
-       Lx = 20.0d3, &  ! Semi-minor axis (cross-strait) of model domain [m]
-       Ly = 60.0d3     ! Semi-major axis (along-strait) of model domain [m]
-  
-  ! Private variable declarations:
-  real(kind=dp), dimension(:), allocatable :: &
-       dzx, &
-       dzy
+       B  ! Buoyancy profile array
 
 contains
 
   subroutine init_physics(M)
     ! Initialize physics model.
+    
+    ! Elements from other modules:
+    ! Parameter values:
+    use fundamental_constants, only: latitude, pi
+    ! Subroutines:
     use water_properties, only: alloc_water_props
     use physics_eqn_builder, only: alloc_phys_RHS_variables
+    use baroclinic_pressure, only: init_baroclinic_pressure
+    
     implicit none
+    
     ! Argument:
     integer :: M  ! Number of grid points
 
@@ -111,10 +72,9 @@ contains
     ! diffusion/advection/Coriolis/baroclinic pressure gradient
     ! equations for the physics model.
     call alloc_phys_RHS_variables(M)
-    ! Initialize velocity component integrals for baroclinic pressure
-    ! gradient calculations
-    ut%new = 0.
-    vt%new = 0.
+    ! Allocate memory for baroclinic pressure gradient calculation
+    ! variables, and initialize them.
+    call init_baroclinic_pressure(M)
     ! Coriolis factor
     ! *** This must be calculated because pgf90 will not accept an
     ! *** intrinsic in parameter statement
@@ -140,10 +100,6 @@ contains
     V%old = V%new
     T%old = T%new
     S%old = S%new
-    ! Velocity component integrals for baroclinic pressure gradient
-    ! calculations
-    ut%old = ut%new
-    vt%old = vt%new
   end subroutine new_to_old_physics
   
 
@@ -224,146 +180,6 @@ contains
   end subroutine double_diffusion
 
 
-  subroutine baroclinic_P_gradient(grid, dt, U_new, V_new, rho_g, &
-       w_u, w_v, dPdx_b, dPdy_b)
-    ! Calculate the baroclinic pressure gradient components.
-    use precision_defs, only: dp
-    use grid_mod, only: grid_, depth_average
-    implicit none
-    ! Agruments:
-    type(grid_) :: &
-         grid  ! Grid depth and spacing arrays
-    real(kind=dp), intent(in) :: &
-         dt    ! Time step [s]
-    real(kind=dp), dimension(0:), intent(inout) :: &
-         U_new, &  ! U component (cross-strait, 35 deg) velocity profile [m/s]
-         V_new, &  ! V component (along-strait, 305 deg) velocity profile [m/s]
-         rho_g     ! Density profile at grid point depths [kg/m^3]
-    real(kind=dp), intent(in) :: &
-         w_u, &  ! wind stress/rho or momentum flux
-         w_v
-    real(kind=dp), dimension(1:), intent(out) :: &
-         dPdx_b, &  ! Baroclinic pressure gradient x (cross-strait) component
-         dPdy_b     ! Baroclinic pressure gradient y (along-strait) component
-    ! Local variables:
-    real(kind=dp) :: sumu, sumv, sumpbx, sumpby, tol, oLx, oLy, gorLx, gorLy, &
-         cz, decayscale
-    integer :: yy, ii
-
-    ! Remove barotropic mode from velocity field
-        sumu = 0.
-        sumv = 0.
-        DO yy = 1, grid%M   !remove barotropic mode
-           sumu = sumu+U_new(yy)
-           sumv = sumv+V_new(yy)
-        END DO
-        sumu = sumu/grid%M
-        sumv = sumv/grid%M
-
-        DO yy = 1, grid%M   !remove barotropic mode
-           U_new(yy) = U_new(yy)-sumu
-           V_new(yy) = V_new(yy)-sumv
-        END DO
-!!$    U_new = U_new - depth_average(U_new, 0.0d0, grid%D)
-!!$    V_new = V_new - depth_average(V_new, 0.0d0, grid%D)
-    ! Calculate the distortion of the isopicnals at the grid layer
-    ! interfaces that the velocity field produces.
-    !
-    ! Calculate integrals of u and v over time.  This from a
-    ! geometrical argument that:
-    !    u * grid%i_space * dt = ut * grid*i_space * Lx / 2
-    ! Thus, ut(j) is the fraction of the jth grid layer that the u velocity
-    ! changes the isopicnal by.
-    ! *** The decayscale relaxation factor is a hack to deal with the fact that
-    ! *** ut & vt grow too large.
-        oLx = 2./(20e3)
-        oLy = 2./(60e3)
-        gorLx = g / (1025.*20e3)
-        gorLy = g / (1025.*60e3)
-
-        decayscale = 1./(3*86400.)
-        sumu = 0
-        sumv = 0
-
-        ! calculate the added thickness of each layer at the "east" and
-        ! "north" side of basin, respectively.  In units of layer thickness
-        ut%new = ut%old * (1 - decayscale * dt) + U_new * dt * oLx
-        vt%new = vt%old * (1 - decayscale * dt) + V_new * dt * oLy 
-!!$    ut%new = ut%old * 0.95 + U_new * dt / (Lx / 2.)
-!!$    vt%new = vt%old * 0.95 + V_new * dt / (Ly / 2.)
-
-        ! Calculate the depths of the distorted isopycnals
-        ! in unit of layer thickness
-        dzx(1) = ut%new(1)+1
-        dzy(1) = vt%new(1)+1
-
-        do yy=2,grid%M
-           dzx(yy) = dzx(yy-1) + (ut%new(yy) + 1)
-           dzy(yy) = dzy(yy-1) + (vt%new(yy) + 1)
-        enddo
-
-!!$    dpx(1) = (ut%new(1) + 1.) * grid%i_space(1)
-!!$    dpy(1) = (vt%new(1) + 1.) * grid%i_space(1)
-!!$    dpx(2:) = dpx(1:grid%M-1) + (ut%new(2:) + 1.) * grid%i_space(2:)
-!!$    dpy(2:) = dpy(1:grid%M-1) + (vt%new(2:) + 1.) * grid%i_space(2:)
-        ! Calculate the baroclinic pressure gradient
-        ! *** Should this tolerance be read in as a run parameter?
-        tol = 1e-6
-        sumpbx = 0.
-        cz = 0.
-        ii = 1
-        ! dPdx_b = P(eastern side) - P(center)
-        ! P(center) = sum rho_g * layer depth
-        ! P(eastern side) = sum rho_g * eastern side thickness
-        ! but note that this second sum must go down to the depth yy and not
-        ! below
-        do yy = 1,grid%M
-           if (yy == 1) then
-              dPdx_b(yy) = -rho_g(yy)
-           else
-              dPdx_b(yy) = dPdx_b(yy-1) - rho_g(yy)
-           endif
-           do while ((dzx(ii) - yy) < -tol .and. ii < grid%M)
-              dPdx_b(yy) = dPdx_b(yy) + rho_g(ii)*(dzx(ii)-cz)
-              cz = dzx(ii)
-              ii = ii + 1
-           enddo
-           dPdx_b(yy) = dPdx_b(yy) + rho_g(ii)*(yy-cz)
-           sumpbx = sumpbx + dPdx_b(yy)
-           cz = yy
-        enddo
-
-        sumpby = 0.
-        cz = 0.
-        ii=1
-        do yy=1,grid%M
-           if (yy == 1) then
-              dPdy_b(yy) = -rho_g(yy)
-           else
-              dPdy_b(yy) = dPdy_b(yy-1)-rho_g(yy)
-           endif
-           do while ((dzy(ii)- yy) <-tol .and. ii < grid%M)
-              dPdy_b(yy) = dPdy_b(yy) + rho_g(ii)*(dzy(ii)-cz)
-              cz = dzy(ii)
-              ii = ii + 1
-           enddo
-           dPdy_b(yy) = dPdy_b(yy) + rho_g(ii)*(yy-cz)
-           sumpby = sumpby + dPdy_b(yy)
-           cz = yy
-        enddo
-
-        sumpbx = sumpbx/grid%M
-        sumpby = sumpby/grid%M
-
-        do yy = 1, grid%M
-           dPdx_b(yy) = (dPdx_b(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                - w_u / (grid%M * grid%i_space(yy))
-           dPdy_b(yy) = (dPdy_b(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                - w_v / (grid%M * grid%i_space(yy))
-        enddo
-    
-  end subroutine baroclinic_P_gradient
-
   subroutine alloc_physics_variables(M)
     ! Allocate memory for physics model variables arrays.
     use malloc, only: alloc_check
@@ -378,27 +194,20 @@ contains
     allocate(B(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Baroclinic pressure gradient profile arrays"
-    allocate(dPdx_b(1:M), dPdy_b(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Velocity component integral profile arrays"
-    allocate(ut%new(0:M+1), ut%old(0:M+1), vt%new(0:M+1), vt%old(0:M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Distorted isopicnal depth profile arrays"
-    allocate(dzx(1:M), dzy(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
   end subroutine alloc_physics_variables
 
 
   subroutine dalloc_physics_variables
     ! Deallocate memory from physics model variables arrays.
+
+    ! Subroutines from other modules:
     use malloc, only: dalloc_check
     use water_properties, only: dalloc_water_props
     use physics_eqn_builder, only: dalloc_phys_RHS_variables
+    use baroclinic_pressure, only: dalloc_baro_press_variables
+    
     implicit none
+    
     ! Local variables:
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
@@ -407,24 +216,15 @@ contains
     deallocate(B, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Baroclinic pressure gradient profile arrays"
-    deallocate(dPdx_b, dPdy_b, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Velocity component integral profile arrays"
-    deallocate(ut%new, ut%old, vt%new, vt%old, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Distorted isopicnal depth profile arrays"
-    deallocate(dzx, dzy, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
     ! Deallocate memory for water property arrays
     call dalloc_water_props
     ! Deallocate memory from arrays for right-hand sides of
     ! diffusion/advection/Coriolis/baroclinic pressure gradient
     ! equations for the physics model.
     call dalloc_phys_RHS_variables()
+    ! Deallocate memory for baroclinic pressure gradient calculation
+    ! arrays.
+    call dalloc_baro_press_variables()
   end subroutine dalloc_physics_variables
 
 end module physics_model
