@@ -5,10 +5,6 @@ module physics_model
   ! Type declarations, variables, parameters, and subroutines related
   ! to the physics model in the code.
   !
-  ! Public Parameters:
-  !
-  !   f -- Coriolis factor
-  !
   ! Public Variables:
   !
   !   B -- Water column buoyancy [m/s^2]
@@ -30,17 +26,11 @@ module physics_model
 
   private
   public :: &
-       ! Parameter values:
-       f, &  !  Coriolis factor
        ! Variables:
        B,      &  ! Buoyancy profile array
        ! Subroutines:
        init_physics, double_diffusion, &
        new_to_old_physics, dalloc_physics_variables
-
-  ! Public parameter declarations:
-  real(kind=dp) :: &
-       f  ! Coriolis factor (would be a parameter but for a pgf90 bug)
 
   ! Public variable declarations:
   real(kind=dp), dimension(:), allocatable :: &
@@ -75,10 +65,6 @@ contains
     ! Allocate memory for baroclinic pressure gradient calculation
     ! variables, and initialize them.
     call init_baroclinic_pressure(M)
-    ! Coriolis factor
-    ! *** This must be calculated because pgf90 will not accept an
-    ! *** intrinsic in parameter statement
-    f = 2. * (2. * pi / 86400.) * sin(pi * latitude / 180.)
   end subroutine init_physics
 
 
