@@ -55,18 +55,20 @@ forcing.o mixing_layer.o \
 \
 user_output.o timeseries_output.o profiles_output.o \
 \
-define_flux.o phys_Hvector.o \
+define_flux.o \
 allocate1.o	\
 stability.o \
 \
-initialize.o define_sog.o irradiance_sog.o 	\
+initialize.o irradiance_sog.o 	\
 buoyancy.o air_sea_fluxes.o surface_flux_sog.o fun_constants.o		\
 ND_flux_profile.o vel_scales.o convection_scales.o		\
 shear_diff.o interior_match.o interior_match2.o		\
-shape_parameters.o modify_K.o def_gamma.o Coriolis_and_pg.o 		\
-matrix_A.o def_v_t_sog.o tridiag.o	\
+shape_parameters.o modify_K.o def_gamma.o Coriolis_and_pg.o \
+def_v_t_sog.o \
 define_Ri_b_sog.o \
-new_year.o SOG.o
+new_year.o \
+\
+SOG.o
 
 # The executable is the default target that is built by "make"
 # It depends on all of the objects which are built from the
