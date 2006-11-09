@@ -120,7 +120,7 @@ contains
     use io_unit_defs, only: user_phys_timeseries, user_bio_timeseries
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_
-    use physics_model, only: ut, vt, dPdx_b, dPdy_b
+    use baroclinic_pressure, only: ut, vt, dPdx_b, dPdy_b
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: &
