@@ -69,14 +69,6 @@ module mean_param
      DOUBLE PRECISION, DIMENSION(:), POINTER::m,s,t    
   END TYPE MST
 
-  TYPE :: trivector
-     DOUBLE PRECISION, DIMENSION(:), POINTER::A,B,C
-  END TYPE trivector
-
-  TYPE :: UVSTmatrix
-     TYPE(trivector)::u, s, t
-  END TYPE UVSTmatrix
-
   TYPE :: MSTscalar
      DOUBLE PRECISION::m,s,t
   END TYPE MSTscalar
