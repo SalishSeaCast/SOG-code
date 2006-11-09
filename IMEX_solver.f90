@@ -14,12 +14,17 @@ module IMEX_solver
   !                            matrices and right-hand sides of
   !                            diffusion/advection PDEs.
   !
+  !   solve_phys_eqns -- Solve the semi-implicit diffusion/advection
+  !                      PDEs with Coriolis and baroclinic pressure
+  !                      gradient terms for the physics quantities.
+  !
   !   solve_bio_eqns -- Solve the semi-implicit diffusion/advection
   !                     PDEs for the biology quantities.
 
-
+  ! Type definitions from other modules:
   use precision_defs, only: dp
   use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
+  
   implicit none
 
   private
@@ -31,7 +36,8 @@ module IMEX_solver
        ! *** Temporary for refactoring
        Hvector, &
        ! Subroutines:
-       init_IMEX_solver, solve_bio_eqns, dalloc_IMEX_variables
+       init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
+       dalloc_IMEX_variables
 
   ! Type Definitions:
   !
@@ -82,7 +88,7 @@ module IMEX_solver
   ! Private to module:
   !
   type(matrices) :: &
-       nAmatrix  ! LHS matrices (A) for semi-implicit PDE matrix eqns
+       Amatrix  ! LHS matrices (A) for semi-implicit PDE matrix eqns
   type(RHS) :: &
        Hvector  ! RHS vectors (H) for semi-implicit PDE matrix eqns
   real(kind=dp), dimension(:), allocatable :: &
@@ -103,13 +109,205 @@ contains
   end subroutine init_IMEX_solver
 
 
+  subroutine solve_phys_eqns(M, day, time, U_old, V_old, T_old, S_old, &  ! in
+       U_new, V_new, T_new, S_new)                                        ! out
+    ! Solve the semi-implicit diffusion/advection PDEs with Coriolis
+    ! and baroclinic pressure gradient terms for the physics quantities.
+
+    ! Type definitions from other modules:
+    use precision_defs, only: dp
+    
+    implicit none
+    
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+    integer, intent(in) :: &
+         day   ! Year-day of current time step
+    real(kind=dp), intent(in) :: &
+         time  ! Time of current time step [s since start of run]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         U_old, &  ! U velocity component(cross-strait) profile; prev time step
+         V_old, &  ! V velocity component(along-strait) profile; prev time step
+         T_old, &  ! Temperature profile at previous time step
+         S_old     ! Salinity profile at previous time step
+    real(kind=dp), dimension(0:), intent(out) :: &
+         U_new, &  ! U velocity component(cross-strait) profile; cur time step
+         V_new, &  ! V velocity component(along-strait) profile; cur time step
+         T_new, &  ! Temperature profile at current time step
+         S_new     ! Salinity profile at current time step
+
+    
+    ! Build the RHS vectors (h) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h
+    call build_phys_Hvectors(M, U_old, V_old, T_old, S_old)
+
+    ! Build the LHS matrices (A) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h
+    call build_phys_Amatrices()
+
+    ! Solve the discretized semi-implicit PDE matrix equations Aq = h
+    call solve_phys_tridiags(M, U_new, V_new, T_new, S_new)
+  end subroutine solve_phys_eqns
+
+
+  subroutine build_phys_Hvectors(M, U_old, V_old, T_old, S_old)
+    ! Build the RHS vectors (h) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Variables:
+    use physics_eqn_builder, only: &
+         Bmatrix, &  ! Precursor diffusion coefficient matrices
+         U_RHS, &     ! U velocity component (cross-strait) RHS arrays
+         V_RHS, &     ! V velocity component (along-strait) RHS arrays
+         T_RHS, &     ! Temperature RHS arrays
+         S_RHS        ! Salinity RHS arrays
+
+    implicit none
+    
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(in) :: &
+         U_old, &  ! U velocity component(cross-strait) profile; prev time step
+         V_old, &  ! V velocity component(along-strait) profile; prev time step
+         T_old, &  ! Temperature profile at previous time step
+         S_old     ! Salinity profile at previous time step
+
+    ! U velocity component
+    call phys_Hvector(M, U_old, U_RHS%diff_adv%new, U_RHS%diff_adv%old, & ! in
+         U_RHS%C_pg%new, U_RHS%C_pg%old, Bmatrix%vel%old,              & ! in
+         Hvector%U)                                                       ! out
+    ! V velocity component
+    call phys_Hvector(M, V_old, V_RHS%diff_adv%new, V_RHS%diff_adv%old, & ! in
+         V_RHS%C_pg%new, V_RHS%C_pg%old, Bmatrix%vel%old,              & ! in
+         Hvector%V)                                                       ! out
+    ! Temperature
+    ! Use null_vector because no Coriolis or pressure gradients terms
+    call phys_Hvector(M, T_old, T_RHS%diff_adv%new, T_RHS%diff_adv%old, & ! in
+         null_vector, null_vector, Bmatrix%T%old,                      & ! in
+         Hvector%T)                                                       ! out
+    ! Salinity
+    ! Use null_vector because no Coriolis or pressure gradients terms
+    call phys_Hvector(M, S_old, S_RHS%diff_adv%new, S_RHS%diff_adv%old, & ! in
+         null_vector, null_vector, Bmatrix%S%old,                      & ! in
+         Hvector%S)                                                       ! out
+  end subroutine build_phys_Hvectors
+  
+
+  subroutine phys_Hvector(M, qty_old, flux, flux_old, C_pg, &
+       C_pg_old, Bmatrix, Hvector)
+    ! Calculate RHS (Hvector) of semi-implicit PDE for a physic quantity. 
+    ! It includes the value of the quantity from the previous time step, and
+    ! current time step non-local flux terms, bottom and surface 
+    ! flux terms, and Coriolis and pressure gradient flux terms.  
+    ! Depending on the IMEX scheme being used to solve the PDE values of
+    ! the quanties above, and of the diffusion coefficient matrix from
+    ! the previous time step may also be blended in.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
+    
+    implicit none
+    
+    ! Arguments:
+    integer :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:) :: &
+         qty_old  ! Profile of the quantity at the previous time step
+    real(kind=dp), dimension(1:), intent(in):: &
+         flux,     &  ! Non-local flux term at current time step
+         flux_old, &  ! Non-local flux term at previous time step
+         C_pg,     &  ! Coriolis and pressure gradient flux term (cur)
+         C_pg_old     ! Coriolis and pressure gradient flux term (prev)
+    type(tridiag), intent(in) :: &
+         Bmatrix  ! Diffussion coefficients matrix at previous time step
+    real(kind=dp), dimension(1:), intent(out) :: &
+         Hvector  ! RHS of discretized semi-implicit PDE matrix equation
+
+    Hvector = qty_old(1:M)                                      &
+         + (1.0 - a_IMEX1) * (flux_old + C_pg_old               &
+                            + Bmatrix%sub * qty_old(0:M-1)  &
+                            + Bmatrix%diag * qty_old(1:M)   &
+                            + Bmatrix%sup * qty_old(2:M+1)) &
+         + a_IMEX1 * (flux + C_pg)
+  end subroutine phys_Hvector
+
+
+  subroutine build_phys_Amatrices()
+    ! Build the LHS matrices (A) for the discretized semi-implicit PDE
+    ! matrix equations Aq = h for physics quantities.
+
+    ! Elements from other modules:
+    !
+    ! Variables:
+    use physics_eqn_builder, only: &
+         Bmatrix  ! Precursor diffusion coefficient matrices
+
+    implicit none
+
+    ! Velocity components
+    call build_Amatrix(Bmatrix%vel%new, Amatrix%vel)
+    ! Temperature
+    call build_Amatrix(Bmatrix%T%new, Amatrix%T)
+    ! Salinity
+    call build_Amatrix(Bmatrix%S%new, Amatrix%S)
+  end subroutine build_phys_Amatrices
+
+
+  subroutine solve_phys_tridiags(M, U_new, V_new, T_new, S_new)
+    ! Solve the discretized semi-implicit PDE matrix equations Aq = h
+    ! for the physics quantities.
+    
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    
+    implicit none
+    
+    ! Arguments:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:), intent(inout) :: &
+         U_new, &  ! U velocity component(cross-strait) profile; cur time step
+         V_new, &  ! V velocity component(along-strait) profile; cur time step
+         T_new, &  ! Temperature profile at current time step
+         S_new     ! Salinity profile at current time step
+    
+    ! U velocity component
+    call solve_tridiag(Amatrix%vel, Hvector%U, U_new(1:M))
+    ! V velocity component
+    call solve_tridiag(Amatrix%vel, Hvector%V, V_new(1:M))
+    ! Temperature
+    call solve_tridiag(Amatrix%T, Hvector%T, T_new(1:M))
+    ! Salinity
+    call solve_tridiag(Amatrix%S, Hvector%S, S_new(1:M))
+  end subroutine solve_phys_tridiags
+
+
   subroutine solve_bio_eqns(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time)
     ! Solve the semi-implicit diffusion/advection PDEs for the
     ! biology quantities.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
     use precision_defs, only: dp
-    use biology_eqn_builder, only: nBmatrix
+    ! Variables:
+    use biology_eqn_builder, only: &
+         Bmatrix  ! Precursor diffusion coefficient matrices
+    
     implicit none
+    
     ! Arguments:
     integer, intent(in) :: &
          M  ! Number of grid points
@@ -137,14 +335,14 @@ contains
 
     ! Build the LHS matrix (A) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
-    call build_Amatrix(nBmatrix%bio%new, nAmatrix%bio)
+    call build_Amatrix(Bmatrix%bio%new, Amatrix%bio)
 
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
     call solve_bio_tridiags(M, Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi)
 
-    ! Check for negative values in results, and stop with a fatal
-    ! error message if any are found
+    ! Check for negative values in results, and print with a warning
+    ! message if any are found
     call check_bio_negatives(Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.false.)
   end subroutine solve_bio_eqns
@@ -154,10 +352,27 @@ contains
        D_DON, D_PON, D_refr, D_bSi)
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
     use precision_defs, only: dp
-    use biology_eqn_builder, only: nBmatrix, Pmicro_RHS, Pnano_RHS, Z_RHS, &
-       NO_RHS, NH_RHS, Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
+    ! Variables:
+    use biology_eqn_builder, only: &
+         Bmatrix,   &  ! Precursor diffusion coefficient matrices
+         Pmicro_RHS, &  ! Micro phytoplankton (diatoms) RHS arrays
+         Pnano_RHS,  &  ! Nano phytoplankton (flagellates) RHS arrays
+         Z_RHS,      &  ! Zooplankton (micro) RHS arrays
+         NO_RHS,     &  ! Nitrate concentration RHS arrays
+         NH_RHS,     &  ! Ammonium concentration RHS arrays
+         Si_RHS,     &  ! Silicon concentration RHS arrays
+         D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
+         D_PON_RHS,  &  ! Particulate organic nitrogen detritus RHS arrays
+         D_refr_RHS, &  ! Refractory nitrogen detritus RHS arrays
+         D_bSi_RHS      ! Biogenic silicon detritus RHS arrays
+    
     implicit none
+    
     ! Arguments:
     integer, intent(in) :: &
          M  ! Number of grid points
@@ -176,61 +391,106 @@ contains
     ! Micro phytoplankton (diatoms)
     call bio_Hvector(M, Pmicro, Pmicro_RHS%diff_adv%new, &
          Pmicro_RHS%diff_adv%old, Pmicro_RHS%bio, Pmicro_RHS%sink, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%Pmicro)
     ! Nano phytoplankton (flagellates); non-sinking
     call bio_Hvector(M, Pnano, Pnano_RHS%diff_adv%new, &
          Pnano_RHS%diff_adv%old, Pnano_RHS%bio, null_vector, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%Pnano)
     ! Microzooplankton: non-sinking
     call bio_Hvector(M, Z, Z_RHS%diff_adv%new, &
          Z_RHS%diff_adv%old, Z_RHS%bio, null_vector, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%Z)
     ! Nitrate; non-sinking
     call bio_Hvector(M, NO, NO_RHS%diff_adv%new, &
          NO_RHS%diff_adv%old, NO_RHS%bio, null_vector, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%NO)
     ! Ammonium; non-sinking
     call bio_Hvector(M, NH, NH_RHS%diff_adv%new, &
          NH_RHS%diff_adv%old, NH_RHS%bio, null_vector, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%NH)
     ! Silicon; non-sinking
     call bio_Hvector(M, Si, Si_RHS%diff_adv%new, &
          Si_RHS%diff_adv%old, Si_RHS%bio, null_vector, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%Si)
     ! Dissolved organic nitrogen detritus; non-sinking
     call bio_Hvector(M, D_DON, D_DON_RHS%diff_adv%new, &
          D_DON_RHS%diff_adv%old, D_DON_RHS%bio, null_vector, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%D_DON)
     ! Particulate organic nitrogen detritus
     call bio_Hvector(M, D_PON, D_PON_RHS%diff_adv%new, &
          D_PON_RHS%diff_adv%old, D_PON_RHS%bio, D_PON_RHS%sink, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%D_PON)
     ! Refractory nitrogen detritus
     call bio_Hvector(M, D_refr, D_refr_RHS%diff_adv%new, &
          D_refr_RHS%diff_adv%old, D_refr_RHS%bio, D_refr_RHS%sink, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%D_refr)
     ! Biogenic silicon detritus
     call bio_Hvector(M, D_bSi, D_bSi_RHS%diff_adv%new, &
          D_bSi_RHS%diff_adv%old, D_bSi_RHS%bio, D_bSi_RHS%sink, &
-         nBmatrix%bio%old, &
+         Bmatrix%bio%old, &
          Hvector%D_bSi)
   end subroutine build_bio_Hvectors
 
+  
+  subroutine bio_Hvector(M, qty_old, diff_adv, diff_adv_old, bio, sink, &
+       Bmatrix, Hvector)
+    ! Calculate RHS (Hvector) of semi-implicit PDE for a biology quantity. 
+    ! It includes the value of the quantity from the previous time step, and
+    ! current time step upwelling flux terms, bottom and surface 
+    ! flux terms, growth - mortality terms, and sinking terms.  
+    ! Depending on the IMEX scheme being used to solve the PDE values of
+    ! the quanties above, and of the diffusion coefficient matrix from
+    ! the previous time step may also be blended in.
 
-    subroutine solve_bio_tridiags(M, Pmicro, Pnano, Z, NO, NH, Si, &
-       D_DON, D_PON, D_refr, D_bSi)
-    ! Solve the discretized semi-implicit PDE matrix equations Aq = h
+    ! Type definitions from other modules:
     use precision_defs, only: dp
+    use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
+    
     implicit none
+    
+    ! Arguments:
+    integer :: &
+         M  ! Number of grid points
+    real(kind=dp), dimension(0:) :: &
+         qty_old  ! Profile of the quantity at the previous time step
+    real(kind=dp), dimension(1:), intent(in):: &
+         diff_adv,     &  ! Diffusion/advection term (current time step)
+         diff_adv_old, &  ! Diffusion/advection term (previous time step)
+         bio,          &  ! Growth - mortality term
+         sink             ! Sinking term
+    type(tridiag), intent(in) :: &
+         Bmatrix  ! Diffussion coefficients matrix at previous time step
+    real(kind=dp), dimension(1:), intent(out) :: &
+         Hvector  ! RHS of discretized semi-implicit PDE matrix equation
+
+    Hvector = qty_old(1:M) + bio + sink                           &
+         + (1.0 - a_IMEX1) * (diff_adv_old                        &
+                              + Bmatrix%sub * qty_old(0:M-1)  &
+                              + Bmatrix%diag * qty_old(1:M)   &
+                              + Bmatrix%sup * qty_old(2:M+1)) &
+         + a_IMEX1 * diff_adv
+    where (abs(Hvector) < epsilon(Hvector)) Hvector = 0.
+  end subroutine bio_Hvector
+
+
+  subroutine solve_bio_tridiags(M, Pmicro, Pnano, Z, NO, NH, Si, &
+       D_DON, D_PON, D_refr, D_bSi)
+    ! Solve the discretized semi-implicit PDE matrix equations Aq = h.
+
+    ! Type definitions from other modules:
+    use precision_defs, only: dp
+
+    implicit none
+
     ! Arguments:
     integer, intent(in) :: &
          M  ! Number of grid points
@@ -245,36 +505,43 @@ contains
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
-    
+
     ! Micro phytoplankton (diatoms)
-    call solve_tridiag(nAmatrix%bio, Hvector%Pmicro, Pmicro(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%Pmicro, Pmicro(1:M))
     ! Nano phytoplankton (flagellates)
-    call solve_tridiag(nAmatrix%bio, Hvector%Pnano, Pnano(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%Pnano, Pnano(1:M))
     ! Microzooplantkon
-    call solve_tridiag(nAmatrix%bio, Hvector%Z, Z(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%Z, Z(1:M))
     ! Nitrate
-    call solve_tridiag(nAmatrix%bio, Hvector%NO, NO(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%NO, NO(1:M))
     ! Ammonium
-    call solve_tridiag(nAmatrix%bio, Hvector%NH, NH(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%NH, NH(1:M))
     ! Silicon
-    call solve_tridiag(nAmatrix%bio, Hvector%Si, Si(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%Si, Si(1:M))
     ! Dissolved organic nitrogen detritus
-    call solve_tridiag(nAmatrix%bio, Hvector%D_DON, D_DON(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%D_DON, D_DON(1:M))
     ! Particulate organic nitrogen detritus
-    call solve_tridiag(nAmatrix%bio, Hvector%D_PON, D_PON(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%D_PON, D_PON(1:M))
     ! Refractory nitrogen detritus
-    call solve_tridiag(nAmatrix%bio, Hvector%D_refr, D_refr(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%D_refr, D_refr(1:M))
     ! Biogenic silicon detritus
-    call solve_tridiag(nAmatrix%bio, Hvector%D_bSi, D_bSi(1:M))
+    call solve_tridiag(Amatrix%bio, Hvector%D_bSi, D_bSi(1:M))
   end subroutine solve_bio_tridiags
 
 
   subroutine check_bio_negatives(Pmicro, Pnano, Z, NO, NH, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
     ! Check for negative values in results.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
     use precision_defs, only: dp
+    ! Subroutines:
     use numerics, only: check_negative
+    
     implicit none
+    
     ! Arguments:
     real(kind=dp), dimension(0:), intent(inout) :: &
          Pmicro, &  ! Micro phytoplankton
@@ -301,7 +568,7 @@ contains
     call check_negative(0, Pnano, "P%nano after solve_tridiag()", &
          day, time, fatal)
     ! Micro zooplankton 
-    call check_negative (0, Z, "Z after solve_bio_eqns()", &
+    call check_negative (0, Z, "Z after solve_tridiag()", &
          day, time, fatal)
     ! Nitrate
     call check_negative(0, NO, "N%O after solve_tridiag()", &
@@ -325,88 +592,19 @@ contains
     call check_negative(0, D_bSi, "D%bSi after solve_tridiag()", &
          day, time, fatal)
   end subroutine check_bio_negatives
-  
-
-  subroutine phys_Hvector(M, qty_old, flux, flux_old, C_pg, &
-       C_pg_old, Bmatrix, Hvector)
-    ! Calculate RHS (Hvector) of semi-implicit PDE for a physic quantity. 
-    ! It includes the value of the quantity from the previous time step, and
-    ! current time step non-local flux terms, bottom and surface 
-    ! flux terms, and Coriolis and pressure gradient flux terms.  
-    ! Depending on the IMEX scheme being used to solve the PDE values of
-    ! the quanties above, and of the diffusion coefficient matrix from
-    ! the previous time step may also be blended in.
-    use precision_defs, only: dp
-    use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
-    implicit none
-    ! Arguments:
-    integer :: &
-         M  ! Number of grid points
-    real(kind=dp), dimension(0:) :: &
-         qty_old  ! Profile of the quantity at the previous time step
-    real(kind=dp), dimension(1:), intent(in):: &
-         flux,     &  ! Non-local flux term at current time step
-         flux_old, &  ! Non-local flux term at previous time step
-         C_pg,     &  ! Coriolis and pressure gradient flux term (cur)
-         C_pg_old     ! Coriolis and pressure gradient flux term (prev)
-    type(tridiag), intent(in) :: &
-         Bmatrix  ! Diffussion coefficients matrix at previous time step
-    real(kind=dp), dimension(1:), intent(out) :: &
-         Hvector  ! RHS of discretized semi-implicit PDE matrix equation
-
-    Hvector = qty_old(1:M)                                      &
-         + (1.0 - a_IMEX1) * (flux_old + C_pg_old               &
-                            + Bmatrix%sub * qty_old(0:M-1)  &
-                            + Bmatrix%diag * qty_old(1:M)   &
-                            + Bmatrix%sup * qty_old(2:M+1)) &
-         + a_IMEX1 * (flux + C_pg)
-  end subroutine phys_Hvector
-
-  
-  subroutine bio_Hvector(M, qty_old, diff_adv, diff_adv_old, bio, sink, &
-       Bmatrix, Hvector)
-    ! Calculate RHS (Hvector) of semi-implicit PDE for a biology quantity. 
-    ! It includes the value of the quantity from the previous time step, and
-    ! current time step upwelling flux terms, bottom and surface 
-    ! flux terms, growth - mortality terms, and sinking terms.  
-    ! Depending on the IMEX scheme being used to solve the PDE values of
-    ! the quanties above, and of the diffusion coefficient matrix from
-    ! the previous time step may also be blended in.
-    use precision_defs, only: dp
-    use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
-    implicit none
-    ! Arguments:
-    integer :: &
-         M  ! Number of grid points
-    real(kind=dp), dimension(0:) :: &
-         qty_old  ! Profile of the quantity at the previous time step
-    real(kind=dp), dimension(1:), intent(in):: &
-         diff_adv,     &  ! Diffusion/advection term (current time step)
-         diff_adv_old, &  ! Diffusion/advection term (previous time step)
-         bio,          &  ! Growth - mortality term
-         sink             ! Sinking term
-    type(tridiag), intent(in) :: &
-         Bmatrix  ! Diffussion coefficients matrix at previous time step
-    real(kind=dp), dimension(1:), intent(out) :: &
-         Hvector  ! RHS of discretized semi-implicit PDE matrix equation
-
-    Hvector = qty_old(1:M) + bio + sink                           &
-         + (1.0 - a_IMEX1) * (diff_adv_old                        &
-                              + Bmatrix%sub * qty_old(0:M-1)  &
-                              + Bmatrix%diag * qty_old(1:M)   &
-                              + Bmatrix%sup * qty_old(2:M+1)) &
-         + a_IMEX1 * diff_adv
-    where (abs(Hvector) < epsilon(Hvector)) Hvector = 0.
-  end subroutine bio_Hvector
 
 
   subroutine build_Amatrix(Bmatrix, Amatrix)
     ! Return the LHS matrix (A) for semi-implicit PDE matrix equation
     ! from the matrix of diffusion coefficients (B) for the quantity
     ! being solved.
+
+    ! Type definitions from other modules:
     use precision_defs, only: dp
     use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
+    
     implicit none
+    
     ! Arguments:
     type(tridiag), intent(in) :: &
          Bmatrix  ! Diffusion coefficient matrix sub-diagonal (prev timestep)
@@ -423,10 +621,17 @@ contains
     ! Solve the matrix equation Aq = h, where A is a tridiagonal matrix,
     ! h is the RHS side vector, and q is the vector of the quantity to
     ! be solved for.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
     use precision_defs, only: dp
-    use io_unit_defs, only: stderr
     use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
+    ! Variables:
+    use io_unit_defs, only: stderr
+    
     implicit none
+    
     ! Arguments:
     type(tridiag), intent(in) :: &
          A  ! Tridiagonal matrix in matrix eq'n Aq = h
@@ -475,14 +680,14 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "LHS matrices (A) for semi-implicit PDE matrix eqns"
-    allocate(nAmatrix%vel%sub(1:M), nAmatrix%vel%diag(1:M), &
-         nAmatrix%vel%sup(1:M),                             &
-         nAmatrix%T%sub(1:M), nAmatrix%T%diag(1:M),         &
-         nAmatrix%T%sup(1:M),                               &
-         nAmatrix%S%sub(1:M), nAmatrix%S%diag(1:M),         &
-         nAmatrix%S%sup(1:M),                               &
-         nAmatrix%bio%sub(1:M), nAmatrix%bio%diag(1:M),     &
-         nAmatrix%bio%sup(1:M),                             &
+    allocate(Amatrix%vel%sub(1:M), Amatrix%vel%diag(1:M), &
+         Amatrix%vel%sup(1:M),                             &
+         Amatrix%T%sub(1:M), Amatrix%T%diag(1:M),         &
+         Amatrix%T%sup(1:M),                               &
+         Amatrix%S%sub(1:M), Amatrix%S%diag(1:M),         &
+         Amatrix%S%sup(1:M),                               &
+         Amatrix%bio%sub(1:M), Amatrix%bio%diag(1:M),     &
+         Amatrix%bio%sup(1:M),                             &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "RHS vectors (H) for semi-implicit PDE matrix eqns"
@@ -511,14 +716,14 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "LHS matrices (A) for semi-implicit PDE matrix eqns"
-    deallocate(nAmatrix%vel%sub, nAmatrix%vel%diag, &
-         nAmatrix%vel%sup,                          &
-         nAmatrix%T%sub, nAmatrix%T%diag,           &
-         nAmatrix%T%sup,                            &
-         nAmatrix%S%sub, nAmatrix%S%diag,           &
-         nAmatrix%S%sup,                            &
-         nAmatrix%bio%sub, nAmatrix%bio%diag,       &
-         nAmatrix%bio%sup,                          &
+    deallocate(Amatrix%vel%sub, Amatrix%vel%diag, &
+         Amatrix%vel%sup,                          &
+         Amatrix%T%sub, Amatrix%T%diag,           &
+         Amatrix%T%sup,                            &
+         Amatrix%S%sub, Amatrix%S%diag,           &
+         Amatrix%S%sup,                            &
+         Amatrix%bio%sub, Amatrix%bio%diag,       &
+         Amatrix%bio%sup,                          &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "RHS vectors (H) for semi-implicit PDE matrix eqns"
