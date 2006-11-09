@@ -342,7 +342,7 @@ contains
                Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
                D_bSi, Ku, Kt, Ks, I_par, U, V)
           ! Add empty line as separator
-          write(Hoffmueller, '("")')
+          write(Hoffmueller, *)
           ! Increment the Hoffmueller output counters
           Hoff_day = Hoff_day + int(Hoff_interval)
           Hoff_sec = Hoff_sec + int(mod(Hoff_interval, 1.0d0) * 86400.)
