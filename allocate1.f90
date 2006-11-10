@@ -17,7 +17,7 @@ subroutine allocate1(M, STAT)
                w%v(0:M),&
                STAT = alloc_stat(4))
 
-      ALLOCATE(K%u%shear(1:M),&
+      ALLOCATE(K%u%shear(1:M),& 
            K%s%dd(1:M), K%t%dd(1:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
            K%t%all(1:M),K%u%all(1:M),K%s%all(1:M),&
