@@ -30,18 +30,18 @@ contains
          grid  ! Grid arrays
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]
-    real(kind=dp), dimension(0:), intent(in) :: &
+    real(kind=dp), dimension(1:), intent(in) :: &
          K_all  ! Total diffusion coefficient array
     type(tridiag) :: &
          Bmatrix  ! Diffusion coefficient matrix
     ! Local variables:
-    real(kind=dp), dimension(1:grid%M) :: O_minus, O_plus
+    real(kind=dp), dimension(1:grid%M) :: Omega_minus, Omega_plus
     
     ! Calculate Omega+ and Omega-
     ! (Large, et al (1994), pg. 398, eqn D9)
-    O_minus = (dt / grid%i_space) * &
-         (K_all(0:grid%M-1) / grid%g_space(0:grid%M-1))
-    O_plus = (dt / grid%i_space) * &
+    Omega_minus(2:) = (dt / grid%i_space(2:)) * &
+         (K_all(1:grid%M-1) / grid%g_space(1:grid%M-1))
+    Omega_plus = (dt / grid%i_space) * &
          (K_all(1:grid%M) / grid%g_space(1:grid%M))
 
     ! Initialize diagonal vectors
@@ -49,9 +49,10 @@ contains
     Bmatrix%diag = 0.
     Bmatrix%sup = 0.
     ! Put in the combinations of Omega+ and Omega- terms (eqn D9)
-    Bmatrix%sub = O_minus
-    Bmatrix%diag = -O_plus - O_minus
-    Bmatrix%sup = O_plus
+    Bmatrix%diag(1) = -Omega_plus(1)
+    Bmatrix%sub(2:) = Omega_minus(2:)
+    Bmatrix%diag(2:) = -Omega_plus(2:) - Omega_minus(2:)
+    Bmatrix%sup = Omega_plus
     Bmatrix%sup(grid%M) = 0.
   end subroutine diffusion_coeff
 
@@ -69,7 +70,7 @@ contains
     ! Arguments:
     type(grid_),intent(in):: grid
     real(kind=dp), intent(in):: dt
-    real(kind=dp), dimension(0:), intent(in):: Kall ! total mixing K
+    real(kind=dp), dimension(1:), intent(in):: Kall ! total mixing K
     real(kind=dp), dimension(0:), intent(in):: gamma ! nonlocal effect
     real(kind=dp), intent(in) :: surface_flux
     real(kind=dp), dimension(0:), intent(in):: distrib_flux
@@ -110,7 +111,7 @@ contains
            grid  ! Grid arrays
       real(kind=dp), intent(in) :: &
            dt  ! Time step [s]
-      real(kind=dp), dimension(0:), intent(in) :: &
+      real(kind=dp), dimension(1:), intent(in) :: &
            K_all  ! Total diffusion coefficient array
       real(kind=dp), intent(in) :: &
            surface_flux, &  ! Surface flux of quantity
