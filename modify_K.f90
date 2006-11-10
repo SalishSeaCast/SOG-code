@@ -24,7 +24,6 @@ SUBROUTINE modify_K(mm, hh, X)
          
          K_grid = 0.0
          K_star = 0.0
-         X%ML(hh%g-1) = 0.0
 
       ELSE IF (hh%g > 1) THEN
           IF (hh%i == hh%g) THEN              !!!Condition (2) change X%ML
