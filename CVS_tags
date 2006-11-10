@@ -39,4 +39,9 @@ EPOC_2006_branch - code was branched to do EPOC 2006 conference paper
                    runs so that refactoring and development could
                    continue on the trunk
 
+before_turbulence_refactoring - immediately before starting to
+			        refactor turbulent diffusion code from
+			        SOG.f90, and lots of subroutine into
+			        the turbulence module. (2006/11/10)
+
 # end of file
