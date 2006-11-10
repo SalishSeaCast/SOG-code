@@ -14,13 +14,14 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(w%b(0:M),w%b_err(0:M),&
            w%t(0:M),w%s(0:M),w%u(0:M),&
-               w%v(0:M),w%p%micro(0:M),&
+               w%v(0:M),&
                STAT = alloc_stat(4))
 
-      ALLOCATE(K%u%shear(0:M),&
+      ALLOCATE(K%u%shear(1:M),&
            K%s%dd(1:M), K%t%dd(1:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
-           K%t%all(0:M),K%u%all(0:M),K%s%all(0:M),&
+           K%t%all(1:M),K%u%all(1:M),K%s%all(1:M),&
+           K%u%ML(1:M), K%s%ML(1:M), K%t%ML(1:M), &
            STAT = alloc_stat(5))
 
       ALLOCATE(Fw(0:M), F_n(0:M), &
@@ -52,9 +53,6 @@ subroutine allocate1(M, STAT)
 
       ALLOCATE(G_shape%s(0:M+1), G_shape%m(0:M+1), G_shape%t(0:M+1), &
            STAT = alloc_stat(16))
-      ALLOCATE(K%u%ML(0:M+1), K%s%ML(0:M+1), K%t%ML(0:M+1), &
-           STAT = alloc_stat(17))
-               
       
 END SUBROUTINE allocate1
 
