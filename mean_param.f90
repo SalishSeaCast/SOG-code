@@ -37,7 +37,7 @@ module mean_param
 
 
   TYPE :: diff
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: shear, total 
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: shear, total
      DOUBLE PRECISION, DIMENSION(:), POINTER :: dd    !double diffusion
      DOUBLE PRECISION, DIMENSION(:), POINTER :: ML    !mixed layer
      DOUBLE PRECISION, DIMENSION(:), POINTER :: all
@@ -51,7 +51,6 @@ module mean_param
 
   TYPE :: flux              !Reynolds fluxes
      DOUBLE PRECISION, DIMENSION(:), POINTER::u, v, s, t, b, b_err
-     TYPE(phyto)::p                                         
   END TYPE flux
 
   TYPE :: entrain           !Entrainment or mixed layer depth
