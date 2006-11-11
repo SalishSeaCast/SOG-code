@@ -48,6 +48,7 @@ contains
     use water_properties, only: alloc_water_props
     use physics_eqn_builder, only: alloc_phys_RHS_variables
     use baroclinic_pressure, only: init_baroclinic_pressure
+    use turbulence, only: alloc_turbulence_variables
     
     implicit none
     
@@ -65,6 +66,8 @@ contains
     ! Allocate memory for baroclinic pressure gradient calculation
     ! variables, and initialize them.
     call init_baroclinic_pressure(M)
+    ! Allocate memory for turbulence variables.
+    call alloc_turbulence_variables(M)
   end subroutine init_physics
 
 
@@ -191,6 +194,7 @@ contains
     use water_properties, only: dalloc_water_props
     use physics_eqn_builder, only: dalloc_phys_RHS_variables
     use baroclinic_pressure, only: dalloc_baro_press_variables
+    use turbulence, only: dalloc_turbulence_variables
     
     implicit none
     
@@ -211,6 +215,8 @@ contains
     ! Deallocate memory for baroclinic pressure gradient calculation
     ! arrays.
     call dalloc_baro_press_variables()
+    ! Deallocate memory for turbulence variables.
+    call dalloc_turbulence_variables()
   end subroutine dalloc_physics_variables
 
 end module physics_model
