@@ -271,9 +271,9 @@ contains
          D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
          D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
          D_bSi(0:),   &  ! Biogenic silicon detritus [uM N]
-         Ku(0:),      &  ! Total momentum eddy diffusivity [m^2/s]
-         Kt(0:),      &  ! Total temperature eddy diffusivity [m^2/s]
-         Ks(0:),      &  ! Total salinity eddy diffusivity [m^2/s]
+         Ku(1:),      &  ! Total momentum eddy diffusivity [m^2/s]
+         Kt(1:),      &  ! Total temperature eddy diffusivity [m^2/s]
+         Ks(1:),      &  ! Total salinity eddy diffusivity [m^2/s]
          I_par(0:),   &  ! Photosynthetic available radiation [W/m^2]
          U(0:),       &  ! U velocity component [m/s]
          V(0:)           ! U velocity component [m/s]
@@ -463,9 +463,9 @@ contains
          D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
          D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
          D_bSi(0:),   &  ! Biogenic silicon detritus [uM N]
-         Ku(0:),      &  ! Total momentum eddy diffusivity [m^2/s]
-         Kt(0:),      &  ! Total temperature eddy diffusivity [m^2/s]
-         Ks(0:),      &  ! Total salinity eddy diffusivity [m^2/s]
+         Ku(1:),      &  ! Total momentum eddy diffusivity [m^2/s]
+         Kt(1:),      &  ! Total temperature eddy diffusivity [m^2/s]
+         Ks(1:),      &  ! Total salinity eddy diffusivity [m^2/s]
          I_par(0:),   &  ! Photosynthetic available radiation [W/m^2]
          U(0:),       &  ! U velocity component [m/s]
          V(0:)           ! U velocity component [m/s]
@@ -474,8 +474,17 @@ contains
     real(kind=dp) :: &
          sigma_t  ! sigma-t quantity calculated from density
 
-    ! Write the profile values at the surface, and at all grid points
-    do i = 0, grid%M
+    ! Write the profile values at the surface.  Eddy diffusivity
+    ! arrays don't have values there, so write zeros for them
+    sigma_t = rho(0) - 1000.
+    write(unit, 600) grid%d_g(0), KtoC(T(0)), &
+         S(0), sigma_t, Pmicro(0), Pnano(0),  &
+         Z(0), NO(0), NH(0), Si(0),           &
+         D_DON(0), D_PON(0), D_refr(0),       &
+         D_bSi(0), 0., 0., 0.,                &
+         I_par(0), U(0), V(0)
+    ! Write the profile values at the interior grid points
+    do i = 1, grid%M
        sigma_t = rho(i) - 1000.
        write(unit, 600) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
             Pmicro(i), Pnano(i), Z(i), NO(i), NH(i), Si(i),     &
