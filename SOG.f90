@@ -412,7 +412,7 @@ program SOG
         K%s%ML = 0.0
         K%t%ML = 0.0
 
-        DO xx = 0, h%i  !use only up to h%i-1
+        DO xx = 1, h%i  !use only up to h%i-1
            IF (grid%d_i(xx) > h%new) THEN
               K%u%ML(xx) = 0.0
               K%s%ML(xx) = 0.0
@@ -555,13 +555,13 @@ S_RHS%diff_adv%new = Gvector%s
 
         w%b_err(0) = 0.
 
-        DO xx = 1, grid%M           !uses K%old and T%new
-           w%t(xx) = -K%t%all(xx)*(T%grad_i(xx) - gamma%t(xx))
-           w%s(xx) = -K%s%all(xx)*(S%grad_i(xx) - gamma%s(xx))
-           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))   
-           w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) &
-                - beta%grad_i(xx) * w%s(xx))
-        END DO
+!!$        DO xx = 1, grid%M           !uses K%old and T%new
+!!$           w%t(xx) = -K%t%all(xx)*(T%grad_i(xx) - gamma%t(xx))
+!!$           w%s(xx) = -K%s%all(xx)*(S%grad_i(xx) - gamma%s(xx))
+!!$           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))   
+!!$           w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) &
+!!$                - beta%grad_i(xx) * w%s(xx))
+!!$        END DO
 
 
         ! beta_t is the ratio of the entrainment flux to the surface buoyancy flux -- set equal to -0.2 when convection is occuring
