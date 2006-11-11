@@ -16,7 +16,7 @@ SUBROUTINE shear_diff(mm, U_grad_i, V_grad_i, rho, nu_s)
            U_grad_i, &  ! Cross-strait vel component gradient at interfaces
            V_grad_i     ! Along-strait vel component gradient at interfaces
       type(water_property), intent(in) :: rho 
-      REAL(KIND=DP), DIMENSION(0:mm%M),INTENT(OUT)::nu_s
+      REAL(KIND=DP), DIMENSION(1:mm%M),INTENT(OUT)::nu_s
 
       REAL(KIND=DP), DIMENSION(0:mm%M)::Rig
       REAL(KIND=DP), DIMENSION(mm%M)::N_2  !buoyancy freq squared 
