@@ -43,9 +43,6 @@ module declarations
        Bf, &   ! Current iteration step value
        Bf_old  ! Previous iteration step value
 
-  ! Turbulent friction velocity
-  real(kind=dp) :: u_star
-
   ! Fresh water flux quantities:
   ! *** Destined for a module (probably new surface_forcing) eventually
   logical :: Fw_surface  ! Add all of the fresh water on the surface?
@@ -73,7 +70,8 @@ module declarations
        count, yy, yy2, gg, jmaxg, cloud_type, day, stable,  &
        water_type
   REAL::D_test
-  DOUBLE PRECISION :: w_star,L_star, day_time, Io, h_Ekman  !depth
+  DOUBLE PRECISION :: &
+       day_time, Io, h_Ekman  !depth
   !friction vel, convective vel scale
   !monin_obukov length and julian day
   DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
