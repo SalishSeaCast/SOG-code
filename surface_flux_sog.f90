@@ -40,7 +40,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
            wt_r, upwell
 
-      DOUBLE PRECISION::C_D, UU, rho_atm, Sa
+      DOUBLE PRECISION:: UU, rho_atm, Sa
       double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
       double precision:: Cs, h_sens, h_latent, h_flux, Cp
       REAL:: epsilon_w,a,b,c,ea,es,cl,le
@@ -52,8 +52,6 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
 !           Q_t depends on Q_tot and Q_sol
 
-!           w%u is wind stress/ro
-!           w%v is wind stress/ro
 !           w%t is Q_t/(ro*cp)
 !           w%s is Ft*sal/rf
 !           w%b is g,alp,bet* w%t and w%s 
@@ -62,26 +60,6 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
 
          UU = SQRT(U_ten**2.0 + V_ten**2.0)   !note U_ten and V_ten at 22m height
-
-         C_D = 1.0D-03*(2.70/UU + 0.142 + 0.0764*UU)
-
-
-
-! other coefficients not used
-
-!----------Wind Stress--------------------------------
-      
-      !fix rho_atm at 1.25 kg/m^3
-      rho_atm = 1.25
-
-      IF (UU /= 0.) THEN  ! UVten /= 0.         
-         stress%u%new = U_ten/UU*C_D*rho_atm*(UU)**2.0 ! U_ten/UVten*C_D*rho_atm*(UVten)**2.0 !0.3  !N/m^2
-         stress%v%new = V_ten/UU*C_D*rho_atm*(UU)**2.0 !V_ten/UVten*C_D*rho_atm*(UVten)**2.0  !N/m^2
-!PRINT*,'UU,U_ten,day,C_D,ro(0)',UU,U_ten,day,C_D,ro(0)
-      ELSE
-         stress%u%new = 0.0    
-         stress%v%new = 0.0    
-      END IF 
 
 !----------Salinity------------------------------------
 
@@ -126,7 +104,8 @@ lw_net=lw_in + lw_out
 !sensible heat flux
 !-----------------------------------------------
 Cs=1.3e-3 ! sensible heat transfer coefficient
-! use rho_atm (was rho_a=1.2256) 
+!fix rho_atm at 1.25 kg/m^3
+rho_atm = 1.25
 Cp=1003 ! specific heat of air
 ! use UU (was U=metday(ii,8)) ! is this wind speed at the surface?
 
@@ -161,9 +140,6 @@ h_flux = lw_net+h_sens+h_latent
       ! Calculate surface flux components (see Large, etal (1994),
       ! eq'ns A2 & A3b)
       !
-      ! Momentum (eq'ns A2a & A2b)
-      w%u(0) = -stress%u%new / ro(0)
-      w%v(0) = -stress%v%new / ro(0)
       ! Temperature (eq'n A2c)
       w%t(0) = -Q_t / (ro(0) * Cp_o)
       ! Salinity (eq'n A2d)
