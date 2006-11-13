@@ -20,7 +20,7 @@ module turbulence
   !
   ! Public Variables:
   !
-  !   K -- Overall diffusivity profile; a continuous profile of K_ML%*
+  !   nK -- Overall diffusivity profile; a continuous profile of K_ML%*
   !        in the mixing layer, and K%*%total below it
   !
   !   wbar -- Turbulent kinematic flux profiles.  Note that only the
@@ -49,11 +49,11 @@ module turbulence
        c_s,   &  ! Coefficient of phi%s in 1/3 power law regime
        kapa,  &  ! von Karman constant
        ! Variables:
-       K, &       ! Overall diffusivity profile; a continuous profile of
+       nK, &       ! Overall diffusivity profile; a continuous profile of
                   ! K_ML%* in the mixing layer, and K%*%total below it
        wbar, & ! Turbulent kinematic flux profiles
        ! Subroutines:
-       alloc_turbulence_variables, dalloc_turbulence_variables
+       init_turbulence, calc_KPP_diffusivity, dalloc_turbulence_variables
 
   ! Type Definitions:
   !
@@ -121,7 +121,7 @@ module turbulence
   !
   ! Public:
   type(mTS_arrays) :: &
-       K  ! Overall diffusivity of the water column; a continuous
+       nK  ! Overall diffusivity of the water column; a continuous
           ! profile of K_ML%* in the mixing layer, and K%*%total below it
   type(turbulent_fluxes) :: &
        wbar  ! Turbulent kinematic flux profiles. 
@@ -146,18 +146,47 @@ module turbulence
            !       %tot_grad_h -- gradient at mixing layer depth
   type(mTS_arrays) :: &
        K_ML  ! Mixing layer diffusivity
+  real(kind=dp) :: &
+       u_star, &  ! Turbulent friction velocity
+       w_star, &  ! Convective velocity scale
+       L_mo       ! Monin-Obukhov length scale
 
 contains
 
-  subroutine init_turbulence()
+  subroutine init_turbulence(M)
+    ! Allocate memory for turbulence model variables, and read
+    ! parameter values from infile.
+
+    ! Functions from other modules:
+    use input_processor, only: getpard
+
+    implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
+
+    ! Allocate memory for turbulence quantities.
+    call alloc_turbulence_variables(M)
+    ! Read parameter values from infile.
     !
   end subroutine init_turbulence
 
 
-  subroutine calc_KPP_diffusivity()
+  subroutine calc_KPP_diffusivity(Bf, h)
     ! Calculate the diffusivity profile using the K profile
     ! parameterization algorithm of Large, et al (1994).
-    
+
+    implicit none
+
+    ! Arguments:
+    real(kind=dp), intent(in) :: &
+         Bf, &  ! Surface buoyancy forcing
+         h      ! Mixing layer depth
+
+    ! Calculate the turbulent friction velocity, convective velocity
+    ! scale, and Monin-Obukhov length scale
+    u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1/4)
+    w_star = (-Bf * h) ** (1/3)
+    L_mo = u_star ** 3 / (kapa * Bf)
   end subroutine calc_KPP_diffusivity
 
 
@@ -181,7 +210,7 @@ contains
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Overall diffusivity profile arrays"
-    allocate(K%m(1:M), K%T(1:M), K%S(1:M), &
+    allocate(nK%m(1:M), nK%T(1:M), nK%S(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Turbulent kinematic flux profile arrays"
@@ -210,7 +239,7 @@ contains
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Overall diffusivity profile arrays"
-    deallocate(K%m, K%T, K%S, &
+    deallocate(nK%m, nK%T, nK%S, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Turbulent kinematic flux profile arrays"
