@@ -48,7 +48,7 @@ contains
     use water_properties, only: alloc_water_props
     use physics_eqn_builder, only: alloc_phys_RHS_variables
     use baroclinic_pressure, only: init_baroclinic_pressure
-    use turbulence, only: alloc_turbulence_variables
+    use turbulence, only: init_turbulence
     
     implicit none
     
@@ -66,8 +66,9 @@ contains
     ! Allocate memory for baroclinic pressure gradient calculation
     ! variables, and initialize them.
     call init_baroclinic_pressure(M)
-    ! Allocate memory for turbulence variables.
-    call alloc_turbulence_variables(M)
+    ! Allocate memory for turbulence model variables, and read
+    ! parameter values from infile.
+    call init_turbulence(M)
   end subroutine init_physics
 
 
