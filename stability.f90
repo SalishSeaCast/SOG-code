@@ -2,11 +2,9 @@
 ! $Source$
 
 subroutine stability
-!!$(Bf, u_star, stable)
-  ! 
 
-      USE mean_param
-      USE declarations
+  use turbulence, only: u_star
+  use declarations, only: Bf, stable
 
       IMPLICIT NONE
 
