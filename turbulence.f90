@@ -54,6 +54,9 @@ module turbulence
        wbar, &   ! Turbulent kinematic flux profiles
        ! *** Temporary until turbulence refactoring is completed
        nu, &  ! Interior diffusivity profile arrays
+       u_star, &  ! Turbulent friction velocity
+       w_star, &  ! Convective velocity scale
+       L_mo, &    ! Monin-Obukhov length scale
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, dalloc_turbulence_variables
 
@@ -190,8 +193,8 @@ contains
 
     ! Calculate the turbulent friction velocity, convective velocity
     ! scale, and Monin-Obukhov length scale
-    u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1/4)
-    w_star = (-Bf * h) ** (1/3)
+    u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1./4.)
+    w_star = (-Bf * h) ** (1./3.)
     L_mo = u_star ** 3 / (kapa * Bf)
   end subroutine calc_KPP_diffusivity
 
