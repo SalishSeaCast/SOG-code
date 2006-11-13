@@ -21,7 +21,7 @@ program SOG
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! *** Temporary until turbulence refactoring is completed
-  use turbulence, only: nu, wbar
+  use turbulence, only: u_star, w_star, L_mo, wbar, nu
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -33,6 +33,7 @@ program SOG
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use physics_eqn_builder, only: build_physics_equations, &
        new_to_old_phys_RHS, new_to_old_phys_Bmatrix
+  use turbulence, only: calc_KPP_diffusivity
   use baroclinic_pressure, only: new_to_old_vel_integrals, &
        baroclinic_P_gradient
   use air_sea_fluxes, only: wind_stress
@@ -288,8 +289,15 @@ program SOG
              atemp_value, humid_value, Qinter, stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
+! *** Trubulence refactoring bridge code
+wbar%t(0) = w%t(0)
+wbar%s(0) = w%s(0)
+wbar%b(0) = w%b(0)
         call wind_stress (unow, vnow, rho%g(1), &
              w%u(0), w%v(0))
+! *** Trubulence refactoring bridge code
+wbar%u(0) = w%u(0)
+wbar%v(0) = w%v(0)
 
         ! Calculate nonturbulent heat flux profile
         Q_n = I / (Cp%i * rho%i)
@@ -318,21 +326,19 @@ program SOG
         ! and previous iteration to help convergence
         Bf = (count * Bf_old + (niter - count) * Bf) / niter !!$
 
-!!$        ! Calculate baroclinic pressure gradient components
-!!$        !
-!!$        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
-!!$        ! *** This might be a better place to calculate these gradients
-!!$        ! *** than at the end of the implicit loop.
-!!$        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
-!!$             stress%u%new, stress%v%new)
-
-        CALL fun_constants(u_star, w_star, L_star, w, Bf, h%new)   !test conv
+        ! Calculate the turbulent diffusivity profile arrays using the
+        ! K Profile Parameterization (KPP) of Large, et al (1994)
+        !
+        ! This calculates the values of the nu%*, K_ML%*, and K%*
+        ! variables that are declared in the turbulence module so that
+        ! they can be used by other modules.
+        call calc_KPP_diffusivity(Bf, h%new)
 
         CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
 
         IF (u_star /= 0.)  THEN         !Wind stress /= 0.
-           CALL ND_flux_profile(grid, L_star, phi)   ! define flux profiles aka (B1)
-           CALL vel_scales(grid, omega, phi, u_star,L_star,h)
+           CALL ND_flux_profile(grid, L_mo, phi)   ! define flux profiles aka (B1)
+           CALL vel_scales(grid, omega, phi, u_star, L_mo, h)
            ! calculates wx (13) as omega (not Omega's)
         ELSE IF (u_star == 0. .AND. Bf < 0.) THEN        !Convective unstable limit
            CALL convection_scales(grid,omega,h, w_star)   !test conv
@@ -369,7 +375,7 @@ program SOG
         !test conv
 
         IF (u_star /= 0. .OR. Bf < 0.) THEN
-           CALL interior_match2(omega, L_star, u_star, h, grid) !test conv
+           CALL interior_match2(omega, L_mo, u_star, h, grid) !test conv
         END IF
 
         !Define shape functions G_shape%x
@@ -439,7 +445,7 @@ program SOG
         !!Define flux profiles, w,  and Q_t (vertical heat flux)!!
         !!Don-t need for running of the model!!  (not sure what this means)
         IF (u_star /= 0. .OR. Bf /= 0.) THEN
-           CALL def_gamma(L_star, grid, w,  wt_r, h, gamma, Bf, omega) 
+           CALL def_gamma(L_mo, grid, w,  wt_r, h, gamma, Bf, omega) 
            ! calculates non-local transport (20)
         ELSE
            gamma%t = 0.
@@ -576,7 +582,7 @@ S_RHS%diff_adv%new = Gvector%s
 
 
         IF (beta_t < 0.) THEN  !omega, vertical velocity scale
-           CALL def_v_t_sog(grid, h, N_2_g, omega%s%value, V_t_square, beta_t, L_star) !test conv  
+           CALL def_v_t_sog(grid, h, N_2_g, omega%s%value, V_t_square, beta_t, L_mo) !test conv  
            ! V_t_square, the turbulent velocity shear, (23)
         END IF
 
@@ -593,14 +599,14 @@ S_RHS%diff_adv%new = Gvector%s
         h_i = (h_i + h%new)/2.0 !use the average value!!!!!!!!##
         IF (stable == 1) THEN          !Stability criteria 
            h_Ekman = 0.7*u_star/f         ! see (24) and surrounding
-           IF (h_Ekman < L_star) THEN
+           IF (h_Ekman < L_mo) THEN
               IF (h_i > h_Ekman) THEN
                  h_i = h_Ekman
                  write (*,*) 'Ekman', h_i
               END IF
            ELSE
-              IF (h_i > L_star) THEN
-                 h_i = L_star
+              IF (h_i > L_mo) THEN
+                 h_i = L_mo
               END IF
            END IF
         END IF
