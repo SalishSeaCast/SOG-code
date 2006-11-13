@@ -1,44 +1,83 @@
-module air_sea_fluxes
+! $Id$
+! $Source$
 
+module air_sea_fluxes
+  ! Type definitions, variable & parameter value declarations, and
+  ! subroutines related to air-sea flux calculations in the SOG code.
+  !
+  ! Public Subroutines:
+  !
+  !   wind_stress -- Calculate the wind-stress.
+  
   use precision_defs, only: dp, sp
   implicit none
-  private
-  public :: wind_stress
   
-  real(kind=dp), parameter :: rho_atm = 1.25 ! kg/m3
-  real(kind=dp) :: UU ! surface wind-speed (calc in wind-stress used in heat flux)
+  private
+  public :: &
+       ! Subroutine:
+       wind_stress
+  
+  ! Parameter Value Declarations:
+  !
+  ! Private to module:
+  real(kind=dp), parameter :: &
+       rho_atm = 1.25  ! Density of air [kg/m^3]
+  
+  ! Variable Declarations:
+  !
+  ! Private to module:
+  real(kind=dp) :: &
+       UU  ! Surface wind-speed (calculated in wind-stress; used in heat flux)
+  
 contains
-  subroutine wind_stress (unow, vnow, rho, &
-       w_u, w_v)
-    ! subroutine to calculate the wind-stress
+  
+  subroutine wind_stress (unow, vnow, rho, w_u, w_v)
+    ! Calculate the wind-stress.
+    !
+    ! This calculates the values of the wbar%u(0), and wbar%v(0)
+    ! variables that are declared in the turbulence module.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Variable Declarations:
+    use turbulence, only: &
+         wbar  ! Turbulent kinematic flux profile arrays
 
     implicit none
-    ! Arguments :
-    ! 35 degree and 325 degree wind components
-    real(kind=dp), intent(in) :: unow, vnow, &
-         ! surface water density (doesn't have to be current value)
-         rho
+    
+    ! Arguments:
+    real(kind=dp), intent(in) :: &
+         unow, &  ! 35 degree wind component (cross-strait)
+         vnow, &  ! 325 degree wind component (along-strait)
+         rho      ! surface water density (doesn't have to be current
+                  ! value)
     real(kind=dp), intent(out) :: w_u, w_v ! surface momentum flux components
+    ! Local variables:
+    real(kind=dp) :: &
+         C_D,      &  ! drag coefficient (Large and Pond)
+         stress_u, &  ! 35 degree wind-stress component (cross-strait)
+         stress_v     ! 325 degree wind-stress component (along-strait)
 
-    ! local variables
-    real(kind=dp) :: C_D, & ! drag coefficient (Large and Pond)
-         stress_u, stress_v  ! wind stress
-    UU = SQRT(unow**2 + vnow**2)   
-
+    ! Calculate the surface wind-speed
+    UU = sqrt(unow ** 2 + vnow ** 2)
+    ! We need to handle dead, flat, calm as a special case to avoid a
+    ! divide-by-zero in the drag coefficient formula.
     if (UU /= 0.) then
-       C_D = 1.0D-03 * (2.70 / UU + 0.142 + 0.0764 * UU)
-       stress_u = unow / UU * C_D * rho_atm * UU**2
-       stress_v = vnow / UU * C_D * rho_atm * UU**2
+       C_D = 1.0d-3 * (2.70 / UU + 0.142 + 0.0764 * UU)
+       stress_u = unow / UU * C_D * rho_atm * UU ** 2
+       stress_v = vnow / UU * C_D * rho_atm * UU ** 2
     else
        stress_u = 0.
        stress_v = 0.
     endif
-
-    ! Momentum (eq'ns A2a & A2b)
-    w_u = -stress_u / rho  ! w%u(0)
-    w_v = -stress_v / rho  ! w%v(0)
-
+    ! Calculate the surface turbulent kinematic flux momentum
+    ! components (Large, et al, (1994), eq'ns A2a & A2b).
+    w_u = -stress_u / rho
+    w_v = -stress_v / rho
   end subroutine wind_stress
+
 
   subroutine longwave_latent_sensible_heat(cf, atemp, humid, T_o, rho_o, Cp_o,&
        w_t)
