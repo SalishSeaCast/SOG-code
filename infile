@@ -57,6 +57,11 @@
 "gridsize"	80	"number of grid points"
 "lambda"	 0.	"grid spacing parameter"
 
+! Physics model parameters
+! Turbulence:
+"nu_w_m"        2.5e-4          "internal wave breaking momentum mixing"
+"nu_w_s"        2.5e-5          "internal wave breaking scalar mixing"
+
 ! Biology model parameters:
 ! Model complexity flags:
 "flagellates_on"	.true.	"include flagellates in model?"
@@ -119,8 +124,6 @@
 
 ! Physics model parameters:
 "upwell_const"  1.25e-5         "maximum upwelling velocity [m/s]"
-"nu_w_m"        2.5e-4          "internal wave breaking momentum mixing"
-"nu_w_s"        2.5e-5          "internal wave breaking scalar mixing"
 "Fw_scale"	2.65e-7		"fresh water scale factor for river flows"
 "Fw_surface"	.true.		"add all of the fresh water on the surface?"
 
