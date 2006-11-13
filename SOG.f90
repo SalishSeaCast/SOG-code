@@ -17,8 +17,11 @@ program SOG
   use core_variables, only: U, V, T, S, P, Z, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B
+  use turbulence, only: nK
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
+  ! *** Temporary until turbulence refactoring is completed
+  use turbulence, only: nu, wbar
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -191,9 +194,8 @@ program SOG
   call read_variation
 
   ! Read the physic model parameter values
+  ! *** These should go into the freshwater module.
   upwell_const = getpard("upwell_const")
-  nu_w_m = getpard('nu_w_m')         ! Internal wave mixing momentum
-  nu_w_s = getpard('nu_w_s')         ! Internal wave mixing scalar
   Fw_scale = getpard('Fw_scale')     ! Fresh water scale factor for river flows
   Fw_surface = getparl('Fw_surface') ! Add all fresh water on surface?
   if (.not. Fw_surface) then
@@ -247,7 +249,6 @@ program SOG
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
      ! step
-!!$     CALL define_sog(time_step)
      h%old = h%new
      call new_to_old_physics()
      call new_to_old_vel_integrals()
@@ -352,16 +353,15 @@ program SOG
              alpha%i, beta%i, &                              ! in
              K%t%dd, K%s%dd)                                 ! out
 
-        ! Define interior diffusivity K%x%total, nu_w_m and nu_w_s
-        ! constant internal wave mixing
+        ! Calculate total interior diffusivity: sum of vertical shear,
+        ! internal wave breaking, and double diffusion diffusivities
+        ! (Large, et al (1994), eq'n (25))
         K%u%total = 0.0
         K%s%total = 0.0
         K%t%total = 0.0          
-        do xx = 1, grid%M
-           K%u%total(xx) = K%u%shear(xx) + nu_w_m + K%s%dd(xx) !test conv
-           K%s%total(xx) = K%u%shear(xx) + nu_w_s + K%s%dd(xx) !test conv
-           K%t%total(xx) = K%u%shear(xx) + nu_w_s + K%t%dd(xx) !test conv
-        enddo
+        K%u%total(1:) = K%u%shear(1:) + nu%m%int_wave + K%s%dd(1:)
+        K%s%total(1:) = K%u%shear(1:) + nu%S%int_wave + K%s%dd(1:)
+        K%t%total(1:) = K%u%shear(1:) + nu%T%int_wave + K%t%dd(1:)
 
         CALL interior_match(grid, h, K%t, nu_w_s)  ! calculate nu (D5)
         CALL interior_match(grid, h, K%u, nu_w_m)
