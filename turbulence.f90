@@ -16,6 +16,7 @@ module turbulence
   !      a_s --  Coefficient of phi%s in 1/3 power law regime
   !      c_m  -- Coefficient of phi%m in 1/3 power law regime
   !      c_s --  Coefficient of phi%s in 1/3 power law regime
+  !      kapa -- von Karman constant
   !
   ! Public Variables:
   !
@@ -46,6 +47,7 @@ module turbulence
        a_s,   &  ! Coefficient of phi%s in 1/3 power law regime
        c_m,   &  ! Coefficient of phi%m in 1/3 power law regime
        c_s,   &  ! Coefficient of phi%s in 1/3 power law regime
+       kapa,  &  ! von Karman constant
        ! Variables:
        K, &       ! Overall diffusivity profile; a continuous profile of
                   ! K_ML%* in the mixing layer, and K%*%total below it
@@ -110,7 +112,8 @@ module turbulence
        a_m = 1.26,    &  ! Coefficient of phi%m in 1/3 power law regime
        a_s = -28.86,  &  ! Coefficient of phi%s in 1/3 power law regime
        c_m = 8.38,    &  ! Coefficient of phi%m in 1/3 power law regime
-       c_s = 98.96       ! Coefficient of phi%s in 1/3 power law regime
+       c_s = 98.96,   &  ! Coefficient of phi%s in 1/3 power law regime
+       kapa = 0.4        ! von Karman constant
   !
   ! Private to module:
 

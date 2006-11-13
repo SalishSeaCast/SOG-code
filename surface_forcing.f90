@@ -19,8 +19,7 @@ module surface_forcing
   DOUBLE PRECISION, PARAMETER:: Cv = 1.5  !1.99 !set to keep beta_t = -0.2
        !beta_t = -0.2 only for convection
   DOUBLE PRECISION, PARAMETER::S_ice = 0.0, & !ice salinity. unknown
-       rho_ice = 1000.0, & !density ice, unknown
-       kapa = 0.4 !Von Karman constant
+       rho_ice = 1000.0
   DOUBLE PRECISION, PARAMETER:: &
        ep = 0.1  !epsilon
   DOUBLE PRECISION, PARAMETER::Ri_o = 0.7, & !critical grad Richardson #

@@ -5,7 +5,7 @@ SUBROUTINE fun_constants(u_st,w_st,L_mo,ww,Bf,hh)
 
   use precision_defs, only: dp
       USE mean_param, only: flux
-      USE surface_forcing, only: kapa
+      USE turbulence, only: kapa
 
       IMPLICIT NONE
 

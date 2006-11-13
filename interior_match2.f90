@@ -5,8 +5,9 @@ SUBROUTINE interior_match2(omeg, L, u_st, hh, mm)
 
   use precision_defs, only: dp
   use grid_mod, only: grid_
+  use turbulence, only: &
+       kapa    ! von Karman constant
       USE mean_param, only: MS, height
-      USE surface_forcing, only: kapa
 
       IMPLICIT NONE
 
