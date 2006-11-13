@@ -49,9 +49,11 @@ module turbulence
        c_s,   &  ! Coefficient of phi%s in 1/3 power law regime
        kapa,  &  ! von Karman constant
        ! Variables:
-       nK, &       ! Overall diffusivity profile; a continuous profile of
-                  ! K_ML%* in the mixing layer, and K%*%total below it
-       wbar, & ! Turbulent kinematic flux profiles
+       nK, &      ! Overall diffusivity profile; a continuous profile of
+                 ! K_ML%* in the mixing layer, and K%*%total below it
+       wbar, &   ! Turbulent kinematic flux profiles
+       ! *** Temporary until turbulence refactoring is completed
+       nu, &  ! Interior diffusivity profile arrays
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, dalloc_turbulence_variables
 
@@ -168,6 +170,10 @@ contains
     call alloc_turbulence_variables(M)
     ! Read parameter values from infile.
     !
+    ! Internal wave breaking diffusivity for momentum and scalar quantities
+    nu%m%int_wave = getpard('nu_w_m')
+    nu%T%int_wave = getpard('nu_w_s')
+    nu%S%int_wave = nu%T%int_wave
   end subroutine init_turbulence
 
 
