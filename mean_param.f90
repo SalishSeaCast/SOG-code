@@ -49,10 +49,6 @@ module mean_param
      TYPE(diff)::u, t, s       
   END TYPE Knu
 
-  TYPE :: flux              !Reynolds fluxes
-     DOUBLE PRECISION, DIMENSION(:), POINTER::u, v, s, t, b, b_err
-  END TYPE flux
-
   TYPE :: entrain           !Entrainment or mixed layer depth
      DOUBLE PRECISION :: depth
      INTEGER :: i,g
