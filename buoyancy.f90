@@ -1,12 +1,14 @@
 ! $Id$
 ! $Source$
 
-subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
-     alpha, beta, Cp, Fw_surface,                                 &  ! in
-     B, Bf)                                                          ! out
+subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
+     alpha, beta, Cp, Fw_surface,                            &  ! in
+     B, Bf)                                                     ! out
   ! Calculate the buoyancy profile, and the surface buoyancy forcing.
   use precision_defs, only: dp
   use grid_mod, only: grid_, interp_value
+  use turbulence, only: &
+       wbar  ! Turbulent kinematic flux profile arrays; we need wbar%b(0)
   use mean_param, only: height
   use fundamental_constants, only: g
   implicit none
@@ -19,7 +21,6 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
   real(kind=dp), dimension(0:grid%M), intent(in) :: &
        Itotal, &  ! Irradiance
        F_n        ! Fresh water contribution to salinity flux
-  real(kind=dp), intent(in) :: wb0  ! Surface buoyance flux
   real(kind=dp), dimension(0:grid%M+1), intent(in) :: &
        rho,   &  ! Density
        alpha, &  ! Thermal expansion coefficient
@@ -67,5 +68,5 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, wb0, rho, &  ! in
   endif
   ! Calculate surface buoyancy forcing (an extension of Large, etal
   ! (1994) eq'n A3d
-  Bf = -wb0 + Br + Bfw
+  Bf = -wbar%b(0) + Br + Bfw
 end subroutine buoyancy
