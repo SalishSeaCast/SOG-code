@@ -41,14 +41,14 @@ CLFLAGS = -rt
 # List of objects (order matters)
 OBJS = precision_defs.o io_unit_defs.o fundamental_constants.o \
 malloc.o unit_conversions.o datetime.o \
-core_variables.o input_processor.o grid.o numerics.o \
+core_variables.o water_properties.o input_processor.o grid.o numerics.o \
 \
 mean_param.o declarations.o surface_forcing.o \
 initial_sog.o \
 \
 turbulence.o diffusion.o \
 baroclinic_pressure.o physics_eqn_builder.o \
-water_properties.o physics_model.o \
+physics_model.o \
 find_upwell.o \
 fitbottom.o freshwater.o\
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
@@ -64,7 +64,7 @@ stability.o \
 initialize.o irradiance_sog.o 	\
 buoyancy.o air_sea_fluxes.o surface_flux_sog.o \
 ND_flux_profile.o vel_scales.o convection_scales.o		\
-shear_diff.o interior_match.o interior_match2.o		\
+interior_match.o interior_match2.o		\
 shape_parameters.o modify_K.o def_gamma.o \
 def_v_t_sog.o \
 define_Ri_b_sog.o \
