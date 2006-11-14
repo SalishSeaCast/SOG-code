@@ -22,9 +22,6 @@ module surface_forcing
        rho_ice = 1000.0
   DOUBLE PRECISION, PARAMETER:: &
        ep = 0.1  !epsilon
-  DOUBLE PRECISION, PARAMETER::Ri_o = 0.7, & !critical grad Richardson #
-       nu_o = 0.001, & !0.0050 !m^2/s interior diff constant
-       p_1 = 3.0 ! shear diff power constant
   DOUBLE PRECISION, PARAMETER::C_star = 9.9
   DOUBLE PRECISION, PARAMETER::del_o = 0.10, &!tolerance
        A_stress = -0.6, & !N/m^2 Wind stress constant
