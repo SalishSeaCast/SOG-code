@@ -95,8 +95,7 @@ contains
   end subroutine init_baroclinic_pressure
 
 
-  subroutine baroclinic_P_gradient(grid, dt, U_new, V_new, rho_g, &
-       w_u, w_v)
+  subroutine baroclinic_P_gradient(grid, dt, U_new, V_new, rho_g)
     ! Calculate the baroclinic pressure gradient components.
 
     ! Elements from other modules:
@@ -106,6 +105,10 @@ contains
     use grid_mod, only: grid_
     ! Parameter Values:
     use fundamental_constants, only: g
+    ! Variable Declarations:
+    use turbulence, only: &
+         wbar  ! Turbulent kinematic flux profile arrays; we need
+               ! wbar%u(0) & wbar%v(0)
     ! Functions:
     use grid_mod, only: depth_average
     
@@ -120,9 +123,6 @@ contains
          U_new, &  ! U component (cross-strait, 35 deg) velocity profile [m/s]
          V_new, &  ! V component (along-strait, 305 deg) velocity profile [m/s]
          rho_g     ! Density profile at grid point depths [kg/m^3]
-    real(kind=dp), intent(in) :: &
-         w_u, &  ! Wind stress/rho or momentum flux
-         w_v
     ! Local variables:
     real(kind=dp) :: &
          sumu, &
@@ -247,11 +247,10 @@ contains
 
         do yy = 1, grid%M
            dPdx_b(yy) = (dPdx_b(yy) - sumpbx) * gorLx * grid%i_space(yy) &
-                - w_u / (grid%M * grid%i_space(yy))
+                - wbar%u(0) / (grid%M * grid%i_space(yy))
            dPdy_b(yy) = (dPdy_b(yy) - sumpby) * gorLy * grid%i_space(yy) &
-                - w_v / (grid%M * grid%i_space(yy))
+                - wbar%v(0) / (grid%M * grid%i_space(yy))
         enddo
-    
   end subroutine baroclinic_P_gradient
 
 
