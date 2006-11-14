@@ -216,7 +216,9 @@ contains
     use precision_defs, only: dp
     use grid_mod, only: grid_
     ! Variable Declarations:
-    use declarations, only: K, w, gamma  ! *** Should change to use turbulence
+    use turbulence, only: &
+         wbar  ! Turbulent kinematic flux profile arrays
+    use declarations, only: K, gamma  ! *** Should change to use turbulence
     use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
     ! Subroutines:
     use diffusion, only: diffusion_bot_surf_flux, diffusion_nonlocal_fluxes
@@ -235,19 +237,19 @@ contains
          S
 
     ! Velocity components
-    call diffusion_bot_surf_flux (grid, dt, K%U%all, w%u(0), &  ! in
-         U(grid%M+1), &                                         ! in
-         U_RHS%diff_adv%new)                                    ! out
-    call diffusion_bot_surf_flux (grid, dt, K%U%all, w%v(0), &  ! in
-         V(grid%M+1),                                        &  ! in
-         V_RHS%diff_adv%new)                                    ! out
+    call diffusion_bot_surf_flux (grid, dt, K%U%all, wbar%u(0), &  ! in
+         U(grid%M+1), &                                            ! in
+         U_RHS%diff_adv%new)                                       ! out
+    call diffusion_bot_surf_flux (grid, dt, K%U%all, wbar%v(0), &  ! in
+         V(grid%M+1),                                           &  ! in
+         V_RHS%diff_adv%new)                                       ! out
     ! Temperature
     call diffusion_nonlocal_fluxes(grid, dt, K%T%all, gamma%t, &  ! in
-         w%T(0), -Q_n, T(grid%M+1),                            &  ! in
+         wbar%t(0), -Q_n, T(grid%M+1),                         &  ! in
          T_RHS%diff_adv%new)                                      ! out
     ! Salinity
     call diffusion_nonlocal_fluxes(grid, dt, K%S%all, gamma%s, &  ! in
-         w%s(0), F_n, S(grid%M+1),                             &  ! in
+         wbar%s(0), F_n, S(grid%M+1),                          &  ! in
          S_RHS%diff_adv%new)                                      ! out
   end subroutine init_phys_RHS_fluxes
 
