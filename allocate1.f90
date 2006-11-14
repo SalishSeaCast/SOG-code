@@ -12,7 +12,7 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(K%u%shear(1:M),& 
+      ALLOCATE(&
            K%s%dd(1:M), K%t%dd(1:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
            K%t%all(1:M),K%u%all(1:M),K%s%all(1:M),&
