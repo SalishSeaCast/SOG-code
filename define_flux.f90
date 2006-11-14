@@ -15,7 +15,10 @@ contains
     use grid_mod, only: grid_
     use water_properties, only: water_property
     use fundamental_constants, only: g
-    USE declarations, only: K, w, gamma, h
+    use turbulence, only: &
+         wbar  ! Turbulent kinematic flux profile arrays; we need
+               ! wbar%u(0) & wbar%v(0)
+    USE declarations, only: K, gamma, h
 
     implicit none
 
@@ -35,7 +38,7 @@ contains
     K%u%all = 0.0
     K%s%all = 0.0
     K%t%all = 0.0
-    w%b_err(0) = 0.
+    wbar%b_err(0) = 0.
 
     ! *** Vectorization would probably simplify this
     do xx = 1, h%i
@@ -43,21 +46,21 @@ contains
           K%u%all(xx) = 0.0
           K%s%all(xx) = 0.0
           K%t%all(xx) = 0.0 
-!!$          w%t(xx) = 0.
-!!$          w%s(xx) = 0.
-!!$          w%v(xx) = 0.
-!!$          w%u(xx) = 0.
-!!$          w%b(xx) = 0.
-!!$          w%b_err(xx) = 0.
+!!$          wbar%t(xx) = 0.
+!!$          wbar%s(xx) = 0.
+!!$          wbar%v(xx) = 0.
+!!$          wbar%u(xx) = 0.
+!!$          wbar%b(xx) = 0.
+!!$          wbar%b_err(xx) = 0.
        else
-!!$          w%t(xx) = -K%t%ML(xx) * (T_grad_i(xx) - gamma%t(xx)) ! (9)
-!!$          w%s(xx) = -K%s%ML(xx) * (S_grad_i(xx) - gamma%s(xx))
-!!$          w%u(xx) = -K%u%ML(xx) * (U_grad_i(xx) - gamma%m(xx))
-!!$          w%v(xx) = -K%u%ML(xx) * (V_grad_i(xx) - gamma%m(xx))
+!!$          wbar%t(xx) = -K%t%ML(xx) * (T_grad_i(xx) - gamma%t(xx)) ! (9)
+!!$          wbar%s(xx) = -K%s%ML(xx) * (S_grad_i(xx) - gamma%s(xx))
+!!$          wbar%u(xx) = -K%u%ML(xx) * (U_grad_i(xx) - gamma%m(xx))
+!!$          wbar%v(xx) = -K%u%ML(xx) * (V_grad_i(xx) - gamma%m(xx))
 !!$          ! Buoyancy flux by definition given t and s flux
-!!$          w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))  
+!!$          wbar%b(xx) = g * (alpha%i(xx) * wbar%t(xx) - beta%i(xx) * wbar%s(xx))  
 !!$          ! Buoyancy flux variation due to error in z
-!!$          w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) - beta%grad_i(xx) * w%s(xx)) 
+!!$          wbar%b_err(xx) = g * (alpha%grad_i(xx) * wbar%t(xx) - beta%grad_i(xx) * wbar%s(xx)) 
           K%u%all(xx) = K%u%ML(xx)
           K%s%all(xx) = K%s%ML(xx)
           K%t%all(xx) = K%t%ML(xx)
@@ -66,12 +69,12 @@ contains
 
     do xx = h%i, grid%M
        if (grid%d_i(xx) > h%new) then
-!!$          w%t(xx) = -K%t%total(xx) * T_grad_i(xx)
-!!$          w%s(xx) = -K%s%total(xx) * S_grad_i(xx)
-!!$          w%u(xx) = -K%u%total(xx) * U_grad_i(xx)
-!!$          w%v(xx) = -K%u%total(xx) * V_grad_i(xx)
-!!$          w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))
-!!$          w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) - beta%grad_i(xx) * w%s(xx))
+!!$          wbar%t(xx) = -K%t%total(xx) * T_grad_i(xx)
+!!$          wbar%s(xx) = -K%s%total(xx) * S_grad_i(xx)
+!!$          wbar%u(xx) = -K%u%total(xx) * U_grad_i(xx)
+!!$          wbar%v(xx) = -K%u%total(xx) * V_grad_i(xx)
+!!$          wbar%b(xx) = g * (alpha%i(xx) * wbar%t(xx) - beta%i(xx) * wbar%s(xx))
+!!$          wbar%b_err(xx) = g * (alpha%grad_i(xx) * wbar%t(xx) - beta%grad_i(xx) * wbar%s(xx))
           K%u%all(xx) = K%u%total(xx)
           K%s%all(xx) = K%s%total(xx)
           K%t%all(xx) = K%t%total(xx)
