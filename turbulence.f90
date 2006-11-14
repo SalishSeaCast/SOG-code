@@ -191,12 +191,87 @@ contains
          Bf, &  ! Surface buoyancy forcing
          h      ! Mixing layer depth
 
-    ! Calculate the turbulent friction velocity, convective velocity
-    ! scale, and Monin-Obukhov length scale
+    ! Calculate the turbulent momentum diffusivity due to shear
+    ! instabilities (nu%m%shear) using the Large, et al (1994)
+    ! parameterization based on the local gradient Richardson number.
+    call shear_diffusivity()
+
+    ! Calculate turbulence scales that characterize the mixing layer:
+    ! turbulent friction velocity, convective velocity scale, and
+    ! Monin-Obukhov length scale
     u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1./4.)
     w_star = (-Bf * h) ** (1./3.)
     L_mo = u_star ** 3 / (kapa * Bf)
   end subroutine calc_KPP_diffusivity
+
+
+  subroutine shear_diffusivity()
+    ! Calculate the turbulent momentum diffusivity due to shear
+    ! instabilities (nu%m%shear) using the Large, et al (1994)
+    ! parameterization based on the local gradient Richardson number.
+
+    ! Elements from other modules:
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Parameter Value Declarations:
+    use fundamental_constants, only: &
+         g  ! Acceleration due to gravity [m/s^2]
+    use grid_mod, only: &
+         grid  ! Grid parameters, and arrays
+    use core_variables, only: &
+         U, &  ! Cross-strait velocity component profile arrays; we
+                                ! need the gradients at the grid layer interface
+                                ! depths: U%grad_i
+         V     ! Along-strait velocity component profile arrays; we
+    ! need the gradients at the grid layer interface
+    ! depths: V%grad_i
+    use water_properties, only: &
+         rho  ! Density profile arrays; we need the density, and its
+    ! gradient at the grid layer interface depths: rho%i &
+    ! rho%grad_i
+
+    implicit none
+
+    ! Local parameter value declarations:
+    real(kind=dp), parameter :: &
+         Ri_o = 0.7d0, &   ! Critical gradient Richardson number
+         nu_o = 1.0d-3, &  ! Maximum shear diffusivity; Large, et al
+                           ! (1994) recommends 50e-4
+         p_1 = 3.0d0       ! Power constant for shear diffusivity
+                           ! parameterization
+    ! Local variables:
+    real(kind=dp), dimension(1:grid%M) :: &
+         Ri_g, &  ! Profile of Richardson number gradient at grid
+                  ! layer interface depths
+         N2,   &  ! Profile of buoyancy frequency squared at grid
+                  ! layer interface depths
+         V2       ! Profile of the square of the magnitude of the
+                  ! velocity gradient at the grid layer interface
+                  ! depths
+    integer :: &
+         i  ! Index over profile depth
+
+    ! Calculate the profiles of the buoyancy frequency squared,
+    ! velocity gradient squared, and Richardson number gradient at the
+    ! grid layer interface depths.  (Large, et al (1994), eq'n (27))
+    N2 = (-g / rho%i(1:grid%M)) * rho%grad_i(1:grid%M)
+    V2 = U%grad_i(1:grid%M) ** 2 + v%grad_i(1:grid%M) ** 2
+    Ri_g = N2 / (V2 + epsilon(V2))
+    ! Apply the shear diffusivity parameterization (Large, et al
+    ! (1994), eq'n(28))
+    do i = 1, grid%M
+       if (Ri_g(i) <= 0.) then
+          ! Eq'n (28a)
+          nu%m%shear(i) = nu_o
+       elseif (0. < Ri_g(i) .and. Ri_g(i) < Ri_o) then
+          ! Eq'n (28b)
+          nu%m%shear(i) = nu_o * (1. - (Ri_g(i) / Ri_o) ** 2) ** p_1
+       else
+          ! Eq'n (28c)
+          nu%m%shear(i) = 0.
+       endif
+    enddo
+  end subroutine shear_diffusivity
 
 
   subroutine alloc_turbulence_variables(M)
