@@ -283,21 +283,19 @@ program SOG
 
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
-        CALL surface_flux_sog(grid%M, rho%g, w, wt_r, S%new(1),        &
+        CALL surface_flux_sog(grid%M, rho%g, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value, Qinter, stress, &
              day, dt/h%new, h, upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
-! *** Trubulence refactoring bridge code
-wbar%t(0) = w%t(0)
-wbar%s(0) = w%s(0)
-wbar%b(0) = w%b(0)
-        call wind_stress (unow, vnow, rho%g(1), &
-             w%u(0), w%v(0))
-! *** Trubulence refactoring bridge code
-wbar%u(0) = w%u(0)
-wbar%v(0) = w%v(0)
+
+        ! Calculate the wind stress, and the turbulent kinenatic flux
+        ! at the surface.
+        !
+        ! This calculates the values of the wbar%u(0), and wbar%v(0)
+        ! variables that are declared in the turbulence module.
+        call wind_stress (unow, vnow, rho%g(1))
 
         ! Calculate nonturbulent heat flux profile
         Q_n = I / (Cp%i * rho%i)
@@ -318,9 +316,9 @@ wbar%v(0) = w%v(0)
         Bf_old = Bf
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
-        CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,       &  ! in
-             B, Bf)                                             ! out
+        CALL buoyancy(grid, T%new, S%new, h, I, F_n,   &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface, &  ! in
+             B, Bf)                                       ! out
 
         ! Blend the values of the surface buoyancy forcing from current
         ! and previous iteration to help convergence
@@ -445,7 +443,7 @@ wbar%v(0) = w%v(0)
         !!Define flux profiles, w,  and Q_t (vertical heat flux)!!
         !!Don-t need for running of the model!!  (not sure what this means)
         IF (u_star /= 0. .OR. Bf /= 0.) THEN
-           CALL def_gamma(L_mo, grid, w,  wt_r, h, gamma, Bf, omega) 
+           CALL def_gamma(L_mo, grid, wt_r, h, gamma, Bf, omega) 
            ! calculates non-local transport (20)
         ELSE
            gamma%t = 0.
@@ -546,9 +544,9 @@ S_RHS%diff_adv%new = Gvector%s
         ! buoyancy frequency
         ! *** Local buoyancy freqency may be part of mixing layer
         ! *** depth calculation
-        CALL buoyancy(grid, T%new, S%new, h, I, F_n, w%b(0), &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,       &  ! in
-             B, Bf)                                             ! out
+        CALL buoyancy(grid, T%new, S%new, h, I, F_n,   &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface, &  ! in
+             B, Bf)                                       ! out
         rho%grad_g = gradient_g(rho%g)
         DO xx = 1,grid%M
            N_2_g(xx) = -(g / rho%g(xx)) * rho%grad_g(xx)
@@ -559,7 +557,7 @@ S_RHS%diff_adv%new = Gvector%s
 !!!Calculate beta_t: need h%e and h%e%i and new w%b  w%i vertical turbulent flux of i
 
 
-        w%b_err(0) = 0.
+        wbar%b_err(0) = 0.
 
 !!$        DO xx = 1, grid%M           !uses K%old and T%new
 !!$           w%t(xx) = -K%t%all(xx)*(T%grad_i(xx) - gamma%t(xx))
@@ -572,7 +570,7 @@ S_RHS%diff_adv%new = Gvector%s
 
         ! beta_t is the ratio of the entrainment flux to the surface buoyancy flux -- set equal to -0.2 when convection is occuring
 
-        if (w%b(0)>0) then
+        if (wbar%b(0)>0) then
            beta_t = -0.2
         else
            beta_t = 0.
@@ -624,8 +622,7 @@ S_RHS%diff_adv%new = Gvector%s
         ! Calculate baroclinic pressure gradient components
         !
         ! This calculates the values of the dPdx_b, and dPdy_b arrays.
-        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g, &
-             w%u(0), w%v(0))
+        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g)
 
         ! Calculate convergence metric for velocity field
         delu = abs(U%new(1)-uprev)/0.01
