@@ -37,7 +37,7 @@ module mean_param
 
 
   TYPE :: diff
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: shear, total
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: total
      DOUBLE PRECISION, DIMENSION(:), POINTER :: dd    !double diffusion
      DOUBLE PRECISION, DIMENSION(:), POINTER :: ML    !mixed layer
      DOUBLE PRECISION, DIMENSION(:), POINTER :: all
