@@ -350,8 +350,6 @@ program SOG
            omega%m%h = 0.
         END IF
 
-        CALL shear_diff(grid, U%grad_i, V%grad_i, rho, K%u%shear)  !test conv  !density instead of linear B  ! calculates ocean interior shear diffusion
-
         ! Calculate double diffusion mixing   
         call double_diffusion(grid%M, T%grad_i, S%grad_i, &  ! in
              alpha%i, beta%i, &                              ! in
@@ -363,9 +361,9 @@ program SOG
         K%u%total = 0.0
         K%s%total = 0.0
         K%t%total = 0.0          
-        K%u%total(1:) = K%u%shear(1:) + nu%m%int_wave + K%s%dd(1:)
-        K%s%total(1:) = K%u%shear(1:) + nu%S%int_wave + K%s%dd(1:)
-        K%t%total(1:) = K%u%shear(1:) + nu%T%int_wave + K%t%dd(1:)
+        K%u%total(1:) = nu%m%shear(1:) + nu%m%int_wave + K%s%dd(1:)
+        K%s%total(1:) = nu%m%shear(1:) + nu%S%int_wave + K%s%dd(1:)
+        K%t%total(1:) = nu%m%shear(1:) + nu%T%int_wave + K%t%dd(1:)
 
         CALL interior_match(grid, h, K%t, nu_w_s)  ! calculate nu (D5)
         CALL interior_match(grid, h, K%u, nu_w_m)
