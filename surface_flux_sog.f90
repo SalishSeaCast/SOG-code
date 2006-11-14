@@ -1,7 +1,7 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, & 
+SUBROUTINE surface_flux_sog(mm,ro, wt_r, & 
                          salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
                          stress,&
@@ -11,6 +11,7 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
   ! *** Check whether wt_r is needed
   
   use fundamental_constants, only: g
+  use turbulence, only: wbar
       USE mean_param
   implicit none
   ! Arguments:
@@ -29,7 +30,6 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
       INTEGER, INTENT(IN)::j_gamma
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
       TYPE(windstress), INTENT(IN OUT)::stress
-      TYPE(flux), INTENT(OUT)::w
       double precision, intent(out):: S_riv ! salinity goal
       logical, intent(in) :: Fw_surface
       real(kind=dp), intent(in) :: Fw_scale  ! Fresh water scale factor for river flows
@@ -52,9 +52,9 @@ SUBROUTINE surface_flux_sog(mm,ro,w, wt_r, &
 
 !           Q_t depends on Q_tot and Q_sol
 
-!           w%t is Q_t/(ro*cp)
-!           w%s is Ft*sal/rf
-!           w%b is g,alp,bet* w%t and w%s 
+!           wbar%t is Q_t/(ro*cp)
+!           wbar%s is Ft*sal/rf
+!           wbar%b is g,alp,bet* wbar%t and wbar%s 
 
 !           wt_r depends on I, ro, cp
 
@@ -141,17 +141,17 @@ h_flux = lw_net+h_sens+h_latent
       ! eq'ns A2 & A3b)
       !
       ! Temperature (eq'n A2c)
-      w%t(0) = -Q_t / (ro(0) * Cp_o)
+      wbar%t(0) = -Q_t / (ro(0) * Cp_o)
       ! Salinity (eq'n A2d)
       ! Note that fresh water flux is added via Bf in buoyancy.f90
-      ! *** Need to check the implications of w%s(0)=0 on def_gamma.f90
+      ! *** Need to check the implications of wbar%s(0)=0 on def_gamma.f90
       if (Fw_surface) then
-         w%s(0) = Ft * salinity_o
+         wbar%s(0) = Ft * salinity_o
       else
-         w%s(0) = 0.
+         wbar%s(0) = 0.
       endif
       ! Buoyancy (eq'n A3b)
-      w%b(0) = g * (alp * w%t(0) - bet * w%s(0))
+      wbar%b(0) = g * (alp * wbar%t(0) - bet * wbar%s(0))
 
 
    !!!Radiative contribution to surface heat flux!!! this is equal to zero because j_gamma=0 because it is never defined as anything
