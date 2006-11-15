@@ -196,6 +196,23 @@ contains
     ! parameterization based on the local gradient Richardson number.
     call shear_diffusivity()
 
+    ! Calculate turbulent temperature and salinity diffusivities due
+    ! to double diffusive mixing using the Large, et al (1994)
+    ! formulation that considers both salt fingering, and diffusive
+    ! convection.
+    call double_diffusion()
+
+    ! Calculate total interior diffusivity: sum of vertical shear,
+    ! internal wave breaking, and double diffusion diffusivities
+    ! (Large, et al (1994), eq'n (25))
+    !
+    ! Momentum
+    nu%m%total(1:) = nu%m%shear(1:) + nu%m%int_wave + nu%S%dd(1:)
+    ! Temperature
+    nu%T%total(1:) = nu%m%shear(1:) + nu%T%int_wave + nu%T%dd(1:)
+    ! Salinity
+    nu%S%total(1:) = nu%m%shear(1:) + nu%S%int_wave + nu%S%dd(1:)
+
     ! Calculate turbulence scales that characterize the mixing layer:
     ! turbulent friction velocity, convective velocity scale, and
     ! Monin-Obukhov length scale
@@ -216,19 +233,20 @@ contains
     ! Parameter Value Declarations:
     use fundamental_constants, only: &
          g  ! Acceleration due to gravity [m/s^2]
+    ! Variable Declarations:
     use grid_mod, only: &
          grid  ! Grid parameters, and arrays
     use core_variables, only: &
          U, &  ! Cross-strait velocity component profile arrays; we
-                                ! need the gradients at the grid layer interface
-                                ! depths: U%grad_i
+               ! need the gradients at the grid layer interface
+               ! depths: U%grad_i
          V     ! Along-strait velocity component profile arrays; we
-    ! need the gradients at the grid layer interface
-    ! depths: V%grad_i
+               ! need the gradients at the grid layer interface
+               ! depths: V%grad_i
     use water_properties, only: &
          rho  ! Density profile arrays; we need the density, and its
-    ! gradient at the grid layer interface depths: rho%i &
-    ! rho%grad_i
+              ! gradient at the grid layer interface depths: rho%i &
+              ! rho%grad_i
 
     implicit none
 
@@ -272,6 +290,93 @@ contains
        endif
     enddo
   end subroutine shear_diffusivity
+  
+
+  subroutine double_diffusion()
+    ! Calculate turbulent temperature and salinity diffusivities
+    ! (nu%*%dd) due to double diffusive mixing using the Large, et al
+    ! (1994) formulation that considers both salt fingering, and
+    ! diffusive convection.  (Large, etal (1994), pp373-374, equations
+    ! 30 to 34).
+
+    ! Elements from other modules:
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Variable Declarations:
+    use grid_mod, only: &
+         grid  ! Grid parameters, and arrays
+    use core_variables, only: &
+         T, &  ! Temperature profile arrays; we need the gradients at
+               ! the grid layer interface depths: T%grad_i
+         S     ! Salinity profile arrays; we need the gradients at the
+               ! grid layer interface depths: S%grad_i
+    use water_properties, only: &
+         alpha, &  ! Thermal expansion coefficient profile arrays; we
+                   ! need the gradient at the grid layer interface
+                   ! depths: alpha%grad_i
+         beta      ! Salinity contraction coefficient profile arrays; we
+                   ! need the gradient at the grid layer interface
+                   ! depths: beta%grad_i
+
+    implicit none
+
+    ! Local parameter value declarations:
+    real(kind=dp), parameter :: &
+         nu_f = 10.0d-4, &  ! Maximum salt fingering diffusivity [m^2/s]
+         R_rho_o = 1.9,  &  ! Salt fingering limit (nu_s = 0)
+         p_2 = 3,        &  ! Salt finger diff power constant
+         nu_m = 1.5d-06     ! Molecular diffusivity (viscosity) [m^2/s]
+    ! Local variables:
+    real(kind=dp), dimension(1:grid%M) :: &
+         R_rho  ! Double diffusion density ratio
+    integer :: &
+         k  ! Loop index over depth
+
+    ! Calculate double diffusion density ratio (Large, et al, (1994) eq'n 30)
+    R_rho = alpha%i(1:) * T%grad_i / (beta%i(1:) * S%grad_i)
+      
+    do k = 1, grid%M
+       ! Determine if there is double diffision, and if so, what type,
+       ! salt fingering, or diffusive convection
+       if (1.0 < R_rho(k) &
+            .and. R_rho(k) < 2.0 &
+            .and. alpha%i(k) * T%grad_i(k) > 0 &
+            .and. beta%i(k) * S%grad_i(k) > 0.) then  
+          ! Salt fingering
+          if (1.0 < R_rho(k) .and. R_rho(k) < R_rho_o) then
+             ! Large, et al, (1994) eq'n 31a
+             nu%S%dd(k) = nu_f &
+                  * (1.0 - ((R_rho(k) - 1.0) &
+                             / (R_rho_o - 1.0)) ** 2) ** p_2
+          else  ! R_rho >= R_rho_o
+             ! Large, et al, (1994) eq'n 31b
+             nu%S%dd = 0.
+          endif
+          ! Large, et al, (1994) eq'n 31c
+          nu%T%dd(k) = 0.7 * nu%S%dd(k)
+       else if (0. < R_rho(k) &
+            .and. R_rho(k) < 1.0 &
+            .and. alpha%i(k) * T%grad_i(k) < 0. &
+            .and. beta%i(k) * S%grad_i(k) < 0.) then   
+          ! Diffusive convection
+          ! Large, et al, (1994) eq'n 32
+          nu%T%dd(k) = nu_m * 0.909 &
+               * exp(4.6 * exp(-0.54 * (1.0 / R_rho(k) - 1.0)))
+          ! Large, et al, (1994) eq'n 34
+          if (R_rho(k) >= 0.5 .and. R_rho(k) < 1.0) then
+             nu%S%dd(k) = nu%T%dd(k) * (1.85 - 0.85 / R_rho(k)) * R_rho(k)
+          else if (R_rho(k) < 0.5) then
+             nu%S%dd(k) = nu%T%dd(k) * 0.15 * R_rho(k)
+          endif
+       else
+          ! No double diffusion (i.e. temperature and salinity are
+          ! both stabilizing, or water column is convectively
+          ! unstable)
+          nu%T%dd(k) = 0.0
+          nu%S%dd(k) = 0.0
+       endif
+    enddo
+  end subroutine double_diffusion
 
 
   subroutine alloc_turbulence_variables(M)
