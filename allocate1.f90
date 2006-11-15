@@ -29,11 +29,7 @@ subroutine allocate1(M, STAT)
       ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), &
            STAT = alloc_stat(7))
 
-      ALLOCATE(&
-               Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),Gvector_o%s(M),Gvector_o%t(M),&
-               Gvector_o%u(M),Gvector_o%v(M),&
-               Gvector_c%u(M),Gvector_c%v(M),Gvector_co%u(M),&
-               Gvector_co%v(M),&
+      ALLOCATE(Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),&
                STAT = alloc_stat(8))
                
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
