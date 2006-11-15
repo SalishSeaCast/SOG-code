@@ -2,7 +2,7 @@
 ! $Source$
 
 SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
-     I_k, Qs, euphotic, Qriver, Pmicro_new, Pnano_new)
+     I_k, Qs, euphotic, Qriver, Pmicro, Pnano)
 
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_
@@ -23,8 +23,8 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       type(entrain), intent(out) :: euphotic !euphotic%depth, euphotic%i
       real, intent(in) :: Qriver
       real(kind=dp), dimension(0:d%M), intent(in) :: &
-           Pmicro_new, &  ! Micro phytoplankton
-           Pnano_new      ! Nano phytoplankton
+           Pmicro, &  ! Micro phytoplankton
+           Pnano      ! Nano phytoplankton
 
       ! Local variables:
       real(kind=dp) :: lat  ! Latitude of centre of model domain [rad]
@@ -118,29 +118,27 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       Ipar = 0.        !PAR
       In = 0.          !total light!
 
-      In(0) =  II        !total light begins attenuation at 0.5m
+      In(0) =  II        
       Ipar(0) = II*0.44  !44% of total light is PAR at surface (Jerlov)
       Iparmax(0) = IImax*0.44
 
-     ! plank=Pmicro_new(1)+Pmicro_new(2)+Pmicro_new(3)+Pmicro_new(4)+Pmicro_new(5)
-     ! plank=plank/5;
 
-      !added V.flagella.01
-      KK = 0.0146 * (Pmicro_new(1) + Pnano_new(1)) &
-           + Qriver * 3.6597e-05 - 0.0110 * 3 + 0.2697
-      !*** set mixed layer depth in this parameterization to a constant 3 m -- 
-      ! otherwise a shallow mixed layer in winter is actually a disadvantage.
-      ! this parameterization needs to be revisited.
+! Light is defined on interfaces
+! parameterization of Nov 2006 by S.Allen based on SOG data
+
       do k = 1, d%M    
-         Ipar(k) = Ipar(0) * exp(-d%d_i(k) * KK)
-         Iparmax(k) = Iparmax(0) * exp(-d%d_i(k) * KK)
+         ! KK is evaluated on the grid points
+         KK = 0.091 + 0.0365 * (Pmicro(k)+Pnano(k)) &
+              + 2.48d-4 * Qriver * exp(-d%d_g(k)/1.74)
+         Ipar(k) = Ipar(k-1) * exp(-d%g_space(k)*KK)
+         Iparmax(k) = Iparmax(k-1) * exp(-d%g_space(k) * KK)
          if (Ipar(k) < 0.01 * Ipar(0) .and. check == 0) then            
             I_k = k                                          
             check = 1                 
          end if               
          ! Total light for heat budget
-         In(k) = 0.70 * II * exp(-d%d_i(k) * (0.8102 * KK + 1.1854)) &
-              + 0.30 * II * exp(-d%d_i(k) * (0.8226 * KK - 0.0879))
+         In(k) = 0.70 * In(k-1) * exp(-d%g_space(k) * (0.8102 * KK + 1.1854)) &
+              + 0.30 * In(k-1) * exp(-d%g_space(k) * (0.8226 * KK - 0.0879))
       end do
 
 
