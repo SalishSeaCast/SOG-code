@@ -25,8 +25,7 @@ module declarations
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::phi,omega
   TYPE(MSTscalar)::a2,a3  !shape constants
-  type(UVST):: Gvector, Gvector_o     ! vert. adv. & nonlocal and surf/bot fluxes
-  type(UVST):: Gvector_c, Gvector_co  ! Coriolis and pg forces
+  type(UVST):: Gvector
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
