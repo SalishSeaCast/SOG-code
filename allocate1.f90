@@ -13,7 +13,6 @@ subroutine allocate1(M, STAT)
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
       ALLOCATE(&
-           K%s%dd(1:M), K%t%dd(1:M),&
            K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
            K%t%all(1:M),K%u%all(1:M),K%s%all(1:M),&
            K%u%ML(1:M), K%s%ML(1:M), K%t%ML(1:M), &
