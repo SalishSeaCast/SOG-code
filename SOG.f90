@@ -28,7 +28,7 @@ program SOG
   use core_variables, only: alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
-  use physics_model, only: init_physics, double_diffusion, &
+  use physics_model, only: init_physics, &
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use physics_eqn_builder, only: build_physics_equations, &
@@ -331,6 +331,13 @@ program SOG
         ! variables that are declared in the turbulence module so that
         ! they can be used by other modules.
         call calc_KPP_diffusivity(Bf, h%new)
+! *** Turbulence refactoring bridge code
+K%u%total = 0.0
+K%s%total = 0.0
+K%t%total = 0.0          
+K%u%total(1:) = nu%m%total
+K%t%total(1:) = nu%T%total
+K%s%total(1:) = nu%S%total
 
         CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
 
@@ -349,21 +356,6 @@ program SOG
            omega%m%h = 0.
            omega%m%h = 0.
         END IF
-
-        ! Calculate double diffusion mixing   
-        call double_diffusion(grid%M, T%grad_i, S%grad_i, &  ! in
-             alpha%i, beta%i, &                              ! in
-             K%t%dd, K%s%dd)                                 ! out
-
-        ! Calculate total interior diffusivity: sum of vertical shear,
-        ! internal wave breaking, and double diffusion diffusivities
-        ! (Large, et al (1994), eq'n (25))
-        K%u%total = 0.0
-        K%s%total = 0.0
-        K%t%total = 0.0          
-        K%u%total(1:) = nu%m%shear(1:) + nu%m%int_wave + K%s%dd(1:)
-        K%s%total(1:) = nu%m%shear(1:) + nu%S%int_wave + K%s%dd(1:)
-        K%t%total(1:) = nu%m%shear(1:) + nu%T%int_wave + K%t%dd(1:)
 
         CALL interior_match(grid, h, K%t, nu_w_s)  ! calculate nu (D5)
         CALL interior_match(grid, h, K%u, nu_w_m)
