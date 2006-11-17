@@ -21,7 +21,7 @@ program SOG
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! *** Temporary until turbulence refactoring is completed
-  use turbulence, only: u_star, w_star, L_mo, wbar, nu
+  use turbulence, only: u_star, L_mo, wbar, nu, w
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -322,7 +322,7 @@ program SOG
 
         ! Blend the values of the surface buoyancy forcing from current
         ! and previous iteration to help convergence
-        Bf = (count * Bf_old + (niter - count) * Bf) / niter !!$
+        Bf = (count * Bf_old + (niter - count) * Bf) / niter
 
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
@@ -341,21 +341,9 @@ K%s%total(1:) = nu%S%total
 
         CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
 
-        IF (u_star /= 0.)  THEN         !Wind stress /= 0.
-           CALL ND_flux_profile(grid, L_mo, phi)   ! define flux profiles aka (B1)
-           CALL vel_scales(grid, omega, phi, u_star, L_mo, h)
-           ! calculates wx (13) as omega (not Omega's)
-        ELSE IF (u_star == 0. .AND. Bf < 0.) THEN        !Convective unstable limit
-           CALL convection_scales(grid,omega,h, w_star)   !test conv
-           ! calculates wx (15) as omega (not Omega's)
-        ELSE                !  No surface forcing or Bf > 0. 
-           omega%m%value = 0.
-           omega%s%value = 0.
-           omega%m%div = 0.
-           omega%s%div = 0.
-           omega%m%h = 0.
-           omega%m%h = 0.
-        END IF
+! *** Turbulence refactoring bridge code
+omega%m%value = w%m
+omega%s%value = w%s
 
         CALL interior_match(grid, h, K%t, nu_w_s)  ! calculate nu (D5)
         CALL interior_match(grid, h, K%u, nu_w_m)
