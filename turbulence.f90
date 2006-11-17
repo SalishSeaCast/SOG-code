@@ -10,12 +10,18 @@ module turbulence
   !
   !   Constants for the nondimensional flux profiles.  See Large, et al
   !   (1994) pg 392, eqn B2
-  !      xsi_m -- Maximum xsi value of the -1/3 power law regime of phi%m
-  !      xsi_s -- Maximum xsi value of the -1/3 power law regime of phi%s
-  !      a_m --  Coefficient of phi%m in 1/3 power law regime
-  !      a_s --  Coefficient of phi%s in 1/3 power law regime
-  !      c_m  -- Coefficient of phi%m in 1/3 power law regime
-  !      c_s --  Coefficient of phi%s in 1/3 power law regime
+  !      zeta_m -- Maximum zeta value of the -1/3 power law regime of 
+  !                non-dimensional turbulent momentum flux profile
+  !      zeta_s -- Maximum zeta value of the -1/3 power law regime of 
+  !                non-dimensional turbulent scalar flux profile
+  !      a_m -- Coefficient of  non-dimensional turbulent momentum flux
+  !             profile in 1/3 power law regime
+  !      a_s -- Coefficient of  non-dimensional turbulent scalar flux
+  !             profile in 1/3 power law regime
+  !      c_m -- Coefficient of  non-dimensional turbulent momentum flux
+  !             profile in 1/3 power law regime
+  !      c_s -- Coefficient of  non-dimensional turbulent scalar flux
+  !             profile in 1/3 power law regime
   !      kapa -- von Karman constant
   !
   ! Public Variables:
@@ -41,13 +47,19 @@ module turbulence
   private
   public :: &
        ! Parameter values:
-       xsi_m, &  ! Max xsi value of the -1/3 power law regime of phi%m
-       xsi_s, &  ! Max xsi value of the -1/3 power law regime of phi%s
-       a_m,   &  ! Coefficient of phi%m in 1/3 power law regime
-       a_s,   &  ! Coefficient of phi%s in 1/3 power law regime
-       c_m,   &  ! Coefficient of phi%m in 1/3 power law regime
-       c_s,   &  ! Coefficient of phi%s in 1/3 power law regime
-       kapa,  &  ! von Karman constant
+       zeta_m, &  ! Max zeta value of the -1/3 power law regime of
+                  ! non-dimensional turbulent momentum flux profile
+       zeta_s, &  ! Max zeta value of the -1/3 power law regime of
+                  ! non-dimensional turbulent scalar flux profile
+       a_m,   &   ! Coefficient of non-dimensional turbulent momentum
+                  ! flux profile in 1/3 power law regime
+       a_s,   &   ! Coefficient of non-dimensional turbulent scalar
+                  ! flux profile in 1/3 power law regime
+       c_m,   &   ! Coefficient of non-dimensional turbulent momentum
+                  ! flux profile in 1/3 power law regime
+       c_s,   &   ! Coefficient of non-dimensional turbulent scalar
+                  ! flux profile in 1/3 power law regime
+       kapa,  &   ! von Karman constant
        ! Variables:
        nK, &      ! Overall diffusivity profile; a continuous profile of
                  ! K_ML%* in the mixing layer, and K%*%total below it
@@ -55,8 +67,8 @@ module turbulence
        ! *** Temporary until turbulence refactoring is completed
        nu, &  ! Interior diffusivity profile arrays
        u_star, &  ! Turbulent friction velocity
-       w_star, &  ! Convective velocity scale
        L_mo, &    ! Monin-Obukhov length scale
+       w, &  ! Turbulent velocity scale profile arrays
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, dalloc_turbulence_variables
 
@@ -107,18 +119,38 @@ module turbulence
           T, &  ! Elements of interior diffusivity for temperature
           S     ! Elements of interior diffusivity for salinity
   end type mTS_components
+  !
+  ! Components for turbulent velocity scale profiles, and the related
+  ! non-dimensional flux profiles
+  type :: turbulent_vel_scales
+     real(kind=dp), dimension(:), allocatable :: &
+          m, &  ! Momentum profile
+          s     ! Scalar (temperature, salinity) profile
+  end type turbulent_vel_scales
 
   ! Parameter Value Declarations:
   !
   ! Public:
   real(kind=dp), parameter :: &
-       xsi_m = -0.20, &  ! Max xsi value of the -1/3 power law regime of phi%m
-       xsi_s = -1.0,  &  ! Max xsi value of the -1/3 power law regime of phi%s
-       a_m = 1.26,    &  ! Coefficient of phi%m in 1/3 power law regime
-       a_s = -28.86,  &  ! Coefficient of phi%s in 1/3 power law regime
-       c_m = 8.38,    &  ! Coefficient of phi%m in 1/3 power law regime
-       c_s = 98.96,   &  ! Coefficient of phi%s in 1/3 power law regime
-       kapa = 0.4        ! von Karman constant
+       zeta_m = -0.20, &  ! Max zeta value of the -1/3 power law
+                          ! regime of non-dimensional turbulent
+                          ! momentum flux profile
+       zeta_s = -1.0,  &  ! Max zeta value of the -1/3 power law
+                          ! regime of non-dimensional turbulent scalar
+                          ! flux profile
+       a_m = 1.26,    &   ! Coefficient of non-dimensional turbulent
+                          ! momentum flux profile in 1/3 power law
+                          ! regime
+       a_s = -28.86,  &   ! Coefficient of non-dimensional turbulent
+                          ! scalar flux profile in 1/3 power law
+                          ! regime
+       c_m = 8.38,    &   ! Coefficient of non-dimensional turbulent
+                          ! momentum flux profile in 1/3 power law
+                          ! regime
+       c_s = 98.96,   &   ! Coefficient of non-dimensional turbulent
+                          ! scalar flux profile in 1/3 power law
+                          ! regime
+       kapa = 0.4         ! von Karman constant
   !
   ! Private to module:
 
@@ -149,12 +181,14 @@ module turbulence
            !       %total      -- sum of above components
            !       %tot_h      -- value at mixing layer depth
            !       %tot_grad_h -- gradient at mixing layer depth
-  type(mTS_arrays) :: &
-       K_ML  ! Mixing layer diffusivity
   real(kind=dp) :: &
        u_star, &  ! Turbulent friction velocity
        w_star, &  ! Convective velocity scale
        L_mo       ! Monin-Obukhov length scale
+  type(turbulent_vel_scales) :: &
+       w  ! velocity scale profile arrays
+  type(mTS_arrays) :: &
+       K_ML  ! Mixing layer diffusivity
 
 contains
 
@@ -191,6 +225,11 @@ contains
          Bf, &  ! Surface buoyancy forcing
          h      ! Mixing layer depth
 
+    ! Step 1: Calculate total turbulent momentum, thermal &
+    ! salinity diffusivities for the whole water column based on
+    ! shear, double diffusion, and internal wave breaking
+    ! instabilities.
+    
     ! Calculate the turbulent momentum diffusivity due to shear
     ! instabilities (nu%m%shear) using the Large, et al (1994)
     ! parameterization based on the local gradient Richardson number.
@@ -213,12 +252,34 @@ contains
     ! Salinity
     nu%S%total(1:) = nu%m%shear(1:) + nu%S%int_wave + nu%S%dd(1:)
 
+    ! Step 2: Calculate the turbulent momentum, thermal &
+    ! salinity diffusivities in the mixing layer
+
     ! Calculate turbulence scales that characterize the mixing layer:
     ! turbulent friction velocity, convective velocity scale, and
     ! Monin-Obukhov length scale
     u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1./4.)
     w_star = (-Bf * h) ** (1./3.)
     L_mo = u_star ** 3 / (kapa * Bf)
+
+    ! Calculate the vertical turbulent velocity scale profiles (w%*)
+    if (u_star /= 0.) then
+       ! The mixing layer turbulence is driven by wind forcing, so
+       ! calculate the velocity scales using Large, et al (1994), eqn
+       ! (13) that in turn uses the non-dimensional flux profiles
+       ! (Large, et al (1994), App. B),
+       call wind_driven_turbulence(h)
+    elseif (u_star == 0. .and. Bf < 0.) then
+       ! The mixing layer turbulence is driven by convection, so
+       ! calculate the velocity scales in their convective limits
+       ! (Large, et al (1994), eqn 15)
+       call convection_driven_turbulence(h)
+    else
+       ! No wind forcing, and no convective forcing, so no turbulence
+       ! in the mixing layer
+       w%m = 0.
+       w%s = 0.
+    endif
   end subroutine calc_KPP_diffusivity
 
 
@@ -379,6 +440,189 @@ contains
   end subroutine double_diffusion
 
 
+  function nondim_momentum_flux(d) result(phi_m)
+    ! Return the value of the non-dimensional momentum flux profile at
+    ! the specified depth (Large, etal (1994), App. B)
+
+    ! Type Definitions from Other Modules:
+    use precision_defs, only: dp
+    ! Variable Declarations:
+
+    implicit none
+
+    ! Argument:
+    real(kind=dp), intent(in) :: &
+         d  ! Depth [m]
+    ! Result:
+    real(kind=dp) :: &
+         phi_m  ! Value of the non-dimensional momentum flux profile
+                ! at the specified depth
+
+    ! Local variables:
+    real(kind=dp) :: &
+         zeta  ! Stability parameter; ratio of depth to Monin-Obukhov
+               ! length scale
+
+    ! Calculate the stability parameter value at the specified depth
+    zeta = d / L_mo
+    if (0. <= zeta) then
+       ! Stable (eqn B1a)
+       phi_m = 1. + 5. * zeta
+    endif
+    ! Unstable
+    if (zeta_m <= zeta .and. zeta < 0.) then
+       ! Eqn B1b
+       phi_m = (1. - 16. * zeta) ** (-1./4.)
+    elseif (zeta < zeta_m) then
+       ! Eqn B1c
+       phi_m = (a_m - c_m * zeta) ** (-1./3.)
+    endif
+  end function nondim_momentum_flux
+
+
+  function nondim_scalar_flux(d) result(phi_s)
+    ! Return the value of the non-dimensional scalar flux profile at
+    ! the specified depth (Large, etal (1994), App. B)
+
+    ! Type Definitions from Other Modules:
+    use precision_defs, only: dp
+
+    implicit none
+
+    ! Argument:
+    real(kind=dp), intent(in) :: &
+         d  ! Depth [m]
+    ! Result:
+    real(kind=dp) :: &
+         phi_s  ! Value of the non-dimensional scalar flux profile
+                ! at the specified depth
+
+    ! Local variables:
+    real(kind=dp) :: &
+         zeta  ! Stability parameter; ratio of depth to Monin-Obukhov
+               ! length scale
+
+    ! Calculate the stability parameter value at the specified depth
+    zeta = d / L_mo
+    if (0. <= zeta) then
+       ! Stable (eqn B1a)
+       phi_s = 1. + 5. * zeta
+    endif
+    ! Unstable
+    if (zeta_s <= zeta .and. zeta < 0.) then
+       ! Eqn B1b
+       phi_s = (1. - 16. * zeta) ** (-1./2.)
+    elseif (zeta < zeta_s) then
+       ! Eqn B1c
+       phi_s = (a_s - c_s * zeta) ** (-1./3.)
+    endif
+  end function nondim_scalar_flux
+
+
+  subroutine wind_driven_turbulence(h)
+    ! Calculate the turbulent velocity scale profiles under conditions
+    ! of wind driven turbulence (u_star /= 0) (Large, etal (1994), eqn
+    ! 13)
+
+    ! Elements from other modules:
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Subroutines:
+    use grid_mod, only: interp_value
+    ! Variable Declarations:
+    use grid_mod, only: &
+         grid  ! Grid parameters, and arrays
+    use mixing_layer, only: &
+         epsiln  ! Non-dimension extent of the surface layer
+
+    implicit none
+
+    ! Argument:
+    real(kind=dp), intent(in) :: &
+         h  ! Mixing layer extent [m]
+    ! Local variables:
+    real(kind=dp) :: &
+         d_surf, &  ! Surface layer extent [m]
+         phi_m_surf, &  ! Value of momentum non-dimensional flux
+                        ! profile at surface layer depth
+         phi_s_surf, &  ! Value of scalar non-dimensional flux profile
+                        ! at surface layer depth
+         zeta           ! Stability parameter; ratio of depth to
+                        ! Monin-Obukhov length scale
+    integer :: &
+         j, &     ! Loop index over grid depth
+         j_below  ! Index of the grid layer interface immediately
+                  ! below the surface layer
+
+      ! Calculate extent of surface layer, and interpolate the values
+      ! of the non-dimensional flux profiles at that depth
+      d_surf = epsiln * h
+      do j = 0, grid%M
+         ! Calculate the stability parameter value at the jth grid
+         ! layer interface depth
+         zeta = grid%d_i(j) / L_mo
+         if (d_surf < grid%d_i(j) .and. grid%d_i(j) < h &
+              .and. zeta < 0.) then
+            ! Special case of depths between the surface layer depth
+            ! and the mixing layer depth, in a stable mixing layer
+            w%m(j) = kapa * u_star / nondim_momentum_flux(d_surf)
+            w%s(j) = kapa * u_star / nondim_scalar_flux(d_surf)
+         else
+            ! General values of the turbulent velocity scales
+            w%m(j) = kapa * u_star / nondim_momentum_flux(grid%d_i(j))
+            w%s(j) = kapa * u_star / nondim_scalar_flux(grid%d_i(j))
+         endif
+      enddo
+  end subroutine wind_driven_turbulence
+
+
+  subroutine convection_driven_turbulence(h)
+    ! Calculate the turbulent velocity scale profiles under conditions
+    ! of convection driven turbulence (u_star = 0 and Bf < 0) (Large,
+    ! etal (1994), eqn 15)
+
+    ! Elements from other modules:
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Subroutines:
+    use grid_mod, only: interp_value
+    ! Variable Declarations:
+    use grid_mod, only: &
+         grid  ! Grid parameters, and arrays
+    use mixing_layer, only: &
+         epsiln  ! Non-dimension extent of the surface layer
+
+    implicit none
+
+    ! Argument:
+    real(kind=dp), intent(in) :: &
+         h  ! Mixing layer extent [m]
+    ! Local variables:
+    real(kind=dp) :: &
+         d_surf, &  ! Surface layer extent [m]
+         sigma      ! Non-dimensional vertical coordinate in the
+                    ! mixing layer
+    integer :: &
+         j  ! Loop index over grid depth
+
+    ! Calculate extent of surface layer
+    d_surf = epsiln * h
+
+    do j = 0, grid%M
+       if (grid%d_i(j) < d_surf) then
+          ! In the surface layer
+          sigma = grid%d_i(j) / h
+       elseif (d_surf <= grid%d_i(j) .and. grid%d_i(j) < h) then
+          ! Between the surface layer and mixing layer depths
+          sigma = epsiln
+       endif
+       ! Calculate the turbulent velocity scales profiles
+       w%m(j) = kapa * (c_m * kapa * sigma) ** (1./3.) * w_star
+       w%s(j) = kapa * (c_s * kapa * sigma) ** (1./3.) * w_star
+    enddo
+  end subroutine convection_driven_turbulence
+
+
   subroutine alloc_turbulence_variables(M)
     ! Allocate memory for turbulence quantities.
     use malloc, only: alloc_check
@@ -405,6 +649,10 @@ contains
     msg = "Turbulent kinematic flux profile arrays"
     allocate(wbar%u(0:M), wbar%v(0:M), wbar%t(0:M), wbar%s(0:M), &
          wbar%b(0:M), wbar%b_err(0:M),                           &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Turbulent velocity scale profile arrays"
+    allocate(w%m(0:M), w%s(0:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_turbulence_variables
@@ -434,6 +682,10 @@ contains
     msg = "Turbulent kinematic flux profile arrays"
     deallocate(wbar%u, wbar%v, wbar%t, wbar%s, &
          wbar%b, wbar%b_err,                   &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Turbulent velocity scale profile arrays"
+    deallocate(w%m, w%s, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_turbulence_variables
