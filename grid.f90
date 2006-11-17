@@ -50,7 +50,7 @@ module grid_mod
   !         the calculated value.  This can be used to find the value of a 
   !         quantity at a specified depth:
   !           call interp_value(d, d_g, qty_g, qty_g(d), j_below) or
-  !           call interp_value(d, d_i, qty_i, aty_i(d), j_below)
+  !           call interp_value(d, d_i, qty_i, qty_i(d), j_below)
   !         or to find the shallowest depth at which a specified quantity
   !         value occurs:
   !           call interp_value(q, qty_g, d_g, d(q), j_below) or
