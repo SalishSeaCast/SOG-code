@@ -23,7 +23,7 @@ module declarations
   TYPE(Knu)::K 
   TYPE(height)::h, surface_h
   TYPE(MST)::gamma,G_shape
-  TYPE(MS)::phi,omega
+  TYPE(MS)::omega
   TYPE(MSTscalar)::a2,a3  !shape constants
   type(UVST):: Gvector
   TYPE(windstress)::stress !wind stress (surface_flux.f90)
