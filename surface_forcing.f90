@@ -20,8 +20,6 @@ module surface_forcing
        !beta_t = -0.2 only for convection
   DOUBLE PRECISION, PARAMETER::S_ice = 0.0, & !ice salinity. unknown
        rho_ice = 1000.0
-  DOUBLE PRECISION, PARAMETER:: &
-       ep = 0.1  !epsilon
   DOUBLE PRECISION, PARAMETER::C_star = 9.9
   DOUBLE PRECISION, PARAMETER::del_o = 0.10, &!tolerance
        A_stress = -0.6, & !N/m^2 Wind stress constant

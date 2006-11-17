@@ -11,18 +11,19 @@ module mixing_layer
 
   private
   public :: &
-       ! Parameter:
-       Ri_c, &  ! Critical Richardson number
+       ! Parameters:
+       Ri_c, &    ! Critical Richardson number
+       epsiln, &  ! Non-dimensional extent of the surface layer
        ! Subroutine:
        init_mixing_layer, find_mixing_layer_depth
 
-  ! Public parameter declaration:
+  ! Public Parameter Declarations:
   !
-  ! Critical value of Richardson number for mixed layer depth
-  ! determination
-  ! *** Susan was surprised that this value was not 0.25
-  real(kind=dp), parameter :: Ri_c = 0.3
-
+  real(kind=dp), parameter :: &
+       Ri_c = 0.3, &  ! Critical value of Richardson number for mixed
+                      ! layer depth determination *** Susan was
+                      ! surprised that this value was not 0.25
+       epsiln = 0.1   ! Non-dimensional extent of the surface layer
 
 contains
 

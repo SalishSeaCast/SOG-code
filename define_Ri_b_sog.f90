@@ -12,7 +12,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, U_new, V_new, rho_g, Rib, &
   use grid_mod, only: grid_, depth_average
   use fundamental_constants, only: g
   USE mean_param, only: height
-  USE surface_forcing, only: ep
+  USE mixing_layer, only: epsiln
 
   ! Arguments:
   type(grid_), intent(in) :: d
@@ -31,7 +31,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, U_new, V_new, rho_g, Rib, &
   integer :: yy
   real(kind=dp) ::Ribmin, rho_avg, U_avg, V_avg
 
-  surf_h%new = ep * hh%new
+  surf_h%new = epsiln * hh%new
        
   U_avg = depth_average(U_new, 0.0d0, surf_h%new)
   V_avg = depth_average(V_new, 0.0d0, surf_h%new)

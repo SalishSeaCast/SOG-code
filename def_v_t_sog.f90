@@ -8,9 +8,10 @@ SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
   use turbulence, only: &
        c_s, &  ! Coefficient of phi%s in 1/3 power law regime
        kapa    ! von Karman constant
-  use mixing_layer, only: Ri_c
+  use mixing_layer, only: Ri_c, epsiln
+
       USE mean_param, only: height
-      USE surface_forcing, only: Cv, ep
+      USE surface_forcing, only: Cv
 
       IMPLICIT NONE
 
@@ -28,11 +29,11 @@ SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
 
       IF (Lstar <= 0.0) THEN   !Doesn't make much difference!!!!
          DO xx = 1, mm%M   ! (13) surface layer versus mixed layer
-            IF (mm%d_g(xx) >= ep*hh%new) THEN
+            IF (mm%d_g(xx) >= epsiln*hh%new) THEN
                omeg_g(xx) = omeg_s(xx)
-            ELSE IF (mm%d_g(xx) < ep*hh%new .AND. ep*hh%new <= mm%d_i(xx)) THEN
+            ELSE IF (mm%d_g(xx) < epsiln*hh%new .AND. epsiln*hh%new <= mm%d_i(xx)) THEN
                omeg_g(xx) = omeg_s(xx-1) + (omeg_s(xx)-omeg_s(xx-1))*&
-               (mm%d_g(xx)-mm%d_i(xx-1))/(ep*hh%new-mm%d_i(xx-1))
+               (mm%d_g(xx)-mm%d_i(xx-1))/(epsiln*hh%new-mm%d_i(xx-1))
             ELSE
                omeg_g(xx) = omeg_s(xx)-(omeg_s(xx-1)-omeg_s(xx))*&
                (mm%d_g(xx)-mm%d_i(xx))/mm%i_space(xx)
@@ -47,7 +48,7 @@ SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
 
       DO xx = 1, mm%M 
          IF (N_2(xx) >= 0) THEN
-            vt_sq(xx) = Cv*SQRT(-betat*N_2(xx)/c_s/ep)/&
+            vt_sq(xx) = Cv*SQRT(-betat*N_2(xx)/c_s/epsiln)/&
                  (Ri_c*kapa**2.0)*mm%d_g(xx)*omeg_g(xx) ! (23)
          ELSE IF (N_2(xx) < 0) THEN !Unstable  Ri_b < Ri_c
             vt_sq(xx) =  0.0  ! 1.0D+30   ! 0.0 
