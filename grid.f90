@@ -43,18 +43,19 @@ module grid_mod
   !   init_grid(M, grid) -- Allocate memory for grid arrays and
   !                         initialize grid interpolation factor arrays.
   !
-  !   interp_value(value, search_array, interp_array, interp_val, j_below)
+  !   interp_value(value, lb, search_array, interp_array, interp_val, j_below)
   !      -- Calculate the value of the quantity in the interp_array that
   !         corresponds to the the specified value in the search_array,
   !         and the index of the grid point or interface immediately below
-  !         the calculated value.  This can be used to find the value of a 
-  !         quantity at a specified depth:
-  !           call interp_value(d, d_g, qty_g, qty_g(d), j_below) or
-  !           call interp_value(d, d_i, qty_i, qty_i(d), j_below)
+  !         the calculated value.  lb is the lower bound of
+  !         search_array & interp_array.  This can be used to find
+  !         the value of a quantity at a specified depth:
+  !           call interp_value(d, lb, d_g, qty_g, qty_g(d), j_below) or
+  !           call interp_value(d, lb, d_i, qty_i, qty_i(d), j_below)
   !         or to find the shallowest depth at which a specified quantity
   !         value occurs:
-  !           call interp_value(q, qty_g, d_g, d(q), j_below) or
-  !           call interp_value(q, qty_i, d_i, d(q), j_below)
+  !           call interp_value(q, lb, qty_g, d_g, d(q), j_below) or
+  !           call interp_value(q, lb, qty_i, d_i, d(q), j_below)
 
   use precision_defs, only: dp
   implicit none
@@ -166,7 +167,7 @@ contains
          / grid%g_space(1:grid%M)
 
     ! Set index numbers for use by interp_value() function
-    forall (j = 1:size(indices)) indices(j) = j
+    forall (j = 0:size(indices)-1) indices(j) = j
   end subroutine init_grid
 
 
@@ -181,56 +182,6 @@ contains
     grid%M = getpari("gridsize")
     lambda = getpard("lambda")
   end subroutine read_grid_params
-
-
-  subroutine alloc_grid
-    ! Allocate memory for grid arrays.
-    use malloc, only: alloc_check
-    implicit none
-    ! Local variables:
-    integer           :: allocstat  ! Allocation return status
-    character(len=80) :: msg        ! Allocation failure message prefix
-
-    msg = "Grid point and interface index arrays"
-    allocate(xsi_g(0:grid%M+1), xsi_i(0:grid%M), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Grid point and interface depth and spacing arrays"
-    allocate(grid%d_g(0:grid%M+1), grid%d_i(0:grid%M), &
-         grid%g_space(0:grid%M), grid%i_space(1:grid%M), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Grid interface interpolation factor arrays"
-    allocate(above_g%factor(1:grid%M+1), below_g%factor(0:grid%M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Grid index number array"
-    allocate(indices(1:grid%M+2), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-  end subroutine alloc_grid
-
-
-  subroutine dalloc_grid
-    ! Deallocate memory for grid arrays.
-    use malloc, only: dalloc_check
-    implicit none
-    ! Local variables:
-    integer           :: dallocstat  ! Allocation return status
-    character(len=80) :: msg         ! Allocation failure message prefix
-
-    msg = "Grid point and interface index arrays"
-    deallocate(xsi_g, xsi_i, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Grid point and interface depth and spacing arrays"
-    deallocate(grid%d_g, grid%d_i, grid%g_space, grid%i_space, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Grid interface interpolation factor arrays"
-    deallocate(above_g%factor, below_g%factor, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Grid index number array"
-    deallocate(indices, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-  end subroutine dalloc_grid
 
 
   function depth_average(qty_g, d1, d2) result(avg)
@@ -266,9 +217,9 @@ contains
     endif
     ! Find the values of the quantity at the depth limits, and the
     ! indices of the grid points immediately below those depths
-    call interp_value(d1, grid%d_g, qty_g, q_d1, j_below_d1)
+    call interp_value(d1, 0, grid%d_g, qty_g, q_d1, j_below_d1)
 !!$print *, "q_d1 j_below_d1 ", q_d1, j_below_d1 - 1
-    call interp_value(d2, grid%d_g, qty_g, q_d2, j_below_d2)
+    call interp_value(d2, 0, grid%d_g, qty_g, q_d2, j_below_d2)
 !!$print *, "q_d2 j_below_d2 ", q_d2, j_below_d2 - 1
     ! Handle the special cases of d1 = d2 and q_d1 = q_d2
     if (abs(d2 - d1) < epsilon(d2 - d1) &
@@ -276,33 +227,29 @@ contains
        avg = q_d1
        return
     endif
-    ! Adjust the j_below value for the fact that interp_value operates
-    ! on 1-based index arrays, and qty_g arrays are 0-based, and set the
-    ! indices of the grid points immediately above d1, and d2
-    j_below_d1 = j_below_d1 - 1
-    j_below_d2 = j_below_d2 - 1
+    ! Set the indices of the grid points immediately above d1, and d2
     j_above_d1 = j_below_d1 - 1
     j_above_d2 = j_below_d2 - 1
-    ! check for d1 and d2 close together
-    if (d2<grid%d_g(j_below_d1+1)) then
-       ! in this case d1 and d2 and within the same pair of grid points
-       if (d2<=grid%d_g(j_below_d1)) then
-          avg = 0.5*(q_d1+q_d2)
-       ! in this case d1 and d2 are within three grid points
+    ! Check for d1 and d2 close together
+    if (d2 < grid%d_g(j_below_d1+1)) then
+       if (d2 <= grid%d_g(j_below_d1)) then
+          ! In this case d1 and d2 are between the same pair of grid points
+          avg = (q_d1 + q_d2) / 2.
        else
-          avg = (0.5*(q_d1+qty_g(j_below_d1))*(grid%d_g(j_below_d1)-d1) &
-               + 0.5*(qty_g(j_below_d1)+q_d2)*(d2-grid%d_g(j_below_d1))) &
-               / (d2-d1)
+          ! In this case d1 and d2 are within three grid points
+          avg = (0.5 * (q_d1 + qty_g(j_below_d1)) * (grid%d_g(j_below_d1)-d1) &
+               + 0.5 * (qty_g(j_below_d1) + q_d2) * (d2-grid%d_g(j_below_d1))) &
+               / (d2 - d1)
        endif
     else
        ! Calculate the depth weighted average value of the quantity
        ! through at least one grid point and then to the interface
        ! below that
-       call interp_value(grid%d_i(j_below_d1), grid%d_g, qty_g, &
+       call interp_value(grid%d_i(j_below_d1), 0, grid%d_g, qty_g, &
             q_i_d1, j_junk)
-       avg = 0.5*(q_d1+qty_g(j_below_d1))*(grid%d_g(j_below_d1)-d1) &
-            + 0.5*(qty_g(j_below_d1)+q_i_d1)* &
-            (grid%d_i(j_below_d1)-grid%d_g(j_below_d1))
+       avg = 0.5 * (q_d1 + qty_g(j_below_d1)) * (grid%d_g(j_below_d1)-d1) &
+            + 0.5 * (qty_g(j_below_d1) + q_i_d1) * &
+            (grid%d_i(j_below_d1) - grid%d_g(j_below_d1))
        ! Portion between whole grid layer interfaces (note, if the second
        ! index is less that the first the dot product gets 0 (so we don't 
        ! need to test to this)
@@ -310,12 +257,12 @@ contains
             grid%i_space(j_below_d1+1:j_above_d2-1))
        ! Portion below a layer interface through one
        ! grid point and to d2
-       call interp_value(grid%d_i(j_above_d2-1), grid%d_g, qty_g, &
+       call interp_value(grid%d_i(j_above_d2-1), 0, grid%d_g, qty_g, &
          q_i_d2, j_junk)
        avg = avg + &
-            0.5*(q_i_d2+qty_g(j_above_d2))* &
-            (grid%d_g(j_above_d2)-grid%d_i(j_above_d2-1)) + &
-            0.5*(qty_g(j_above_d2)+q_d2)*(d2-grid%d_g(j_above_d2))
+            0.5 * (q_i_d2 + qty_g(j_above_d2)) * &
+            (grid%d_g(j_above_d2) - grid%d_i(j_above_d2-1)) + &
+            0.5 * (qty_g(j_above_d2) + q_d2) * (d2 - grid%d_g(j_above_d2))
        avg = avg / (d2 - d1)
     endif
   end function depth_average
@@ -370,36 +317,49 @@ contains
   end function interp_i
 
 
-  subroutine interp_value(value, search_array, interp_array, &  ! in
-       interp_val, j_below)                                     ! out
+  subroutine interp_value(value, lb, search_array, interp_array, &  ! in
+       interp_val, j_below)                                         ! out
     ! Calculate the value of the quantity in the interp_array that
     ! corresponds to the the specified value in the search_array,
     ! and the index of the grid point or interface immediately below
     ! the calculated value.  This can be used to find the value of a 
     ! quantity at a specified depth:
     !   call interp_value(d, d_g, qty_g, qty_g(d), j_below) or
-    !   call interp_value(d, d_i, qty_i, aty_i(d), j_below)
+    !   call interp_value(d, d_i, qty_i, qty_i(d), j_below)
     ! or to find the shallowest depth at which a specified quantity
     ! value occurs:
     !   call interp_value(q, qty_g, d_g, d(q), j_below) or
     !   call interp_value(q, qty_i, d_i, d(q), j_below)
-    use io_unit_defs, only: stdout
+
+    use io_unit_defs, only: stderr
+
     implicit none
+
     ! Arguments:
-    real(kind=dp), intent(in) :: value  ! Depth or quantity value to find
-    real(kind=dp), dimension(1:), intent(in) :: &
+    real(kind=dp), intent(in) :: &
+         value  ! Depth or quantity value to find
+    integer, intent(in) :: &
+         lb  ! Lower bound of search_array & interp_array
+    real(kind=dp), dimension(lb:), intent(in) :: &
          search_array, &  ! Array to find value in
          interp_array     ! Array to interpolate over
-    real(kind=dp), intent(out) :: interp_val
-    integer, intent(out) :: j_below
+    real(kind=dp), intent(out) :: &
+         interp_val  ! Interpolated value
+    integer, intent(out) :: &
+         j_below  ! Index of grid point or layer interface immediately
+                  ! below interpolated value
+
     ! Local variables:
-    logical, dimension(1:size(search_array)) :: mask
+    logical, dimension(lb:size(search_array)+lb-1) :: &
+         mask  ! Mask array used as an faster alternative to looping
+               ! over the search array
 
     ! Mask the search array for values greater than or equal to the
-    ! specified value, and confirm that the specified value is within
-    ! the range of the search array.  We need to add the epsilon of
-    ! value so that value = 0 is handled properly.
+    ! specified value.  We need to add the epsilon of value so that
+    ! value = 0 is handled properly.
     mask = search_array >= (value + epsilon(value))
+    ! Confirm that the specified value is within the range of the
+    ! search array.
     if (any(mask) .and. .not. all(mask)) then
        ! Find the index of the search array element below the
        ! specified value
@@ -411,11 +371,60 @@ contains
             * (value - search_array(j_below-1)) &
             / (search_array(j_below) - search_array(j_below-1))
     else
-       write(stdout, *) "Warning: value = ", value, &
+       write(stderr, *) "Warning: value = ", value, &
             " out of range in interp_value()"
-       interp_val = 9999999999.
-       j_below = 999999
+       stop
     endif
   end subroutine interp_value
 
+
+  subroutine alloc_grid
+    ! Allocate memory for grid arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Grid point and interface index arrays"
+    allocate(xsi_g(0:grid%M+1), xsi_i(0:grid%M), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Grid point and interface depth and spacing arrays"
+    allocate(grid%d_g(0:grid%M+1), grid%d_i(0:grid%M), &
+         grid%g_space(0:grid%M), grid%i_space(1:grid%M), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Grid interface interpolation factor arrays"
+    allocate(above_g%factor(1:grid%M+1), below_g%factor(0:grid%M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Grid index number array"
+    allocate(indices(0:grid%M+1), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_grid
+
+
+  subroutine dalloc_grid
+    ! Deallocate memory for grid arrays.
+    use malloc, only: dalloc_check
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Allocation return status
+    character(len=80) :: msg         ! Allocation failure message prefix
+
+    msg = "Grid point and interface index arrays"
+    deallocate(xsi_g, xsi_i, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Grid point and interface depth and spacing arrays"
+    deallocate(grid%d_g, grid%d_i, grid%g_space, grid%i_space, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Grid interface interpolation factor arrays"
+    deallocate(above_g%factor, below_g%factor, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Grid index number array"
+    deallocate(indices, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+  end subroutine dalloc_grid
+  
 end module grid_mod
