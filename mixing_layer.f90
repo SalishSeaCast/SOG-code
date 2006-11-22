@@ -2,28 +2,71 @@
 ! $Source$
 
 module mixing_layer
-  ! Type declaration, variables, and subroutines related to the mixing
-  ! layer depth calculation.
+  ! Type definitions, variable & parameter value declarations, and
+  ! subroutines related to the mixing layer depth calculation in the
+  ! SOG code.
+  !
+  ! Public Parameters:
+  !
+  !   Ri_c -- Critical Richardson number
+  !
+  ! Public Variables:
+  !
+  !   h -- Mixing layer depth values & indices
+  !
+  ! Public Subroutines:
+  !
+  !   init_mixing_layer --
+  !
+  !   find_mixing_layer_depth --
+  !
+  !   find_mixing_layer_indices -- Set the value of the indices of the
+  !                                grid point & grid layer interface
+  !                                immediately below the mixing layer
+  !                                depth.
+  !
+  !   new_to_old_mixing_layer -- Copy %new component of mixing layer
+  !                              depth variables to %old component for
+  !                              use at next time step.
 
   use precision_defs, only: dp
-
   implicit none
 
   private
   public :: &
-       ! Parameters:
+       ! Parameter values:
        Ri_c, &    ! Critical Richardson number
-       epsiln, &  ! Non-dimensional extent of the surface layer
-       ! Subroutine:
-       init_mixing_layer, find_mixing_layer_depth
+       ! Variables:
+       h, &  ! Mixing layer depth values & indices
+       ! Subroutines:
+       init_mixing_layer, find_mixing_layer_depth, &
+       find_mixing_layer_indices, new_to_old_mixing_layer
+
+  ! Type Definitions:
+  !
+  ! Mixing layer
+  type mixing_layer_depth
+     real(kind=dp) :: &
+          new, &  ! Depth at current time step
+          old     ! Depth at previous time step
+     integer :: &
+          i, &  ! Index of grid layer interface immediately below
+                ! mixing layer depth
+          g     ! Index of grid point immediately below mixing layer
+                ! depth
+  end type mixing_layer_depth
 
   ! Public Parameter Declarations:
   !
   real(kind=dp), parameter :: &
-       Ri_c = 0.3, &  ! Critical value of Richardson number for mixed
-                      ! layer depth determination *** Susan was
-                      ! surprised that this value was not 0.25
-       epsiln = 0.1   ! Non-dimensional extent of the surface layer
+       Ri_c = 0.3  ! Critical value of Richardson number for mixed
+                   ! layer depth determination
+
+  ! Variable Declarations:
+  !
+  ! Public
+  type(mixing_layer_depth) :: &
+       h  ! Mixing layer depth values & indices
 
 contains
 
@@ -31,7 +74,124 @@ contains
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
+
+    ! Initialize the mixing layer depth, and the indices of the grid
+    ! point & grid layer interface immediately below it
+    h%new = 2.0
+    call find_mixing_layer_indices()
   end subroutine init_mixing_layer
+
+
+  subroutine new_to_old_mixing_layer()
+    ! Copy %new component of mixing layer depth variables to %old
+    ! component for use at next time step.
+
+    implicit none
+
+    h%old = h%new
+  end subroutine new_to_old_mixing_layer
+
+
+  subroutine find_mixing_layer_depth(grid, Ri_b, Bf, year, day, day_time, &
+       count)
+    ! Find the mixing layer depth.  See Large, etal (1994) pp 371-372.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    use grid_mod, only: grid_
+    ! Parameter Value Declarations:
+    use io_unit_defs, only: stdout
+    use fundamental_constants, only: f
+    ! Variables
+    use turbulence, only: u_star, L_mo
+    ! Subroutines:
+    use grid_mod, only: interp_value
+
+    implicit none
+
+    ! Arguments:
+    type(grid_), intent(in) :: &
+         grid  ! Grid parameters and arrays
+    real(kind=dp), dimension(0:), intent(in) :: &
+         Ri_b  ! Bulk Richardson no.
+    real(kind=dp), intent(in) :: &
+         Bf  ! Surface buoyancy flux
+    integer, intent(in) :: &
+         year, &  ! Year for flagging mixing too deep events
+         day,  &  ! Year-day  for flagging mixing too deep events
+         count    ! Iteration count for flagging mixing too deep events
+    real(kind=dp), intent(in) :: &
+         day_time  ! Day-sec for flagging mixing too deep events
+
+    ! Local variable:
+    real(kind=dp) :: &
+         d_Ekman  ! Ekman depth [m]
+!!$         h_blend  ! Mixing layer depth before we find a new one;
+!!$                  ! blended with new value to help stabilize the
+!!$                  ! convergence of the implicit solver loop
+
+    ! Find the depth at which the bulk Richardson number exceeds the
+    ! critical value
+!!$    h_blend = h%new
+    call interp_value(Ri_c, 0, Ri_b, grid%d_g(0:grid%M), h%new, h%g)
+!!$    ! Blend the newly found value with the previous one so that
+!!$    ! changes aren't too quick; this helps stabilize the convergence
+!!$    ! of the implicit solver loop
+!!$    h_blend = (h_blend + h%new) / 2.
+    ! Apply the Ekman and Monin-Obukhov depth criteria to the mixing
+    ! layer depth when stable forcing exists
+    if (Bf > 0. .or. (Bf == 0. .and. u_star /= 0.)) then
+       ! Calculate the Ekmann depth (Large, et al (1994), eqn 24)
+       d_Ekman = 0.7d0 * u_star / f
+       ! Under stable forcing, mixing layer depth is the minimum of
+       ! the values from Richardson number, Ekman depth, and Monim
+       ! -Obukhov length scale criteria
+       h%new = min(h%new, d_Ekman, L_mo)
+       ! But it also can't be shallower than the depth of the 1st grid
+       ! point
+       h%new = max(h%new, grid%d_g(1))
+    endif
+    ! Handle mixing layer extending nearly to the bottom of the grid
+    if (h%new > grid%d_g(grid%M - 3)) then
+       h%new = grid%d_g(grid%M - 3)
+       write(stdout, *) "find_mixing_layer_depth: Mixing too deep. ", &
+            "Set h%new = ", h%new
+       write(stdout, *) "Iteration count = ", count, " Time: yr = ", &
+            year, " day = ", day, " day_time = ", day_time
+    endif
+    ! Set the value of the indices of the grid point & grid layer
+    ! interface immediately below the mixing layer depth.
+    call find_mixing_layer_indices()
+  end subroutine find_mixing_layer_depth
+
+
+  subroutine find_mixing_layer_indices()
+    ! Set the value of the indices of the grid point & grid layer
+    ! interface immediately below the mixing layer depth.
+
+    ! Elements from other modules:
+    !
+    ! Variable:
+    use grid_mod, only: grid
+    ! Subroutine:
+    use grid_mod, only: interp_value
+
+    implicit none
+
+    ! Using interp_value() here is a convenient way of getting h%g
+    ! without duplicating code that searches through the grid
+    call interp_value(h%new, 0, grid%d_g, grid%d_g, h%new, h%g)
+    if (grid%d_i(h%g - 1) > h%new) then
+       ! Mixing layer depth is in the grid layer above the grid point
+       h%i = h%g - 1
+    else
+       ! Mixing layer depth is in the same grid layer as the grid
+       ! point
+       h%i = h%g
+    endif
+  end subroutine find_mixing_layer_indices
 
 
   subroutine alloc_mixing_layer(M)
@@ -49,39 +209,5 @@ contains
 
   subroutine dalloc_mixing_layer
   end subroutine dalloc_mixing_layer
-
-
-  subroutine find_mixing_layer_depth(grid, Ri_b, year, day, day_time, count, &
-       h_new)
-    ! Find the mixing layer depth.  See Large, etal (1994) pp 371-372.
-    use precision_defs, only: dp
-    use io_unit_defs, only: stdout
-    use grid_mod, only: grid_, interp_value
-    implicit none
-    ! Arguments:
-    type(grid_), intent(in) :: grid 
-    real(kind=dp), dimension(0:), intent(in) :: Ri_b  ! Bulk Richardson no.
-    ! Time and iteration count values for flagging mixing too deep events
-    integer, intent(in) :: year, day, count
-    real(kind=dp), intent(in) :: day_time
-    real(kind=dp), intent(out) :: h_new  ! Mixing layer depth [m]
-
-    ! Local variable:
-    integer :: j_below  ! Index of grid point immediately below mixing
-                        ! layer depth
-
-    ! Find the depth at which the bulk Richardson number exceeds the
-    ! critical value
-    call interp_value(Ri_c, Ri_b, grid%d_g(0:grid%M), h_new, j_below)
-    ! Handle mixing layer extending nearly to the bottom of the grid
-    if (h_new > grid%d_g(grid%M - 3)) then
-       h_new = grid%d_g(grid%M - 3)
-       write(stdout, *) "ML_height_sog: Mixing too deep. ", &
-            "Set h%new = ", h_new
-       write(stdout, *) "Iteration count = ", count, " Time: yr = ", &
-            year, " day = ", day, " day_time = ", day_time
-    endif
-
-  end subroutine find_mixing_layer_depth
 
 end module mixing_layer
