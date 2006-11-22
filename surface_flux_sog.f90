@@ -5,7 +5,9 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
                          salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
                          stress,&
-                         day,dtdz,h,upwell_const,upwell,Eriver,u,dt, &
+                         day,dtdz,&
+!!$                         h,&
+                         upwell_const,upwell,Eriver,u,dt, &
                          Fw_surface, Fw_scale, Ft, &
                          count)
   ! *** Check whether wt_r is needed
@@ -15,7 +17,7 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
       USE mean_param
   implicit none
   ! Arguments:
-      TYPE(height), INTENT(IN)::h
+!!$      TYPE(height), INTENT(IN)::h
       INTEGER, INTENT(IN)::mm,day
       DOUBLE PRECISION,DIMENSION(0:mm+1), INTENT(IN)::ro ! density%new
       DOUBLE PRECISION, INTENT(IN):: alp, Cp_o, bet !alph%i(0), Cp%i(0), beta%i(0)
