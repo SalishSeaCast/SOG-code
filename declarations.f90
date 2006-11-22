@@ -21,7 +21,7 @@ module declarations
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   TYPE(Knu)::K 
-  TYPE(height)::h, surface_h
+  TYPE(height)::oh, surface_h
   TYPE(MST)::gamma,G_shape
   TYPE(MS)::omega
   TYPE(MSTscalar)::a2,a3  !shape constants
@@ -34,7 +34,7 @@ module declarations
   !                                        avgdata_u, avgdata_v
   DOUBLE PRECISION, DIMENSION(0:366)::smooth_u, smooth_v
   DOUBLE PRECISION::begin_hour,end_hour  ! used in interpolate_dt
-  DOUBLE PRECISION :: time, h_i, del, del_p
+  DOUBLE PRECISION :: time, del, del_p
 
   ! Surface buoyancy forcing
   real(kind=dp) :: &
@@ -65,7 +65,7 @@ module declarations
   CHARACTER::ignored_input
   INTEGER, DIMENSION(20)::alloc_stat  !***
   INTEGER :: steps, time_step, index,xx, xx2, year, jmax_i,    &
-       count, yy, yy2, gg, jmaxg, cloud_type, day, stable,  &
+       count, yy, yy2, gg, jmaxg, cloud_type, day, &
        water_type
   REAL::D_test
   DOUBLE PRECISION :: &
