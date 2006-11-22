@@ -277,10 +277,10 @@ contains
     Pmicro_avg_3m = depth_average(Pmicro, 0.0d0, 3.0d0)
     Pnano_avg_3m = depth_average(Pnano, 0.0d0, 3.0d0)
     Z_avg_3m = depth_average(Z, 0.0d0, 3.0d0)
-    call interp_value(20.0d0, grid%d_g, D_DON, D_DON_20m, j_below)
-    call interp_value(20.0d0, grid%d_g, D_PON, D_PON_20m, j_below)
-    call interp_value(20.0d0, grid%d_g, D_refr, D_refr_20m, j_below)
-    call interp_value(20.0d0, grid%d_g, D_bSi, D_bSi_20m, j_below)
+    call interp_value(20.0d0, 0, grid%d_g, D_DON, D_DON_20m, j_below)
+    call interp_value(20.0d0, 0, grid%d_g, D_PON, D_PON_20m, j_below)
+    call interp_value(20.0d0, 0, grid%d_g, D_refr, D_refr_20m, j_below)
+    call interp_value(20.0d0, 0, grid%d_g, D_bSi, D_bSi_20m, j_below)
     write(std_bio_timeseries, 200) time, NO(0), NO_avg_3m, NH(0), NH_avg_3m, &
          Si(0), Si_avg_3m, Pmicro(0), Pmicro_avg_3m, Pnano(0), Pnano_avg_3m, &
          Z(0), Z_avg_3m, D_DON_20m, D_PON_20m, D_refr_20m, D_bSi_20m
