@@ -6,9 +6,10 @@ SUBROUTINE def_v_t_sog(mm, hh, N_2, omeg_s, vt_sq, betat,Lstar)
   use precision_defs, only: dp
   use grid_mod, only: grid_
   use turbulence, only: &
-       c_s, &  ! Coefficient of phi%s in 1/3 power law regime
-       kapa    ! von Karman constant
-  use mixing_layer, only: Ri_c, epsiln
+       c_s,  &  ! Coefficient of phi%s in 1/3 power law regime
+       kapa, &  ! von Karman constant
+       epsiln
+  use mixing_layer, only: Ri_c
 
       USE mean_param, only: height
       USE surface_forcing, only: Cv

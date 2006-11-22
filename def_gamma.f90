@@ -10,7 +10,7 @@ SUBROUTINE def_gamma(L,  mm, wtr, hh, gamm, Bf, omeg)
        kapa, &  ! von Karman constant
        wbar     ! Turbulent kinematic flux profile arrays; we need
                 ! wbar%t(0) & wbar%s(0)
-  USE mixing_layer, only: epsiln
+  USE turbulence, only: epsiln
 
   USE mean_param, only: height, MST, MS
   use surface_forcing, only: c_star

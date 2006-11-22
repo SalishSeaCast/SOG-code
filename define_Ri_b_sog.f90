@@ -12,7 +12,7 @@ subroutine define_Ri_b_sog(d, hh, surf_h, U_new, V_new, rho_g, Rib, &
   use grid_mod, only: grid_, depth_average
   use fundamental_constants, only: g
   USE mean_param, only: height
-  USE mixing_layer, only: epsiln
+  USE turbulence, only: epsiln
 
   ! Arguments:
   type(grid_), intent(in) :: d
