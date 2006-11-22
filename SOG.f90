@@ -10,7 +10,7 @@ program SOG
   use datetime, only: datetime_
   !
   ! Parameter values:
-  use fundamental_constants, only: g, f
+  use fundamental_constants, only: g
   !
   ! Variables:
   use grid_mod, only: grid
@@ -18,6 +18,7 @@ program SOG
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B
   use turbulence, only: nK
+  use mixing_layer, only: h
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! *** Temporary until turbulence refactoring is completed
@@ -50,7 +51,8 @@ program SOG
   use profiles_output, only: init_profiles_output, write_std_profiles, &
        profiles_output_close
   use user_output, only: write_user_timeseries, write_user_profiles
-  use mixing_layer, only: find_mixing_layer_depth
+  use mixing_layer, only: find_mixing_layer_depth, &
+       find_mixing_layer_indices, new_to_old_mixing_layer
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
@@ -99,6 +101,9 @@ program SOG
 
   ! Iteration limit for inner loop that solves KPP turbulence model
   integer :: niter
+  ! Value of h%new from previous iteration for blending with new value
+  ! to stabilize convergence of the implicit solver loop
+  real(kind=dp) :: h_i
 
   ! Variables for velocity component convergence metric
   double precision :: &
@@ -213,13 +218,6 @@ program SOG
   ! *** This should go somewhere else - maybe init_physics() (yet to come)
   niter = getpari("niter")
 
-  ! Initialize mixing, and mixed layer depths
-  ! *** It would be cool to calculate these from the initial salinity
-  ! *** profile read from the CTD file.
-  IF(h%new < grid%d_g(1))THEN 
-     h%new = grid%d_g(1)
-  END IF
-
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
   ! coefficients, and specific heat capacity (Cp).
@@ -246,9 +244,9 @@ program SOG
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
      ! step
-     h%old = h%new
      call new_to_old_physics()
      call new_to_old_vel_integrals()
+     call new_to_old_mixing_layer()
      call new_to_old_phys_RHS()
      call new_to_old_phys_Bmatrix()
      call new_to_old_bio_RHS()
@@ -270,20 +268,14 @@ program SOG
         T%grad_i = gradient_i(T%new)
         S%grad_i = gradient_i(S%new)
 
-        ! *** I think this is finding the depths of the grid point
-        ! *** and grid interface that bound the mixed layer depth
-        ! d_g(j_max_g) > h ie, hh%g is grid point just below h
-        CALL find_jmax_g(h, grid)
-        ! d_i(j_max_i) > h ie h%i is just above h
-        CALL find_jmax_i(h, grid)
-
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
         CALL surface_flux_sog(grid%M, rho%g, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value, Qinter, stress, &
-             day, dt/h%new, h, upwell_const, upwell, Einter,       &
+             day, dt/h%new, &
+             upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
 
         ! Calculate the wind stress, and the turbulent kinenatic flux
@@ -312,9 +304,9 @@ program SOG
         Bf_old = Bf
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
-        CALL buoyancy(grid, T%new, S%new, h, I, F_n,   &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface, &  ! in
-             B, Bf)                                       ! out
+        CALL buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
+             B, Bf)                                           ! out
 
         ! Blend the values of the surface buoyancy forcing from current
         ! and previous iteration to help convergence
@@ -334,22 +326,20 @@ K%t%total = 0.0
 K%u%total(1:) = nu%m%total
 K%t%total(1:) = nu%T%total
 K%s%total(1:) = nu%S%total
-
-        CALL stability   !stable = 0 (unstable), stable = 1 (stable), stable = 2 (no forcing)  this is the stability of the water column.
-
-! *** Turbulence refactoring bridge code
 omega%m%value = w%m
 omega%s%value = w%s
 
-        CALL interior_match(grid, h, K%t, nu%t%int_wave)  ! calculate nu (D5)
-        CALL interior_match(grid, h, K%u, nu%m%int_wave)
-!!$print *, "K%u%div = ", K%u%div
-!!$print *, "h%new, K%u%h: ", h%new, K%u%total(h%i-1), K%u%h, K%u%total(h%i)
-        CALL interior_match(grid, h, K%s, nu%s%int_wave)
+! *** Mixing layer length refactoring bridge code
+oh%new = h%new
+oh%g = h%g
+oh%i = h%i
+        CALL interior_match(grid, oh, K%t, nu%t%int_wave)  ! calculate nu (D5)
+        CALL interior_match(grid, oh, K%u, nu%m%int_wave)
+        CALL interior_match(grid, oh, K%s, nu%s%int_wave)
         !test conv
 
         IF (u_star /= 0. .OR. Bf < 0.) THEN
-           CALL interior_match2(omega, L_mo, u_star, h, grid) !test conv
+           CALL interior_match2(omega, L_mo, u_star, oh, grid) !test conv
         END IF
 
         !Define shape functions G_shape%x
@@ -412,14 +402,14 @@ omega%s%value = w%s
         END DO
 
         ! K star, enhance diffusion at grid point just below or above h (see (D6)
-        CALL modify_K(grid, h, K%u) !test conv  !!must modify G_shape!!
-        CALL modify_K(grid, h, K%s) !test conv  !!If G_shape is used again, use modified value!!
-        CALL modify_K(grid, h, K%t) !test conv
+        CALL modify_K(grid, oh, K%u) !test conv  !!must modify G_shape!!
+        CALL modify_K(grid, oh, K%s) !test conv  !!If G_shape is used again, use modified value!!
+        CALL modify_K(grid, oh, K%t) !test conv
 
         !!Define flux profiles, w,  and Q_t (vertical heat flux)!!
         !!Don-t need for running of the model!!  (not sure what this means)
         IF (u_star /= 0. .OR. Bf /= 0.) THEN
-           CALL def_gamma(L_mo, grid, wt_r, h, gamma, Bf, omega) 
+           CALL def_gamma(L_mo, grid, wt_r, oh, gamma, Bf, omega) 
            ! calculates non-local transport (20)
         ELSE
            gamma%t = 0.
@@ -520,9 +510,9 @@ S_RHS%diff_adv%new = Gvector%s
         ! buoyancy frequency
         ! *** Local buoyancy freqency may be part of mixing layer
         ! *** depth calculation
-        CALL buoyancy(grid, T%new, S%new, h, I, F_n,   &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface, &  ! in
-             B, Bf)                                       ! out
+        CALL buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
+             B, Bf)                                           ! out
         rho%grad_g = gradient_g(rho%g)
         DO xx = 1,grid%M
            N_2_g(xx) = -(g / rho%g(xx)) * rho%grad_g(xx)
@@ -556,44 +546,31 @@ S_RHS%diff_adv%new = Gvector%s
 
 
         IF (beta_t < 0.) THEN  !omega, vertical velocity scale
-           CALL def_v_t_sog(grid, h, N_2_g, omega%s%value, V_t_square, beta_t, L_mo) !test conv  
+           CALL def_v_t_sog(grid, oh, N_2_g, omega%s%value, V_t_square, beta_t, L_mo) !test conv  
            ! V_t_square, the turbulent velocity shear, (23)
         END IF
 
         ! Calculate the profile of bulk Richardson number (Large, etal
         ! (1994) eqn 21)
-        CALL define_Ri_b_sog(grid, h, surface_h, U%new, V%new, rho%g, Ri_b, &
+        CALL define_Ri_b_sog(grid, oh, surface_h, U%new, V%new, rho%g, Ri_b, &
              V_t_square, N_2_g)
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
-        call find_mixing_layer_depth (grid, Ri_b, year, day, day_time, count, &
-             h_i)
-        ! Apply the Ekman depth criterion to the mixing layer depth
-        ! when stable forcing exists
-        ! *** This code could probably go into ML_height_sog.
-        h_i = (h_i + h%new)/2.0 !use the average value!!!!!!!!##
-        IF (stable == 1) THEN          !Stability criteria 
-           h_Ekman = 0.7*u_star/f         ! see (24) and surrounding
-           IF (h_Ekman < L_mo) THEN
-              IF (h_i > h_Ekman) THEN
-                 h_i = h_Ekman
-                 write (*,*) 'Ekman', h_i
-              END IF
-           ELSE
-              IF (h_i > L_mo) THEN
-                 h_i = L_mo
-              END IF
-           END IF
-        END IF
+        !
+        ! This sets the values of the components of h%*.
+        h_i = h%new
+        call find_mixing_layer_depth (grid, Ri_b, Bf, year, day, day_time, &
+             count)
+        ! Average the newly calculated mixing layer depth with that
+        ! from the previous iteration to help stabilize the
+        ! convergence of the implicit solver loop
+        h%new = (h_i + h%new) / 2.
+        ! Set the value of the indices of the grid point & grid layer
+        ! interface immediately below the mixing layer depth.
+        call find_mixing_layer_indices()
 
-        IF (h_i < grid%d_g(1)) THEN  !minimum mixing
-           h_i = grid%d_g(1)
-        END IF
-
-        CALL find_jmax_g(h,grid) !***! can't be less than the grid
-
-        del = ABS(h_i - h%new)/grid%i_space(1)
-        h%new = h_i
-        CALL find_jmax_g(h,grid)
+        ! Calculate the mixing layer depth convergence metric for
+        ! measuring the progress of the implicit solver
+        del = abs(h_i - h%new) / grid%i_space(1)
 
         ! Calculate baroclinic pressure gradient components
         !
@@ -711,7 +688,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt, month_o)
      scount = scount + 1
-     !*** should compare to 1 m value... fix this to be grid independent
+     !*** Fix this to be grid independent
      sumS = sumS + 0.5*(S%new(2)+S%new(3))
      sumSriv = sumSriv + S_riv
   end do  !--------- End of time loop ----------
