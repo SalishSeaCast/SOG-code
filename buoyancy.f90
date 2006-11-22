@@ -17,7 +17,7 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
   real(kind=dp), dimension(0:grid%M+1), intent(in) :: &
        Tnew, &  ! Temperature profile
        Snew     ! Salinity profile
-  type(height), intent(in) :: hml  ! Mixing layer depth
+  real(kind=dp), intent(in) :: hml  ! Mixing layer depth
   real(kind=dp), dimension(0:grid%M), intent(in) :: &
        Itotal, &  ! Irradiance
        F_n        ! Fresh water contribution to salinity flux
@@ -46,12 +46,12 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
 
   ! Interpolate to find water property and flux values at the mixing
   ! layer depth
-  call interp_value(hml%new, grid%d_g, rho, rho_ml, j_below)
-  call interp_value(hml%new, grid%d_g, alpha, alpha_ml, j_below)
-  call interp_value(hml%new, grid%d_g, beta, beta_ml, j_below)
-  call interp_value(hml%new, grid%d_g, Cp, Cp_ml, j_below)
-  call interp_value(hml%new, grid%d_i, Itotal, I_ml, j_below)
-  call interp_value(hml%new, grid%d_i, F_n, Fn_ml, j_below)
+  call interp_value(hml, 0, grid%d_g, rho, rho_ml, j_below)
+  call interp_value(hml, 0, grid%d_g, alpha, alpha_ml, j_below)
+  call interp_value(hml, 0, grid%d_g, beta, beta_ml, j_below)
+  call interp_value(hml, 0, grid%d_g, Cp, Cp_ml, j_below)
+  call interp_value(hml, 0, grid%d_i, Itotal, I_ml, j_below)
+  call interp_value(hml, 0, grid%d_i, F_n, Fn_ml, j_below)
 
   ! Contribution of heat and fresh water fluxes to surface buoyancy
   ! forcing (Surface values less the amount at (and thus below) the
