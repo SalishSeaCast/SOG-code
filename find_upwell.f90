@@ -34,8 +34,6 @@ contains
     ! type definitions
     use precision_defs, only: dp, sp
     use grid_mod, only: grid_
-    ! subroutines
-    use grid_mod, only: interp_value
 
     implicit none
 
