@@ -18,7 +18,8 @@ contains
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays; we need
                ! wbar%u(0) & wbar%v(0)
-    USE declarations, only: K, gamma, h
+    use mixing_layer, only: h
+    USE declarations, only: K
 
     implicit none
 
