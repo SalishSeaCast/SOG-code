@@ -22,7 +22,10 @@ module turbulence
   !             profile in 1/3 power law regime
   !      c_s -- Coefficient of  non-dimensional turbulent scalar flux
   !             profile in 1/3 power law regime
-  !      kapa -- von Karman constant
+  !
+  !   kapa -- von Karman constant
+  !
+  !   epsiln -- Non-dimensional extent of the surface layer
   !
   ! Public Variables:
   !
@@ -51,15 +54,16 @@ module turbulence
                   ! non-dimensional turbulent momentum flux profile
        zeta_s, &  ! Max zeta value of the -1/3 power law regime of
                   ! non-dimensional turbulent scalar flux profile
-       a_m,   &   ! Coefficient of non-dimensional turbulent momentum
+       a_m,    &  ! Coefficient of non-dimensional turbulent momentum
                   ! flux profile in 1/3 power law regime
-       a_s,   &   ! Coefficient of non-dimensional turbulent scalar
+       a_s,    &  ! Coefficient of non-dimensional turbulent scalar
                   ! flux profile in 1/3 power law regime
-       c_m,   &   ! Coefficient of non-dimensional turbulent momentum
+       c_m,    &  ! Coefficient of non-dimensional turbulent momentum
                   ! flux profile in 1/3 power law regime
-       c_s,   &   ! Coefficient of non-dimensional turbulent scalar
+       c_s,    &  ! Coefficient of non-dimensional turbulent scalar
                   ! flux profile in 1/3 power law regime
-       kapa,  &   ! von Karman constant
+       kapa,   &  ! von Karman constant
+       epsiln, &  ! Non-dimensional extent of the surface layer
        ! Variables:
        nK, &      ! Overall diffusivity profile; a continuous profile of
                  ! K_ML%* in the mixing layer, and K%*%total below it
@@ -150,7 +154,8 @@ module turbulence
        c_s = 98.96,   &   ! Coefficient of non-dimensional turbulent
                           ! scalar flux profile in 1/3 power law
                           ! regime
-       kapa = 0.4         ! von Karman constant
+       kapa = 0.4,    &   ! von Karman constant
+       epsiln = 0.1       ! Non-dimensional extent of the surface layer
   !
   ! Private to module:
 
@@ -218,6 +223,8 @@ contains
     ! Calculate the diffusivity profile using the K profile
     ! parameterization algorithm of Large, et al (1994).
 
+    use precision_defs, only: dp
+
     implicit none
 
     ! Arguments:
@@ -241,7 +248,7 @@ contains
     ! convection.
     call double_diffusion()
 
-    ! Calculate total interior diffusivity: sum of vertical shear,
+    ! Calculate total interior diffusivities: sum of vertical shear,
     ! internal wave breaking, and double diffusion diffusivities
     ! (Large, et al (1994), eq'n (25))
     !
@@ -251,6 +258,10 @@ contains
     nu%T%total(1:) = nu%m%shear(1:) + nu%T%int_wave + nu%T%dd(1:)
     ! Salinity
     nu%S%total(1:) = nu%m%shear(1:) + nu%S%int_wave + nu%S%dd(1:)
+
+    ! Calculate the value of the total interior diffusivities, and
+    ! their vertical gradients at the mixing layer depth
+    call nu_h()
 
     ! Step 2: Calculate the turbulent momentum, thermal &
     ! salinity diffusivities in the mixing layer
@@ -440,6 +451,13 @@ contains
   end subroutine double_diffusion
 
 
+  subroutine nu_h()
+    ! Calculate the value of the total interior diffusivities, and
+    ! their vertical gradients at the mixing layer depth
+
+  end subroutine nu_h
+
+
   function nondim_momentum_flux(d) result(phi_m)
     ! Return the value of the non-dimensional momentum flux profile at
     ! the specified depth (Large, etal (1994), App. B)
@@ -527,32 +545,23 @@ contains
     ! Elements from other modules:
     ! Type Definitions:
     use precision_defs, only: dp
-    ! Subroutines:
-    use grid_mod, only: interp_value
     ! Variable Declarations:
     use grid_mod, only: &
          grid  ! Grid parameters, and arrays
-    use mixing_layer, only: &
-         epsiln  ! Non-dimension extent of the surface layer
 
     implicit none
 
     ! Argument:
     real(kind=dp), intent(in) :: &
          h  ! Mixing layer extent [m]
+
     ! Local variables:
     real(kind=dp) :: &
          d_surf, &  ! Surface layer extent [m]
-         phi_m_surf, &  ! Value of momentum non-dimensional flux
-                        ! profile at surface layer depth
-         phi_s_surf, &  ! Value of scalar non-dimensional flux profile
-                        ! at surface layer depth
-         zeta           ! Stability parameter; ratio of depth to
-                        ! Monin-Obukhov length scale
+         zeta       ! Stability parameter; ratio of depth to
+                    ! Monin-Obukhov length scale
     integer :: &
-         j, &     ! Loop index over grid depth
-         j_below  ! Index of the grid layer interface immediately
-                  ! below the surface layer
+         j  ! Loop index over grid depth
 
       ! Calculate extent of surface layer, and interpolate the values
       ! of the non-dimensional flux profiles at that depth
@@ -584,13 +593,9 @@ contains
     ! Elements from other modules:
     ! Type Definitions:
     use precision_defs, only: dp
-    ! Subroutines:
-    use grid_mod, only: interp_value
     ! Variable Declarations:
     use grid_mod, only: &
          grid  ! Grid parameters, and arrays
-    use mixing_layer, only: &
-         epsiln  ! Non-dimension extent of the surface layer
 
     implicit none
 
