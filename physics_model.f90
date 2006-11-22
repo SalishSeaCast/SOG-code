@@ -46,6 +46,7 @@ contains
     use physics_eqn_builder, only: alloc_phys_RHS_variables
     use baroclinic_pressure, only: init_baroclinic_pressure
     use turbulence, only: init_turbulence
+    use mixing_layer, only: init_mixing_layer
     
     implicit none
     
@@ -66,6 +67,9 @@ contains
     ! Allocate memory for turbulence model variables, and read
     ! parameter values from infile.
     call init_turbulence(M)
+    ! Allocate memory for mixing layer depth calculation variables,
+    ! and initialize them.
+    call init_mixing_layer(M)
   end subroutine init_physics
 
 
