@@ -10,7 +10,6 @@ module initial_sog
   DOUBLE PRECISION, PARAMETER:: &
        Uo = 0.0,     &  ! m/s
        Vo = 0.0,     &  ! m/s
-       hm =  2.0, &     !28, & !75.0, & !Large1996
 !!$       P_micro = 0.3D-3, &
 ! *** Parameter value setting of P_nano replaced by a variable version in 
 ! *** initial_mean below, so that initial value of flagellates biomass may
@@ -22,7 +21,7 @@ contains
 
   subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, Z, &
        NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
-       hi, d, cruise_id)       
+       hml, d, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_
@@ -44,7 +43,7 @@ contains
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
-    real(kind=dp), intent(out) :: hi !h%new
+    real(kind=dp), intent(in) :: hml ! Mixing layer depth
     type(grid_), intent(in) :: d
     character*4  cruise_id           ! cruise_id
 
@@ -97,7 +96,7 @@ contains
     !---biology jan 10 2005---------------------------------
 
     DO i = 2, d%M+1   
-       IF (d%d_g(i) <= hm) THEN  !Large1996  March 1960 initial profile        
+       IF (d%d_g(i) <= hml) THEN  !Large1996  March 1960 initial profile        
 
 !!$          Pmicro(i) = P_micro
 !!$          Pnano(i) = P_nano
@@ -179,8 +178,6 @@ contains
           Z(i) = Z(j) * 0.5 + Z(j+1) * 0.5
        endif
     enddo
-
-    hi = hm  !Large1996 !ho 
 
     !If the bottom fluxes are fixed, use the following 
     !tp reevaluate M+1 values:
