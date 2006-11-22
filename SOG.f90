@@ -83,10 +83,6 @@ program SOG
   real(kind=dp) :: upwell_const, S_riv, sumS=0, sumSriv=0
   integer :: scount=0
 
-  ! Internal wave breaking eddy viscosity for momentum and scalars
-  ! (tuned parameters)
-  real(kind=dp) :: nu_w_m, nu_w_s
-
   ! Interpolated river flows
   real(kind=sp) :: Qinter  ! Fraser River
   real(kind=sp) :: Einter  ! Englishman River
@@ -345,9 +341,11 @@ K%s%total(1:) = nu%S%total
 omega%m%value = w%m
 omega%s%value = w%s
 
-        CALL interior_match(grid, h, K%t, nu_w_s)  ! calculate nu (D5)
-        CALL interior_match(grid, h, K%u, nu_w_m)
-        CALL interior_match(grid, h, K%s, nu_w_s)   
+        CALL interior_match(grid, h, K%t, nu%t%int_wave)  ! calculate nu (D5)
+        CALL interior_match(grid, h, K%u, nu%m%int_wave)
+!!$print *, "K%u%div = ", K%u%div
+!!$print *, "h%new, K%u%h: ", h%new, K%u%total(h%i-1), K%u%h, K%u%total(h%i)
+        CALL interior_match(grid, h, K%s, nu%s%int_wave)
         !test conv
 
         IF (u_star /= 0. .OR. Bf < 0.) THEN
