@@ -66,7 +66,7 @@ program SOG
   ! Inherited modules
   ! *** Goal is to make these go away
   use declarations
-  use surface_forcing, only: del_o, precision, step_guess, step_min
+  use surface_forcing, only: precision, step_guess, step_min
   use initial_sog, only: initial_mean
   ! Subroutine & function modules:
   ! (Wrapping subroutines and functions in modules provides compile-time
@@ -101,13 +101,19 @@ program SOG
 
   ! Iteration limit for inner loop that solves KPP turbulence model
   integer :: niter
-  ! Value of h%new from previous iteration for blending with new value
-  ! to stabilize convergence of the implicit solver loop
-  real(kind=dp) :: h_i
+
+  ! Scales required for convergence
+  real(kind=dp) uscale, hscale
+
+  ! Value of h%new, u%new and v%new from previous iteration for 
+  ! blending with new value to stabilize convergence of the implicit 
+  ! solver loop
+  real(kind=dp) :: hprev
+  real(kind=dp), dimension (:), allocatable :: uprev, vprev
 
   ! Variables for velocity component convergence metric
   double precision :: &
-       &uprev, vprev, delu, delv
+       & delh, delu, delv
 
   ! Code identification string (maintained by CVS), for output file headers
   character*70 :: &
@@ -188,6 +194,14 @@ program SOG
      END IF
   END DO
 
+  ! *** great refractory guru to fix this out of here
+  allocate (uprev(0:grid%M+1), vprev(0:grid%M+1), &
+       STAT = alloc_stat(1))
+  if (alloc_stat(1) /= 0) then
+     print "(a)", " Allocation failed for uprev, vprev"
+     stop
+  endif
+
   ! Length of forcing data files (move to be read in)
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   met_n = 1918
@@ -244,6 +258,9 @@ program SOG
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
      ! step
+
+     h%old = h%new
+
      call new_to_old_physics()
      call new_to_old_vel_integrals()
      call new_to_old_mixing_layer()
@@ -295,22 +312,13 @@ program SOG
            F_n = 0.
         else
            Fw = Ft * exp(-grid%d_i / (Fw_depth * h%old))
-           F_n = S%new * Fw
+           F_n = 29.626 * Fw
         endif
-
-        ! Store the surface buoyancy forcing value from the previous
-        ! iteration so we can use it to blend with the new value to
-        ! help the implicit solver converge more quickly
-        Bf_old = Bf
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
         CALL buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
              B, Bf)                                           ! out
-
-        ! Blend the values of the surface buoyancy forcing from current
-        ! and previous iteration to help convergence
-        Bf = (count * Bf_old + (niter - count) * Bf) / niter
 
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
@@ -466,6 +474,9 @@ S_RHS%diff_adv%new = Gvector%s
            call new_to_old_phys_Bmatrix()
         endif
 
+        uprev = u%new
+        vprev = v%new
+
         ! Solve the semi-implicit diffusion/advection PDEs with
         ! Coriolis and baroclinic pressure gradient terms for the
         ! physics quantities.
@@ -554,39 +565,58 @@ S_RHS%diff_adv%new = Gvector%s
         ! (1994) eqn 21)
         CALL define_Ri_b_sog(grid, oh, surface_h, U%new, V%new, rho%g, Ri_b, &
              V_t_square, N_2_g)
+
+        hprev = h%new
+
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
-        !
         ! This sets the values of the components of h%*.
-        h_i = h%new
         call find_mixing_layer_depth (grid, Ri_b, Bf, year, day, day_time, &
              count)
         ! Average the newly calculated mixing layer depth with that
         ! from the previous iteration to help stabilize the
         ! convergence of the implicit solver loop
-        h%new = (h_i + h%new) / 2.
+        ! (and if things aren't converging, try something different)
+        if (count.ge.10.and.count.le.13) then
+           h%new = 0.75*h%new + 0.25*hprev
+           u%new = 0.75*u%new + 0.25*uprev
+           v%new = 0.75*v%new + 0.25*vprev
+        elseif (count.ge.23.and.count.le.26) then
+           h%new = 0.25*h%new + 0.75*hprev
+           u%new = 0.25*u%new + 0.75*uprev
+           v%new = 0.25*v%new + 0.75*vprev
+        else
+           h%new = (hprev + h%new) / 2.
+           u%new = (uprev + u%new) / 2.
+           v%new = (vprev + v%new) / 2.
+        endif
+
         ! Set the value of the indices of the grid point & grid layer
         ! interface immediately below the mixing layer depth.
         call find_mixing_layer_indices()
 
         ! Calculate the mixing layer depth convergence metric for
         ! measuring the progress of the implicit solver
-        del = abs(h_i - h%new) / grid%i_space(1)
+        ! Accuracy is 2% at large mixed layer 
+        ! depths and about 4 cm at 1 m mixed layer depths
+        hscale = 0.02 * hprev + 0.02
+        delh = ABS(hprev - h%new)/hscale
+
+
+        ! Calculate convergence metric for velocity field
+        ! Accuracy is 2% at large 
+        ! velocities and 0.7 cm/s at 10.0 cm/s (units are m/s)
+        uscale = 0.02*sqrt(uprev(1)**2+vprev(1)**2) + 0.005
+        delu = abs(u%new(1)-uprev(1))/uscale
+        delv = abs(v%new(1)-vprev(1))/uscale
 
         ! Calculate baroclinic pressure gradient components
         !
         ! This calculates the values of the dPdx_b, and dPdy_b arrays.
         call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g)
 
-        ! Calculate convergence metric for velocity field
-        delu = abs(U%new(1)-uprev)/0.01
-        delv = abs(V%new(1)-vprev)/0.01
-        uprev = U%new(1)
-        vprev = V%new(1)
-        if (del.lt.delu) del = delu
-        if (del.lt.delv) del = delv
 
         ! Test for convergence of implicit solver
-        if (count >= 2 .and. del < del_o) then
+        if (count >= 2 .and. max(delh,delu,delv) < 1) then
            exit
         endif
      enddo  !---------- End of the implicit solver loop ----------
