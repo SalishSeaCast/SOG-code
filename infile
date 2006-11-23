@@ -59,14 +59,14 @@
 
 ! Physics model parameters
 ! Turbulence:
-"nu_w_m"        2.5e-4          "internal wave breaking momentum mixing"
-"nu_w_s"        2.5e-5          "internal wave breaking scalar mixing"
+"nu_w_m"        1.0e-4          "internal wave breaking momentum mixing"
+"nu_w_s"        1.0e-5          "internal wave breaking scalar mixing"
 
 ! Biology model parameters:
 ! Model complexity flags:
-"flagellates_on"	.true.	"include flagellates in model?"
-"remineralization"	.true.	"include remineralization loop in model?"
-"use microzooplankton"  .true.  "include microzooplankton in model?"
+"flagellates_on"	.false.	"include flagellates in model?"
+"remineralization"	.false.	"include remineralization loop in model?"
+"use microzooplankton"  .false.  "include microzooplankton in model?"
 ! Phytoplankton values:
 "Micro, max growth"	3.3e-05      "micro maximum growth under light limit"
 "Nano, max growth"      1.65e-05      "nano maximum growth under light limit"
@@ -124,8 +124,9 @@
 
 ! Physics model parameters:
 "upwell_const"  1.25e-5         "maximum upwelling velocity [m/s]"
-"Fw_scale"	2.65e-7		"fresh water scale factor for river flows"
-"Fw_surface"	.true.		"add all of the fresh water on the surface?"
+"Fw_scale"	2.7e-7		"fresh water scale factor for river flows"
+"Fw_surface"	.false.		"add all of the fresh water on the surface?"
+"Fw_depth"      1.2             "interface thickness"
 
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
