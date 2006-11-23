@@ -18,21 +18,12 @@ module surface_forcing
        zero =  0.
   DOUBLE PRECISION, PARAMETER:: Cv = 1.5  !1.99 !set to keep beta_t = -0.2
        !beta_t = -0.2 only for convection
-  DOUBLE PRECISION, PARAMETER::S_ice = 0.0, & !ice salinity. unknown
-       rho_ice = 1000.0
   DOUBLE PRECISION, PARAMETER::C_star = 9.9
-  DOUBLE PRECISION, PARAMETER::del_o = 0.10, &!tolerance
-       A_stress = -0.6, & !N/m^2 Wind stress constant
-       T_stress = 57600.0, &  !seconds or 16 hrs
+  DOUBLE PRECISION, PARAMETER:: &
        Q_o = 1368.0, & !1367.0? W/m^2  Solar constant
-       Lon = 145., &  !(145oW)
        !           albedo = 0.061, &  !6% Large 1996
-  albedo = 0.18, &  !KC 17% OCT.22 2004
-       emiss = -1.0, & !emissivity Large 1996
-       Stef_Boltz = 5.6697D-08, & !W/m^2/K^4
-       R_v = 287.04, & !J/kg/K  gas constant for dry air
-       mu_3 = 0.2, &   !(Denman)^(-1)  gN/m^2  attenuation coeff  
-       handle = 1.0D-02  !gN(P)/gN(Z)/(handle time 's')   swim diffusivity
+       albedo = 0.18  !KC 17% OCT.22 2004
+
   !***
   DOUBLE PRECISION, DIMENSION(13), PARAMETER::leap_year = (/ 1956, 1960, 1964, 1968, 1972,1976, 1980, &
        1984, 1988, 1992, 1996, 2000, 2004 /)
