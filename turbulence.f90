@@ -325,7 +325,7 @@ contains
     ! Local parameter value declarations:
     real(kind=dp), parameter :: &
          Ri_o = 0.7d0, &   ! Critical gradient Richardson number
-         nu_o = 1.0d-3, &  ! Maximum shear diffusivity; Large, et al
+         nu_o = 5.0d-3, &  ! Maximum shear diffusivity; Large, et al
                            ! (1994) recommends 50e-4
          p_1 = 3.0d0       ! Power constant for shear diffusivity
                            ! parameterization
