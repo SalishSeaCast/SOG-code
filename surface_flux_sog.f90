@@ -73,9 +73,9 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
      S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
 
      ! tuned fresh water flux value (to give, on average) the parameterized
-     ! value above.  To keep the fit nice through river flow levels, the
-     ! exponent here must match the upwell exponent.
-     Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver) * (Qriver/2720)**0.41
+     ! value above.  
+     ! *** need to check linearity over river flows.
+     Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver)
 
      ! The entrainment of deep water into the bottom of the
      ! grid is based on the parameterization derived by Susan Allen in
