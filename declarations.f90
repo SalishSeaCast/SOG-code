@@ -30,11 +30,7 @@ module declarations
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
 
-  DOUBLE PRECISION, DIMENSION(365)::insol_avg, insol_actual_avg, insol_smooth, insol_actual_smooth
-  !                                        avgdata_u, avgdata_v
-  DOUBLE PRECISION, DIMENSION(0:366)::smooth_u, smooth_v
-  DOUBLE PRECISION::begin_hour,end_hour  ! used in interpolate_dt
-  DOUBLE PRECISION :: time, del, del_p
+  DOUBLE PRECISION :: time    !*** core variable?
 
   ! Surface buoyancy forcing
   real(kind=dp) :: &
