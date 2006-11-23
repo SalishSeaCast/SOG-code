@@ -13,11 +13,12 @@ module freshwater
   public :: S_riv
   public :: freshwater_bio
 
-  real(kind=dp), parameter :: river_nitrate = 6.4
-  real(kind=dp), parameter :: river_Pmicro = 0.
-  real(kind=dp), parameter :: river_Pnano = 0.
-  real(kind=dp), parameter :: river_Zoo = 0.
-  real(kind=dp), parameter :: river_silicon = 60.0
+  ! circulation strength of a scalar is equal to deep value minus river value
+  real(kind=dp), parameter :: phys_circ_nitrate = 30.5-13.
+  real(kind=dp), parameter :: phys_circ_Pmicro = 0.
+  real(kind=dp), parameter :: phys_circ_Pnano = 0.
+  real(kind=dp), parameter :: phys_circ_Zoo = 0.
+  real(kind=dp), parameter :: phys_circ_silicon = 54.0-80.0
 
   real(kind=dp) :: S_riv ! surface salinity prediction from fit
 
@@ -49,9 +50,8 @@ contains
     S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
     
     ! tuned fresh water flux value (to give, on average) the parameterized
-    ! value above.  To keep the fit nice through river flow levels, the
-    ! exponent here must match the upwell exponent.
-    Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver) * (Qriver/Qmean)**0.41
+    ! value above.  
+    Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver) 
     
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
@@ -72,7 +72,7 @@ contains
   subroutine freshwater_bio (qty, current_value, surf_flux, distrib_flux)
 ! calculates the freshwater biological fluxes
 
-    
+    use grid_mod, only: grid
     implicit none
     
     character (len=*), intent(in) :: qty
@@ -80,18 +80,24 @@ contains
     real (kind=dp), intent(out) :: surf_flux
     real (kind=dp), dimension(0:), intent(out) :: distrib_flux
 
+    integer :: i
+
     if (Fw_surface) then
        distrib_flux = 0.
        if (qty.eq."nitrate") then
-          surf_flux = - Ft * (river_nitrate - current_value(1))
+          ! if phyto are using the nitrate the grad is zero'd. 
+          ! 4.0 = 2 x (Michalis-Menton K)
+          surf_flux = Ft * phys_circ_nitrate * &
+               min(4.0, current_value(1))/ 4.0
        elseif (qty.eq."Pmicro") then
-          surf_flux = - Ft * (river_Pmicro - current_value(1))
+          surf_flux = Ft * (phys_circ_Pmicro)
        elseif (qty.eq."Pnano") then
-          surf_flux = - Ft * (river_Pnano - current_value(1))
+          surf_flux = Ft * (phys_circ_Pnano)
        elseif (qty.eq."Zoo") then
-          surf_flux = - Ft * (river_Zoo - current_value(1))
+          surf_flux = Ft * (phys_circ_Zoo)
        elseif (qty.eq."silicon") then
-          surf_flux = - Ft * (river_silicon - current_value(1))
+          surf_flux = Ft * phys_circ_silicon * &
+               min(4.0, current_value(1)) / 4.0
        else
           write (*,*) "problems in freshwater, river flux for ", qty, &
                " is not defined."
@@ -100,15 +106,24 @@ contains
     else ! distributed fresh water and fluxes
        surf_flux = 0.
        if (qty.eq."nitrate") then
-          distrib_flux = - Fw * (river_nitrate - current_value)
+          ! vector variation does not give the same results as the loop
+          do i=0,grid%M
+             ! if phyto are using the nitrate the grad is zero'd. 
+             ! 4.0 = 2 x (Michalis-Menton K)
+             distrib_flux(i) = Fw(i) * phys_circ_nitrate * &
+                  min(4.0,current_value(i))/4.0
+          enddo
        elseif (qty.eq."Pmicro") then
-          distrib_flux = - Fw * (river_Pmicro - current_value)
+          distrib_flux = Fw * (phys_circ_Pmicro)
        elseif (qty.eq."Pnano") then
-          distrib_flux = - Fw * (river_Pnano - current_value)
+          distrib_flux = Fw * (phys_circ_Pnano)
        elseif (qty.eq."Zoo") then
-          distrib_flux = - Fw * (river_Zoo - current_value)
+          distrib_flux = Fw * (phys_circ_Zoo)
        elseif (qty.eq."silicon") then
-          distrib_flux = - Fw * (river_silicon - current_value)
+          do i=0,grid%M
+             distrib_flux = Fw(i) * phys_circ_silicon * &
+                  min(4.0, current_value(i))/4.0
+          enddo
        else
           write (*,*) "problems in freshwater, river flux for ", qty, &
                " is not defined."
