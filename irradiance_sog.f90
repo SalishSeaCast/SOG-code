@@ -105,15 +105,6 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
            cloud%type(of)%B*b**2.0*&
            180.0/PI/60.0*(SIN(PI/180.0*(sunset-12.0)*30.0)-SIN(PI/180.0*(sunrise-12.0)*30.0)))/24.0 
 
-! Qs is the daily integrated value
-
-!     PRINT "(A)","II"
-!      PRINT *,II
-!      PRINT "(A)","Qs"
-!      PRINT *,Qs
-!pause
-!----------------------------------------------------------
-!KC Oct.12 2004
 
       Ipar = 0.        !PAR
       In = 0.          !total light!
@@ -125,20 +116,25 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
 ! Light is defined on interfaces
 ! parameterization of Nov 2006 by S.Allen based on SOG data
+! and then slightly changed (+0.01 in constant -0.01 in exp) 
+! to make IPAR contours match better deep in water column (fit
+! was done to 11 m)
 
       do k = 1, d%M    
-         ! KK is evaluated on the grid points
-         KK = 0.091 + 0.0365 * (Pmicro(k)+Pnano(k)) &
-              + 2.48d-4 * Qriver * exp(-d%d_g(k)/1.74)
-         Ipar(k) = Ipar(k-1) * exp(-d%g_space(k)*KK)
-         Iparmax(k) = Iparmax(k-1) * exp(-d%g_space(k) * KK)
+         ! KK is evaluated on the grid points         
+         ! 1.5 is correction uM to mg/m3 chl, 0.5 is picoplankton
+         KK = 0.0722 + 0.0377 * 1.5 * (Pmicro(k)+Pnano(k)+0.5)**0.665 &
+              + (2.307d-8 * Qriver**2 + 0.427) * exp(-d%d_g(k)/2.09)
+         Ipar(k) = Ipar(k-1) * exp(-d%i_space(k)*KK)
+         Iparmax(k) = Iparmax(k-1) * exp(-d%i_space(k) * KK)
+
          if (Ipar(k) < 0.01 * Ipar(0) .and. check == 0) then            
             I_k = k                                          
             check = 1                 
          end if               
          ! Total light for heat budget
-         In(k) = 0.70 * In(k-1) * exp(-d%g_space(k) * (0.8102 * KK + 1.1854)) &
-              + 0.30 * In(k-1) * exp(-d%g_space(k) * (0.8226 * KK - 0.0879))
+         In(k) = 0.70 * In(k-1) * exp(-d%i_space(k) * (0.8102 * KK + 1.1854)) &
+              + 0.30 * In(k-1) * exp(-d%i_space(k) * (0.8226 * KK - 0.0879))
       end do
 
 
