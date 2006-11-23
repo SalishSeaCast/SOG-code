@@ -124,7 +124,7 @@
 
 ! Physics model parameters:
 "upwell_const"  1.25e-5         "maximum upwelling velocity [m/s]"
-"Fw_scale"	2.7e-7		"fresh water scale factor for river flows"
+"Fw_scale"	1.6e-7		"fresh water scale factor for river flows"
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
 "Fw_depth"      1.2             "interface thickness"
 
