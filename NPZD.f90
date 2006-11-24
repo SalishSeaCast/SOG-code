@@ -53,9 +53,10 @@ module NPZD
   ! Rate parameters for phytoplankton
   type :: rate_para_phyto
      real(kind=dp) :: R, &  ! max growth rate for light limitation
-          sigma, & ! parameter in light limitation
-          gamma, & ! loss parameter under light limitation
-          inhib, & ! light inhibition
+          Iopt, & ! optimum light (Steeves scheme)
+          maxtemp, & ! maximum temp for growth
+          temprange, & ! range below tempmax that temp is limiting
+          gamma, & ! loss parameter under light limitation          
           k, & ! half saturation constant
           ! preference for NO3 over NH (always less than 1 as NH is preferred)
           kapa, &
@@ -170,15 +171,18 @@ contains
     ! max growth rate for light limitation
     rate_micro%R = getpard('Micro, max growth')
     rate_nano%R = getpard('Nano, max growth')
-    ! parameter in light limitation 
-    rate_micro%sigma = getpard('Micro, sigma')
-    rate_nano%sigma = getpard('Nano, sigma')
+    ! optimum light level
+    rate_micro%Iopt = getpard('Micro, I_opt')
+    rate_nano%Iopt = getpard('Nano, I_opt')
+    ! maximum temp for growth
+    rate_micro%maxtemp = getpard('Micro, max temp')
+    rate_nano%maxtemp = getpard('Nano, max temp')
+    ! temp range of limitation below max
+    rate_micro%temprange = getpard('Micro, temp range')
+    rate_nano%temprange = getpard('Nano, temp range')
     ! loss parameter under light limitation
     rate_micro%gamma = getpard('Micro, gamma loss')
     rate_nano%gamma = getpard('Nano, gamma loss')
-    ! light inhibition
-    rate_micro%inhib = getpard('Micro, light inhib') 
-    rate_nano%inhib = getpard('Nano, light inhib') 
     ! NO3 half saturation constant
     rate_micro%k = getpard('Micro, NO3 k')
     rate_nano%k = getpard('Nano, NO3 k')
@@ -299,12 +303,13 @@ contains
   end subroutine dalloc_biology_variables
 
 
-  subroutine p_growth(M, NO, NH, Si, P, I_par, temp_Q10, rate, plank) 
+  subroutine p_growth(M, NO, NH, Si, P, I_par, temp_Q10, Temp, rate, plank) 
     ! Calculate the growth (light limited
     ! or nutrient limited) 
     ! of either phytoplankton class which 
     ! are functions of temperature
     use precision_defs, only: dp
+    use unit_conversions, only: KtoC
     use mean_param, only: plankton2
     use surface_forcing, only: small
     implicit none
@@ -316,6 +321,7 @@ contains
     real(kind=dp), dimension(1:M), intent(in) :: P
     real(kind=dp), dimension(0:M), intent(in) :: I_par  ! light
     real(kind=dp), dimension(1:M), intent(in) :: temp_Q10  ! Q10 temp effect
+    real(kind=dp), dimension(0:), intent(in) :: temp ! temperature
     ! parameters of the growth equations
     type(rate_para_phyto), intent(in) :: rate
     ! out are the growth values
@@ -336,20 +342,26 @@ contains
     Oup_cell = 0.
     Hup_cell = 0.
 
-    ! flagella_jun06/ Next loop is different from V.16.1 => Rmax(replaces plank%R in KPP) 
-    ! is temp dependent in SOG 
-
     DO j = 1,M
 
-       ! biological process impactedby Q10 temperature effect
-
        ! maximum growth rate (before light/nutrient limitation)
-       Rmax(j)=rate%R*temp_Q10(j)
 
-       plank%growth%light(j) = Rmax(j)*(1.0-EXP(-rate%sigma*I_par(j)/Rmax(j)))
+       ! biological process impactedby Q10 temperature effect
+       Rmax(j)= rate%R * temp_Q10(j) &
+            ! and organisms can have a maximum growth temp
+            * min ( max(rate%maxtemp- KtoC(temp(j)), 0.), rate%temprange) / &
+            rate%temprange
 
-       Uc(j) = (1.0-rate%gamma)*plank%growth%light(j)* &
-            (1/(1+rate%inhib*I_par(j)))
+       plank%growth%light(j) = Rmax(j)  * &
+            ! Steeves scheme like but with extended high light range
+            ! (Steves scheme has built in light inhibition)
+            ! 0.67, 2.7 and 1.8 are constants for making the fit
+            ! Steeves like at small light and making it fit Durbin for
+            ! Thalassosira nordelenski at higher light
+            (1 - exp(-I_par(j)/(0.67 * rate%Iopt)) ) * &
+            exp(-I_par(j)/(2.7 * rate%Iopt)) * 1.8
+
+       Uc(j) = (1.0 - rate%gamma) * plank%growth%light(j)
     END DO
 
 !!!!!!!!!!!!!!!Define growth due to nutrients!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -579,7 +591,7 @@ contains
     ! micro is the growth parameters for micro plankton (IN) and the growth rates 
     ! (OUT)
 
-    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10, & ! in
+    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10, Temp, & ! in
          rate_micro, micro)         ! in and out, in, out
 
     NatMort_micro=(rate_micro%Rm)*temp_Q10
@@ -599,7 +611,7 @@ contains
     ! (OUT)
     ! NatMort_nano is physiological death, GrazMort_nano is grazing mortality
 
-    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10, & ! in
+    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10, Temp, & ! in
          rate_nano, nano)              ! in and out, in, out
 
     NatMort_nano = (rate_nano%Rm) * temp_Q10
