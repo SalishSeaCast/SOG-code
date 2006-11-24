@@ -299,7 +299,7 @@ contains
   end subroutine dalloc_biology_variables
 
 
-  subroutine p_growth(M, NO, NH, Si, P, I_par, temp_effect, rate, plank) 
+  subroutine p_growth(M, NO, NH, Si, P, I_par, temp_Q10, rate, plank) 
     ! Calculate the growth (light limited
     ! or nutrient limited) 
     ! of either phytoplankton class which 
@@ -315,7 +315,7 @@ contains
     ! plankton concentraton (either Pmicro or Pnano)
     real(kind=dp), dimension(1:M), intent(in) :: P
     real(kind=dp), dimension(0:M), intent(in) :: I_par  ! light
-    real(kind=dp), dimension(1:M), intent(in) :: temp_effect  ! Q10 temp effect
+    real(kind=dp), dimension(1:M), intent(in) :: temp_Q10  ! Q10 temp effect
     ! parameters of the growth equations
     type(rate_para_phyto), intent(in) :: rate
     ! out are the growth values
@@ -344,7 +344,7 @@ contains
        ! biological process impactedby Q10 temperature effect
 
        ! maximum growth rate (before light/nutrient limitation)
-       Rmax(j)=rate%R*temp_effect(j)
+       Rmax(j)=rate%R*temp_Q10(j)
 
        plank%growth%light(j) = Rmax(j)*(1.0-EXP(-rate%sigma*I_par(j)/Rmax(j)))
 
@@ -471,7 +471,7 @@ contains
           WasteMicro,     &  ! Profile of micro phytos converted to waste
           WasteNano,      &  ! Profile of nano phytos converted to waste
           Si_remin           ! Profile of dissolution of biogenic Si detritus
-    real(kind=dp), dimension(1:M) :: temp_effect
+    real(kind=dp), dimension(1:M) :: temp_Q10
     integer :: &
          bPZ, &  ! Beginning index for a quantity in the PZ array
          ePZ     ! Ending index for a quantity in the PZ array
@@ -569,8 +569,9 @@ contains
     remin_NH = 0.
 
     ! all biological processes are impacted by Q10 temp effect
+    ! parameters are set for 20 degrees C.
     ! calculate it
-    temp_effect = 1.88**(0.1 * (KtoC(Temp(1:M)) - 20.)) 
+    temp_Q10 = dexp (0.07 * (KtoC(Temp(1:M)) - 20.d0))
 
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of micro plankton
     ! I_par is light, Temp is temperature 
@@ -578,11 +579,11 @@ contains
     ! micro is the growth parameters for micro plankton (IN) and the growth rates 
     ! (OUT)
 
-    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_effect, & ! in
+    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10, & ! in
          rate_micro, micro)         ! in and out, in, out
 
-    NatMort_micro=(rate_micro%Rm)*temp_effect
-    GrazMort_micro=(rate_micro%M_z)*temp_effect
+    NatMort_micro=(rate_micro%Rm)*temp_Q10
+    GrazMort_micro=(rate_micro%M_z)*temp_Q10
 
     ! put microplankton mortality into the medium detritus flux
 !SEA    GrazMort_micro = (1.0 + 5.0 * exp(-(day-150.)**2/60.**2) + &
@@ -598,11 +599,11 @@ contains
     ! (OUT)
     ! NatMort_nano is physiological death, GrazMort_nano is grazing mortality
 
-    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_effect, & ! in
+    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10, & ! in
          rate_nano, nano)              ! in and out, in, out
 
-    NatMort_nano = (rate_nano%Rm) * temp_effect
-    GrazMort_nano = (rate_nano%M_z) * temp_effect
+    NatMort_nano = (rate_nano%Rm) * temp_Q10
+    GrazMort_nano = (rate_nano%M_z) * temp_Q10
 
 !SEA    GrazMort_nano = GrazMort_nano*Pnano ! ie propto the square
     WasteNano = WasteNano + (GrazMort_nano+NatMort_nano)*Pnano
