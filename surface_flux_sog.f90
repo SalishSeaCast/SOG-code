@@ -4,9 +4,7 @@
 SUBROUTINE surface_flux_sog(mm,ro, wt_r, & 
                          salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
-                         stress,&
                          day,dtdz,&
-!!$                         h,&
                          upwell_const,upwell,Eriver,u,dt, &
                          Fw_surface, Fw_scale, Ft, &
                          count)
@@ -17,7 +15,6 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
       USE mean_param
   implicit none
   ! Arguments:
-!!$      TYPE(height), INTENT(IN)::h
       INTEGER, INTENT(IN)::mm,day
       DOUBLE PRECISION,DIMENSION(0:mm+1), INTENT(IN)::ro ! density%new
       DOUBLE PRECISION, INTENT(IN):: alp, Cp_o, bet !alph%i(0), Cp%i(0), beta%i(0)
@@ -31,7 +28,6 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
       REAL, INTENT(IN):: cf,atemp,humid, Qriver, Eriver
       INTEGER, INTENT(IN)::j_gamma
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
-      TYPE(windstress), INTENT(IN OUT)::stress
       double precision, intent(out):: S_riv ! salinity goal
       logical, intent(in) :: Fw_surface
       real(kind=dp), intent(in) :: Fw_scale  ! Fresh water scale factor for river flows
