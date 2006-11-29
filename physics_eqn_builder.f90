@@ -182,7 +182,7 @@ contains
     use precision_defs, only: dp
     use grid_mod, only: grid_
     ! Variable Declarations:
-    use declarations, only: K  ! *** Should change to use turbulence
+    use turbulence, only: K
     ! Subroutines:
     use diffusion, only: diffusion_coeff
     
@@ -195,13 +195,13 @@ contains
          dt  ! Time step [s]
 
     ! Velocity components
-    call diffusion_coeff(grid, dt, K%u%all, & ! in
+    call diffusion_coeff(grid, dt, K%m, & ! in
          Bmatrix%vel%new)                     ! out
     ! Temperature
-    call diffusion_coeff(grid, dt, K%T%all, & ! in
+    call diffusion_coeff(grid, dt, K%T, & ! in
          Bmatrix%T%new)                       ! out
     ! Salinity
-    call diffusion_coeff(grid, dt, K%S%all, & ! in
+    call diffusion_coeff(grid, dt, K%S, & ! in
          Bmatrix%S%new)                       ! out
   end subroutine calc_phys_Bmatrices
 
@@ -217,8 +217,9 @@ contains
     use grid_mod, only: grid_
     ! Variable Declarations:
     use turbulence, only: &
-         wbar  ! Turbulent kinematic flux profile arrays
-    use declarations, only: K, gamma  ! *** Should change to use turbulence
+         wbar, &  ! Turbulent kinematic flux profile arrays
+         K        ! Turbulent diffusivity profile arrays
+    use declarations, only: gamma  ! *** Should change to use diffusion
     use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
     ! Subroutines:
     use diffusion, only: diffusion_bot_surf_flux, diffusion_nonlocal_fluxes
@@ -237,20 +238,20 @@ contains
          S
 
     ! Velocity components
-    call diffusion_bot_surf_flux (grid, dt, K%U%all, wbar%u(0), &  ! in
-         U(grid%M+1), &                                            ! in
-         U_RHS%diff_adv%new)                                       ! out
-    call diffusion_bot_surf_flux (grid, dt, K%U%all, wbar%v(0), &  ! in
-         V(grid%M+1),                                           &  ! in
-         V_RHS%diff_adv%new)                                       ! out
+    call diffusion_bot_surf_flux (grid, dt, K%m, wbar%u(0), &  ! in
+         U(grid%M+1), &                                        ! in
+         U_RHS%diff_adv%new)                                   ! out
+    call diffusion_bot_surf_flux (grid, dt, K%m, wbar%v(0), &  ! in
+         V(grid%M+1),                                       &  ! in
+         V_RHS%diff_adv%new)                                   ! out
     ! Temperature
-    call diffusion_nonlocal_fluxes(grid, dt, K%T%all, gamma%t, &  ! in
-         wbar%t(0), -Q_n, T(grid%M+1),                         &  ! in
-         T_RHS%diff_adv%new)                                      ! out
+    call diffusion_nonlocal_fluxes(grid, dt, K%T, gamma%t, &  ! in
+         wbar%t(0), -Q_n, T(grid%M+1),                     &  ! in
+         T_RHS%diff_adv%new)                                  ! out
     ! Salinity
-    call diffusion_nonlocal_fluxes(grid, dt, K%S%all, gamma%s, &  ! in
-         wbar%s(0), F_n, S(grid%M+1),                          &  ! in
-         S_RHS%diff_adv%new)                                      ! out
+    call diffusion_nonlocal_fluxes(grid, dt, K%S, gamma%s, &  ! in
+         wbar%s(0), F_n, S(grid%M+1),                      &  ! in
+         S_RHS%diff_adv%new)                                  ! out
   end subroutine init_phys_RHS_fluxes
 
 
