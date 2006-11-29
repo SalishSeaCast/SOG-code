@@ -44,4 +44,10 @@ before_turbulence_refactoring - immediately before starting to
 			        SOG.f90, and lots of subroutine into
 			        the turbulence module. (2006/11/10)
 
+turbulence_refactoring_completed - immediately after completion of
+			           refactoring of turbulence
+			           diffusivity code from SOG.f90, and
+			           lots of subroutine into the
+			           turbulence module. (2006/11/29)
+
 # end of file
