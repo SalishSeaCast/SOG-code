@@ -17,12 +17,12 @@ program SOG
   use core_variables, only: U, V, T, S, P, Z, N, Si, D
   use water_properties, only: rho, alpha, beta, Cp
   use physics_model, only: B
-  use turbulence, only: nK
+  use turbulence, only: K
   use mixing_layer, only: h
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! *** Temporary until turbulence refactoring is completed
-  use turbulence, only: u_star, L_mo, wbar, nu, w
+  use turbulence, only: u_star, L_mo, w, wbar
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -68,11 +68,6 @@ program SOG
   use declarations
   use surface_forcing, only: precision, step_guess, step_min
   use initial_sog, only: initial_mean
-  ! Subroutine & function modules:
-  ! (Wrapping subroutines and functions in modules provides compile-time
-  !  checking of number and type of arguments - but not order!)
-  ! *** These should eventually end up in refactored modules
-  use define_flux_mod
 
   implicit none
 
@@ -290,7 +285,7 @@ program SOG
         CALL surface_flux_sog(grid%M, rho%g, wt_r, S%new(1),        &
              S%old(1), S_riv, T%new(0), j_gamma, I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
-             atemp_value, humid_value, Qinter, stress, &
+             atemp_value, humid_value, Qinter, &
              day, dt/h%new, &
              upwell_const, upwell, Einter,       &
              u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
@@ -309,9 +304,9 @@ program SOG
         ! contribution to the salinity profile
         ! *** Move to a subroutine
         if (Fw_surface) then
-           F_n = 0.
+           F_n = 0.0d0
         else
-           Fw = Ft * exp(-grid%d_i / (Fw_depth * h%old))
+           Fw = Ft * exp(-grid%d_i / (Fw_depth * h%new))
            F_n = 29.626 * Fw
         endif
 
@@ -326,109 +321,26 @@ program SOG
         ! This calculates the values of the nu%*, K_ML%*, and K%*
         ! variables that are declared in the turbulence module so that
         ! they can be used by other modules.
-        call calc_KPP_diffusivity(Bf, h%new)
-! *** Turbulence refactoring bridge code
-K%u%total = 0.0
-K%s%total = 0.0
-K%t%total = 0.0          
-K%u%total(1:) = nu%m%total
-K%t%total(1:) = nu%T%total
-K%s%total(1:) = nu%S%total
-omega%m%value = w%m
-omega%s%value = w%s
+        call calc_KPP_diffusivity(Bf, h%new, h%i, h%g)
+!!$! *** Turbulence refactoring bridge code
+omega%m%value = w%m%profile
+omega%s%value = w%s%profile
 
-! *** Mixing layer length refactoring bridge code
+! *** Mixing layer depth refactoring bridge code
 oh%new = h%new
 oh%g = h%g
 oh%i = h%i
-        CALL interior_match(grid, oh, K%t, nu%t%int_wave)  ! calculate nu (D5)
-        CALL interior_match(grid, oh, K%u, nu%m%int_wave)
-        CALL interior_match(grid, oh, K%s, nu%s%int_wave)
-        !test conv
-
-        IF (u_star /= 0. .OR. Bf < 0.) THEN
-           CALL interior_match2(omega, L_mo, u_star, oh, grid) !test conv
-        END IF
-
-        !Define shape functions G_shape%x
-
-        IF (u_star /= 0. .OR. Bf < 0.) THEN
-           CALL shape_parameters(K%u,omega%m, h%new, a2%m, a3%m)
-           CALL shape_parameters(K%s,omega%s, h%new, a2%s, a3%s)
-           CALL shape_parameters(K%t,omega%s, h%new, a2%t, a3%t) !test conv
-        ELSE
-           a2%m = -2.0
-           a2%s = -2.0
-           a2%t = -2.0
-           a3%m = 1.0
-           a3%s = 1.0
-           a3%t = 1.0
-        END IF
-
-        G_shape%m = 0.   
-        G_shape%s = 0.
-        G_shape%t = 0.
-
-        DO index = 0, h%i  !Just in Surface Layer  (h%i-1)?
-           IF (grid%d_i(index) > h%new) THEN
-              G_shape%m(index) = 0.   
-              G_shape%s(index) = 0.
-              G_shape%t(index) = 0.
-           ELSE ! not sigma = d_i/h%new, a1 = 1 
-              G_shape%m(index) = grid%d_i(index)/h%new*(1.0 + grid%d_i(index)/h%new*(a2%m + &
-                   grid%d_i(index)/h%new*a3%m)) ! (11)
-              G_shape%s(index) = grid%d_i(index)/h%new*(1.0 + grid%d_i(index)/h%new*(a2%s + &
-                   grid%d_i(index)/h%new*a3%s)) 
-              G_shape%t(index) = grid%d_i(index)/h%new*(1.0 + grid%d_i(index)/h%new*(a2%t + &
-                   grid%d_i(index)/h%new*a3%t))
-           END IF
-        END DO   !test conv
-
-        !Define K%x%ML profiles (10)
-
-        K%u%ML = 0.0
-        K%s%ML = 0.0
-        K%t%ML = 0.0
-
-        DO xx = 1, h%i  !use only up to h%i-1
-           IF (grid%d_i(xx) > h%new) THEN
-              K%u%ML(xx) = 0.0
-              K%s%ML(xx) = 0.0
-              K%t%ML(xx) = 0.0
-           ELSE
-              K%u%ML(xx) = h%new*omega%m%value(xx)*G_shape%m(xx)
-              K%s%ML(xx) = h%new*omega%s%value(xx)*G_shape%s(xx) 
-              K%t%ML(xx) = h%new*omega%s%value(xx)*G_shape%t(xx)   !test conv
-           END IF
-           IF (K%u%ML(xx) < 0. .OR. K%s%ML(xx) < 0. .OR. K%t%ML(xx) < 0.) THEN
-              PRINT "(A)","Diffusivities < 0. See KPP.f90:  time, Jday, h%new"
-              PRINT *,time,day,h%new
-              PRINT "(A)","K%u%ML(xx),K%s%ML(xx),K%t%ML(xx)"
-              PRINT *,K%u%ML(xx),K%s%ML(xx),K%t%ML(xx)
-              STOP
-           END IF
-        END DO
-
-        ! K star, enhance diffusion at grid point just below or above h (see (D6)
-        CALL modify_K(grid, oh, K%u) !test conv  !!must modify G_shape!!
-        CALL modify_K(grid, oh, K%s) !test conv  !!If G_shape is used again, use modified value!!
-        CALL modify_K(grid, oh, K%t) !test conv
-
-        !!Define flux profiles, w,  and Q_t (vertical heat flux)!!
-        !!Don-t need for running of the model!!  (not sure what this means)
-        IF (u_star /= 0. .OR. Bf /= 0.) THEN
+        
+        ! Calculates non-local transport term (Large, et al (1994),
+        ! eqn 20).  Only applicable to scalar quantities under
+        ! convective forcing.
+        IF (abs(u_star) > epsilon(u_star) .or. abs(Bf) > epsilon(Bf)) THEN
            CALL def_gamma(L_mo, grid, wt_r, oh, gamma, Bf, omega) 
-           ! calculates non-local transport (20)
         ELSE
-           gamma%t = 0.
-           gamma%s = 0.
-           gamma%m = 0.
+           gamma%t = 0.0d0
+           gamma%s = 0.0d0
+           gamma%m = 0.0d0
         END IF
-
-        !defines w%x, K%x%all, K%x%old, Bf%b, and F_n 
-        CALL define_flux(grid, U%grad_i, V%grad_i, T%grad_i, S%grad_i, &
-             alpha, beta)
-! *** End of turbulence code???
 
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
@@ -537,8 +449,8 @@ S_RHS%diff_adv%new = Gvector%s
         wbar%b_err(0) = 0.
 
 !!$        DO xx = 1, grid%M           !uses K%old and T%new
-!!$           w%t(xx) = -K%t%all(xx)*(T%grad_i(xx) - gamma%t(xx))
-!!$           w%s(xx) = -K%s%all(xx)*(S%grad_i(xx) - gamma%s(xx))
+!!$           w%t(xx) = -K%t(xx)*(T%grad_i(xx) - gamma%t(xx))
+!!$           w%s(xx) = -K%s(xx)*(S%grad_i(xx) - gamma%s(xx))
 !!$           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))   
 !!$           w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) &
 !!$                - beta%grad_i(xx) * w%s(xx))
@@ -705,7 +617,7 @@ S_RHS%diff_adv%new = Gvector%s
      call write_std_profiles(codeId, datetime_str(runDatetime),       &
           datetime_str(startDatetime), year, day, day_time, dt, grid, &
           T%new, S%new, rho%g, P%micro, P%nano, Z, N%O, N%H, Si,      &
-          D%DON, D%PON, D%refr, D%bSi, K%u%all, K%t%all, K%s%all,     &
+          D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                 &
           I_par, U%new, V%new)
 
      ! Write user-specified profiles results
