@@ -12,12 +12,6 @@ subroutine allocate1(M, STAT)
       integer, intent(in) :: M  ! Number of grid points
       integer, dimension(20), intent(out) :: STAT  ! Memory allocation status
 
-      ALLOCATE(&
-           K%u%total(0:M),K%s%total(0:M),K%t%total(0:M),&
-           K%t%all(1:M),K%u%all(1:M),K%s%all(1:M),&
-           K%u%ML(1:M), K%s%ML(1:M), K%t%ML(1:M), &
-           STAT = alloc_stat(5))
-
       ALLOCATE(Fw(0:M), F_n(0:M), &
            Q_n(0:M), &
            I(0:M), I_par(0:M), &
@@ -40,9 +34,6 @@ subroutine allocate1(M, STAT)
       ALLOCATE(f_ratio(M), &
            STAT = alloc_stat(11))
 
-      ALLOCATE(G_shape%s(0:M+1), G_shape%m(0:M+1), G_shape%t(0:M+1), &
-           STAT = alloc_stat(16))
-      
 END SUBROUTINE allocate1
 
 
