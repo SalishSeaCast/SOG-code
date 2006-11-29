@@ -20,13 +20,10 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(Knu)::K 
   TYPE(height)::oh, surface_h
-  TYPE(MST)::gamma,G_shape
+  TYPE(MST)::gamma
   TYPE(MS)::omega
-  TYPE(MSTscalar)::a2,a3  !shape constants
   type(UVST):: Gvector
-  TYPE(windstress)::stress !wind stress (surface_flux.f90)
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
 
