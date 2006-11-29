@@ -122,12 +122,12 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     ! internal parameters
     real(kind=dp) :: errcon  ! definition for convergence error
-    parameter (errcon=1.84e-4)
+    parameter (errcon=1.84d-4)
     ! exponents for how fast to grow or shrink the step
     real(kind=dp) :: Pgrow, Pshrnk 
-    parameter (Pgrow=-0.2, Pshrnk=-0.25)
+    parameter (Pgrow=-0.2d0, Pshrnk=-0.25d0)
     real(kind=dp) :: safety ! drop down an extra 10% just to be sure
-    parameter (safety=0.9)
+    parameter (safety=0.9d0)
 
     ! internal variables (alphabetical)
 
