@@ -34,20 +34,6 @@ module mean_param
      real(kind=dp), dimension(:), pointer:: Nlimit
   end type plankton2
 
-
-
-  TYPE :: diff
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: total
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: ML    !mixed layer
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: all
-     DOUBLE PRECISION :: div      !only for interior
-     DOUBLE PRECISION :: h        !diffusivities at h
-  END TYPE diff
-
-  TYPE :: Knu               !K and nu diffusivities
-     TYPE(diff)::u, t, s       
-  END TYPE Knu
-
   TYPE :: entrain           !Entrainment or mixed layer depth
      DOUBLE PRECISION :: depth
      INTEGER :: i,g
@@ -63,10 +49,6 @@ module mean_param
      DOUBLE PRECISION, DIMENSION(:), POINTER::m,s,t    
   END TYPE MST
 
-  TYPE :: MSTscalar
-     DOUBLE PRECISION::m,s,t
-  END TYPE MSTscalar
-
   TYPE :: boundary          !boundary conditions at h
      DOUBLE PRECISION :: h, div
      DOUBLE PRECISION, DIMENSION(:), POINTER::value
@@ -75,14 +57,6 @@ module mean_param
   TYPE :: MS                !Momemtum and scalar
      TYPE(boundary)::m, s
   END TYPE MS
-
-  TYPE :: old_new
-     DOUBLE PRECISION::old,new
-  END TYPE old_new
-
-  TYPE :: windstress
-     TYPE(old_new)::u,v
-  END TYPE windstress
 
   INTEGER::is_leap_year, was_leap_year
 
