@@ -349,7 +349,8 @@ contains
        ! biological process impactedby Q10 temperature effect
        Rmax(j)= rate%R * temp_Q10(j) &
             ! and organisms can have a maximum growth temp
-            * min ( max(rate%maxtemp- KtoC(temp(j)), 0.), rate%temprange) / &
+            * min(max(rate%maxtemp - KtoC(temp(j)), 0.0d0), &
+                  rate%temprange) / &
             rate%temprange
 
        plank%growth%light(j) = Rmax(j)  * &
@@ -358,10 +359,10 @@ contains
             ! 0.67, 2.7 and 1.8 are constants for making the fit
             ! Steeves like at small light and making it fit Durbin for
             ! Thalassosira nordelenski at higher light
-            (1 - exp(-I_par(j)/(0.67 * rate%Iopt)) ) * &
-            exp(-I_par(j)/(2.7 * rate%Iopt)) * 1.8
+            (1.0d0 - exp(-I_par(j) / (0.67d0 * rate%Iopt)) ) * &
+            exp(-I_par(j) / (2.7d0 * rate%Iopt)) * 1.8d0
 
-       Uc(j) = (1.0 - rate%gamma) * plank%growth%light(j)
+       Uc(j) = (1.0d0 - rate%gamma) * plank%growth%light(j)
     END DO
 
 !!!!!!!!!!!!!!!Define growth due to nutrients!!!!!!!!!!!!!!!!!!!!!!!!!
