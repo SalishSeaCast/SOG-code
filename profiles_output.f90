@@ -291,7 +291,7 @@ contains
 
     ! Check the day and the time
     if (iprof <= noprof .and. day == profday(iprof)) then
-       if (abs(day_time - proftime(iprof)) < 0.5 * dt) then
+       if (abs(day_time - proftime(iprof)) < 0.5d0 * dt) then
           ! Calculate the month number and month day for profile headers
           profileDatetime(iprof)%yr = year
           profileDatetime(iprof)%yr_day = day
@@ -336,7 +336,7 @@ contains
 
     ! Check to see if we're in a Hoffmueller results output time step
     if (day == Hoff_day) then
-       if (abs(day_time - Hoff_sec) < 0.5 * dt) then
+       if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
           ! Write the profiles numbers
           call write_profiles_numbers(Hoffmueller, grid, T, S, rho, &
                Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
@@ -345,7 +345,7 @@ contains
           write(Hoffmueller, *)
           ! Increment the Hoffmueller output counters
           Hoff_day = Hoff_day + int(Hoff_interval)
-          Hoff_sec = Hoff_sec + int(mod(Hoff_interval, 1.0d0) * 86400.)
+          Hoff_sec = Hoff_sec + int(mod(Hoff_interval, 1.0d0) * 86400.0d0)
           if (Hoff_sec == 86400) then
              Hoff_sec = 0
              Hoff_day = Hoff_day + 1

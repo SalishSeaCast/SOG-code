@@ -8,14 +8,14 @@ module initial_sog
   ! *** These parameter values can probably be set in other, more
   ! *** appropriate modules
   DOUBLE PRECISION, PARAMETER:: &
-       Uo = 0.0,     &  ! m/s
-       Vo = 0.0,     &  ! m/s
+       Uo = 0.0d0,     &  ! m/s
+       Vo = 0.0d0,     &  ! m/s
 !!$       P_micro = 0.3D-3, &
 ! *** Parameter value setting of P_nano replaced by a variable version in 
 ! *** initial_mean below, so that initial value of flagellates biomass may
 ! *** be set to zero without recompiling
 !       P_nano = 2.6D-3 * 0., & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
-       NHo = .5D-3 
+       NHo = 0.5d-3 
 
 contains
 
@@ -60,7 +60,7 @@ contains
     real(kind=dp) :: P_nano
 
        !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
-       P_nano = 2.6D-3
+       P_nano = 2.6d-3
 
     U_new(1) = Uo
     V_new(1) = Vo

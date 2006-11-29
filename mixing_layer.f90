@@ -59,8 +59,8 @@ module mixing_layer
   ! Public Parameter Declarations:
   !
   real(kind=dp), parameter :: &
-       Ri_c = 0.3  ! Critical value of Richardson number for mixed
-                   ! layer depth determination
+       Ri_c = 0.3d0  ! Critical value of Richardson number for mixed
+                     ! layer depth determination
 
   ! Variable Declarations:
   !
@@ -77,7 +77,7 @@ contains
 
     ! Initialize the mixing layer depth, and the indices of the grid
     ! point & grid layer interface immediately below it
-    h%new = 2.0
+    h%new = 2.0d0
     call find_mixing_layer_indices()
   end subroutine init_mixing_layer
 
@@ -128,21 +128,18 @@ contains
     ! Local variable:
     real(kind=dp) :: &
          d_Ekman  ! Ekman depth [m]
-!!$         h_blend  ! Mixing layer depth before we find a new one;
-!!$                  ! blended with new value to help stabilize the
-!!$                  ! convergence of the implicit solver loop
 
     ! Find the depth at which the bulk Richardson number exceeds the
     ! critical value
-!!$    h_blend = h%new
     call interp_value(Ri_c, 0, Ri_b, grid%d_g(0:grid%M), h%new, h%g)
-!!$    ! Blend the newly found value with the previous one so that
-!!$    ! changes aren't too quick; this helps stabilize the convergence
-!!$    ! of the implicit solver loop
-!!$    h_blend = (h_blend + h%new) / 2.
+
     ! Apply the Ekman and Monin-Obukhov depth criteria to the mixing
-    ! layer depth when stable forcing exists
-    if (Bf > 0. .or. (Bf == 0. .and. u_star /= 0.)) then
+    ! layer depth when stable forcing exists.  Note that abs(x) <
+    ! epsilon(x) is a real-number-robust test for x == 0, and abs(x) >
+    ! epsilon(x) is similarly for x /= 0.
+    if (Bf > 0. &
+         .or. (abs(Bf) < epsilon(Bf) &
+               .and. abs(u_star) > epsilon(u_star))) then
        ! Calculate the Ekmann depth (Large, et al (1994), eqn 24)
        d_Ekman = 0.7d0 * u_star / f
        ! Under stable forcing, mixing layer depth is the minimum of
@@ -153,6 +150,7 @@ contains
        ! point
        h%new = max(h%new, grid%d_g(1))
     endif
+
     ! Handle mixing layer extending nearly to the bottom of the grid
     if (h%new > grid%d_g(grid%M - 3)) then
        h%new = grid%d_g(grid%M - 3)
@@ -161,6 +159,7 @@ contains
        write(stdout, *) "Iteration count = ", count, " Time: yr = ", &
             year, " day = ", day, " day_time = ", day_time
     endif
+
     ! Set the value of the indices of the grid point & grid layer
     ! interface immediately below the mixing layer depth.
     call find_mixing_layer_indices()

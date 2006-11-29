@@ -32,9 +32,9 @@ module fundamental_constants
   real(kind=dp) :: &
        f  ! Coriolis factor (would be a parameter but for a pgf90 bug)
   real(kind=dp), parameter :: &
-       g = 9.80665, &                  ! Acceleration due to gravity [m/s^2]
-       latitude = 49. + 7.517 / 60., & ! Station S3 latitude [deg]
-       pi = 3.141592653589793
+       g = 9.80665d0, &                  ! Acceleration due to gravity [m/s^2]
+       latitude = 49.0d0 + 7.517d0 / 60.0d0, & ! Station S3 latitude [deg]
+       pi = 3.141592653589793d0
 
 contains
 
@@ -42,7 +42,7 @@ contains
     ! Coriolis factor
     ! *** This must be calculated because pgf90 will not accept an
     ! *** intrinsic in parameter statement
-    f = 2. * (2. * pi / 86400.) * sin(pi * latitude / 180.)
+    f = 2.0d0 * (2.0d0 * pi / 86400.0d0) * sin(pi * latitude / 180.0d0)
   end subroutine init_constants
   
 end module fundamental_constants

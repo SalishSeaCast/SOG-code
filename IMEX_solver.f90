@@ -81,7 +81,7 @@ module IMEX_solver
   !           = 0.0 --> forward Euler in diffusion
   ! Both have forward Euler in explicit terms (i.e. Coriolis and
   ! boundary conditions)
-  real(kind=dp), parameter :: a_IMEX1 = 1.0
+  real(kind=dp), parameter :: a_IMEX1 = 1.0d0
 
   ! Variable Declarations:
   !
@@ -478,6 +478,8 @@ contains
                               + Bmatrix%diag * qty_old(1:M)   &
                               + Bmatrix%sup * qty_old(2:M+1)) &
          + a_IMEX1 * diff_adv
+    ! Note that abs(x) < epsilon(x) is a real-number-robust test for x
+    ! == 0.
     where (abs(Hvector) < epsilon(Hvector)) Hvector = 0.
   end subroutine bio_Hvector
 
@@ -644,8 +646,9 @@ contains
     real(kind=dp) :: beta
     integer :: j
 
-    ! Confirm that the matrix equation is properly expressed
-    if (A%diag(1) == 0.) then
+    ! Confirm that the matrix equation is properly expressed.  Note
+    ! that abs(x) < epsilon(x) is a real-number-robust test for x == 0.
+    if (abs(A%diag(1)) < epsilon(A%diag(1))) then
        write(stderr, *) "tridiag: Malformed matrix, Amatrix(1) = 0"
        stop
     endif
@@ -655,7 +658,7 @@ contains
     do j = 2, size(h)
        gamma(j) = A%sup(j-1) / beta
        beta = A%diag(j) - A%sub(J) * gamma(j)
-       if (beta == 0.) then
+       if (abs(beta) < epsilon(beta)) then
           write(stderr, *) "tridiag: Solver failed, beta = 0 at j = ", j
           stop
        endif

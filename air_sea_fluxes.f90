@@ -21,7 +21,7 @@ module air_sea_fluxes
   !
   ! Private to module:
   real(kind=dp), parameter :: &
-       rho_atm = 1.25  ! Density of air [kg/m^3]
+       rho_atm = 1.25d0  ! Density of air [kg/m^3]
   
   ! Variable Declarations:
   !
@@ -62,8 +62,9 @@ contains
     ! Calculate the surface wind-speed
     UU = sqrt(unow ** 2 + vnow ** 2)
     ! We need to handle dead, flat, calm as a special case to avoid a
-    ! divide-by-zero in the drag coefficient formula.
-    if (UU < epsilon(0.0d0)) then
+    ! divide-by-zero in the drag coefficient formula.  Note that
+    ! abs(x) < epsilon(x) is a real-number-robust test for x == 0.
+    if (abs(UU) < epsilon(0.0d0)) then
        stress_u = 0.
        stress_v = 0.
     else
@@ -109,10 +110,10 @@ contains
     !
     ! Longwave radiation
     real(kind=dp), parameter :: &
-         r = 0.03,           &
+         r = 0.03d0,         &
          Ce = 9.37d-06,      &
          sigma = 5.6697d-08, &  ! Stefan Boltzmann constant
-         epsilon_w = 0.96       ! surface emissivity in IR portion of
+         epsilon_w = 0.96d0     ! surface emissivity in IR portion of
                                 ! the spectrum Local variables:
     real(kind=dp) :: &
          lw_in,  &  ! Downward long wave radiation
@@ -122,17 +123,17 @@ contains
     ! Sensible heat flux
     real(kind=dp), parameter :: &
          Cs = 1.3d-3, &  ! Sensible heat transfer coefficient
-         Cp = 1003.      ! Specific heat of air
+         Cp = 1003.0d0   ! Specific heat of air
     real(kind=dp) :: &
          h_sens  ! Sensible heat flux
     !
     ! Latent heat flux 
     real(kind=dp), parameter :: &
-         a = 7.5,      &  ! Vapour pressure consts
-         b = 237.3,    &
-         c = 0.7858,   &
-         CL = 1.3e-3,  &  ! Latent heat consts
-         LE = 2.453d06
+         a = 7.5d0,      &  ! Vapour pressure consts
+         b = 237.3d0,    &
+         c = 0.7858d0,   &
+         CL = 1.3e-3,    &  ! Latent heat consts
+         LE = 2.453d6
     real(kind=dp) :: &
          ea,       &  ! Vapour pressure [mb]
          es,       &  ! Saturated vapous pressure [mb]
@@ -141,7 +142,7 @@ contains
 
     ! Downward radiation from atmosphere
     ! *** There are several different ways to calculate this
-    lw_in = (1 - r) * (1 +0.17 * cf**2) * Ce * atemp**2 &
+    lw_in = (1.0d0 - r) * (1.0d0 +0.17d0 * cf**2) * Ce * atemp**2 &
          * sigma * atemp**4  
     ! Upward emission of radiation from earth's surface, stull page 48
     lw_out = -epsilon_w * sigma * T_o**4                      
@@ -149,13 +150,13 @@ contains
     ! Sensible heat flux
     h_sens = Cs * rho_atm * Cp * UU * (atemp - T_o) 
     ! Vapour pressure in mb
-    ea = (humid / 100.) * &
-         exp(2.303 * ((a * KtoC(atemp) / ( KtoC(atemp) + b)) + c))
+    ea = (humid / 100.0d0) * &
+         exp(2.303d0 * ((a * KtoC(atemp) / ( KtoC(atemp) + b)) + c))
     !Saturated vapour pressure 
     ! *** Same const as above??
-    es = exp(2.3026 * ((a * KtoC(T_o) / (KtoC(T_o) + b)) + c))
+    es = exp(2.3026d0 * ((a * KtoC(T_o) / (KtoC(T_o) + b)) + c))
     ! Latent heat
-    h_latent = (0.622 / 1013.) * CL * rho_atm * LE * UU * (ea - es)
+    h_latent = (0.622d0 / 1013.0d0) * CL * rho_atm * LE * UU * (ea - es)
     h_latent = max(h_latent, 0.d0)
     ! Surface heat flux in W/m^2
     Q_t = lw_net + h_sens + h_latent

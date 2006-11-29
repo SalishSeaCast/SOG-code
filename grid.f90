@@ -137,7 +137,9 @@ contains
     enddo
     xsi_g(grid%M + 1) = xsi_i(grid%M)
 
-    ! Calculate the grid point and interface depths (Large, etal 1994 eq'n D1)
+    ! Calculate the grid point and interface depths (Large, et al
+    ! (1994) eq'n D1).  Note that abs(x) < epsilon(x) is a
+    ! real-number-robust test for x == 0.
     if (abs(lambda) < epsilon(lambda)) then
        ! Uniform grid (lambda == 0)
        grid%d_g = grid%D * xsi_g
@@ -218,10 +220,9 @@ contains
     ! Find the values of the quantity at the depth limits, and the
     ! indices of the grid points immediately below those depths
     call interp_value(d1, 0, grid%d_g, qty_g, q_d1, j_below_d1)
-!!$print *, "q_d1 j_below_d1 ", q_d1, j_below_d1 - 1
     call interp_value(d2, 0, grid%d_g, qty_g, q_d2, j_below_d2)
-!!$print *, "q_d2 j_below_d2 ", q_d2, j_below_d2 - 1
-    ! Handle the special cases of d1 = d2 and q_d1 = q_d2
+    ! Handle the special cases of d1 = d2 and q_d1 = q_d2.  Note that
+    ! abs(x) < epsilon(x) is a real-number-robust test for x == 0.
     if (abs(d2 - d1) < epsilon(d2 - d1) &
          .or. abs(q_d2 - q_d1) < epsilon(q_d2 - q_d1)) then
        avg = q_d1

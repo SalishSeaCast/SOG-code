@@ -123,18 +123,21 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       do k = 1, d%M    
          ! KK is evaluated on the grid points         
          ! 1.5 is correction uM to mg/m3 chl, 0.5 is picoplankton
-         KK = 0.0722 + 0.0377 * 1.5 * (Pmicro(k)+Pnano(k)+0.5)**0.665 &
-              + (2.307d-8 * Qriver**2 + 0.427) * exp(-d%d_g(k)/2.09)
-         Ipar(k) = Ipar(k-1) * exp(-d%i_space(k)*KK)
+         KK = 0.0722d0 + 0.0377d0 * 1.5d0 &
+              * (Pmicro(k) + Pnano(k) + 0.5d0) ** 0.665 &
+              + (2.307d-8 * Qriver ** 2 + 0.427d0) * exp(-d%d_g(k) / 2.09d0)
+         Ipar(k) = Ipar(k-1) * exp(-d%i_space(k) * KK)
          Iparmax(k) = Iparmax(k-1) * exp(-d%i_space(k) * KK)
 
-         if (Ipar(k) < 0.01 * Ipar(0) .and. check == 0) then            
+         if (Ipar(k) < 0.01d0 * Ipar(0) .and. check == 0) then            
             I_k = k                                          
             check = 1                 
          end if               
          ! Total light for heat budget
-         In(k) = 0.70 * In(k-1) * exp(-d%i_space(k) * (0.8102 * KK + 1.1854)) &
-              + 0.30 * In(k-1) * exp(-d%i_space(k) * (0.8226 * KK - 0.0879))
+         In(k) = 0.70d0 * In(k-1) * exp(-d%i_space(k) &
+              * (0.8102d0 * KK + 1.1854d0)) &
+              + 0.30d0 * In(k-1) * exp(-d%i_space(k) &
+              * (0.8226d0 * KK - 0.0879d0))
       end do
 
 
@@ -145,14 +148,16 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
      euphotic%i = 0
      euphotic%g = 0
-     euphotic%depth = 0.
+     euphotic%depth = 0.0d0
      DO k = 1,d%M
 !        IF (Iparmax(k) <= Iparmax(0)*0.01) THEN
-        IF (Ipar(k) <= 1.4) THEN  ! saturation light intensity for Thalasosira
+        IF (Ipar(k) <= 1.40d0) THEN  ! saturation light intensity for Thalasosira
            euphotic%i = k
            euphotic%g = k
            euphotic%depth = d%d_g(k)
-           if (Ipar(k) == 0) euphotic%depth = 0.
+           ! Note that abs(x) < epsilon(x) is a real-number-robust
+           ! test for x == 0.
+           if (abs(Ipar(k)) < epsilon(Ipar(k))) euphotic%depth = 0.0d0
            EXIT
         END IF
      END DO

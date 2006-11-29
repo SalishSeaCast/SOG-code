@@ -90,8 +90,8 @@ contains
     call alloc_baro_press_variables(M)
     ! Initialize velocity component integrals for baroclinic pressure
     ! gradient calculations
-    ut%new = 0.
-    vt%new = 0.
+    ut%new = 0.0d0
+    vt%new = 0.0d0
   end subroutine init_baroclinic_pressure
 
 
@@ -198,9 +198,9 @@ contains
 !!$    dpy(2:) = dpy(1:grid%M-1) + (vt%new(2:) + 1.) * grid%i_space(2:)
         ! Calculate the baroclinic pressure gradient
         ! *** Should this tolerance be read in as a run parameter?
-        tol = 1e-6
-        sumpbx = 0.
-        cz = 0.
+        tol = 1.0d-6
+        sumpbx = 0.0d0
+        cz = 0.0d0
         ii = 1
         ! dPdx_b = P(eastern side) - P(center)
         ! P(center) = sum rho_g * layer depth
@@ -223,8 +223,8 @@ contains
            cz = yy
         enddo
 
-        sumpby = 0.
-        cz = 0.
+        sumpby = 0.0d0
+        cz = 0.0d0
         ii=1
         do yy=1,grid%M
            if (yy == 1) then

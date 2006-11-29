@@ -14,11 +14,11 @@ module freshwater
   public :: freshwater_bio
 
   ! circulation strength of a scalar is equal to deep value minus river value
-  real(kind=dp), parameter :: phys_circ_nitrate = 30.5-13.
-  real(kind=dp), parameter :: phys_circ_Pmicro = 0.
-  real(kind=dp), parameter :: phys_circ_Pnano = 0.
-  real(kind=dp), parameter :: phys_circ_Zoo = 0.
-  real(kind=dp), parameter :: phys_circ_silicon = 54.0-80.0
+  real(kind=dp), parameter :: phys_circ_nitrate = 30.5d0 - 13.0d0
+  real(kind=dp), parameter :: phys_circ_Pmicro = 0.0d0
+  real(kind=dp), parameter :: phys_circ_Pnano = 0.0d0
+  real(kind=dp), parameter :: phys_circ_Zoo = 0.0d0
+  real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 
   real(kind=dp) :: S_riv ! surface salinity prediction from fit
 
@@ -40,23 +40,24 @@ contains
     real(kind=dp), intent(out) :: upwell
     real(kind=dp), intent(out) :: w_s ! surface salinity flux
     ! Local variables
-    real(kind=dp), parameter :: Qmean=2720. ! mean fraser river flow from entrainment fit
+    real(kind=dp), parameter :: &
+         Qmean=2720.0d0 ! mean fraser river flow from entrainment fit
 
     ! Parameterized fit of the surface salinity of the Strait of
     ! Georgia at station S3 based on the river flows.  (Derived by
     ! Kate Collins 16-Jun-2005)  This value is not directly used
     ! in the model but is used to make sure the tuned FT value
     ! is correct.
-    S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
+    S_riv = 29.1166d0 - Qriver * (0.0019d0) - Eriver * (0.0392d0)
     
     ! tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
-    Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver) 
+    Ft = Fw_scale * (0.0019d0 * Qriver + 0.0392d0 * Eriver) 
     
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
     ! Jun-2006 (See entrainment.pdf)
-    upwell = upwell_const * (Qriver/Qmean)**0.41
+    upwell = upwell_const * (Qriver/Qmean)**0.41d0
 
     ! Salinity (eq'n A2d)
     ! Note that fresh water flux is added via Bf in buoyancy.f90
@@ -64,7 +65,7 @@ contains
     if (Fw_surface) then
        w_s = Ft * S_o   ! w%s(0)
     else
-       w_s = 0.  ! w%s(0)
+       w_s = 0.0d0  ! w%s(0)
     endif
     
   end subroutine freshwater_phys
