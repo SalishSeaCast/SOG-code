@@ -52,7 +52,7 @@ program SOG
        profiles_output_close
   use user_output, only: write_user_timeseries, write_user_profiles
   use mixing_layer, only: find_mixing_layer_depth, &
-       find_mixing_layer_indices, new_to_old_mixing_layer
+       find_mixing_layer_indices
   use find_upwell, only: upwell_profile, vertical_advection
   use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
        diffusion_bot_surf_flux
@@ -253,12 +253,8 @@ program SOG
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
      ! step
-
-     h%old = h%new
-
      call new_to_old_physics()
      call new_to_old_vel_integrals()
-     call new_to_old_mixing_layer()
      call new_to_old_phys_RHS()
      call new_to_old_phys_Bmatrix()
      call new_to_old_bio_RHS()

@@ -24,10 +24,6 @@ module mixing_layer
   !                                grid point & grid layer interface
   !                                immediately below the mixing layer
   !                                depth.
-  !
-  !   new_to_old_mixing_layer -- Copy %new component of mixing layer
-  !                              depth variables to %old component for
-  !                              use at next time step.
 
   use precision_defs, only: dp
   implicit none
@@ -40,15 +36,14 @@ module mixing_layer
        h, &  ! Mixing layer depth values & indices
        ! Subroutines:
        init_mixing_layer, find_mixing_layer_depth, &
-       find_mixing_layer_indices, new_to_old_mixing_layer
+       find_mixing_layer_indices
 
   ! Type Definitions:
   !
   ! Mixing layer
   type mixing_layer_depth
      real(kind=dp) :: &
-          new, &  ! Depth at current time step
-          old     ! Depth at previous time step
+          new  ! Depth at current time step
      integer :: &
           i, &  ! Index of grid layer interface immediately below
                 ! mixing layer depth
@@ -80,16 +75,6 @@ contains
     h%new = 2.0d0
     call find_mixing_layer_indices()
   end subroutine init_mixing_layer
-
-
-  subroutine new_to_old_mixing_layer()
-    ! Copy %new component of mixing layer depth variables to %old
-    ! component for use at next time step.
-
-    implicit none
-
-    h%old = h%new
-  end subroutine new_to_old_mixing_layer
 
 
   subroutine find_mixing_layer_depth(grid, Ri_b, Bf, year, day, day_time, &
