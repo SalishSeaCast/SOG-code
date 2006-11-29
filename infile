@@ -59,8 +59,9 @@
 
 ! Physics model parameters
 ! Turbulence:
-"nu_w_m"        1.0e-4          "internal wave breaking momentum mixing"
-"nu_w_s"        1.0e-5          "internal wave breaking scalar mixing"
+"nu_w_m"        1.0d-4          "internal wave breaking momentum mixing"
+"nu_w_s"        1.0d-5          "internal wave breaking scalar mixing"
+"shear smooth"	0.6d0		"shear diffusivity smoothing parameter"
 
 ! Biology model parameters:
 ! Model complexity flags:
