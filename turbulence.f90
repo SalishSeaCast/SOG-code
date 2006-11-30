@@ -1070,9 +1070,9 @@ contains
          alpha, &  ! Thermal expansion coefficient profile arrays
          beta      ! Salinity contraction coefficient profile arrays
     ! Function:
-    use diffusion, only: &
-         gamma  ! Return non-local transport term for the specified
-                ! flux
+!!$    use diffusion, only: &
+!!$         gamma  ! Return non-local transport term for the specified
+!!$                ! flux
 
     implicit none
 
