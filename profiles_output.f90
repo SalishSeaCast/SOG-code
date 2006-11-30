@@ -64,14 +64,17 @@ module profiles_output
   real(kind=dp), dimension(maxprofiles) :: &
        proftime
   integer :: &
+       Hoff_startyr,  &  ! Year to start Hoffmueller results output in
        Hoff_startday, &  ! Year-day to start Hoffmueller results output at
        Hoff_startsec, &  ! Day-second to start Hoffmueller results output at
+       Hoff_endyr,   &   ! Year to end Hoffmueller results output in
        Hoff_endday,   &  ! Year-day to end Hoffmueller results output at
        Hoff_endsec       ! Day-second to end Hoffmueller results output at
   real(kind=dp) :: &
        Hoff_interval  ! Time interval between Hoffmueller results [day]
   integer :: &
        iprof, &     ! Counter, current profile
+       Hoff_yr, &   ! Counter: Next Hoffmueller output year
        Hoff_day, &  ! Counter: Next Hoffmueller output yr-day
        Hoff_sec     ! Counter: Next Hoffmueller output day-sec
   real(kind=dp) :: &
@@ -144,14 +147,17 @@ contains
     endif
 
     ! Read the Hoffmueller results file name, its start/end
-    ! days/times, and its output interval
+    ! years/days/times, and its output interval
     Hoffmueller_fn = getpars("Hoffmueller file")
+    Hoff_startyr = getpari("Hoffmueller start yr")
     Hoff_startday = getpari("Hoffmueller start day")
     Hoff_startsec = getpari("Hoffmueller start sec")
+    Hoff_endyr = getpari("Hoffmueller end yr")
     Hoff_endday = getpari("Hoffmueller end day")
     Hoff_endsec = getpari("Hoffmueller end sec")
     Hoff_interval = getpard("Hoffmueller interval")
-    ! Initialize Hoffmueller output yr-day, and day-sec counters
+    ! Initialize Hoffmueller output year, yr-day, and day-sec counters
+    Hoff_yr = Hoff_startyr
     Hoff_day = Hoff_startday
     Hoff_sec = Hoff_startsec
     ! Open the Hoffmueller output results file, and write its header
@@ -204,11 +210,12 @@ contains
     call write_cmn_hdr_id(Hoffmueller, codeId, str_run_Datetime, &
          str_CTD_Datetime)
     call write_cmn_hdr_fields(Hoffmueller)
-    ! *** Incomplete - need to write the rest of the header
-    write(Hoffmueller, 210) Hoff_startday, Hoff_startsec, Hoff_endday, &
-         Hoff_endsec, Hoff_interval
-210 format("*HoffmuellerStartDay: ", i3/, &
+    write(Hoffmueller, 210) Hoff_startyr, Hoff_startday, Hoff_startsec, &
+         Hoff_endyr, Hoff_endday, Hoff_endsec, Hoff_interval
+210 format("*HoffmuellerStartYr: ", i4/,  &
+         "*HoffmuellerStartDay: ", i3/,   &
          "*HoffmuellerStartSec: :", i5/,  &
+         "*HoffmuellerEndYr: ", i4/,      &
          "*HoffmuellerEndDay: ", i3/,     &
          "*HoffmuellerEndSec: :", i5/,    &
          "*HoffmuellerInterval: ", f7.3/, &
@@ -335,8 +342,9 @@ contains
     endif
 
     ! Check to see if we're in a Hoffmueller results output time step
-    if (day == Hoff_day) then
+    if (year == Hoff_yr .and. day == Hoff_day) then
        if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
+print *, "Hoffmueller time: ", year, day, day_time
           ! Write the profiles numbers
           call write_profiles_numbers(Hoffmueller, grid, T, S, rho, &
                Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
@@ -345,6 +353,10 @@ contains
           write(Hoffmueller, *)
           ! Increment the Hoffmueller output counters
           Hoff_day = Hoff_day + int(Hoff_interval)
+          if (Hoff_day > 365) then
+             Hoff_yr = Hoff_yr + 1
+             Hoff_day = Hoff_day - 365
+          endif
           Hoff_sec = Hoff_sec + int(mod(Hoff_interval, 1.0d0) * 86400.0d0)
           if (Hoff_sec == 86400) then
              Hoff_sec = 0
@@ -352,12 +364,14 @@ contains
           endif
           ! Check to see if we're beyond the end of the Hoffmueller
           ! output time interval
-          if (Hoff_day > Hoff_endday &
-               .or. (Hoff_day == Hoff_endday &
+          if (Hoff_yr > Hoff_endyr &
+               .or. (Hoff_yr == Hoff_endyr &
+               .and. Hoff_day > Hoff_endday) &
+               .or. (Hoff_yr == Hoff_endyr .and. Hoff_day == Hoff_endday &
                .and. Hoff_sec > Hoff_endsec)) then
-             ! Set the Hoffmueller day counter to a day we're already
-             ! past so that we won't trigger anymore writing
-             Hoff_day = day - 1
+             ! Set the Hoffmueller year counter to the year before we
+             ! started so that we won't trigger anymore writing
+             Hoff_yr = Hoff_startyr - 1
           endif
        endif
     endif

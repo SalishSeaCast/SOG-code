@@ -46,8 +46,10 @@
 ! Hoffmueller diagram output (a collection of profiles at time intervals
 ! for contour or colourmap plotting)
 "Hoffmueller file"	"profiles/Hoffmueller"	"file for Hoffmueller results"
+"Hoffmueller start yr"	2004			"yr to start Hoff output"
 "Hoffmueller start day"	294			"yr-day to start Hoff output"
 "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
+"Hoffmueller end yr"	2004			"yr to end Hoff output"
 "Hoffmueller end day"	300			"yr-day to end Hoff output"
 "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
 "Hoffmueller interval"	2.			"days between Hoff outputs"
