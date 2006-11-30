@@ -185,7 +185,7 @@ program SOG
      IF (alloc_stat(xx) /= 0) THEN
         PRINT "(A)","ALLOCATION failed.  KPP.f  xx:"
         PRINT *,xx,alloc_stat(xx)
-        STOP
+        CALL EXIT(1)
      END IF
   END DO
 
@@ -194,7 +194,7 @@ program SOG
        STAT = alloc_stat(1))
   if (alloc_stat(1) /= 0) then
      print "(a)", " Allocation failed for uprev, vprev"
-     stop
+     call exit(1)
   endif
 
   ! Length of forcing data files (move to be read in)
@@ -646,4 +646,6 @@ S_RHS%diff_adv%new = Gvector%s
   call dalloc_biology_variables
   call dalloc_IMEX_variables
 
+  ! Return a successful exit status to the operating system
+  call exit(0)
 end program SOG
