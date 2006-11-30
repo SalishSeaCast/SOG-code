@@ -64,6 +64,7 @@ module NPZD
           N_o, & ! overall half saturation constant????
           N_x, & ! exponent in inhibition equation
           Si_ratio, & ! silicon to nitrogen ratio in phyto     
+          K_Si, & ! half-saturation for Si
           Rm, & ! natural mortality rate
           M_z ! mortality rate
   end type rate_para_phyto
@@ -201,6 +202,11 @@ contains
     ! silicon to nitrogen ratio in phyto
     rate_micro%Si_ratio = getpard('Micro, Si ratio')
     rate_nano%Si_ratio = getpard('Nano, Si ratio')
+    ! half-saturation for Silicon
+    rate_micro%K_Si = getpard('Micro, K Si')
+    if (rate_micro%Si_ratio.eq.0) rate_micro%K_Si = 0. ! to eliminate Si limitn
+    rate_nano%K_Si = getpard('Nano, K Si')
+    if (rate_nano%Si_ratio.eq.0) rate_nano%K_Si = 0. ! to eliminate Si limitn
     ! natural mortality rate
     rate_micro%Rm = getpard('Micro, nat mort')
     rate_nano%Rm = getpard('Nano, nat mort')
@@ -329,7 +335,8 @@ contains
 
     ! Local variables:
     integer :: j ! counter through depth
-    real(kind=dp), dimension(1:M) :: Uc ! growth based on light
+    real(kind=dp), dimension(1:M) :: Uc, & ! growth based on light
+         Sc ! growth based on Si
     real(kind=dp), dimension(1:M) :: Oup_cell ! NO uptake assuming full light
     real(kind=dp), dimension(1:M) :: Hup_cell ! NH uptake assuming full light
     real(kind=dp), dimension(1:M) :: Rmax ! maximum growth rate for given Temp
@@ -366,6 +373,12 @@ contains
     END DO
 
 !!!!!!!!!!!!!!!Define growth due to nutrients!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ! Silicon (vectorized)
+
+    Sc = Rmax * Si / (rate%K_Si + Si)
+
+    ! Nitrate and Ammonium
 
     DO j = 1,M
 
@@ -407,42 +420,50 @@ contains
 
     DO j = 1,M
 
-       IF (Uc(j) >= 0. .AND. Uc(j) < Oup_cell(j) + Hup_cell(j)) THEN 
+       If (Uc(j) < 0. ) then
+          plank%growth%new(j) = 0.
+       else
 
-          !LIGHT LIMITING
-          plank%growth%new(j) = Uc(j) 
-
-          ! split the nutrient uptake between NH and NO
-
-          IF (Uc(j) <= Hup_cell(j)) THEN
-             ! add to nutrient uptake so we combined the effects of
-             ! different phyto classes
-             uptake%NH(j) = Uc(j) * P(j) + uptake%NH(j)
-             uptake%NO(j) = uptake%NO(j)
-          ELSE
+          IF (min(Uc(j),Sc(j)) >= Oup_cell(j) + Hup_cell(j)) THEN
+             
+             !N LIMITING
+             plank%growth%new(j) = Oup_cell(j) + Hup_cell(j)  
+             
+             IF (plank%growth%new(j) < 0.) THEN
+                plank%growth%new(j) = 0.
+             ENDIF
+             
+             uptake%NO(j) = Oup_cell(j) * P(j) + uptake%NO(j)
              uptake%NH(j) = Hup_cell(j) * P(j) + uptake%NH(j)
-             uptake%NO(j) = (Uc(j) - Hup_cell(j)) * P(j) + &
-                  uptake%NO(j)
+             
+          else
+
+             if (Uc(j) < Sc(j)) then
+                !LIGHT LIMITING
+                plank%growth%new(j) = Uc(j) 
+             else
+                ! Si limitation
+                plank%growth%new(j) = Sc(j)
+             endif
+             
+             ! split the nitrogen uptake between NH and NO
+             
+             IF (plank%growth%new(j) <= Hup_cell(j)) THEN
+                ! add to nutrient uptake so we combined the effects of
+                ! different phyto classes
+                uptake%NH(j) = plank%growth%new(j) * P(j) + uptake%NH(j)
+                uptake%NO(j) = uptake%NO(j)
+             ELSE
+                uptake%NH(j) = Hup_cell(j) * P(j) + uptake%NH(j)
+                uptake%NO(j) = (plank%growth%new(j) - Hup_cell(j)) * P(j) + &
+                     uptake%NO(j)
+             END IF
+
           END IF
 
-       ELSE IF (Uc(j) >= 0. .AND. Uc(j) >= Oup_cell(j) + Hup_cell(j)) THEN
-
-          !NUTRIENT LIMITING
-          plank%growth%new(j) = Oup_cell(j) + Hup_cell(j)  
-
-          IF (plank%growth%new(j) < 0.) THEN
-             plank%growth%new(j) = 0.
-          ENDIF
-
-          uptake%NO(j) = Oup_cell(j) * P(j) + uptake%NO(j)
-          uptake%NH(j) = Hup_cell(j) * P(j) + uptake%NH(j)
-
-       ELSE  !No nutrient uptake, no growth
-          plank%growth%new(j) =  0
-       END IF
-
+       endif
     END DO
-
+ 
   END SUBROUTINE p_growth
 
   subroutine derivs(M, PZ, Temp, I_par, day, dPZdt)
