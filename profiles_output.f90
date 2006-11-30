@@ -344,7 +344,6 @@ contains
     ! Check to see if we're in a Hoffmueller results output time step
     if (year == Hoff_yr .and. day == Hoff_day) then
        if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
-print *, "Hoffmueller time: ", year, day, day_time
           ! Write the profiles numbers
           call write_profiles_numbers(Hoffmueller, grid, T, S, rho, &
                Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
