@@ -237,7 +237,7 @@ contains
           write (*,*) "Bins must be in order, expecting"
           write (*,*) "bin number ",xx
           write (*,*) "but got bin number ",binno,"."
-          stop
+          call exit(1)
        endif
        wastedestiny%m(xx) = getpard('frac waste m')
        wastedestiny%s(xx) = getpard('frac waste s')
@@ -405,13 +405,13 @@ contains
        IF (Oup_cell(j) < 0.) THEN
           PRINT "(A)","Oup_cell(j) < 0. in reaction.f90"
           PRINT *,Oup_cell(j)
-          STOP
+          CALL EXIT(1)
        END IF
 
        IF (Hup_cell(j) < 0.) THEN
           PRINT "(A)","Hup_cell(j) < 0. in reaction.f90"
           PRINT *,Hup_cell(j)
-          STOP
+          CALL EXIT(1)
        END IF
 
     END DO
@@ -656,7 +656,7 @@ contains
     IF (MINVAL(remin_NH) < 0.) THEN
        PRINT "(A)","remin_NH < 0. in derivs.f90"
        PRINT *,remin_NH
-       STOP
+       CALL EXIT(1)
     END IF
 
     ! calculate the f-ratio

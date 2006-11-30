@@ -102,7 +102,7 @@ contains
        else
           write (*,*) "problems in freshwater, river flux for ", qty, &
                " is not defined."
-          stop
+          call exit(1)
        endif
     else ! distributed fresh water and fluxes
        surf_flux = 0.
@@ -128,7 +128,7 @@ contains
        else
           write (*,*) "problems in freshwater, river flux for ", qty, &
                " is not defined."
-          stop
+          call exit(1)
        endif
     endif
   end subroutine freshwater_bio

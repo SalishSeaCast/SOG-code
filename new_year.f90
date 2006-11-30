@@ -46,11 +46,11 @@ subroutine new_year(day_ti, o_day, o_year, ti, ddt, month)
      ELSE IF (o_day == 367 .AND. is_leap_year == 0) THEN
         PRINT "(A)", "Error in new_year.f90. is_leap_year,o_day:"
         PRINT *,is_leap_year,o_day
-        STOP
+        CALL EXIT(1)
      ELSE IF (o_day > 367) THEN
         PRINT "(A)", "Day > 367, see new_year.f90"
         PRINT *,o_day
-        STOP
+        CALL EXIT(1)
      END IF
   END IF
 

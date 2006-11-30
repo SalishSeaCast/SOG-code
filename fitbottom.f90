@@ -55,7 +55,7 @@ contains
     ! Calculate the value of the specified quantitity at the bottom
     ! grid boundary for the given value of arg.
     use precision_defs, only: dp
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     real(kind=dp), intent(in):: arg
@@ -78,9 +78,9 @@ contains
     elseif (qty == quantity(6)) then
        index = 6
     else
-       write (stderr,*) 'bottom_value in fitbottom.f90:', &
+       write (stdout,*) 'bottom_value in fitbottom.f90:', &
             'Unexpected quantity: ', qty
-       stop
+       call exit(1)
     endif
 
     value = c(1,index) + c(2,index)*cos(arg) + c(3,index)*sin(arg) &

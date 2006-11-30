@@ -93,7 +93,7 @@ contains
     ! The Hoffmueller results file is a series of profile results
     ! written to 1 file so that they can be plotted as a contour or
     ! colourmap plot.
-    use io_unit_defs, only: haloclines, Hoffmueller, stderr
+    use io_unit_defs, only: haloclines, Hoffmueller, stdout
     use datetime, only: datetime_, datetime_str
     use input_processor, only: getpars, getpari, getpariv, getpardv, getpard
     implicit none
@@ -124,9 +124,9 @@ contains
     ! validate it
     noprof =  getpari("noprof")
     if (noprof > maxprofiles) then
-       write (stderr, *) "init_profiles_output: Limit on number of ", &
+       write (stdout, *) "init_profiles_output: Limit on number of ", &
             "profiles is ", maxprofiles, ".  ", noprof, " requested."
-       stop
+       call exit(1)
     endif
     if (noprof > 0) then
        ! Read the arrays of profile dates/times (year-days, and

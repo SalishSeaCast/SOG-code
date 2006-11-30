@@ -124,7 +124,7 @@ contains
        read(66, *) depth, NO(i), Si(i)
        if (depth.ne.i*0.5) then
           write (*,*) 'Expecting nutrients, NO3 and Silicon at 0.5 m intervals'
-          stop
+          call exit(1)
        endif
     enddo
     close (66)

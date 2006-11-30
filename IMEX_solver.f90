@@ -630,7 +630,7 @@ contains
     use precision_defs, only: dp
     use numerics, only: tridiag  ! Tridiagonal matrix arrays type def'n
     ! Variables:
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
     
     implicit none
     
@@ -649,8 +649,8 @@ contains
     ! Confirm that the matrix equation is properly expressed.  Note
     ! that abs(x) < epsilon(x) is a real-number-robust test for x == 0.
     if (abs(A%diag(1)) < epsilon(A%diag(1))) then
-       write(stderr, *) "tridiag: Malformed matrix, Amatrix(1) = 0"
-       stop
+       write(stdout, *) "tridiag: Malformed matrix, Amatrix(1) = 0"
+       call exit(1)
     endif
     ! Decomposition and forward substitution
     beta = A%diag(1)
@@ -659,8 +659,8 @@ contains
        gamma(j) = A%sup(j-1) / beta
        beta = A%diag(j) - A%sub(J) * gamma(j)
        if (abs(beta) < epsilon(beta)) then
-          write(stderr, *) "tridiag: Solver failed, beta = 0 at j = ", j
-          stop
+          write(stdout, *) "tridiag: Solver failed, beta = 0 at j = ", j
+          call exit(1)
        endif
        q(j) = (h(j) - A%sub(j) * q(j-1)) / beta
     enddo

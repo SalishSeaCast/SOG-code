@@ -67,11 +67,10 @@ contains
     datetime%day = dd
     ! mm will be correct if, and only if, ddd is correct for yyyy
     if(mm >= 1 .and. mm <= 12) return
-    ! *** Change this to write on stderr
-    write(*,1) ddd
+    write(*, 1) ddd
 1   format('Error: calendar(): day of the year input =', i11, &
          ' is out of range.')
-    stop
+    call exit(1)
   end subroutine calendar_date
 
 

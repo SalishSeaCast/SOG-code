@@ -91,7 +91,7 @@ contains
   function getpars(name, reportThis) result(str)
     ! Read the named string value, and report it to stdout, if
     ! requested.
-    use io_unit_defs, only: stderr, stdout, stripped_infile
+    use io_unit_defs, only: stdout, stripped_infile
     implicit none
     ! Arguments:
     character(len=*), intent(in)  :: name
@@ -112,9 +112,9 @@ contains
     ! Read and validate the value
     read(stripped_infile, *) label, str, desc
     if (name /= label) then
-       write(stderr, *) "getpars: Expecting ", name, " but got ", &
+       write(stdout, *) "getpars: Expecting ", name, " but got ", &
             trim(label), " instead."
-       stop
+       call exit(1)
     end if
     ! Trim trailing blanks from the value
     str = trim(str)
@@ -128,7 +128,7 @@ contains
   function getpari(name, reportThis) result(int)
     ! Read the named single integer value, and report it to stdout, if
     ! requested.
-    use io_unit_defs, only: stderr, stdout, stripped_infile
+    use io_unit_defs, only: stdout, stripped_infile
     implicit none
     ! Arguments:
     character(len=*), intent(in)  :: name
@@ -150,9 +150,9 @@ contains
     ! Read and validate the value
     read(stripped_infile, *) label, int, desc
     if (name /= label) then
-       write(stderr, *) "getpari: Expecting ", name, " but got ", &
+       write(stdout, *) "getpari: Expecting ", name, " but got ", &
             trim(label), " instead."
-       stop
+       call exit(1)
     end if
     ! Report the value to stdout, if requested
     if (show_report .and. report_this) then
@@ -167,7 +167,7 @@ contains
   subroutine getpariv(name, len, vec, reportThis)
     ! Read the named vector of integer values, and report it to stdout, if
     ! requested.
-    use io_unit_defs, only: stderr, stdout, stripped_infile
+    use io_unit_defs, only: stdout, stripped_infile
     implicit none
     ! Arguments:
     character(len=*), intent(in)  :: name
@@ -190,9 +190,9 @@ contains
     ! Read and validate the value
     read(stripped_infile, *) label, (vec(i), i = 1, len), desc
     if (name /= label) then
-       write(stderr, *) "getpariv: Expecting ", name, " but got ", &
+       write(stdout, *) "getpariv: Expecting ", name, " but got ", &
             trim(label), " instead."
-       stop
+       call exit(1)
     end if
     ! Report the value to stdout, if requested
     if (show_report .and. report_this) then
@@ -216,7 +216,7 @@ contains
   function getpard(name, reportThis) result(num)
     ! Read the named single real(kind=dp) value, and report it to
     ! stdout, if requested.
-    use io_unit_defs, only: stderr, stdout, stripped_infile
+    use io_unit_defs, only: stdout, stripped_infile
     use precision_defs, only: dp
     implicit none
     ! Arguments:
@@ -239,9 +239,9 @@ contains
     ! Read and validate the value
     read(stripped_infile, *) label, num, desc
     if (name /= label) then
-       write(stderr, *) "getpard: Expecting ", name, " but got ", &
+       write(stdout, *) "getpard: Expecting ", name, " but got ", &
             trim(label), " instead."
-       stop
+       call exit(1)
     end if
     ! Report the value to stdout, if requested
     if (show_report .and. report_this) then
@@ -256,7 +256,7 @@ contains
   subroutine getpardv(name, len, vec, reportThis)
     ! Read the named vector of real(kind=dp) values, and report it to
     ! stdout, if requested.
-    use io_unit_defs, only: stderr, stdout, stripped_infile
+    use io_unit_defs, only: stdout, stripped_infile
     use precision_defs, only: dp
     implicit none
     ! Arguments:
@@ -280,9 +280,9 @@ contains
     ! Read and validate the value
     read(stripped_infile, *) label, (vec(i), i = 1, len), desc
     if (name /= label) then
-       write(stderr, *) "getpardv: Expecting ", name, " but got ", &
+       write(stdout, *) "getpardv: Expecting ", name, " but got ", &
             trim(label), " instead."
-       stop
+       call exit(1)
     end if
     ! Report the value to stdout, if requested
     if (show_report .and. report_this) then
@@ -306,7 +306,7 @@ contains
   function getparl(name, reportThis) result(bool)
     ! Read the named logical value, and report it to
     ! stdout, if requested.
-    use io_unit_defs, only: stderr, stdout, stripped_infile
+    use io_unit_defs, only: stdout, stripped_infile
     implicit none
     ! Arguments:
     character(len=*), intent(in)  :: name
@@ -328,9 +328,9 @@ contains
     ! Read and validate the value
     read(stripped_infile, *) label, bool, desc
     if (name /= label) then
-       write(stderr, *) "getparl: Expecting ", name, " but got ", &
+       write(stdout, *) "getparl: Expecting ", name, " but got ", &
             trim(label), " instead."
-       stop
+       call exit(1)
     end if
     ! Report the value to stdout, if requested
     if (show_report .and. report_this) then

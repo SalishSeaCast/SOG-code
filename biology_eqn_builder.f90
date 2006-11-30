@@ -333,7 +333,7 @@ contains
     do ii = 1,grid%M
        if (w_sink(ii).lt.0) then
           write (*,*) "Youve got biology sinking upward!"
-          stop
+          call exit(1)
        else
           ig = ii
           flux(ii) = - w_sink(ii) * qty(ig)

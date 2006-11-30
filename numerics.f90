@@ -20,7 +20,9 @@ module numerics
   !
   ! Public Subroutines:
   !
-  !   check_negative -- 
+  !   check_negative -- Check for negative values in a vector.  Output
+  !                     a message if a negative value is found, and
+  !                     optionally stop execution; default is to stop.
 
   use precision_defs, only: dp
   implicit none
@@ -63,7 +65,7 @@ contains
     ! negative value is found, and optionally stop execution; default
     ! is to stop.
     use precision_defs, only: dp
-    use io_unit_defs, only: stderr, stdout
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     integer, intent(in) :: &
@@ -82,7 +84,6 @@ contains
     logical :: &
          die    ! Stop execution if a -ve value is found?
     integer :: &
-         stream, &  ! Output stream to send message to; stderr or stdout
          j          ! Indices of most negative values in vector
 
     ! Handle optional fatal argument
@@ -95,11 +96,9 @@ contains
     if (any(vector < 0.0d0)) then
        ! Build message depending on whether or not -ve values are fatal
        if (die) then
-          stream = stderr
-          write(stderr, *) "Error: Negative value(s) in " // msg, &
+          write(stdout, *) "Error: Negative value(s) in " // msg, &
                " at day = ", day, " time = ", time
        else
-          stream = stdout
           write(stdout, *) "Warning: Negative value(s) in " // msg &
                // " set to zero at day = ", day, " time = ", time
        endif
@@ -107,15 +106,15 @@ contains
        do j = lbound, size(vector) + lbound - 1
           if (vector(j) < 0.0d0) then
              ! Output the message
-             write(stream, *) " j = ", j
+             write(stdout, *) " j = ", j
           endif
        enddo
        ! Stop execution if -ve values are fatal
        if (die) then
-          stop
+          call exit(1)
        else
           ! If not a fatal errror, set the -ve value to zero
-          where (vector < 0.0d0) vector = 0.
+          where (vector < 0.0d0) vector = 0.0d0
        endif
     endif
   end subroutine check_negative

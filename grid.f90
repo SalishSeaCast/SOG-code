@@ -115,7 +115,7 @@ contains
   subroutine init_grid
     ! Initialize grid.
     use precision_defs, only: dp, sp
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
     implicit none
     ! Local variables:
     integer :: j  ! Loop index over depth of grid
@@ -149,9 +149,9 @@ contains
        ! surface, lambda > 0 concentrates resolution near D)
        ! *** Note that implementation of non-uniform grid is not
        ! *** consistent throughout the code
-       write(stderr, *) "init_grid: Non-uniform grid is not ", &
+       write(stdout, *) "init_grid: Non-uniform grid is not ", &
             "fully implemented, lambda = ", lambda
-       stop
+       call exit(1)
        grid%d_g = (grid%D / lambda) * log(1. * xsi_g * (1. - exp(lambda)))
        grid%d_i = (grid%D / lambda) * log(1. * xsi_i * (1. - exp(lambda)))
     endif
@@ -332,7 +332,7 @@ contains
     !   call interp_value(q, qty_g, d_g, d(q), j_below) or
     !   call interp_value(q, qty_i, d_i, d(q), j_below)
 
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
 
     implicit none
 
@@ -372,9 +372,9 @@ contains
             * (value - search_array(j_below-1)) &
             / (search_array(j_below) - search_array(j_below-1))
     else
-       write(stderr, *) "Warning: value = ", value, &
+       write(stdout, *) "Warning: value = ", value, &
             " out of range in interp_value()"
-       stop
+       call exit(1)
     endif
   end subroutine interp_value
 

@@ -54,7 +54,7 @@ contains
     if (vary%cf%enabled .and. .not.vary%cf%fixed) then
        if (vary%cf%shift /= int(vary%cf%shift)) then
           write (*,*) "non-integer cf shifts not implemented"
-          stop
+          call exit(1)
        endif
     endif
     
@@ -62,11 +62,11 @@ contains
     if (vary%wind%enabled) then
        if  (vary%wind%fixed) then
           write (*,*) 'Fixed wind magnitude has not been implemented'
-          stop
+          call exit(1)
        elseif (vary%wind%shift /= dint(vary%wind%shift)) then
           write (*,*) 'Non-full year shifts have not been implemented ',&
                'for the wind'
-          stop
+          call exit(1)
        endif
     endif
 
@@ -296,7 +296,7 @@ contains
        day_met=day + 1826
     else
        write (*,*) "unknown year in met data", year
-       stop
+       call exit(1)
     endif
 
   end function accum_day
@@ -347,7 +347,7 @@ contains
     else
        write (*,*) 'Out of range for leap-year calculation. ', &
             'Add more years to function leapyear'
-       stop
+       call exit(1)
     endif
     
   end function leapyear

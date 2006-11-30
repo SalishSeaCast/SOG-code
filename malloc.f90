@@ -11,12 +11,12 @@ module malloc
   !
   ! alloc_check(stat, msg) -- Check the stat result of an allocate
   !                           statement.  If it is non-zero, output 
-  !                           the specified message on stderr and stop 
+  !                           the specified message on stdout and stop 
   !                           execution.
   !
   ! dalloc_check(stat, msg) -- Check the stat result of an deallocate
   !                            statement.  If it is non-zero, output 
-  !                            the specified message on stderr and stop 
+  !                            the specified message on stdout and stop 
   !                            execution.
 
   implicit none
@@ -28,34 +28,34 @@ contains
 
   subroutine alloc_check(alloc_stat, message)
     ! Check the stat result of an allocate statement.
-    ! If it is non-zero, output the specified message on stderr
+    ! If it is non-zero, output the specified message on stdout
     ! and stop execution.
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     integer, intent(in)           :: alloc_stat
     character(len=80), intent(in) :: message
 
     if (alloc_stat /= 0) then
-       write(stderr, *) trim(message) // " memory allocation failed."
-       stop
+       write(stdout, *) trim(message) // " memory allocation failed."
+       call exit(1)
     end if
   end subroutine alloc_check
 
 
   subroutine dalloc_check(dalloc_stat, message)
     ! Check the stat result of an deallocate statement.
-    ! If it is non-zero, output the specified message on stderr
+    ! If it is non-zero, output the specified message on stdout
     ! and stop execution.
-    use io_unit_defs, only: stderr
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     integer, intent(in)           :: dalloc_stat
     character(len=80), intent(in) :: message
 
     if (dalloc_stat /= 0) then
-       write(stderr, *) trim(message) // " memory deallocation failed."
-       stop
+       write(stdout, *) trim(message) // " memory deallocation failed."
+       call exit(1)
     end if
   end subroutine dalloc_check
 
