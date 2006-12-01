@@ -351,14 +351,20 @@ contains
                   ! below interpolated value
 
     ! Local variables:
+    integer :: &
+         ub  !  Upper bound of search_array
     logical, dimension(lb:size(search_array)+lb-1) :: &
          mask  ! Mask array used as an faster alternative to looping
                ! over the search array
 
     ! Mask the search array for values greater than or equal to the
-    ! specified value.  We need to add the epsilon of value so that
-    ! value = 0 is handled properly.
-    mask = search_array >= (value + epsilon(value))
+    ! specified value.  We need to handle the 1st and last values in
+    ! the search array separately so that we catch cases where they
+    ! are exactly equal to the specified value.
+    mask(lb) = search_array(lb) >= (value + epsilon(value))
+    ub = size(search_array) + lb - 1
+    mask(lb+1:ub-1) = search_array(lb+1:ub-1) >= value
+    mask(ub) = search_array(ub) >= (value - epsilon(value))
     ! Confirm that the specified value is within the range of the
     ! search array.
     if (any(mask) .and. .not. all(mask)) then
