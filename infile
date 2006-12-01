@@ -70,6 +70,16 @@
 "flagellates_on"	.false.	"include flagellates in model?"
 "remineralization"	.false.	"include remineralization loop in model?"
 "use microzooplankton"  .false.  "include microzooplankton in model?"
+
+! Zooplankton values:
+! tuned
+"Mesozoo, winter conc"   0.086 "Mesozoo background concentration"
+! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
+"Mesozoo, max ingestion"      1.39e-5 "Mesozoo, maximum intact rate"
+! Alain 0.75
+"Mesozoo, micro pred slope" 0.5 "Mesozoo, Microplankton limit on predation"
+! Alain 2
+"Mesozoo, micro half-sat"  1.0 "Mesozoo, Microplankton half sat const"
 ! Phytoplankton values:
 ! Hitchcock 1980, 1.4 d-1 for T. nordenskelii at 10degrees
 "Micro, max growth"	3.24e-05      "micro maximum growth (s-1)"
@@ -103,7 +113,7 @@
 "Nano, Si ratio"	0.	     "Nano, ratio silicon/nitrogen"
 "Micro, K Si"           1.           "Micro, half-saturation Si"
 "Nano, K Si"            0.           "Nano, half-saturation Si"
-"Micro, nat mort"	0.e-06       "Micro, natural mortality"
+"Micro, nat mort"	2.3e-06       "Micro, natural mortality"
 "Nano, nat mort" 	0.e-07       "Nano, natural mortality"
 "Micro, graze mort"	3.75e-06     "Micro, grazing mortality"
 "Nano, graze mort"	3.75e-06     "Nano, grazing mortality"
