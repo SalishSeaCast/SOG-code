@@ -1134,7 +1134,10 @@ contains
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Mixing layer diffusivity profile arrays"
-    allocate(K_ML%m(1:M), K_ML%T(1:M), K_ML%S(1:M), &
+    ! K_ML%* is 0-based because its surface value (zero by definition)
+    ! is required in subroutine modify_K() when the mixing layer depth
+    ! is very shallow
+    allocate(K_ML%m(0:M), K_ML%T(0:M), K_ML%S(0:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Overall diffusivity profile arrays"
