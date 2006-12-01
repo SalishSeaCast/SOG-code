@@ -38,6 +38,8 @@ module NPZD
        flagellates, &       ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton, &  ! Active or not
+       ! diagnostics
+       Mesozoo, &
        ! Subroutines:
        init_NPZD, derivs, &
        dalloc_biology_variables
@@ -68,6 +70,14 @@ module NPZD
           Rm, & ! natural mortality rate
           M_z ! mortality rate
   end type rate_para_phyto
+  ! Rate parameters for Zooplankton
+  type :: rate_para_zoo
+     real(kind=dp) :: & 
+          winterconc, & ! background, winter conc (mesozoo only)
+          R, & ! max ingestion rate
+          MicroPredSlope, & ! limit from predation
+          MicroHalfSat ! half-saturation for getting eaten
+  end type rate_para_zoo  
   !
   ! Parameters for mortality (where it goes)
   type :: loss_param
@@ -98,6 +108,7 @@ module NPZD
        flagellates, &    ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton ! use a microzooplantkon pool?
+  real(kind=dp), dimension(:), allocatable :: Mesozoo
 
   ! Private variable declarations:
   !
@@ -124,6 +135,7 @@ module NPZD
   !
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano
+  type(rate_para_zoo) :: rate_mesozoo
   type(loss_param) :: wastedestiny
   !
   ! Nitrogen compound uptake diagnotics
@@ -169,6 +181,15 @@ contains
 
 
     ! Biological rate parameters
+    ! zooplankton rates
+    ! winter concentration
+    rate_mesozoo%winterconc = getpard('Mesozoo, winter conc')
+    ! max igestion rate
+    rate_mesozoo%R = getpard('Mesozoo, max ingestion')
+    ! limit from predation
+    rate_mesozoo%MicroPredSlope = getpard('Mesozoo, micro pred slope')
+    ! half saturation
+    rate_mesozoo%MicroHalfSat = getpard('Mesozoo, micro half-sat')
     ! max growth rate for light limitation
     rate_micro%R = getpard('Micro, max growth')
     rate_nano%R = getpard('Nano, max growth')
@@ -246,6 +267,7 @@ contains
          wastedestiny%m(D_bins)
     wastedestiny%s(0) = 1. - wastedestiny%s(1) - wastedestiny%s(2) - &
          wastedestiny%s(D_bins)
+
   end subroutine init_NPZD
 
 
@@ -275,6 +297,10 @@ contains
     allocate(remin_NH(1:M), NH_oxid(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Mesozooplankton diagnostic array"
+    allocate(Mesozoo(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_biology_variables
 
 
@@ -301,6 +327,10 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Nitrogen remineralization diagnostic arrays"
     deallocate(remin_NH, NH_oxid, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Mesozooplankton diagnostic array"
+    deallocate(Mesozoo, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     ! Deallocate memory from arrays for right-hand sides of
@@ -361,10 +391,10 @@ contains
             rate%temprange
 
        plank%growth%light(j) = Rmax(j)  * &
-            ! Steeves scheme like but with extended high light range
-            ! (Steves scheme has built in light inhibition)
+            ! Steeles scheme like but with extended high light range
+            ! (Steeles scheme has built in light inhibition)
             ! 0.67, 2.7 and 1.8 are constants for making the fit
-            ! Steeves like at small light and making it fit Durbin for
+            ! Steeles like at small light and making it fit Durbin for
             ! Thalassosira nordelenski at higher light
             (1.0d0 - exp(-I_par(j) / (0.67d0 * rate%Iopt)) ) * &
             exp(-I_par(j) / (2.7d0 * rate%Iopt)) * 1.8d0
@@ -512,6 +542,7 @@ contains
 
     integer :: jj ! counter through PZ
 
+
     ! Unload PZ array into local biology quantity arrays to make the
     ! formulation of the derivatives clearer.  Set any negative values
     ! to zero.
@@ -616,15 +647,24 @@ contains
     call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10, Temp, & ! in
          rate_micro, micro)         ! in and out, in, out
 
-    NatMort_micro=(rate_micro%Rm)*temp_Q10
-    GrazMort_micro=(rate_micro%M_z)*temp_Q10
+    NatMort_micro= (rate_micro%Rm) * temp_Q10 * Pmicro
+
+    Mesozoo(1:M) = rate_mesozoo%winterconc 
+
+    GrazMort_micro= rate_mesozoo%R * temp_Q10 * Mesozoo * & 
+         (Pmicro - rate_mesozoo%MicroPredSlope) / &
+         (rate_mesozoo%MicroHalfSat + Pmicro - rate_mesozoo%MicroPredSlope)
+
+    do jj=1,M
+       GrazMort_micro(jj) = max(0., GrazMort_micro(jj))
+    enddo
 
     ! put microplankton mortality into the medium detritus flux
 !SEA    GrazMort_micro = (1.0 + 5.0 * exp(-(day-150.)**2/60.**2) + &
 !SEA         2.0 * exp(-(day-230.)**2/60.**2) ) * GrazMort_micro
     ! copepods can't crop a full bloom (half-saturation 0.7 Alain)
 !SEA    GrazMort_micro = GrazMort_micro / (2.0 + Pmicro)
-    WasteMicro = WasteMicro + (GrazMort_micro+NatMort_micro)*Pmicro
+    WasteMicro = WasteMicro + (GrazMort_micro+NatMort_micro)
 
     ! phytoplankton growth: Nitrate and Ammonimum, conc. of nano plankton
     ! I_par is light, Temp is temperature 
@@ -636,11 +676,11 @@ contains
     call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10, Temp, & ! in
          rate_nano, nano)              ! in and out, in, out
 
-    NatMort_nano = (rate_nano%Rm) * temp_Q10
-    GrazMort_nano = (rate_nano%M_z) * temp_Q10
+    NatMort_nano = (rate_nano%Rm) * temp_Q10 * Pnano
+    GrazMort_nano = (rate_nano%M_z) * temp_Q10 * Pnano
 
 !SEA    GrazMort_nano = GrazMort_nano*Pnano ! ie propto the square
-    WasteNano = WasteNano + (GrazMort_nano+NatMort_nano)*Pnano
+    WasteNano = WasteNano + (GrazMort_nano+NatMort_nano)
 
     ! Remineralization:
     !
@@ -677,15 +717,15 @@ contains
     bPZ = (PZ_bins%micro - 1) * M + 1
     ePZ = PZ_bins%micro * M
     where (Pmicro > 0.) 
-       dPZdt(bPZ:ePZ) = (micro%growth%new - NatMort_micro &
-               - GrazMort_micro) * Pmicro
+       dPZdt(bPZ:ePZ) = micro%growth%new * Pmicro - NatMort_micro &
+               - GrazMort_micro
     endwhere
     ! Nano phytoplankton
     bPZ = (PZ_bins%nano - 1) * M + 1
     ePZ = PZ_bins%nano * M
     where (Pnano > 0.) 
-       dPZdt(bPZ:ePZ) = (nano%growth%new - NatMort_nano &
-               - GrazMort_nano) * Pnano
+       dPZdt(bPZ:ePZ) = nano%growth%new * Pnano - NatMort_nano &
+               - GrazMort_nano
     endwhere
     ! Microzooplantkon
     bPZ = (PZ_bins%zoo - 1) * M + 1
