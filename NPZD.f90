@@ -430,7 +430,11 @@ contains
           Hup_cell(j) = 0.
        END IF
 
-       plank%Nlimit(j) = (Oup_cell(j) + Hup_cell(j)) / Rmax(j)
+       plank%Nlimit(j) = (Oup_cell(j) + Hup_cell(j)) / & 
+            (Rmax(j) + epsilon(Rmax(j)))
+       ! if Rmax is zero the above equation will get a very large number 
+       ! 0/0+e but Nlimit must always be less than 1
+       plank%Nlimit(j) = min(plank%Nlimit(j), 1.d0)
 
        IF (Oup_cell(j) < 0.) THEN
           PRINT "(A)","Oup_cell(j) < 0. in reaction.f90"
