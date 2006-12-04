@@ -11,7 +11,7 @@
 ! Run timing parameters:
 ! Date/time at which the run starts (must match a CTD profile date/time)
 ! *** This should be replaced with a calendar date & clock time, 
-! *** ideally on 1 line
+! *** ideally on 1 line 
 "year_o"	2004	"year in which the run starts"
 "month_o"	10	"month in which the run starts"
 "yr_day_o"	293	"year-day on which the run starts [1-Jan = 1]"
@@ -68,18 +68,25 @@
 ! Biology model parameters:
 ! Model complexity flags:
 "flagellates_on"	.false.	"include flagellates in model?"
-"remineralization"	.false.	"include remineralization loop in model?"
+"remineralization"	.true.	"include remineralization loop in model?"
 "use microzooplankton"  .false.  "include microzooplankton in model?"
 
 ! Zooplankton values:
 ! tuned
-"Mesozoo, winter conc"   0.1d0 "Mesozoo background concentration"
+"Mesozoo, winter conc"       0.12d0 "Mesozoo background concentration"
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
-"Mesozoo, max ingestion"      1.39d-5 "Mesozoo, maximum intact rate"
+"Mesozoo, max ingestion"     1.39d-5 "Mesozoo, maximum intake rate"
 ! Alain 0.75
-"Mesozoo, micro pred slope" 0.2d0 "Mesozoo, Microplankton limit on predation"
+"Mesozoo, pred slope"        0.2d0 "Mesozoo, limit on predation"
 ! Alain 2
-"Mesozoo, micro half-sat"  0.2d0 "Mesozoo, Microplankton half sat const"
+"Mesozoo, half-sat"          0.2d0 "Mesozoo, half sat const"
+! split it up evenly
+"Mesozoo, pref for diatoms"  0.5d0 "Mesozoo preference for diatoms"
+"Mesozoo, micro pred slope"  0.2d0 "Mesozoo, micro limit of predation"
+"Mesozoo, micro half-sat"    0.2d0 "Mesozoo, micro half-saturation"
+"Mesozoo, pref for PON"      0.5d0 "Mesozoo, preference for PON"
+"Mesozoo, PON pred slope"    0.2d0 "Mesozoo, PON limit of predation"
+"Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation" 
 ! Phytoplankton values:
 ! Hitchcock 1980, 1.4 d-1 for T. nordenskelii at 10degrees
 "Micro, max growth"	3.24d-05      "micro maximum growth (s-1)"
@@ -117,12 +124,44 @@
 "Nano, nat mort" 	0.d-07       "Nano, natural mortality"
 "Micro, graze mort"	3.75d-06     "Micro, grazing mortality"
 "Nano, graze mort"	3.75d-06     "Nano, grazing mortality"
+
 ! Remineralization rates
-"NH remin rate"         0.d0           "Ammonium remineralization rate [1/s]"
+! 2 months at 10 degrees
+"NH remin rate"         4d-7           "Ammonium remineralization rate [1/s]"
+! Debby? and Alain and Jeffery
 "DON remin rate"        2.3d-6       "DON detritus remineralization rate [1/s]"
+! Jeffery 0.035 day-1 at 10 degrees ( 1month agrees with 370 notes)
 "PON remin rate"        8.0d-7       "PON detritus remineralization rate [1/s]"
-"bSi remin rate"        4.0d-7       "bSi detritus remineralization rate [1/s]"
+! from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
+! of same order as a number of papers including Brzezinski et al,; Bidle and 
+! Azam 1998 without bacteria
+"bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
+
 ! Waste and detritus
+! Micro Natural Mortality
+"Waste, dnm, NH"        0.      "fraction of waste from micro nat mort to NH"
+! Denman and Pena about 1/2 to dissolved
+"Waste, dnm, DON"       0.45    "fraction of waste from micro nat mort to DON"
+"Waste, dnm, PON"       0.45    "fraction of waste from micro nat mort to PON"
+! some loss
+"Waste, dnm, Ref"       0.05    "fraction of waste from micro nat mort to Ref"
+"Waste, dnm, Bsi"       1       "fraction of waste from micro nat mort to BSi"
+! Microphyto eaten by Mesozoo
+! Alain, excretion rate to growth rate
+"Waste, dem, NH"  0.03d0 "fraction of waste from mesozoo eat microphyto to NH"
+! Denman and Pena about 1/2 to dissolved
+"Waste, dem, DON" 0.2d0 "fraction of waste from mesozoo eat microphyto to DON"
+"Waste, dem, PON" 0.2d0 "fraction of waste from mesozoo eat microphyto to PON"
+! assimiliation minus excretion
+"Waste, dem, Ref" 0.57d0 "fraction of waste mesozoo eat microphyto to Ref"
+"Waste, dem, Bsi" 1.d0  "fraction of waste from mesozoo eat microphyto to BSi"
+! PON eaten by Mesozoo (copy above numbers, except Si)
+"Waste, pem, NH"  0.03d0 "fraction of waste from mesozoo eat PON to NH"
+"Waste, pem, DON" 0.2d0 "fraction of waste from mesozoo eat PON to DON"
+"Waste, pem, PON" 0.2d0 "fraction of waste from mesozoo eat PON to PON"
+"Waste, pem, Ref" 0.57d0 "fraction of waste mesozoo eat PON to Ref"
+"Waste, pem, Bsi" 0.d0  "fraction of waste from mesozoo eat PON to BSi"
+! Old waste code
 "Bin No"                1            "DON is detritus bin"
 "frac waste m"		0.2d0	     "frac of micro waste to this bin"
 "frac waste s"		0.2d0	     "frac of nano waste to this bin"
@@ -136,11 +175,14 @@
 "frac waste m"		0.05d0	     "frac of micro waste to this bin"
 "frac waste s"		0.05d0	     "frac of nano waste to this bin"
 ! Sinking rates
+! Alain
 "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
 "Micro max sink rate"   1.2d0          "Micro phyto max sinking rate [m/d]"
-"PON sink rate"         1.157d-5     "PON detritus sinking rate [m/s]"
-"refr sink rate"        0.d0           "Refractory N detritus sinking rate [m/s]"
-"bSi sink rate"         2.3d-5       "Biogenic Si detritus sinking rate [m/s]"
+! Jeffery quoting Dune and Bacon
+"PON sink rate"         8d-5     "PON detritus sinking rate [m/s]"
+"refr sink rate"        0.d0         "Refractory N detritus sinking rate [m/s]"
+! match N03 particles
+"bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
 ! Vary parameters
 "vary%wind%enabled"    .false.       "Variation of wind data?"
