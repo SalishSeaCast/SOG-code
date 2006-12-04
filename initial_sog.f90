@@ -2,8 +2,28 @@
 ! $Source$
 
 module initial_sog
-  ! *** What's in here?
+  ! Initialization of core variables including the reading of the CTD start
+  ! file
+  !
+  ! Public Parameters:
+  !
+  ! N2chl -- ratio of mg/m3 of chl to uM of N in phytoplankton
+  !
+
+  use precision_defs, only: dp
+
   implicit none
+  private
+  public :: &
+       ! Parameter values:
+       N2chl, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
+       ! Subroutines:
+       initial_mean
+
+  ! Public parameter declarations :
+  real(kind=dp), parameter :: &
+       N2chl = 1.5d0  ! ratio of chl mg/m3 to uMol N in phytoplankton
+
 
   ! *** These parameter values can probably be set in other, more
   ! *** appropriate modules
@@ -146,8 +166,12 @@ contains
             dumt, dump, dumo, S_new(i)  
        ! *** Maybe we should have a degC2degK function? 
        T_new(i) = T_new(i) + 273.15
+       ! convert fluorescence to uMol N
+       Pmicro(i) = Pmicro(i)/N2chl
+       ! split between micro and nano plankton
        Pmicro(i) = 5.0/6.0*Pmicro(i)
        Pnano(i) = 1.0/5.0*Pmicro(i)
+       ! estimate microzooplankton
        Z(i) = 0.5*Pmicro(i)
     enddo
     close(46)
