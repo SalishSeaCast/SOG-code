@@ -7,6 +7,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_
   use fundamental_constants, only: pi, latitude
+  use initial_sog, only: N2chl ! ratio of chl mg/m3 to N uMol for phytoplankton
       USE mean_param, only: entrain
       USE surface_forcing, only: albedo, Q_o
 
@@ -122,8 +123,8 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
       do k = 1, d%M    
          ! KK is evaluated on the grid points         
-         ! 1.5 is correction uM to mg/m3 chl, 0.5 is picoplankton
-         KK = 0.0722d0 + 0.0377d0 * 1.5d0 &
+         ! N2chl is correction uM to mg/m3 chl, 0.5 is picoplankton
+         KK = 0.0722d0 + 0.0377d0 * N2chl &
               * (Pmicro(k) + Pnano(k) + 0.5d0) ** 0.665 &
               + (2.307d-8 * Qriver ** 2 + 0.427d0) * exp(-d%d_g(k) / 2.09d0)
          Ipar(k) = Ipar(k-1) * exp(-d%i_space(k) * KK)
