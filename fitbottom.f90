@@ -25,28 +25,33 @@ module fitbottom
   ! Private module variable declarations:
   ! 
   ! Number of different quantities
-  integer, parameter :: NQ = 6
+  integer, parameter :: NQ = 7
   ! Quantity names
   character(len=12), dimension(NQ), parameter :: quantity &
        = ['salinity', 'temperature', 'chl fluor', 'nitrate', 'silicon', &
-          'plank ratio']
-  ! Fit coefficients (see fitbottom.py and fitted.m in
+          'ammonium', 'plank ratio']
+  ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
+  ! fitted.m in
   ! sog-forcing/bottom for details of how these coefficient values
   ! were derived.
   real(kind=dp), dimension(5, NQ), parameter :: c &
        = reshape([ &
           ! Salinity (constant, seasonal and biseasonal components)
-          29.62605865, 0.10374454, -0.03562458, -0.14156091, -0.06348989, &
+          29.62605865d0, 0.10374454d0, -0.03562458d0, -0.14156091d0, &
+          -0.06348989d0, &
           ! Temperature (constant, seasonal and biseasonal components)
-          9.34995751, -0.27245442, -0.90151197, 0.17933473, -0.05590939, &
+          9.34995751d0, -0.27245442d0, -0.90151197d0, 0.17933473d0, &
+          -0.05590939d0, &
           ! Phytoplankton from fluor (constant and seasonal)
-          0.58316137, -0.11206845, 0.26241523, 0., 0., &
-          ! Nitrate (constant) !*** not from fit... what SEA thinks
-          30.0, 0., 0., 0., 0., & 
-          ! Silicon (constant) !*** not from fit... what SEA thinks
-          50.0, 0., 0., 0., 0., &
+          0.58316137d0, -0.11206845d0, 0.26241523d0, 0.d0, 0.d0, &
+          ! Nitrate (constant) ! from salinity versus nitrate fit Nov 06 LB 91
+          30.5d0, 0.d0, 0.d0, 0.d0, 0.d0, & 
+          ! Silicon (constant) ! from salinity versus silicon fit NOv 06 LB 91
+          54.0d0, 0.d0, 0.d0, 0.d0, 0.d0, &
+          ! Ammonium (constant) ! from salinity versus nitrate fit Nov 06 LB 91
+          1.0d0, 0.d0, 0.d0, 0.d0, 0.d0, &
           ! Ratio of pico/micro plankton (constant and biseasonal)
-          1.25948868, 0., 0., 0.97697686, 0.46289294 &
+          1.25948868d0, 0.d0, 0.d0, 0.97697686d0, 0.46289294d0 &
          ], [5, NQ])
 
 contains
@@ -77,6 +82,8 @@ contains
        index = 5
     elseif (qty == quantity(6)) then
        index = 6
+    elseif (qty == quantity(7)) then
+       index = 7
     else
        write (stdout,*) 'bottom_value in fitbottom.f90:', &
             'Unexpected quantity: ', qty
@@ -89,7 +96,7 @@ contains
 
 
   subroutine bot_bound_time (day, day_time, &
-       Tbot, Sbot, Nobot, Sibot, Pmbot, Pnbot)
+       Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot)
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
@@ -99,7 +106,7 @@ contains
     ! Arguments:
     integer, intent(in) :: day
     real(kind=dp), intent(in) :: day_time
-    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Pmbot, Pnbot
+    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio
     
@@ -110,6 +117,7 @@ contains
     Sbot = bottom_value(arg, 'salinity')
     Nobot = bottom_value(arg, 'nitrate')
     Sibot = bottom_value(arg, 'silicon')
+    Nhbot = bottom_value(arg, 'ammonium')
     
     chl = bottom_value(arg, 'chl fluor')
     ratio = bottom_value(arg, 'plank ratio')
@@ -119,7 +127,7 @@ contains
   end subroutine bot_bound_time
   
 
-  subroutine bot_bound_uniform (M, Z, NH, D_DON, D_PON, D_refr, D_bSi)
+  subroutine bot_bound_uniform (M, Z, D_DON, D_PON, D_refr, D_bSi)
     ! Set the values at the bottom of the grid for those
     ! quantities that we don't have time series data for.
     use precision_defs, only: dp
@@ -128,14 +136,12 @@ contains
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), intent(inout), dimension(0:) :: &
          Z,      &  ! microzooplantkon
-         NH,     &  ! Ammonium concentration profile array
          D_DON,  &  ! Dissolved organic nitrogen concentration profile array
          D_PON,  &  ! Particulate organic nitrogen concentration profile array
          D_refr, &  ! Refractory nitrogen concentration profile array
          D_bSi      ! Biogenic silicon concentration profile array
 
     Z(M+1) = min(Z(M), 5.0d0)
-    NH(M+1) = min(NH(M), 0.5d0)
     D_DON(M+1) = D_DON(M)
     D_PON(M+1) = D_PON(M)
     D_refr(M+1) = D_refr(M)
