@@ -35,7 +35,11 @@ module initial_sog
 ! *** initial_mean below, so that initial value of flagellates biomass may
 ! *** be set to zero without recompiling
 !       P_nano = 2.6D-3 * 0., & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
-       NHo = 0.5d-3 
+
+       ! estimate of deep NH from Nitrate/Salinity fits.  Gives deep
+       ! nitrate as 31.5 uM but we measure 30.5 --- rest must be
+       ! remineralized NH
+       NHo = 1.0d0
 
 contains
 
@@ -84,56 +88,18 @@ contains
 
     U_new(1) = Uo
     V_new(1) = Vo
-!!$    Pmicro(1) = P_micro
-!!$    Pnano(1) = P_nano
-    NH(1) = NHo
-
-    !-----detritus loop added march 2006---------------------------------
-
-    open(unit=44, file="input/initial_Detritus.dat", &
-         status="OLD", action="READ")
-    do i = 1, d%M + 1
-       read(44, *) D_DON(i), D_PON(i)
-    end do
-    close(44)
-    D_bSi = D_PON
-    D_refr = 0.
-    ! Need deep ocean values for bottom boundary condition
-    D_DON(d%M + 1) = 0.
-    D_PON(d%M + 1) = 0.
-    D_bSi(d%M + 1) = 0.
-
-    ! *** The values read here are all overwritten, but removing this code
-    ! *** causes unclean diffs (profiles are visually the same though)
-    open(unit=49, file="input/NH4.dat", status="OLD", &
-         action="READ")
-    do i = 1, d%M + 1
-       read(49, *) NH(i)
-    end do
-    close(49)
-
-
-    !---biology jan 10 2005---------------------------------
 
     DO i = 2, d%M+1   
-       IF (d%d_g(i) <= hml) THEN  !Large1996  March 1960 initial profile        
-
-!!$          Pmicro(i) = P_micro
-!!$          Pnano(i) = P_nano
-          NH(i) = NHo
+       IF (d%d_g(i) <= hml) THEN               
+          NH(i) = 0.   ! essentially zero in mixed layer except in winter
        ELSE
-!!$          Pmicro(i) = 0.
-!!$          Pnano(i) = 0.
-          NH(i) = 0.
+          NH(i) = NHo   ! deep value
        END IF
        U_new(i) = Uo
        V_new(i) = Vo
-
     END DO
 
-!!$    Pmicro(d%M+1) = 0.
-!!$    Pnano(d%M+1) = 0.
-    NH(d%M+1) = 0.
+    NH(d%M+1) = NHo
 
 
     ! read in nutrients data
@@ -153,8 +119,6 @@ contains
     
 
 
-    !---end biology------------------------------------------ 
-
     ! STRATOGEM CTD data from station S3 to initialize temperature,
     ! phytoplacnkton biomass, and salinity in water column
     fn = getpars("ctd_in")
@@ -171,8 +135,11 @@ contains
        ! split between micro and nano plankton
        Pmicro(i) = 5.0/6.0*Pmicro(i)
        Pnano(i) = 1.0/5.0*Pmicro(i)
-       ! estimate microzooplankton
-       Z(i) = 0.5*Pmicro(i)
+       Z(i) = Pnano(i) !*** hard value to estimate
+       D_PON(i) = Pmicro(i)/5. ! estimate
+       D_DON(i) = D_PON(i)/10. ! estimate
+       D_Bsi(i) = D_PON(i)
+       D_Refr(i) = 0. 
     enddo
     close(46)
 
@@ -182,6 +149,10 @@ contains
     Pnano(0) = Pnano(1)
     Z(0) = Z(1)
     NH(0) = NH(1)
+    D_PON(0) = D_PON(1)
+    D_DON(0) = D_DON(1)
+    D_Bsi(0) = D_BSi(1)
+    D_Refr(0) = D_refr(1)
 
     ! assuming dz = 0.5
     ! Interpolate CTD data values for grid points between measurements?
@@ -193,6 +164,10 @@ contains
           Pmicro(i) = Pmicro(j) 
           Pnano(i) = Pnano(j)
           Z(i) = Z(j)
+          D_PON(i) = D_PON(j)
+          D_DON(i) = D_DON(j)
+          D_BSi(i) = D_Bsi(j)
+          D_Refr(i) = D_Refr(j)
        else
           ! *** This looks like a job for a arith_mean function
           T_new(i) = T_new(j) * 0.5 + T_new(j+1) * 0.5
@@ -200,6 +175,10 @@ contains
           Pmicro(i) = Pmicro(j) * 0.5 + Pmicro(j+1) * 0.5
           Pnano(i) = Pnano(j) * 0.5 + Pnano(j+1) * 0.5
           Z(i) = Z(j) * 0.5 + Z(j+1) * 0.5
+          D_PON(i) = D_PON(j) * 0.5 + D_PON(j+1) * 0.5
+          D_DON(i) = D_DON(j) * 0.5 + D_DON(j+1) * 0.5
+          D_BSi(i) = D_BSi(j) * 0.5 + D_BSi(j+1) * 0.5
+          D_Refr(i) = D_Refr(j) * 0.5 + D_Refr(j+1) * 0.5
        endif
     enddo
 
