@@ -657,7 +657,8 @@ contains
 
     GrazMort_micro= rate_mesozoo%R * temp_Q10 * Mesozoo * & 
          (Pmicro - rate_mesozoo%MicroPredSlope) / &
-         (rate_mesozoo%MicroHalfSat + Pmicro - rate_mesozoo%MicroPredSlope)
+         (rate_mesozoo%MicroHalfSat + Pmicro - rate_mesozoo%MicroPredSlope &
+         + epsilon(rate_mesozoo%MicroHalfSat))
 
     do jj=1,M
        GrazMort_micro(jj) = max(0., GrazMort_micro(jj))
