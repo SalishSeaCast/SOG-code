@@ -58,6 +58,7 @@ module NPZD
           Iopt, & ! optimum light (Steeves scheme)
           maxtemp, & ! maximum temp for growth
           temprange, & ! range below tempmax that temp is limiting
+          Q10exp, & ! exponent for Q10 tempeffect
           gamma, & ! loss parameter under light limitation          
           k, & ! half saturation constant
           ! preference for NO3 over NH (always less than 1 as NH is preferred)
@@ -79,16 +80,14 @@ module NPZD
           HalfSat, &         ! overall half-saturation
           MicroPref, &       ! fractional preference for diatoms
           MicroPredSlope, &  ! limit from predation
+          NanoHalfSat, &    ! half-saturation for getting eaten
+          NanoPref, &       ! fractional preference for diatoms
+          NanoPredSlope, &  ! limit from predation
           MicroHalfSat, &    ! half-saturation for getting eaten
           PON_Pref, &        ! fraction preference for PON
           PON_PredSlope, &   ! limit from predation
           PON_HalfSat        ! half-saturation for PON
   end type rate_para_zoo  
-  !
-  ! Parameters for mortality (where it goes)
-  type :: loss_param
-     real(kind=dp), dimension(:), pointer :: s,m  ! nano, micro
-  end type loss_param
 
   ! New parameters for waste
   type :: nloss_param
@@ -147,10 +146,11 @@ module NPZD
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano
   type(rate_para_zoo) :: rate_mesozoo
-  type(loss_param) :: wastedestiny
   type(nloss_param) :: frac_waste_DNM, & ! Diatom natural mortality
+       frac_waste_NNM, & ! Nano natural mortality
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
-       frac_waste_PEM    ! PON eaten by Mesozoo
+       frac_waste_NEM, & ! Nano eaten by mesozoo
+       frac_waste_PEM   ! PON eaten by Mesozoo
   !
   ! Nitrogen compound uptake diagnotics
   type(uptake_) :: uptake
@@ -210,7 +210,13 @@ contains
     rate_mesozoo%MicroPredSlope = getpard('Mesozoo, micro pred slope')
     ! half saturation
     rate_mesozoo%MicroHalfSat = getpard('Mesozoo, micro half-sat')
-    ! preference for diatoms
+    ! preference for nano
+    rate_mesozoo%MicroPref = getpard('Mesozoo, pref for nano')
+    ! limit from predation
+    rate_mesozoo%MicroPredSlope = getpard('Mesozoo, nano pred slope')
+    ! half saturation
+    rate_mesozoo%MicroHalfSat = getpard('Mesozoo, nano half-sat')
+    ! preference for PON
     rate_mesozoo%PON_Pref = getpard('Mesozoo, pref for PON')
     ! limit from predation
     rate_mesozoo%PON_PredSlope = getpard('Mesozoo, PON pred slope')
@@ -229,6 +235,9 @@ contains
     ! temp range of limitation below max
     rate_micro%temprange = getpard('Micro, temp range')
     rate_nano%temprange = getpard('Nano, temp range')
+    ! exponent for Q_10
+    rate_micro%Q10exp = getpard('Micro, Q10 exp')
+    rate_nano%Q10exp = getpard('Nano, Q10 exp')
     ! loss parameter under light limitation
     rate_micro%gamma = getpard('Micro, gamma loss')
     rate_nano%gamma = getpard('Nano, gamma loss')
@@ -286,6 +295,14 @@ contains
     frac_waste_DNM%Ref = getpard('Waste, dnm, Ref')
     frac_waste_DNM%Bsi = getpard('Waste, dnm, Bsi')
 
+    ! Nanophyto natural mortality
+    frac_waste_NNM%NH = getpard('Waste, nnm, NH')
+    frac_waste_NNM%DON = getpard('Waste, nnm, DON')
+    frac_waste_NNM%PON = getpard('Waste, nnm, PON')
+    frac_waste_NNM%Ref = getpard('Waste, nnm, Ref')
+    frac_waste_NNM%Bsi = getpard('Waste, nnm, Bsi')
+
+
     ! Microphyto(diatom) eaten by Mesozoo
     frac_waste_DEM%NH = getpard('Waste, dem, NH')
     frac_waste_DEM%DON = getpard('Waste, dem, DON')
@@ -293,30 +310,20 @@ contains
     frac_waste_DEM%Ref = getpard('Waste, dem, Ref')
     frac_waste_DEM%Bsi = getpard('Waste, dem, Bsi')
 
+    ! Nanophyto eaten by Mesozoo
+    frac_waste_NEM%NH = getpard('Waste, nem, NH')
+    frac_waste_NEM%DON = getpard('Waste, nem, DON')
+    frac_waste_NEM%PON = getpard('Waste, nem, PON')
+    frac_waste_NEM%Ref = getpard('Waste, nem, Ref')
+    frac_waste_NEM%Bsi = getpard('Waste, nem, Bsi')
+
+
     ! PON eaten by Mesozoo
     frac_waste_PEM%NH = getpard('Waste, pem, NH')
     frac_waste_PEM%DON = getpard('Waste, pem, DON')
     frac_waste_PEM%PON = getpard('Waste, pem, PON')
     frac_waste_PEM%Ref = getpard('Waste, pem, Ref')
     frac_waste_PEM%Bsi = getpard('Waste, pem, Bsi')
-
-
-    ! Detritus
-    do xx= 1, D_bins
-       binno = getpari("Bin No")
-       if (binno .ne. xx) then
-          write (*,*) "Bins must be in order, expecting"
-          write (*,*) "bin number ",xx
-          write (*,*) "but got bin number ",binno,"."
-          call exit(1)
-       endif
-       wastedestiny%m(xx) = getpard('frac waste m')
-       wastedestiny%s(xx) = getpard('frac waste s')
-    enddo
-    wastedestiny%m(0) = 1. - wastedestiny%m(1) - wastedestiny%m(2) - &
-         wastedestiny%m(D_bins)
-    wastedestiny%s(0) = 1. - wastedestiny%s(1) - wastedestiny%s(2) - &
-         wastedestiny%s(D_bins)
 
   end subroutine init_NPZD
 
@@ -333,10 +340,6 @@ contains
 
     msg = "PZ vector (biology model timestep initial conditions) array"
     allocate(PZ(1:(PZ_bins%Quant + D_bins) * M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Waste destiny (biology model timestep initial conditions) array"
-    allocate(wastedestiny%m(0:D_bins), wastedestiny%s(0:D_bins), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrogen compounds uptake diagnostic arrays"
@@ -365,10 +368,6 @@ contains
 
     msg = "PZ vector (biology model timestep initial conditions) array"
     deallocate(PZ, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Waste destiny (biology model timestep initial conditions) array"
-    deallocate(wastedestiny%m, wastedestiny%s, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Nitrogen compounds uptake diagnostic arrays"
@@ -588,13 +587,11 @@ contains
           Graz_PON,       &  ! PON grazing mortality profile
 ! new waste variables
           was_NH, was_DON, was_PON, was_Ref, was_Bsi, &
-          WasteMicro,     &  ! Profile of micro phytos converted to waste
-          WasteNano,      &  ! Profile of nano phytos converted to waste
           Si_remin           ! Profile of dissolution of biogenic Si detritus
     real(kind=dp), dimension(1:M) :: temp_Q10
     ! temporary variable to calculate mortality scheme
     real(kind=dp) :: food_limitation, denominator, &
-         Meso_mort_micro, Meso_graz_PON 
+         Meso_mort_micro, Meso_graz_PON , Meso_mort_nano
    
     integer :: &
          bPZ, &  ! Beginning index for a quantity in the PZ array
@@ -695,9 +692,7 @@ contains
     was_PON = 0.
     was_Ref = 0.
     was_Bsi = 0.
-    ! old waste code
-    WasteMicro = 0.
-    WasteNano = 0.
+
     remin_NH = 0.
 
     ! all biological processes are impacted by Q10 temp effect
@@ -707,10 +702,12 @@ contains
 
     ! phytoplankton growth: 
 
-    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10, Temp, & ! in
+    call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10**rate_micro%Q10exp, &
+         Temp, & ! in
          rate_micro, micro)         ! in and out, in, out
 
-    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10, Temp, & ! in
+    call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10**rate_nano%Q10exp, &
+         Temp, & ! in
          rate_nano, nano)              ! in and out, in, out
 
     ! phytoplankton natural mortality:
@@ -718,11 +715,16 @@ contains
     NatMort_micro= (rate_micro%Rm) * temp_Q10 * Pmicro
     NatMort_nano = (rate_nano%Rm) * temp_Q10 * Pnano
 
-    was_NH = was_NH + frac_waste_DNM%NH * NatMort_micro 
-    was_DON = was_DON + frac_waste_DNM%DON * NatMort_micro 
-    was_PON = was_PON + frac_waste_DNM%PON * NatMort_micro
-    was_Ref = was_Ref + frac_waste_DNM%Ref * NatMort_micro
-    was_BSi = was_BSi + frac_waste_DNM%BSi * NatMort_micro
+    was_NH = was_NH + frac_waste_DNM%NH * NatMort_micro &
+         + frac_waste_NNM%NH * NatMort_nano
+    was_DON = was_DON + frac_waste_DNM%DON * NatMort_micro &
+         + frac_waste_NNM%DON * NatMort_nano
+    was_PON = was_PON + frac_waste_DNM%PON * NatMort_micro &
+         + frac_waste_NNM%PON * NatMort_nano
+    was_Ref = was_Ref + frac_waste_DNM%Ref * NatMort_micro &
+         + frac_waste_NNM%Ref * NatMort_nano
+    was_BSi = was_BSi + frac_waste_DNM%BSi * NatMort_micro &
+         + frac_waste_NNM%Bsi * NatMort_nano
 
     ! Grazing processes
 
@@ -732,11 +734,13 @@ contains
 
     do jj = 1,M
        ! global food limitation
-       food_limitation = (Pmicro(jj) + D_PON(jj) - rate_mesozoo%PredSlope) / &
-            (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) &
+       food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) &
+            - rate_mesozoo%PredSlope) / &
+            (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
             - rate_mesozoo%PredSlope + epsilon(rate_mesozoo%HalfSat))
        
        denominator = (rate_mesozoo%MicroPref * Pmicro(jj) + &
+            rate_mesozoo%NanoPref * Pnano(jj) + &
             rate_mesozoo%PON_Pref * D_PON(jj) + epsilon(Pmicro(jj)) )
 
        ! limitation based on microplankton
@@ -747,6 +751,14 @@ contains
             - rate_mesozoo%MicroPredSlope + &
             epsilon(rate_mesozoo%MicroHalfSat)))
 
+       ! limitation based on nanoplankton
+       Meso_mort_nano = min(rate_mesozoo%NanoPref * food_limitation &
+            * Pnano(jj) / denominator, &
+            (Pnano(jj) - rate_mesozoo%NanoPredslope) / &
+            (rate_mesozoo%NanoHalfSat + Pnano(jj) &
+            - rate_mesozoo%NanoPredSlope + &
+            epsilon(rate_mesozoo%NanoHalfSat)))
+
        ! limitation based on PON
        Meso_graz_PON = min(rate_mesozoo%PON_Pref * food_limitation &
             * D_PON(jj) / denominator, &
@@ -755,10 +767,13 @@ contains
             + epsilon(rate_mesozoo%PON_HalfSat)))
 
        ! global corrected by individual
-       food_limitation = Meso_mort_micro + Meso_graz_PON
+       food_limitation = Meso_mort_micro + Meso_mort_nano + Meso_graz_PON
 
        GrazMort_micro(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * & 
             max(0., Meso_mort_micro)
+
+       GrazMort_nano(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
+            max(0., Meso_mort_nano)
 
        Graz_PON(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
             max(0., Meso_graz_PON)
@@ -766,19 +781,24 @@ contains
     enddo
 
     was_NH = was_NH + frac_waste_PEM%NH * Graz_PON + &
-         frac_waste_DEM%NH * GrazMort_micro
+         frac_waste_DEM%NH * GrazMort_micro + &
+         frac_waste_NEM%NH * GrazMort_nano
     was_DON = was_DON + frac_waste_PEM%DON * Graz_PON + &
-         frac_waste_DEM%DON * GrazMort_micro
+         frac_waste_DEM%DON * GrazMort_micro + &
+         frac_waste_NEM%DON * GrazMort_nano
     was_PON = was_PON + frac_waste_PEM%PON * Graz_PON + &
-         frac_waste_DEM%PON * GrazMort_micro
+         frac_waste_DEM%PON * GrazMort_micro + &
+         frac_waste_NEM%PON * GrazMort_nano
     was_Ref = was_Ref + frac_waste_PEM%Ref * Graz_PON + &
-         frac_waste_DEM%Ref * GrazMort_micro
+         frac_waste_DEM%Ref * GrazMort_micro + &
+         frac_waste_NEM%Ref * GrazMort_nano
     was_BSi = was_BSi + frac_waste_PEM%BSi * Graz_PON + &
-         frac_waste_DEM%BSi * GrazMort_micro
+         frac_waste_DEM%BSi * GrazMort_micro + &
+         frac_waste_NEM%BSi * GrazMort_nano
 
-    GrazMort_nano = (rate_nano%M_z) * temp_Q10 * Pnano
+    ! additional mortality???
 
-    WasteNano = WasteNano + (GrazMort_nano+NatMort_nano)
+    ! GrazMort_nano = GrazMort_nano + (rate_nano%M_z) * temp_Q10 * Pnano
 
     ! Remineralization:
     !
@@ -841,8 +861,6 @@ contains
     ePZ = PZ_bins%NH * M
     where (NH > 0.) 
        dPZdt(bPZ:ePZ) = -uptake%NH              &
-               + WasteMicro * wastedestiny%m(0) &
-               + WasteNano * wastedestiny%s(0)  &
                + was_NH &
                + remin_NH - NH_oxid
     endwhere
@@ -858,18 +876,14 @@ contains
     bPZ = (PZ_bins%D_DON - 1) * M + 1
     ePZ = PZ_bins%D_DON * M
     where (D_DON > 0.) 
-       dPZdt(bPZ:ePZ) = WasteMicro * wastedestiny%m(1)  &
-                  + WasteNano * wastedestiny%s(1) &
-                  + was_DON &
+       dPZdt(bPZ:ePZ) = was_DON &
                   - remin%D_DON * D_DON
     endwhere
     ! Particulate organic nitrogen detritus
     bPZ = (PZ_bins%D_PON - 1) * M + 1
     ePZ = PZ_bins%D_PON * M
     where (D_PON > 0.) 
-       dPZdt(bPZ:ePZ) = WasteMicro * wastedestiny%m(2)  &
-                  + WasteNano * wastedestiny%s(2) &
-                  + was_PON - Graz_PON &
+       dPZdt(bPZ:ePZ) = was_PON - Graz_PON &
                   - remin%D_PON * D_PON
     endwhere
     ! Biogenic silicon detritus
