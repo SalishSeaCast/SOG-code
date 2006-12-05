@@ -22,7 +22,7 @@ program SOG
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! *** Temporary until turbulence refactoring is completed
-  use turbulence, only: u_star, L_mo, w, wbar
+  use turbulence, only: L_mo, w, wbar
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -54,8 +54,6 @@ program SOG
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
   use find_upwell, only: upwell_profile, vertical_advection
-  use diffusion, only: diffusion_coeff, diffusion_nonlocal_fluxes, &
-       diffusion_bot_surf_flux
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
   use precision_defs, only: dp, sp
@@ -310,7 +308,7 @@ program SOG
         CALL buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
              B, Bf)                                           ! out
-
+   
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
         !
@@ -327,17 +325,6 @@ oh%new = h%new
 oh%g = h%g
 oh%i = h%i
         
-        ! Calculates non-local transport term (Large, et al (1994),
-        ! eqn 20).  Only applicable to scalar quantities under
-        ! convective forcing.
-        IF (abs(u_star) > epsilon(u_star) .or. abs(Bf) > epsilon(Bf)) THEN
-           CALL def_gamma(L_mo, grid, wt_r, oh, gamma, Bf, omega) 
-        ELSE
-           gamma%t = 0.0d0
-           gamma%s = 0.0d0
-           gamma%m = 0.0d0
-        END IF
-
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
         ! the physics quantities.
@@ -382,8 +369,11 @@ S_RHS%diff_adv%new = Gvector%s
            call new_to_old_phys_Bmatrix()
         endif
 
-        uprev = u%new
-        vprev = v%new
+        ! Preserve the profiles of the velocity components from the
+        ! previous iteration to use in averaging below for convergence
+        ! stabilization.
+        Uprev = U%new
+        Vprev = V%new
 
         ! Solve the semi-implicit diffusion/advection PDEs with
         ! Coriolis and baroclinic pressure gradient terms for the
@@ -474,28 +464,35 @@ S_RHS%diff_adv%new = Gvector%s
         CALL define_Ri_b_sog(grid, oh, surface_h, U%new, V%new, rho%g, Ri_b, &
              V_t_square, N_2_g)
 
+        ! Preserve the value of the mixing layer depth from the
+        ! previous iteration to use in averaging below for convergence
+        ! stabilization.
         hprev = h%new
-
         ! Find the mixing layer depth by comparing Ri_b to Ri_c
         ! This sets the values of the components of h%*.
         call find_mixing_layer_depth (grid, Ri_b, Bf, year, day, day_time, &
              count)
         ! Average the newly calculated mixing layer depth with that
         ! from the previous iteration to help stabilize the
-        ! convergence of the implicit solver loop
-        ! (and if things aren't converging, try something different)
-        if (count.ge.10.and.count.le.13) then
+        ! convergence of the implicit solver loop.  Try nudging things
+        ! if convergence isn't progressing well.
+        !
+        ! *** These count ranges are bsae on a maximum iteration limit
+        ! *** of niter = 30.  They should be adjust if that infile
+        ! *** parameter value is changed (and Susan has very definite
+        ! *** ideas on *how* they should be changed).
+        if (count >= 10 .and. count <= 13) then
            h%new = 0.75*h%new + 0.25*hprev
-           u%new = 0.75*u%new + 0.25*uprev
-           v%new = 0.75*v%new + 0.25*vprev
-        elseif (count.ge.23.and.count.le.26) then
+           U%new = 0.75*U%new + 0.25*Uprev
+           V%new = 0.75*V%new + 0.25*Vprev
+        elseif (count >= 23 .and. count <= 26) then
            h%new = 0.25*h%new + 0.75*hprev
-           u%new = 0.25*u%new + 0.75*uprev
-           v%new = 0.25*v%new + 0.75*vprev
+           U%new = 0.25*U%new + 0.75*Uprev
+           V%new = 0.25*V%new + 0.75*Vprev
         else
            h%new = (hprev + h%new) / 2.
-           u%new = (uprev + u%new) / 2.
-           v%new = (vprev + v%new) / 2.
+           U%new = (Uprev + U%new) / 2.
+           V%new = (Vprev + V%new) / 2.
         endif
 
         ! Set the value of the indices of the grid point & grid layer
@@ -507,15 +504,13 @@ S_RHS%diff_adv%new = Gvector%s
         ! Accuracy is 2% at large mixed layer 
         ! depths and about 4 cm at 1 m mixed layer depths
         hscale = 0.02 * hprev + 0.02
-        delh = ABS(hprev - h%new)/hscale
-
-
-        ! Calculate convergence metric for velocity field
-        ! Accuracy is 2% at large 
-        ! velocities and 0.7 cm/s at 10.0 cm/s (units are m/s)
-        uscale = 0.02*sqrt(uprev(1)**2+vprev(1)**2) + 0.005
-        delu = abs(u%new(1)-uprev(1))/uscale
-        delv = abs(v%new(1)-vprev(1))/uscale
+        delh = abs(hprev - h%new)/hscale
+        ! Calculate convergence metrics for the velocity field.
+        ! Accuracy is 2% at large velocities and 0.7 cm/s at 10.0 cm/s
+        ! (units are m/s)
+        Uscale = 0.02 * sqrt(Uprev(1) ** 2 + Vprev(1) ** 2) + 0.005
+        delU = abs(U%new(1) - Uprev(1)) / Uscale
+        delV = abs(V%new(1) - Vprev(1)) / Uscale
 
         ! Calculate baroclinic pressure gradient components
         !
@@ -524,7 +519,7 @@ S_RHS%diff_adv%new = Gvector%s
 
 
         ! Test for convergence of implicit solver
-        if (count >= 2 .and. max(delh,delu,delv) < 1) then
+        if (count >= 2 .and. max(delh, delu, delv) < 1) then
            exit
         endif
      enddo  !---------- End of the implicit solver loop ----------
