@@ -45,10 +45,6 @@ module mean_param
      TYPE(entrain)::e, ml   !entrainment depth or mixed layer depth
   END TYPE height
 
-  TYPE :: MST               ! Momentum, Salinity and Temp component vectors
-     DOUBLE PRECISION, DIMENSION(:), POINTER::m,s,t    
-  END TYPE MST
-
   TYPE :: boundary          !boundary conditions at h
      DOUBLE PRECISION :: h, div
      DOUBLE PRECISION, DIMENSION(:), POINTER::value
