@@ -16,9 +16,6 @@ module surface_forcing
        cutoff = 10.0, &
        var_c = 5.0, &   !***  !11.0
        zero =  0.
-  DOUBLE PRECISION, PARAMETER:: Cv = 1.5  !1.99 !set to keep beta_t = -0.2
-       !beta_t = -0.2 only for convection
-  DOUBLE PRECISION, PARAMETER::C_star = 9.9
   DOUBLE PRECISION, PARAMETER:: &
        Q_o = 1368.0, & !1367.0? W/m^2  Solar constant
        !           albedo = 0.061, &  !6% Large 1996
