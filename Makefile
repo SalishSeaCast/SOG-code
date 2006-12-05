@@ -61,8 +61,6 @@ allocate1.o	\
 \
 initialize.o irradiance_sog.o 	\
 buoyancy.o air_sea_fluxes.o surface_flux_sog.o \
-def_v_t_sog.o \
-define_Ri_b_sog.o \
 new_year.o \
 \
 SOG.o
