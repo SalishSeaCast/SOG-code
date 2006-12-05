@@ -15,8 +15,6 @@ subroutine allocate1(M, STAT)
       ALLOCATE(Fw(0:M), F_n(0:M), &
            Q_n(0:M), &
            I(0:M), I_par(0:M), &
-           omega%s%value(0:M), omega%m%value(0:M), &
-           Ri_b(0:M), N_2_g(M), V_t_square(M), &
            STAT = alloc_stat(6)) 
                      
       ALLOCATE(Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),&
