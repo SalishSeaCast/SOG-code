@@ -38,6 +38,10 @@ module turbulence
   !           It is commented out, but can be included in a build if it
   !           is required for diagnostic purposes.
   !
+  !   u_star -- Turbulent friction velocity
+  !
+  !   L_mo -- Monin-Obukhov length scale
+  !
   ! Public Subroutines:
   !
   !   init_turbulence -- Allocate memory for turbulence model
@@ -85,10 +89,11 @@ module turbulence
        K, &      ! Overall diffusivity profile; a continuous profile of
                  ! K_ML%* in the mixing layer, and nu%*%total below it
        wbar, &   ! Turbulent kinematic flux profiles
-       ! *** Temporary until turbulence refactoring is completed
+       u_star, &  ! Turbulent friction velocity
        L_mo, &    ! Monin-Obukhov length scale
+       ! *** Temporary until turbulence refactoring is completed
        w, &  ! Turbulent velocity scale profile arrays
-          ! values at the mixing layer depth
+             ! values at the mixing layer depth
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, calc_turbulent_fluxes, &
        nonlocal_scalar_transport, dalloc_turbulence_variables
