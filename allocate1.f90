@@ -19,9 +19,6 @@ subroutine allocate1(M, STAT)
            Ri_b(0:M), N_2_g(M), V_t_square(M), &
            STAT = alloc_stat(6)) 
                      
-      ALLOCATE(gamma%m(0:M),gamma%s(0:M),gamma%t(0:M), &
-           STAT = alloc_stat(7))
-
       ALLOCATE(Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),&
                STAT = alloc_stat(8))
                
