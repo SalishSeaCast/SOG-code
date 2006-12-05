@@ -39,21 +39,6 @@ module mean_param
      INTEGER :: i,g
   END TYPE entrain
 
-  TYPE :: height            !boundary layer depth 
-     DOUBLE PRECISION :: old, new
-     INTEGER :: i, g        !interface and grid index
-     TYPE(entrain)::e, ml   !entrainment depth or mixed layer depth
-  END TYPE height
-
-  TYPE :: boundary          !boundary conditions at h
-     DOUBLE PRECISION :: h, div
-     DOUBLE PRECISION, DIMENSION(:), POINTER::value
-  END TYPE boundary
-
-  TYPE :: MS                !Momemtum and scalar
-     TYPE(boundary)::m, s
-  END TYPE MS
-
   INTEGER::is_leap_year, was_leap_year
 
 END MODULE mean_param
