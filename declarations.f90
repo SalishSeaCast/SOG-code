@@ -20,8 +20,6 @@ module declarations
   real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
-  TYPE(height)::oh, surface_h
-  TYPE(MS)::omega
   type(UVST):: Gvector
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
@@ -61,12 +59,7 @@ module declarations
        water_type
   REAL::D_test
   DOUBLE PRECISION :: &
-       day_time, Io, h_Ekman  !depth
-  !friction vel, convective vel scale
-  !monin_obukov length and julian day
-  DOUBLE PRECISION::beta_t ! entrainment coefficient under convection
-  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE::V_t_square, &
-       Ri_b, N_2_g
+       day_time, Io
   !I = intensity
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par
 
