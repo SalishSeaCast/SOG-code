@@ -21,8 +21,6 @@ program SOG
   use mixing_layer, only: h
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
-  ! *** Temporary until turbulence refactoring is completed
-  use turbulence, only: L_mo, w, wbar
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -316,14 +314,6 @@ program SOG
         ! variables that are declared in the turbulence module so that
         ! they can be used by other modules.
         call calc_KPP_diffusivity(Bf, h%new, h%i, h%g)
-!!$! *** Turbulence refactoring bridge code
-omega%m%value = w%m%profile
-omega%s%value = w%s%profile
-
-! *** Mixing layer depth refactoring bridge code
-oh%new = h%new
-oh%g = h%g
-oh%i = h%i
         
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
@@ -417,61 +407,20 @@ S_RHS%diff_adv%new = Gvector%s
 
         ! Update buoyancy profile, surface buoyancy forcing, and local
         ! buoyancy frequency
-        ! *** Local buoyancy freqency may be part of mixing layer
-        ! *** depth calculation
-        CALL buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
+        call buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
              B, Bf)                                           ! out
         rho%grad_g = gradient_g(rho%g)
-        DO xx = 1,grid%M
-           N_2_g(xx) = -(g / rho%g(xx)) * rho%grad_g(xx)
-        END DO
-
-!!!Define turbulent velocity shear V_t_square for Ri_b  use last count values
-
-!!!Calculate beta_t: need h%e and h%e%i and new w%b  w%i vertical turbulent flux of i
-
-
-        wbar%b_err(0) = 0.
-
-!!$        DO xx = 1, grid%M           !uses K%old and T%new
-!!$           w%t(xx) = -K%t(xx)*(T%grad_i(xx) - gamma%t(xx))
-!!$           w%s(xx) = -K%s(xx)*(S%grad_i(xx) - gamma%s(xx))
-!!$           w%b(xx) = g * (alpha%i(xx) * w%t(xx) - beta%i(xx) * w%s(xx))   
-!!$           w%b_err(xx) = g * (alpha%grad_i(xx) * w%t(xx) &
-!!$                - beta%grad_i(xx) * w%s(xx))
-!!$        END DO
-
-
-        ! beta_t is the ratio of the entrainment flux to the surface buoyancy flux -- set equal to -0.2 when convection is occuring
-
-        if (wbar%b(0)>0) then
-           beta_t = -0.2
-        else
-           beta_t = 0.
-        endif
-
-        V_t_square = 0.
-
-
-        IF (beta_t < 0.) THEN  !omega, vertical velocity scale
-           CALL def_v_t_sog(grid, oh, N_2_g, omega%s%value, V_t_square, beta_t, L_mo) !test conv  
-           ! V_t_square, the turbulent velocity shear, (23)
-        END IF
-
-        ! Calculate the profile of bulk Richardson number (Large, etal
-        ! (1994) eqn 21)
-        CALL define_Ri_b_sog(grid, oh, surface_h, U%new, V%new, rho%g, Ri_b, &
-             V_t_square, N_2_g)
 
         ! Preserve the value of the mixing layer depth from the
         ! previous iteration to use in averaging below for convergence
         ! stabilization.
         hprev = h%new
-        ! Find the mixing layer depth by comparing Ri_b to Ri_c
+        ! Find the mixing layer depth by comparing the profile of bulk
+        ! Richardson number to a critical value.
+        ! 
         ! This sets the values of the components of h%*.
-        call find_mixing_layer_depth (grid, Ri_b, Bf, year, day, day_time, &
-             count)
+        call find_mixing_layer_depth (year, day, day_time, count)
         ! Average the newly calculated mixing layer depth with that
         ! from the previous iteration to help stabilize the
         ! convergence of the implicit solver loop.  Try nudging things
