@@ -9,7 +9,6 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
   use grid_mod, only: grid_, interp_value
   use turbulence, only: &
        wbar  ! Turbulent kinematic flux profile arrays; we need wbar%b(0)
-  use mean_param, only: height
   use fundamental_constants, only: g
   implicit none
   ! Arguments:
