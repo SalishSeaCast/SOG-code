@@ -46,7 +46,7 @@ core_variables.o water_properties.o input_processor.o grid.o numerics.o \
 mean_param.o declarations.o surface_forcing.o \
 initial_sog.o \
 \
-diffusion.o turbulence.o mixing_layer.o \
+turbulence.o mixing_layer.o diffusion.o \
 baroclinic_pressure.o physics_eqn_builder.o \
 physics_model.o \
 find_upwell.o \
@@ -61,7 +61,6 @@ allocate1.o	\
 \
 initialize.o irradiance_sog.o 	\
 buoyancy.o air_sea_fluxes.o surface_flux_sog.o \
-def_gamma.o \
 def_v_t_sog.o \
 define_Ri_b_sog.o \
 new_year.o \
