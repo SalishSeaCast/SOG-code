@@ -86,13 +86,12 @@ module turbulence
                  ! K_ML%* in the mixing layer, and nu%*%total below it
        wbar, &   ! Turbulent kinematic flux profiles
        ! *** Temporary until turbulence refactoring is completed
-       u_star, &  ! Turbulent friction velocity
        L_mo, &    ! Monin-Obukhov length scale
        w, &  ! Turbulent velocity scale profile arrays
           ! values at the mixing layer depth
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, calc_turbulent_fluxes, &
-       dalloc_turbulence_variables
+       nonlocal_scalar_transport, dalloc_turbulence_variables
 
   ! Type Definitions:
   !
@@ -1043,8 +1042,69 @@ contains
     Lambda = (1.0d0 - del) * nu_h_gm1 + del * K_star
   end function modify_K
 
+  
+  function nonlocal_scalar_transport(flux, h, d_i, Bf) result(gamma_value)
+    ! Return the value of the non-local transport term for the
+    ! specified flux, and depth.  (Large, et al (1994), eqn 20).
 
-  subroutine calc_turbulent_fluxes(h, h_i)
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    ! Functions:
+
+    ! Arguments:
+    real(kind=dp), intent(in) :: &
+         flux, &  ! Flux to calculate the non-local transport term
+                  ! value for.
+         h,    &  ! Mixing layer depth
+         d_i,  &  ! Depth of grid layer interface to calculate the
+                  ! non-local transport term value at.
+         Bf       ! Surface bouyancy flux
+
+    ! Result:
+    real(kind=dp) :: &
+         gamma_value  ! Value of the non-local transport term for the
+                      ! specified flux, and depth.
+
+    ! Local Parameters:
+    real(kind=dp), parameter :: C_star = 9.9  ! Proportionality
+                                              ! coefficient for
+                                              ! parameterizatio of
+                                              ! non-local transport
+                                              ! terms.  *** Large, et
+                                              ! al (1994) recommends a
+                                              ! value of 10.
+    ! Local Variables:
+    real(kind=dp) :: &
+         w_S      ! Value of the scalar turbulent velocity scale at
+                  ! the depth for which the non-local transport term
+                  ! is being calculated.
+
+    ! Note that abs(x) > epsilon(x) is a real-number-robust test for
+    ! x /= 0.
+    if ((abs(u_star) > epsilon(u_star) .or. abs(Bf) > epsilon(Bf)) &
+         .and. (Bf < 0.0d0) &
+         .and. d_i < h) then
+       ! There is wind or convective forcing, it is unstable, and
+       ! we're in the mixing layer.
+       ! Calculate Value of the scalar turbulent velocity scale at the
+       ! depth for which the non-local transport term is being
+       ! calculated.
+       w_S = w_scale(h, d_i, Bf, nondim_scalar_flux, c_s)
+       ! Calculate value of the non-local transport term for the
+       ! specified flux, and depth,
+       gamma_value = C_star * kapa                     &
+            * (c_s * kapa * epsiln) ** (1.0d0 / 3.0d0) &
+            * flux / (w_S * h)
+    else
+       ! No forcing, or it's stable, or we're below the mixing layer.
+       gamma_value = 0.0d0
+    endif
+  end function nonlocal_scalar_transport
+
+
+  subroutine calc_turbulent_fluxes(h, h_i, Bf)
     ! Calculate the turbulent kinematic flux profiles.  
     !
     ! Note that only the surface values (index = 0) are used in the
@@ -1069,16 +1129,15 @@ contains
     use water_properties, only: &
          alpha, &  ! Thermal expansion coefficient profile arrays
          beta      ! Salinity contraction coefficient profile arrays
+    use declarations, only: wt_r  ! *** Should some from somewhere else
     ! Function:
-!!$    use diffusion, only: &
-!!$         gamma  ! Return non-local transport term for the specified
-!!$                ! flux
 
     implicit none
 
     ! Arguments:
     real(kind=dp), intent(in) :: &
-         h   ! Mixing layer depth
+         h, &   ! Mixing layer depth
+         Bf     ! Surface bouyancy flux
     integer, intent(in) :: &
          h_i  ! Index of grid layer interface immediately below mixing
               ! layer depth.
@@ -1096,8 +1155,11 @@ contains
           wbar%u(j) = -K_ML%m(j) * (U%grad_i(j) - 0.0d0)
           wbar%v(j) = -K_ML%m(j) * (V%grad_i(j) - 0.0d0)
           ! Temperature
-!!$          wbar%t(j) = -K_ML%T(j) * (T%grad_i(j) - gamma(wbar%t(0) + wtr))
-!!$          wbar%s(j) = -K_ML%S(j) * (S%grad_i(j) - gamma(wbar%s(0)))
+          wbar%t(j) = -K_ML%T(j) * (T%grad_i(j) &
+               - nonlocal_scalar_transport((wbar%t(0) + wt_r), &
+                                           h, grid%d_i(j), Bf))
+          wbar%s(j) = -K_ML%S(j) * (S%grad_i(j) &
+               - nonlocal_scalar_transport(wbar%s(0), h, grid%d_i(j), Bf))
           ! Large, et al (1994), eqn A3b
           wbar%b(j) = g * (alpha%i(j) * wbar%t(j) - beta%i(j) * wbar%s(j))
           ! *** Buoyancy flux variation due to error in z ???
