@@ -64,6 +64,20 @@ module turbulence
   !
   !   dalloc_turbulence_variables -- Deallocate memory for turbulence
   !                                  quantities.
+  !
+  ! Public Functions:
+  !
+  !   w_scale -- Return the vertical turbulent velocity scale value
+  !              at the specified depth.
+  !
+  !   nondim_scalar_flux -- Return the value of the non-dimensional
+  !                         scalar flux profile at the specified depth
+  !                         (Large, etal (1994), App. B).
+  !
+  !   nonlocal_scalar_transport -- Return the value of the non-local
+  !                                transport term for the specified
+  !                                flux, and depth.  (Large, et al
+  !                                (1994), eqn 20).
 
   use precision_defs, only: dp
   implicit none
@@ -96,7 +110,9 @@ module turbulence
              ! values at the mixing layer depth
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, calc_turbulent_fluxes, &
-       nonlocal_scalar_transport, dalloc_turbulence_variables
+       dalloc_turbulence_variables, &
+       ! Functions:
+       w_scale, nondim_scalar_flux, nonlocal_scalar_transport
 
   ! Type Definitions:
   !
@@ -148,8 +164,6 @@ module turbulence
   !
   ! Elements of turbulent velocity scale profiles
   type :: turbulent_vel_scale_elements
-     real(kind=dp), dimension(:), allocatable :: &
-          profile  ! Shape function profile array
      real(kind=dp) :: &
           h,      &  ! Value at the mixing layer depth
           grad_h     ! Vertical gradient value at the mixing layer
@@ -358,14 +372,6 @@ contains
     u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1.0d0/4.0d0)
     w_star = (-Bf * h) ** (1.0d0/3.0d0)
     L_mo = u_star ** 3 / (kapa * Bf)
-
-    ! *** Temporary calculation of turbulent velocity scale profiles
-    ! *** until def_gamma, and define_Ri_b_sog have been refactored to
-    ! *** use other w%* components.
-    do j = 1, grid%M
-       w%m%profile(j) = w_scale(h, grid%d_i(j), Bf, nondim_momentum_flux, c_m)
-       w%s%profile(j) = w_scale(h, grid%d_i(j), Bf, nondim_scalar_flux, c_s)
-    enddo
 
     ! Calculate the coefficients of the non-dimension vertical shape
     ! functions (Large, et al (1994), eqn 11).
@@ -725,7 +731,7 @@ contains
 
   function nondim_scalar_flux(d) result(phi_s)
     ! Return the value of the non-dimensional scalar flux profile at
-    ! the specified depth (Large, etal (1994), App. B)
+    ! the specified depth (Large, etal (1994), App. B).
 
     ! Type Definitions from Other Modules:
     use precision_defs, only: dp
@@ -1073,14 +1079,13 @@ contains
                       ! specified flux, and depth.
 
     ! Local Parameters:
-    real(kind=dp), parameter :: C_star = 9.9  ! Proportionality
-                                              ! coefficient for
-                                              ! parameterizatio of
-                                              ! non-local transport
-                                              ! terms.  *** Large, et
-                                              ! al (1994) recommends a
-                                              ! value of 10.
-    ! Local Variables:
+    real(kind=dp), parameter :: &
+         C_star = 9.9d0  ! Proportionality coefficient for
+                         ! parameterizatio of non-local transport
+                         ! terms.  *** Large, et al (1994) recommends
+                         ! a value of 10.
+
+    !Local Variables:
     real(kind=dp) :: &
          w_S      ! Value of the scalar turbulent velocity scale at
                   ! the depth for which the non-local transport term
@@ -1216,10 +1221,6 @@ contains
          wbar%b(0:M), wbar%b_err(0:M),                           &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Turbulent velocity scale profile arrays"
-    allocate(w%m%profile(0:M), w%s%profile(0:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
   end subroutine alloc_turbulence_variables
 
 
@@ -1247,10 +1248,6 @@ contains
     msg = "Turbulent kinematic flux profile arrays"
     deallocate(wbar%u, wbar%v, wbar%t, wbar%s, &
          wbar%b, wbar%b_err,                   &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Turbulent velocity scale profile arrays"
-    deallocate(w%m%profile, w%s%profile, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_turbulence_variables
