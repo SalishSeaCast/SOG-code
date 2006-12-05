@@ -120,6 +120,7 @@ contains
     use physics_eqn_builder, only: dalloc_phys_RHS_variables
     use baroclinic_pressure, only: dalloc_baro_press_variables
     use turbulence, only: dalloc_turbulence_variables
+    use mixing_layer, only: dalloc_mixing_layer_variables
     
     implicit none
     
@@ -142,6 +143,8 @@ contains
     call dalloc_baro_press_variables()
     ! Deallocate memory for turbulence variables.
     call dalloc_turbulence_variables()
+    ! Deallocate memory for mixing layer variables.
+    call dalloc_mixing_layer_variables()
   end subroutine dalloc_physics_variables
 
 end module physics_model
