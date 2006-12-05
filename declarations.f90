@@ -21,7 +21,6 @@ module declarations
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   TYPE(height)::oh, surface_h
-  TYPE(MST)::gamma
   TYPE(MS)::omega
   type(UVST):: Gvector
   TYPE(plankton2)::micro, nano
