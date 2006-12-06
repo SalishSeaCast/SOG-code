@@ -61,8 +61,9 @@ module mixing_layer
        h  ! Mixing layer depth values & indices
   
   ! Private:
+  real(kind=dp) :: &
+       N  ! Buoyancy frequency at (1 + epsiln) time the mixing layer depth
   real(kind=dp), dimension(:), allocatable :: &
-       N, &      ! Local buoyancy frequency profile
        V_t_2, &  ! Profile of the square fo the turbulent velocity shear
        Ri_b      ! Bulk Richardson number profile
 
@@ -224,8 +225,9 @@ contains
     !
     ! Type Definitions:
     use precision_defs, only: dp
-    ! Functions:
+    ! Functions & Subroutines:
     use turbulence, only: w_scale, nondim_scalar_flux
+    use grid_mod, only: interp_value
     ! Parameter Values:
     use fundamental_constants, only: &
          g  ! Acceleration due to gravity
@@ -245,21 +247,39 @@ contains
 
     ! Local Parameters:
     real(kind=dp), parameter :: &
-         Cv = 1.5d0  ! Ratio of interior local buoyancy frequency to
-                     ! same at entrainment depth.  *** Large, et al
-                     ! (1994), table 1 recommends a value of 1.5 to
-                     ! 1.6
+         Cv = 1.5d0, &    ! Ratio of interior local buoyancy frequency
+                          ! to same at entrainment depth.  *** Large,
+                          ! et al (1994), table 1 recommends a value
+                          ! of 1.5 to 1.6
+         N_min = 0.014d0  ! Minimum value for local buoyancy
+                          ! frequency.  Based on weak winter (10 deg
+                          ! C) stratification with surface salinity of
+                          ! 29 and deep (40 m) salinity of 30.  That
+                          ! gives a density difference of 0.78 kg/m3,
+                          ! and an average density of 1022.7 kg/m3.
+                          ! N = sqrt(-g * drho/dz / rho) gives 0.014.
 
     ! Local Variables:
     real(kind=dp) :: &
-         beta_t, &  ! Ratio of entrainment flux to surface buoyancy flux
-         w_s        ! Value of scalar turbulent velocity scale
+         hp,         &  ! (1 + epsiln) times the missing layer depth.
+                        ! Used to calculate the buoyancy frequency
+                        ! used for the turbulent shear velocity
+                        ! profile.
+         rho_hp,     &  ! Density at hp depth.
+         drho_dz_hp, &  ! Density gradient at hp depth.
+         beta_t,     &  ! Ratio of entrainment flux to surface buoyancy flux
+         w_s            ! Value of scalar turbulent velocity scale
     integer :: &
-         j  ! Index over grid depth
+         j, &    ! Index over grid depth
+         j_junk  ! Unused index returned by interp_value() subroutine.
     
-    ! Calculate the profile of the local buoyancy frequency at the
-    ! grid point depths.
-    N = sqrt(-(g / rho%g(1:grid%M)) * rho%grad_g(1:grid%M))
+    ! Calculate the buoyancy frequency at (1 + epsiln) times the
+    ! previous mixing layer depth.  See Large, et al (1994),
+    ! discussion following eqn 22.
+    hp = (1.0d0 + epsiln) * h%new
+    call interp_value(hp, 0, grid%d_g, rho%g, rho_hp, j_junk)
+    call interp_value(hp, 0, grid%d_g, rho%grad_g, drho_dz_hp, j_junk)
+    N = max(N_min, sqrt(-g * min(0.0d0, drho_dz_hp) / rho_hp))
     ! Set the value of the ratio of entrainment flux to surface
     ! buoyancy flux, and calculate the turbulent velocity shear
     ! profile (Large, et al (1994), eqn 23).
@@ -271,7 +291,7 @@ contains
           w_s = w_scale(h%new, grid%d_g(j), Bf, nondim_scalar_flux, c_s)
           ! Large, et al (1994), eqn 23.
           V_t_2(j) = Cv * sqrt(-beta_t / (c_s * epsiln)) &
-               * grid%d_g(j) * N(j) * w_s / (Ri_c * kapa ** 2)
+               * grid%d_g(j) * N * w_s / (Ri_c * kapa ** 2)
        enddo
     else
        V_t_2 = 0.0d0
@@ -316,10 +336,6 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Local buoyancy frequency profile array"
-    allocate(N(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
     msg = "Square of turbulent velocity shear profile array"
     allocate(V_t_2(1:M), &
          stat=allocstat)
@@ -339,10 +355,6 @@ contains
     integer           :: dallocstat  ! Deallocation return status
     character(len=80) :: msg         ! Deallocation failure message prefix
 
-    msg = "Local buoyancy frequency profile array"
-    deallocate(N, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
     msg = "Square of turbulent velocity shear profile array"
     deallocate(V_t_2, &
          stat=dallocstat)
