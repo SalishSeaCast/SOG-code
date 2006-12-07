@@ -72,6 +72,4 @@ module declarations
   ! Vertical profile of the entrainment velocity
   real(kind=dp), dimension(:), allocatable :: wupwell
 
-  DOUBLE PRECISION,DIMENSION(:),ALLOCATABLE::f_ratio
-
 end module declarations

@@ -40,6 +40,7 @@ module NPZD
        microzooplankton, &  ! Active or not
        ! diagnostics
        Mesozoo, &
+       f_ratio, &  ! Ratio of new to total production profile
        ! Subroutines:
        init_NPZD, derivs, &
        dalloc_biology_variables
@@ -159,7 +160,8 @@ module NPZD
   real(kind=dp), dimension(:), pointer :: &
        remin_NH, &  ! Total remineralization to ammonium
        NH_oxid      ! Bacterial oxidation of NH4 to NO3
-
+  real(kind=dp), dimension(:), allocatable :: &
+       f_ratio  ! Ratio of new to total production profile
   integer :: D_bins
 
 contains
@@ -354,6 +356,10 @@ contains
     allocate(Mesozoo(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Ratio of new to total production profile array"
+    allocate(f_ratio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_biology_variables
 
 
@@ -380,6 +386,10 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Mesozooplankton diagnostic array"
     deallocate(Mesozoo, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Ratio of new to total production profile array"
+    deallocate(f_ratio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     ! Deallocate memory from arrays for right-hand sides of
@@ -552,7 +562,7 @@ contains
     ! Calculate the derivatives of the biology quantities for odeint()
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
-    use declarations, only: micro, nano, f_ratio
+    use declarations, only: micro, nano
     use unit_conversions, only: KtoC
     implicit none
     ! Arguments:

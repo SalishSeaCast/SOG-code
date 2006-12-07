@@ -26,9 +26,6 @@ subroutine allocate1(M, STAT)
            wupwell(0:M), &
            STAT = alloc_stat(10))
 
-      ALLOCATE(f_ratio(M), &
-           STAT = alloc_stat(11))
-
 END SUBROUTINE allocate1
 
 
