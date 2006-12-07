@@ -700,7 +700,7 @@ contains
     ! calculate it
     temp_Q10 = dexp (0.07 * (KtoC(Temp(1:M)) - 20.d0))
 
-    ! phytoplankton growth: 
+    ! phytoplankton growth:  growth is per cell, uptake is in uMol
 
     call p_growth(M, NO, NH, Si, Pmicro, I_par, temp_Q10**rate_micro%Q10exp, &
          Temp, & ! in
@@ -709,6 +709,10 @@ contains
     call p_growth(M, NO, NH, Si, Pnano, I_par, temp_Q10**rate_nano%Q10exp, &
          Temp, & ! in
          rate_nano, nano)              ! in and out, in, out
+
+    ! change growth to be total
+    micro%growth%new = micro%growth%new * Pmicro
+    nano%growth%new = nano%growth%new * Pnano
 
     ! phytoplankton natural mortality:
 
@@ -723,8 +727,9 @@ contains
          + frac_waste_NNM%PON * NatMort_nano
     was_Ref = was_Ref + frac_waste_DNM%Ref * NatMort_micro &
          + frac_waste_NNM%Ref * NatMort_nano
-    was_BSi = was_BSi + frac_waste_DNM%BSi * NatMort_micro &
-         + frac_waste_NNM%Bsi * NatMort_nano
+    was_BSi = was_BSi &
+         + frac_waste_DNM%BSi * NatMort_micro * rate_micro%Si_ratio &
+         + frac_waste_NNM%Bsi * NatMort_nano * rate_nano%Si_ratio
 
     ! Grazing processes
 
@@ -792,9 +797,9 @@ contains
     was_Ref = was_Ref + frac_waste_PEM%Ref * Graz_PON + &
          frac_waste_DEM%Ref * GrazMort_micro + &
          frac_waste_NEM%Ref * GrazMort_nano
-    was_BSi = was_BSi + frac_waste_PEM%BSi * Graz_PON + &
-         frac_waste_DEM%BSi * GrazMort_micro + &
-         frac_waste_NEM%BSi * GrazMort_nano
+    was_BSi = was_BSi + frac_waste_PEM%BSi * Graz_PON * 0.d0 + &
+         frac_waste_DEM%BSi * GrazMort_micro * rate_micro%Si_ratio + &
+         frac_waste_NEM%BSi * GrazMort_nano * rate_nano%Si_ratio
 
     ! additional mortality???
 
@@ -835,14 +840,14 @@ contains
     bPZ = (PZ_bins%micro - 1) * M + 1
     ePZ = PZ_bins%micro * M
     where (Pmicro > 0.) 
-       dPZdt(bPZ:ePZ) = micro%growth%new * Pmicro - NatMort_micro &
+       dPZdt(bPZ:ePZ) = micro%growth%new - NatMort_micro &
                - GrazMort_micro
     endwhere
     ! Nano phytoplankton
     bPZ = (PZ_bins%nano - 1) * M + 1
     ePZ = PZ_bins%nano * M
     where (Pnano > 0.) 
-       dPZdt(bPZ:ePZ) = nano%growth%new * Pnano - NatMort_nano &
+       dPZdt(bPZ:ePZ) = nano%growth%new - NatMort_nano &
                - GrazMort_nano
     endwhere
     ! Microzooplantkon
@@ -868,8 +873,8 @@ contains
     bPZ = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M
     where (Si > 0.) 
-       dPZdt(bPZ:ePZ) = -micro%growth%new * Pmicro * rate_micro%Si_ratio &
-            - nano%growth%new * Pnano * rate_nano%Si_ratio &
+       dPZdt(bPZ:ePZ) = -micro%growth%new * rate_micro%Si_ratio &
+            - nano%growth%new * rate_nano%Si_ratio &
             + Si_remin
     endwhere
     ! Dissolved organic ditrogen detritus
@@ -877,22 +882,20 @@ contains
     ePZ = PZ_bins%D_DON * M
     where (D_DON > 0.) 
        dPZdt(bPZ:ePZ) = was_DON &
-                  - remin%D_DON * D_DON
+                  - remin%D_DON * D_DON * temp_Q10
     endwhere
     ! Particulate organic nitrogen detritus
     bPZ = (PZ_bins%D_PON - 1) * M + 1
     ePZ = PZ_bins%D_PON * M
     where (D_PON > 0.) 
        dPZdt(bPZ:ePZ) = was_PON - Graz_PON &
-                  - remin%D_PON * D_PON
+                  - remin%D_PON * D_PON * temp_Q10
     endwhere
     ! Biogenic silicon detritus
     bPZ = (PZ_bins%D_bSi - 1) * M + 1
     ePZ = PZ_bins%D_bSi * M
     where (D_bSi > 0.) 
-       dPZdt(bPZ:ePZ) = (NatMort_micro + GrazMort_micro) &
-               * Pmicro * rate_micro%Si_ratio &
-               + was_Bsi &
+       dPZdt(bPZ:ePZ) = was_Bsi &
                - Si_remin
     endwhere
   end subroutine derivs
