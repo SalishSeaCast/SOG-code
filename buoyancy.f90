@@ -1,9 +1,45 @@
 ! $Id$
 ! $Source$
 
-subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
+module buoyancy
+  ! Variable declarations, and subroutines related to the buoyancy
+  ! profile and surface buoyancy flux calculation in the SOG code.
+  !
+  ! Public Variables:
+  !
+  !   Bf -- Surface buoyancy flux
+  !
+  ! Diagnostic Variables (not used anywhere, but available for output):
+  !
+  !   B -- Buoyancy profile
+
+  use precision_defs, only: dp
+
+  implicit none
+
+  private
+  public :: &
+       ! Variables:
+       Bf, &  ! Surface buoyancy forcing
+       ! Diagnostics:
+!!$       B, &  ! Buoyancy profile
+       ! Subroutines:
+!!$       alloc_buoyancy_variables, &
+       calc_buoyancy
+!!$, &
+!!$       dalloc_bouyancy variables
+
+  ! Variable Declarations:
+  !
+  ! Public:
+  real(kind=dp) :: &
+       Bf  ! Surface buoyancy forcing
+
+contains
+
+subroutine calc_buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
      alpha, beta, Cp, Fw_surface,                            &  ! in
-     B, Bf)                                                     ! out
+     B)                                                     ! out
   ! Calculate the buoyancy profile, and the surface buoyancy forcing.
   use precision_defs, only: dp
   use grid_mod, only: grid_, interp_value
@@ -28,7 +64,6 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
   logical, intent(in) :: Fw_surface
   ! Results:
   real(kind=dp), dimension(0:grid%M+1), intent(out) :: B  ! Buoyance profile
-  real(kind=dp), intent(out) :: Bf  ! Surface buoyancy forcing
 
   ! Local variables:
   ! Water properties, irradiance, and fresh water flux at mixing layer
@@ -68,4 +103,6 @@ subroutine buoyancy(grid, Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
   ! Calculate surface buoyancy forcing (an extension of Large, etal
   ! (1994) eq'n A3d
   Bf = -wbar%b(0) + Br + Bfw
-end subroutine buoyancy
+end subroutine calc_buoyancy
+
+end module buoyancy
