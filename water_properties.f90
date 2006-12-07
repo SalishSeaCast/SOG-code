@@ -41,7 +41,10 @@ module water_properties
        ! Type:
        water_property, &
        ! Variables:
-       rho, alpha, beta, Cp, &
+       rho,   &  ! Density [kg/m^3]
+       alpha, &  ! Thermal expansion coefficient [K^-1]
+       beta,  &  ! Saline contraction coefficient [K^-1]
+       Cp,    &  ! Specific heat capacity [J/kg.K]
        ! Subroutines:
        calc_rho_alpha_beta_Cp_profiles, &
        alloc_water_props, &
