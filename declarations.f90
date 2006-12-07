@@ -11,20 +11,11 @@ module declarations
   implicit NONE
 
   ! Run parameters read from file specified as 'inputfile' in infile
-  integer :: year_o         ! year in which run starts [yr]
-  ! *** Why is month_o not declared here; rather it's local in SOG.f90
-  integer :: day_o          ! year-day on which run starts [1-Jan = 1]
-  integer :: t_o            ! start of run time on day_o [s]
-                            ! *** t_o should match CTD profile time of day
-  real(kind=dp) :: t_f      ! end of run time [s]
-  real(kind=dp) :: dt       ! time step [s]
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   type(UVST):: Gvector
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
-
-  DOUBLE PRECISION :: time    !*** core variable?
 
   ! Surface buoyancy forcing
   real(kind=dp) :: &
@@ -54,12 +45,14 @@ module declarations
   DOUBLE PRECISION::Br
   CHARACTER::ignored_input
   INTEGER, DIMENSION(20)::alloc_stat  !***
-  INTEGER :: steps, time_step, index,xx, xx2, year, jmax_i,    &
-       count, yy, yy2, gg, jmaxg, cloud_type, day, &
+  INTEGER :: &
+       time_step, index,xx, xx2, &
+       jmax_i,    &
+       count, yy, yy2, gg, jmaxg, cloud_type, &
        water_type
   REAL::D_test
   DOUBLE PRECISION :: &
-       day_time, Io
+       Io
   !I = intensity
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par
 
