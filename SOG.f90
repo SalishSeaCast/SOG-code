@@ -207,8 +207,6 @@ program SOG
      Fw_depth = getpard('Fw_depth')  ! Depth to distribute freshwater flux over
   endif
 
-  CALL initialize ! initializes everything (biology too)
-
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
