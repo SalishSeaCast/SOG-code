@@ -59,7 +59,7 @@ user_output.o timeseries_output.o profiles_output.o \
 \
 allocate1.o	\
 \
-initialize.o irradiance_sog.o 	\
+irradiance_sog.o 	\
 buoyancy.o air_sea_fluxes.o surface_flux_sog.o \
 new_year.o \
 \
