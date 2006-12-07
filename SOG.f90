@@ -34,6 +34,8 @@ program SOG
        Cp        ! Specific heat capacity [J/kg.K]
   use physics_model, only: &
        B  ! Buoyancy profile array
+  use buoyancy, only: &
+       Bf  ! Surface buoyancy forcing
   use turbulence, only: &
        K  ! Overall diffusivity profile; a continuous profile of
           ! K_ML%* in the mixing layer, and nu%*%total below it
@@ -67,6 +69,8 @@ program SOG
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
+  use input_processor, only: init_input_processor, getpars, &
+       getpard, getparl
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
   use numerics, only: init_numerics, dalloc_numerics_variables
@@ -74,20 +78,19 @@ program SOG
   use physics_model, only: init_physics, &
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
-  use physics_eqn_builder, only: build_physics_equations, &
-       new_to_old_phys_RHS, new_to_old_phys_Bmatrix
-  use turbulence, only: calc_KPP_diffusivity
+  use air_sea_fluxes, only: wind_stress
+  use buoyancy, only: calc_buoyancy
   use baroclinic_pressure, only: new_to_old_vel_integrals, &
        baroclinic_P_gradient
-  use air_sea_fluxes, only: wind_stress
+  use turbulence, only: calc_KPP_diffusivity
+  use physics_eqn_builder, only: build_physics_equations, &
+       new_to_old_phys_RHS, new_to_old_phys_Bmatrix
   use biology_model, only: init_biology, calc_bio_rate
   use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
        new_to_old_bio_Bmatrix
   use NPZD, only: dalloc_biology_variables
   use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
-  use input_processor, only: init_input_processor, getpars, getpari, &
-       getpard, getparl
   use timeseries_output, only: init_timeseries_output, write_std_timeseries, &
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_std_profiles, &
@@ -294,9 +297,11 @@ program SOG
         endif
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
-        CALL buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
+        !
+        ! This sets the value of the surface buoyancy flux (Bf).
+        CALL calc_buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
-             B, Bf)                                           ! out
+             B)                                           ! out
    
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
@@ -396,11 +401,12 @@ S_RHS%diff_adv%new = Gvector%s
         alpha%grad_i = gradient_i(alpha%g)
         beta%grad_i = gradient_i(beta%g)
 
-        ! Update buoyancy profile, surface buoyancy forcing, and local
-        ! buoyancy frequency
-        call buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
+        ! Update buoyancy profile, and surface buoyancy forcing.
+        !
+        ! This sets the value of the surface buoyancy flux (Bf).
+        call calc_buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
              rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
-             B, Bf)                                           ! out
+             B)                                           ! out
         rho%grad_g = gradient_g(rho%g)
 
         ! Preserve the value of the mixing layer depth from the
