@@ -73,7 +73,7 @@
 
 ! Zooplankton values:
 ! tuned
-"Mesozoo, winter conc"       0.12d0 "Mesozoo background concentration"
+"Mesozoo, winter conc"       0.133d0 "Mesozoo background concentration"
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
 "Mesozoo, max ingestion"     1.39d-5 "Mesozoo, maximum intake rate"
 ! Alain 0.75
@@ -134,12 +134,17 @@
 "Nano, graze mort"	3.75d-06     "Nano, grazing mortality"
 
 ! Remineralization rates
-! 2 months at 10 degrees
+! 2 months at 10 degrees (Alain 0.1 d-1 at 10degrees)
+! Denman 0.01d-1 at 10 degrees (2e-7)
 "NH remin rate"         4d-7           "Ammonium remineralization rate [1/s]"
-! Debby? and Alain and Jeffery
+! Alain and Jeffery 0.2d-1
+! Debby: should be longer than PON but she did not include very labile portion
 "DON remin rate"        2.3d-6       "DON detritus remineralization rate [1/s]"
-! Jeffery 0.035 day-1 at 10 degrees ( 1month agrees with 370 notes)
-"PON remin rate"        8.0d-7       "PON detritus remineralization rate [1/s]"
+! Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes but this
+! is for deeply sinking and thus refractory stuff?)
+! Debby and Alain 0.2d-1
+! Denman 0.1d-1 at 10 degrees
+"PON remin rate"        2.3d-6       "PON detritus remineralization rate [1/s]"
 ! from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
 ! of same order as a number of papers including Brzezinski et al,; Bidle and 
 ! Azam 1998 without bacteria
@@ -171,7 +176,7 @@
 ! assimiliation minus excretion
 "Waste, dem, Ref" 0.57d0 "fraction of waste mesozoo eat microphyto to Ref"
 "Waste, dem, Bsi" 1.d0  "fraction of waste from mesozoo eat microphyto to BSi"
-! Microphyto eaten by Mesozoo (copy above number, except Si)
+! Nanophyto eaten by Mesozoo (copy above number, except Si)
 "Waste, nem, NH"  0.03d0 "fraction of waste from mesozoo eat nanophyto to NH"
 "Waste, nem, DON" 0.2d0 "fraction of waste from mesozoo eat nanophyto to DON"
 "Waste, nem, PON" 0.2d0 "fraction of waste from mesozoo eat nanophyto to PON"
@@ -200,9 +205,9 @@
 
 ! Physics model parameters:
 "upwell_const"  1.25d-5         "maximum upwelling velocity [m/s]"
-"Fw_scale"	1.9d-7		"fresh water scale factor for river flows"
+"Fw_scale"	1.85d-7		"fresh water scale factor for river flows"
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
-"Fw_depth"      0.8d0             "interface thickness"
+"Fw_depth"      0.65d0             "interface thickness"
 
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
