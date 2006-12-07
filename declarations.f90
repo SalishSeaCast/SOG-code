@@ -17,10 +17,10 @@ module declarations
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
 
-  ! Surface buoyancy forcing
-  real(kind=dp) :: &
-       Bf, &   ! Current iteration step value
-       Bf_old  ! Previous iteration step value
+!!$  ! Surface buoyancy forcing
+!!$  real(kind=dp) :: &
+!!$       Bf, &   ! Current iteration step value
+!!$       Bf_old  ! Previous iteration step value
 
   ! Fresh water flux quantities:
   ! *** Destined for a module (probably new surface_forcing) eventually
