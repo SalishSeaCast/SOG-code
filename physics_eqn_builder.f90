@@ -219,7 +219,8 @@ contains
          wbar, &  ! Turbulent kinematic flux profile arrays
          K        ! Turbulent diffusivity profile arrays
     use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
-    use declarations, only: Bf  ! *** Should come from somewhere else
+    use buoyancy, only: &
+         Bf  ! Surface buoyancy forcing
     
     implicit none
     

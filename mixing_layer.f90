@@ -99,7 +99,8 @@ contains
     use turbulence, only: &
          u_star, &  ! Turbulent friction velocity
          L_mo       ! Monin_Obukhov length scale
-    use declarations, only: Bf  ! *** Should come from somewhere else
+    use buoyancy, only: &
+         Bf  ! Surface buoyancy forcing
     ! Subroutines:
     use grid_mod, only: interp_value
 
@@ -243,7 +244,8 @@ contains
          rho  ! Density profile
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
-    use declarations, only: Bf  ! *** Should come from somewhere else
+    use buoyancy, only: &
+         Bf  ! Surface buoyancy forcing
 
     ! Local Parameters:
     real(kind=dp), parameter :: &

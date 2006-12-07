@@ -189,8 +189,11 @@ contains
          diffusion_nonlocal_fluxes
     use find_upwell, only: vertical_advection
     use freshwater, only: freshwater_bio
-    use declarations, only: Bf  ! *** should come from somewhere else
+    use buoyancy, only: &
+         Bf  ! Surface buoyancy forcing
+
     implicit none
+
     ! Arguments:
     type(grid_), intent(in) :: &
          grid  ! Grid arrays
