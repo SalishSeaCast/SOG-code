@@ -37,9 +37,6 @@ module declarations
   real(kind=dp) :: Q_t  ! Turbulent surface heat flux
   real(kind=dp), dimension(:), allocatable :: Q_n  ! Nonturb heat flux profile
 
-  double precision :: wt_r
-
-  INTEGER::j_gamma !interface point corresponding to depth at which Radiation contributes to turbulent
   !surface heat flux
   DOUBLE PRECISION::Q_sol  !See irradiance.f90
   DOUBLE PRECISION::Br

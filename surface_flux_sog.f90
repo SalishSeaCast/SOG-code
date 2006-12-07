@@ -1,14 +1,13 @@
 ! $Id$
 ! $Source$
 
-SUBROUTINE surface_flux_sog(mm,ro, wt_r, & 
-                         salinity_n,salinity_o,S_riv,temp_o,j_gamma, I,Q_t,alp, Cp_o, &
+SUBROUTINE surface_flux_sog(mm,ro, & 
+                         salinity_n,salinity_o,S_riv,temp_o, I,Q_t,alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
                          day,dtdz,&
                          upwell_const,upwell,Eriver,u,dt, &
                          Fw_surface, Fw_scale, Ft, &
                          count)
-  ! *** Check whether wt_r is needed
   
   use fundamental_constants, only: g
   use turbulence, only: wbar
@@ -26,7 +25,6 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
            u, dt
            !Q_tot,F_tot, Q_sol,  !U_ten, V_ten are unow, vnow
       REAL, INTENT(IN):: cf,atemp,humid, Qriver, Eriver
-      INTEGER, INTENT(IN)::j_gamma
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
       double precision, intent(out):: S_riv ! salinity goal
       logical, intent(in) :: Fw_surface
@@ -36,7 +34,7 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
       real(kind=dp), intent(in) :: upwell_const 
                                  ! upwelling constant, tuned parameter
       DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
-           wt_r, upwell
+           upwell
 
       DOUBLE PRECISION:: UU, rho_atm, Sa
       double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
@@ -53,8 +51,6 @@ SUBROUTINE surface_flux_sog(mm,ro, wt_r, &
 !           wbar%t is Q_t/(ro*cp)
 !           wbar%s is Ft*sal/rf
 !           wbar%b is g,alp,bet* wbar%t and wbar%s 
-
-!           wt_r depends on I, ro, cp
 
 
          UU = SQRT(U_ten**2.0 + V_ten**2.0)   !note U_ten and V_ten at 22m height
@@ -150,17 +146,6 @@ h_flux = lw_net+h_sens+h_latent
       endif
       ! Buoyancy (eq'n A3b)
       wbar%b(0) = g * (alp * wbar%t(0) - bet * wbar%s(0))
-
-
-   !!!Radiative contribution to surface heat flux!!! this is equal to zero because j_gamma=0 because it is never defined as anything
-
- ! need to think about this  eq.A4 in Large, used in def_gamma
-
-      wt_r = -(I(0)/(ro(0)*Cp_o)-  &               
-                 I(j_gamma)/(ro(j_gamma)*Cp_o))
-
-!PRINT*,'wtr',wt_r, j_gamma
-!pause
 
 END SUBROUTINE surface_flux_sog
 

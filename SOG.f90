@@ -267,8 +267,8 @@ program SOG
 
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
-        CALL surface_flux_sog(grid%M, rho%g, wt_r, S%new(1),        &
-             S%old(1), S_riv, T%new(0), j_gamma, I, Q_t,        &
+        CALL surface_flux_sog(grid%M, rho%g, S%new(1),        &
+             S%old(1), S_riv, T%new(0), I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value, Qinter, &
              day, dt/h%new, &

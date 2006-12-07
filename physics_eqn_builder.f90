@@ -219,7 +219,7 @@ contains
          wbar, &  ! Turbulent kinematic flux profile arrays
          K        ! Turbulent diffusivity profile arrays
     use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
-    use declarations, only: Bf, wt_r  ! *** Should come from somewhere else
+    use declarations, only: Bf  ! *** Should come from somewhere else
     
     implicit none
     
@@ -239,10 +239,12 @@ contains
          U_RHS%diff_adv%new)                                          ! out
     call diffusion_bot_surf_flux(dt, K%m, wbar%v(0), V(grid%M+1),  &  ! in
          V_RHS%diff_adv%new)                                          ! out
-    ! Temperature
-    call diffusion_nonlocal_fluxes(dt, K%T, (wbar%t(0) + wt_r), &  ! in
-         Bf, wbar%t(0), -Q_n, T(grid%M+1),                      &  ! in
-         T_RHS%diff_adv%new)                                       ! out
+    ! Temperature.  Note that the \bar{w\theta}_R term in Large, et al
+    ! (1994), eqn 20 is not included here because it is zero.  See
+    ! Large, et al (1994), pg. 379, and App. A for the explanation.
+    call diffusion_nonlocal_fluxes(dt, K%T, wbar%t(0), &  ! in
+         Bf, wbar%t(0), -Q_n, T(grid%M+1),             &  ! in
+         T_RHS%diff_adv%new)                              ! out
     ! Salinity
     call diffusion_nonlocal_fluxes(dt, K%S, wbar%s(0), &  ! in
          Bf, wbar%s(0), F_n, S(grid%M+1),              &  ! in

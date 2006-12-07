@@ -1139,8 +1139,6 @@ contains
     use water_properties, only: &
          alpha, &  ! Thermal expansion coefficient profile arrays
          beta      ! Salinity contraction coefficient profile arrays
-    use declarations, only: wt_r  ! *** Should some from somewhere else
-    ! Function:
 
     implicit none
 
@@ -1164,10 +1162,12 @@ contains
           ! see Large, et al (1994), eqn 20)
           wbar%u(j) = -K_ML%m(j) * (U%grad_i(j) - 0.0d0)
           wbar%v(j) = -K_ML%m(j) * (V%grad_i(j) - 0.0d0)
-          ! Temperature
+          ! Temperature.  Note that the \bar{w\theta}_R term in Large,
+          ! et al (1994), eqn 20 is not included here because it is
+          ! zero.  See Large, et al (1994), pg. 379, and App. A for
+          ! the explanation.
           wbar%t(j) = -K_ML%T(j) * (T%grad_i(j) &
-               - nonlocal_scalar_transport((wbar%t(0) + wt_r), &
-                                           h, grid%d_i(j), Bf))
+               - nonlocal_scalar_transport(wbar%t(0), h, grid%d_i(j), Bf))
           wbar%s(j) = -K_ML%S(j) * (S%grad_i(j) &
                - nonlocal_scalar_transport(wbar%s(0), h, grid%d_i(j), Bf))
           ! Large, et al (1994), eqn A3b
