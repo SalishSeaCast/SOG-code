@@ -7,26 +7,70 @@ program SOG
   ! Things that we will use from other modules
   !
   ! Type definitions:
+  use precision_defs, only: dp, sp
   use datetime, only: datetime_
   !
   ! Parameter values:
+  use io_unit_defs, only: stripped_infile, stdout
   use fundamental_constants, only: g
   !
   ! Variables:
-  use grid_mod, only: grid
-  use core_variables, only: U, V, T, S, P, Z, N, Si, D
-  use water_properties, only: rho, alpha, beta, Cp
-  use physics_model, only: B
-  use turbulence, only: K
-  use mixing_layer, only: h
+  use grid_mod, only: &
+       grid  ! Grid parameters and depth and spacing arrays
+  use core_variables, only: &
+       U,  &  ! Cross-strait (35 deg) velocity component arrays
+       V,  &  ! Along-strait (305 deg) velocity component arrays
+       T,  &  ! Temperature profile arrays
+       S,  &  ! Salinity profile arrays
+       P,  &  ! Micro & nano phytoplankton profile arrays
+       Z,  &  ! Microzooplankton profile array
+       N,  &  ! Nitrate & ammonium concentation profile arrays
+       Si, &  ! Silicon concentration profile arrays
+       D      ! Detritus concentration profile arrays
+  use water_properties, only: &
+       rho,   &  ! Density [kg/m^3]
+       alpha, &  ! Thermal expansion coefficient [K^-1]
+       beta,  &  ! Saline contraction coefficient [K^-1]
+       Cp        ! Specific heat capacity [J/kg.K]
+  use physics_model, only: &
+       B  ! Buoyancy profile array
+  use turbulence, only: &
+       K  ! Overall diffusivity profile; a continuous profile of
+          ! K_ML%* in the mixing layer, and nu%*%total below it
+  use mixing_layer, only: &
+       h  ! Mixing layer depth value & indices
+  use numerics, only: &
+       startDatetime, &   ! Date/time of initial conditions
+       year, &   ! Year counter
+       day,  &   ! Year-day counter
+       day_time, &  ! Day-sec counter
+       time, &  ! Time counter through run; seconds since
+                ! startDatetime%day_sec
+       dt, &      ! Time step [s]
+       steps, &   ! Number of time steps in the main time loop
+       max_iter, &  ! Maximum number of iterations allowed for
+                    ! implicit solver loop.
+       hprev, &  ! Values of h%new, u%new and v%new from previous
+       Uprev, &  ! iteration for blending with new value to stabilize
+       Vprev, &  ! convergence of the implicit solver loop
+       new_weight, prev_weight, &  ! Weighting factors for convergence
+                                   ! stabilization blending.
+       vel_scale, h_scale, &  ! Scale factors used to normalize the
+                              ! velocity components, and mixing layer
+                              ! depth values to calculate the
+                              ! convergence metrics for the implicit
+                              ! solver loop.
+       del  ! Convergence metrics for implicit solver loop.
+
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
-  use core_variables, only: alloc_core_variables, dalloc_core_variables
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
+  use numerics, only: init_numerics, dalloc_numerics_variables
+  use core_variables, only: alloc_core_variables, dalloc_core_variables
   use physics_model, only: init_physics, &
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
@@ -54,8 +98,6 @@ program SOG
   use find_upwell, only: upwell_profile, vertical_advection
   use fitbottom, only: bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
-  use precision_defs, only: dp, sp
-  use io_unit_defs, only: stripped_infile, stdout
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
 
@@ -86,33 +128,12 @@ program SOG
 
   integer :: wind_n, met_n, river_n ! length of various forcing files
 
-  ! Initial month parameter read from run control input file
-  ! and passed to new_year()
-  integer :: month_o
-
-  ! Iteration limit for inner loop that solves KPP turbulence model
-  integer :: niter
-
-  ! Scales required for convergence
-  real(kind=dp) uscale, hscale
-
-  ! Value of h%new, u%new and v%new from previous iteration for 
-  ! blending with new value to stabilize convergence of the implicit 
-  ! solver loop
-  real(kind=dp) :: hprev
-  real(kind=dp), dimension (:), allocatable :: uprev, vprev
-
-  ! Variables for velocity component convergence metric
-  double precision :: &
-       & delh, delu, delv
-
   ! Code identification string (maintained by CVS), for output file headers
   character*70 :: &
        codeId = "$Source$"
 
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
-  type(datetime_) :: startDatetime   ! Date/time of initial conditions
 
 
   ! ---------- Beginning of Initialization Section ----------
@@ -130,23 +151,11 @@ program SOG
   ! *** being a parameter
   call init_constants()
 
-  ! Read the run start date/time, duration, and time step
-  ! *** Not sure where these should go?
-  year_o = getpari("year_o")
-  month_o = getpari("month_o")
-  day_o = getpari("yr_day_o")
-  t_o = getpari("t_o")
-  t_f = getpard("run_dur")
-  dt = getpard("dt")
-  ! Calculate the number of time steps for the run (note that int()
-  ! rounds down)
-  steps = 1 + int((t_f - t_o) / dt)
-  ! Calculate the month number and month day for output file headers
-  startDatetime%yr = year_o
-  startDatetime%yr_day = day_o
-  startDatetime%day_sec = t_o
-  call calendar_date(startDatetime)
-  call clock_time(startDatetime)
+  ! Initialize the grid
+  call init_grid()
+
+  ! Initialize the numerics
+  call init_numerics(grid%M)
 
   ! Initialize time series writing code
   call init_timeseries_output(codeId, datetime_str(runDatetime), &
@@ -154,9 +163,6 @@ program SOG
   ! Initialize profiles writing code
   call init_profiles_output(codeId, datetime_str(runDatetime), &
        startDatetime)
-
-  ! Initialize the grid
-  call init_grid
 
   ! Allocate memory for the profiles arrays of the core variables that
   ! we are calculating, i.e. U, V, T, S, etc.
@@ -185,14 +191,6 @@ program SOG
      END IF
   END DO
 
-  ! *** great refractory guru to fix this out of here
-  allocate (uprev(0:grid%M+1), vprev(0:grid%M+1), &
-       STAT = alloc_stat(1))
-  if (alloc_stat(1) /= 0) then
-     print "(a)", " Allocation failed for uprev, vprev"
-     call exit(1)
-  endif
-
   ! Length of forcing data files (move to be read in)
   wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
   met_n = 1918
@@ -217,11 +215,6 @@ program SOG
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
        h%new, grid, cruise_id)
-
-  ! Read the iteration count limit for the physics model implicit
-  ! solver
-  ! *** This should go somewhere else - maybe init_physics() (yet to come)
-  niter = getpari("niter")
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
@@ -264,7 +257,7 @@ program SOG
      CALL irradiance_sog(cf_value, day_time, day, &
           I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano)
 
-     DO count = 1, niter !------ Beginning of the implicit solver loop ------
+     DO count = 1, max_iter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the velocity field and water column
         ! temperature, and salinity at the grid layer interface depths
         U%grad_i = gradient_i(U%new)
@@ -420,29 +413,31 @@ S_RHS%diff_adv%new = Gvector%s
         ! Richardson number to a critical value.
         ! 
         ! This sets the values of the components of h%*.
-        call find_mixing_layer_depth (year, day, day_time, count)
-        ! Average the newly calculated mixing layer depth with that
-        ! from the previous iteration to help stabilize the
-        ! convergence of the implicit solver loop.  Try nudging things
-        ! if convergence isn't progressing well.
+        call find_mixing_layer_depth(year, day, day_time, count)
+
+        ! Blend the newly calculated mixing layer depth, and velocity
+        ! component profiles with those from the previous iteration to
+        ! help stabilize the convergence of the implicit solver loop.
+        ! Try "nudging things" if convergence isn't progressing well.
         !
-        ! *** These count ranges are bsae on a maximum iteration limit
-        ! *** of niter = 30.  They should be adjust if that infile
-        ! *** parameter value is changed (and Susan has very definite
-        ! *** ideas on *how* they should be changed).
+        ! *** These count ranges for "nudging things" are base on a
+        ! *** maximum iteration limit of max_iter = 30.  They should
+        ! *** be adjusted if that infile parameter value is changed
+        ! *** (and Susan has very definite ideas on *how* they should
+        ! *** be changed).
         if (count >= 10 .and. count <= 13) then
-           h%new = 0.75*h%new + 0.25*hprev
-           U%new = 0.75*U%new + 0.25*Uprev
-           V%new = 0.75*V%new + 0.25*Vprev
+           new_weight = 0.75d0
+           prev_weight = 0.25d0
         elseif (count >= 23 .and. count <= 26) then
-           h%new = 0.25*h%new + 0.75*hprev
-           U%new = 0.25*U%new + 0.75*Uprev
-           V%new = 0.25*V%new + 0.75*Vprev
+           new_weight = 0.25d0
+           prev_weight = 0.75d0
         else
-           h%new = (hprev + h%new) / 2.
-           U%new = (Uprev + U%new) / 2.
-           V%new = (Vprev + V%new) / 2.
+           new_weight = 0.5d0
+           prev_weight = 0.5d0
         endif
+        h%new = new_weight * h%new + prev_weight * hprev
+        U%new = new_weight * U%new + prev_weight * Uprev
+        V%new = new_weight * V%new + prev_weight * Vprev
 
         ! Set the value of the indices of the grid point & grid layer
         ! interface immediately below the mixing layer depth.
@@ -452,14 +447,14 @@ S_RHS%diff_adv%new = Gvector%s
         ! measuring the progress of the implicit solver
         ! Accuracy is 2% at large mixed layer 
         ! depths and about 4 cm at 1 m mixed layer depths
-        hscale = 0.02 * hprev + 0.02
-        delh = abs(hprev - h%new)/hscale
+        h_scale = 0.02d0 * hprev + 0.02d0
+        del%h = abs(h%new - hprev) / h_scale
         ! Calculate convergence metrics for the velocity field.
         ! Accuracy is 2% at large velocities and 0.7 cm/s at 10.0 cm/s
         ! (units are m/s)
-        Uscale = 0.02 * sqrt(Uprev(1) ** 2 + Vprev(1) ** 2) + 0.005
-        delU = abs(U%new(1) - Uprev(1)) / Uscale
-        delV = abs(V%new(1) - Vprev(1)) / Uscale
+        vel_scale = 0.02d0 * sqrt(Uprev(1) ** 2 + Vprev(1) ** 2) + 0.005d0
+        del%U = abs(U%new(1) - Uprev(1)) / vel_scale
+        del%V = abs(V%new(1) - Vprev(1)) / vel_scale
 
         ! Calculate baroclinic pressure gradient components
         !
@@ -468,7 +463,7 @@ S_RHS%diff_adv%new = Gvector%s
 
 
         ! Test for convergence of implicit solver
-        if (count >= 2 .and. max(delh, delu, delv) < 1) then
+        if (count >= 2 .and. max(del%h, del%U, del%V) < 1.0d0) then
            exit
         endif
      enddo  !---------- End of the implicit solver loop ----------
@@ -569,7 +564,7 @@ S_RHS%diff_adv%new = Gvector%s
           datetime_str(startDatetime), year, day, day_time, dt, grid)
 
      ! Increment time, calendar date and clock time
-     call new_year(day_time, day, year, time, dt, month_o)
+     call new_year(day_time, day, year, time, dt, startDatetime%mo)
      scount = scount + 1
      !*** Fix this to be grid independent
      sumS = sumS + 0.5*(S%new(2)+S%new(3))
@@ -585,6 +580,7 @@ S_RHS%diff_adv%new = Gvector%s
   call profiles_output_close
 
   ! Deallocate memory
+  call dalloc_numerics_variables
   call dalloc_grid
   call dalloc_core_variables
   call dalloc_physics_variables
