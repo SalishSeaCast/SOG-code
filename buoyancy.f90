@@ -37,8 +37,7 @@ module buoyancy
 
 contains
 
-subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
-     alpha, beta, Cp, Fw_surface)
+subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
   ! Calculate the buoyancy profile, surface turbulent kinematic
   ! buoyancy flux, and the surface buoyancy forcing.
 
@@ -55,25 +54,25 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
              ! surface temperature and salinity values (wbar%t(0) &
              ! wbar%s(0)), and we set the surface buoyancy value
              ! wbar%b(0).
+  use freshwater, only: &
+       Fw_surface, &  ! Add all of the fresh water on the surface?
+       F_n            ! Fresh water contribution to salinity flux
 
   implicit none
 
   ! Arguments:
   real(kind=dp), dimension(0:), intent(in) :: &
-       Tnew, &  ! Temperature profile
-       Snew     ! Salinity profile
+       Tnew, &   ! Temperature profile
+       Snew      ! Salinity profile
   real(kind=dp), intent(in) :: &
-       hml  ! Mixing layer depth
+       hml       ! Mixing layer depth
   real(kind=dp), dimension(0:), intent(in) :: &
-       Itotal, &  ! Irradiance
-       F_n        ! Fresh water contribution to salinity flux
+       Itotal    ! Irradiance
   real(kind=dp), dimension(0:), intent(in) :: &
        rho,   &  ! Density profile
        alpha, &  ! Thermal expansion coefficient profile
        beta,  &  ! Saline expansion coefficient profile
        Cp        ! Specific heat capacity profile
-  logical, intent(in) :: &
-       Fw_surface
 
   ! Local variables:
   ! Water properties, irradiance, and fresh water flux at mixing layer
