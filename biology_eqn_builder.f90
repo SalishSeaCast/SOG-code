@@ -173,7 +173,7 @@ contains
   
 
   subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Z, NO, NH, & ! in
-       Si, D_DON, D_PON, D_refr, D_bSi, Ft, wupwell)
+       Si, D_DON, D_PON, D_refr, D_bSi, wupwell)
     ! Build the terms for the diffusion/advection equations for the
     ! biology quantities.
     !
@@ -210,8 +210,6 @@ contains
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
-    real(kind=dp), intent(in) :: &
-         Ft  ! Total fresh water flux
     real(kind=dp), dimension(0:), intent(in) :: &
          wupwell  ! Profile of vertical upwelling velocity [m/s]
     ! Local variables:
