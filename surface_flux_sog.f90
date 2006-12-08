@@ -2,40 +2,25 @@
 ! $Source$
 
 SUBROUTINE surface_flux_sog(mm,ro, & 
-                         salinity_n,salinity_o,S_riv,temp_o, I,Q_t,alp, Cp_o, &
-                         bet, U_ten, V_ten, cf, atemp, humid, Qriver,&
-                         day,dtdz,&
-                         upwell_const,upwell,Eriver,u,dt, &
-                         Fw_surface, Fw_scale, Ft, &
-                         count)
+                         temp_o, I, Q_t, alp, Cp_o, &
+                         bet, U_ten, V_ten, cf, atemp, humid)
   
   use fundamental_constants, only: g
   use turbulence, only: wbar
       USE mean_param
   implicit none
   ! Arguments:
-      INTEGER, INTENT(IN)::mm,day
+      INTEGER, INTENT(IN)::mm
       DOUBLE PRECISION,DIMENSION(0:mm+1), INTENT(IN)::ro ! density%new
       DOUBLE PRECISION, INTENT(IN):: alp, Cp_o, bet !alph%i(0), Cp%i(0), beta%i(0)
-      DOUBLE PRECISION, INTENT(IN)::salinity_n, & ! current upper level Sal
-           salinity_o, &  ! previous time step upper level Sal
+      DOUBLE PRECISION, INTENT(IN)::&
            temp_o, & 
-           U_ten, V_ten, &
-           dtdz, &  ! time step divided by mixing layer depth
-           u, dt
-           !Q_tot,F_tot, Q_sol,  !U_ten, V_ten are unow, vnow
-      REAL, INTENT(IN):: cf,atemp,humid, Qriver, Eriver
+           U_ten, V_ten
+      REAL, INTENT(IN):: cf,atemp,humid
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
-      double precision, intent(out):: S_riv ! salinity goal
-      logical, intent(in) :: Fw_surface
-      real(kind=dp), intent(in) :: Fw_scale  ! Fresh water scale factor for river flows
-      real(kind=dp), intent(out):: Ft  ! fresh water flux
-      integer, intent(in) :: count ! iteration count used to stabilize Ft
-      real(kind=dp), intent(in) :: upwell_const 
-                                 ! upwelling constant, tuned parameter
-      DOUBLE PRECISION, INTENT(OUT)::Q_t, &  !Q_t(0)
-           upwell
-
+      DOUBLE PRECISION, INTENT(OUT)::Q_t
+      
+      ! Local Variables:
       DOUBLE PRECISION:: UU, rho_atm, Sa
       double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
       double precision:: Cs, h_sens, h_latent, h_flux, Cp
@@ -54,25 +39,6 @@ SUBROUTINE surface_flux_sog(mm,ro, &
 
 
          UU = SQRT(U_ten**2.0 + V_ten**2.0)   !note U_ten and V_ten at 22m height
-
-!----------Salinity------------------------------------
-
-     ! Parameterized fit of the surface salinity of the Strait of
-     ! Georgia at station S3 based on the river flows.  (Derived by
-     ! Kate Collins 16-Jun-2005)  This value is not directly used
-     ! in the model but is used to make sure the tuned FT value
-     ! is correct.
-     S_riv = 29.1166 - Qriver * (0.0019) - Eriver * (0.0392)
-
-     ! tuned fresh water flux value (to give, on average) the parameterized
-     ! value above.  
-     ! *** need to check linearity over river flows.
-     Ft = Fw_scale * (0.0019 * Qriver + 0.0392 * Eriver)
-
-     ! The entrainment of deep water into the bottom of the
-     ! grid is based on the parameterization derived by Susan Allen in
-     ! Jun-2006 (See entrainment.pdf)
-     upwell = upwell_const * (Qriver/2720)**0.41
 
 
 !net longwave radiation.
@@ -136,13 +102,4 @@ h_flux = lw_net+h_sens+h_latent
       !
       ! Temperature (eq'n A2c)
       wbar%t(0) = -Q_t / (ro(0) * Cp_o)
-      ! Salinity (eq'n A2d)
-      ! Note that fresh water flux is added via Bf in buoyancy.f90
-      ! *** Need to check the implications of wbar%s(0)=0 on def_gamma.f90
-      if (Fw_surface) then
-         wbar%s(0) = Ft * salinity_o
-      else
-         wbar%s(0) = 0.
-      endif
-
 END SUBROUTINE surface_flux_sog
