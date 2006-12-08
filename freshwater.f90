@@ -1,77 +1,185 @@
+! $Id$
+! $Source$
+
 module freshwater
+  ! Type definitions, variable & parameter value declarations, and
+  ! subroutines related to the fresh water flow influences SOG code.
+  !
+  ! Public Variables:
+  !
+  !   Fw_surface -- Add all of the fresh water on the surface?
+  !
+  !   Ft -- Total fresh water flux
+  !
+  !   F_n -- Fresh water contribution to salinity flux
+  !
+  ! Public Subroutines:
+  !
+  !   init_freshwater -- Allocate memory for fresh water quantity
+  !                      arrays, and read parameter values from the
+  !                      infile.
+  !
+  !   freshwater_phys -- Calculate the strength of
+  !                      upwelling/entrainment, the freshwater flux,
+  !                      the surface turbulent kinematic salinity
+  !                      flux, and the profile of fresh water
+  !                      contribution to the salinity flux.
+  !
+  !   freshwater_bio -- Calculate the freshwater biological fluxes.
 
-! subroutine to calculate the influences of the freshwater flow
-
-  use precision_defs, only: dp, sp
-!*** temporary will disappear as these variables become local here
-  use declarations, only: Fw, Fw_surface, Ft, Fw_scale
-
+  use precision_defs, only: dp
   implicit none
 
   private
-  ! public diagnostic variable
-  public :: S_riv
-  public :: freshwater_bio
+  public :: &
+       ! Variables:
+       Fw_surface, &  ! Add all of the fresh water on the surface?
+       Ft,         &  ! Total fresh water flux
+       F_n,        &  ! Fresh water contribution to salinity flux
+       upwell,     &  ! Upwelling velocity from river flows
+                      ! parameterization.
+       ! Diagnostics:
+       S_riv, &  ! Surface salinity prediction from fit
+       ! Subroutines:
+       init_freshwater, freshwater_phys, freshwater_bio, &
+       dalloc_freshwater_variables
 
-  ! circulation strength of a scalar is equal to deep value minus river value
+  ! Parameter Value Declarations:
+  !
+  ! Private:
+  !
+  ! Circulation strength of a scalar is equal to deep value minus
+  ! river value
   real(kind=dp), parameter :: phys_circ_nitrate = 30.5d0 - 13.0d0
   real(kind=dp), parameter :: phys_circ_Pmicro = 0.0d0
   real(kind=dp), parameter :: phys_circ_Pnano = 0.0d0
   real(kind=dp), parameter :: phys_circ_Zoo = 0.0d0
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 
-  real(kind=dp) :: S_riv ! surface salinity prediction from fit
+  ! Variable Declarations:
+  !
+  ! Public:
+  logical :: &
+       Fw_surface  ! Add all of the fresh water on the surface?
+  real(kind=dp) :: &
+       Ft,  &  ! Total fresh water flux
+       upwell  ! Upwelling velocity from river flows parameterization
+  real(kind=dp), dimension(:), allocatable :: &
+       F_n  ! Fresh water contribution to salinity flux
+  !
+  ! Diagnostic:
+  real(kind=dp) :: &
+       S_riv  ! Surface salinity prediction from fit
+  !
+  ! Private:
+  real(kind=dp), dimension(:), allocatable :: &
+       Fw  ! Fresh water flux profile
+  real(kind=dp) :: &
+       Fw_scale, &   ! Fresh water scale factor for river flows
+       Fw_depth, &   ! Depth to distribute fresh water flux over
+       upwell_const  ! Maximum upwelling velocity (tuning parameter)
 
 contains
 
-  subroutine init_freshwater
-! reads in required parameters
+  subroutine init_freshwater(M)
+    ! Allocate memory for fresh water quantity arrays, and read
+    ! parameter values from the infile.
+    implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
+
+    ! Allocate memory for fresh water quantity arrays
+    call alloc_freshwater_variables(M)
+    ! Read fresh water parameter values from the infile.
+    call read_freshwater_params()
   end subroutine init_freshwater
 
-  subroutine freshwater_phys (Qriver, Eriver, upwell_const, S_o,& 
-       upwell, w_s)
-! calculates the freshwater flux Fw and the strength of upwelling/entrainment
+
+  subroutine read_freshwater_params()
+    ! Read the fresh water parameter values from the infile.
+    use input_processor, only: getpard, getparl
+    implicit none
+
+    ! Maximum upwelling velocity (tuning parameter)
+    upwell_const = getpard("upwell_const")
+    ! Fresh water scale factor for river flows
+    Fw_scale = getpard('Fw_scale')     
+    ! Add all fresh water on surface?
+    Fw_surface = getparl('Fw_surface') 
+    ! Depth to distribute freshwater flux over
+    if (.not. Fw_surface) then
+       Fw_depth = getpard('Fw_depth')  
+    endif
+  end subroutine read_freshwater_params
+
+
+  subroutine freshwater_phys(Qriver, Eriver, S_old, h)
+    ! Calculate the strength of upwelling/entrainment, the freshwater
+    ! flux, the surface turbulent kinematic salinity flux, and the
+    ! profile of fresh water contribution to the salinity flux.
+
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: sp
+    ! Variables:
+    use grid_mod, only: &
+         grid  ! Grid parameters and depth & spacing arrays
+    use turbulence, only: &
+         wbar  ! Turbulent kinematic flux profile arrays
 
     implicit none
+
     ! Arguments
-    real(kind=sp), intent(in) :: Qriver, Eriver
-    real(kind=dp), intent(in) :: upwell_const
-    real(kind=dp), intent(in) :: S_o ! surface salinity
-    real(kind=dp), intent(out) :: upwell
-    real(kind=dp), intent(out) :: w_s ! surface salinity flux
+    real(kind=sp), intent(in) :: &
+         Qriver, &  ! Fraser River flow
+         Eriver     ! Englishman River flow
+    real(kind=dp), intent(in) :: &
+         S_old,        &  ! Surface salinity
+         h                ! Mixing layer depth
+
     ! Local variables
     real(kind=dp), parameter :: &
-         Qmean=2720.0d0 ! mean fraser river flow from entrainment fit
+         Qmean = 2720.0d0 ! Mean fraser river flow from entrainment fit
 
     ! Parameterized fit of the surface salinity of the Strait of
     ! Georgia at station S3 based on the river flows.  (Derived by
     ! Kate Collins 16-Jun-2005)  This value is not directly used
-    ! in the model but is used to make sure the tuned FT value
+    ! in the model but is used to make sure the tuned Ft value
     ! is correct.
     S_riv = 29.1166d0 - Qriver * (0.0019d0) - Eriver * (0.0392d0)
     
-    ! tuned fresh water flux value (to give, on average) the parameterized
+    ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
     Ft = Fw_scale * (0.0019d0 * Qriver + 0.0392d0 * Eriver) 
     
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
     ! Jun-2006 (See entrainment.pdf)
-    upwell = upwell_const * (Qriver/Qmean)**0.41d0
+    upwell = upwell_const * (Qriver / Qmean) ** 0.41d0
 
-    ! Salinity (eq'n A2d)
-    ! Note that fresh water flux is added via Bf in buoyancy.f90
-    ! *** Need to check the implications of w%s(0)=0 on def_gamma.f90
+    ! Calculate the surface turbulent kinematic salinity flux (Large,
+    ! et al (1994), eqn A2d).  Note that fresh water flux is added via
+    ! Bf in calc_buoyancy().
     if (Fw_surface) then
-       w_s = Ft * S_o   ! w%s(0)
+       wbar%s(0) = Ft * S_old
     else
-       w_s = 0.0d0  ! w%s(0)
+       wbar%s(0) = 0.0d0
     endif
-    
+
+    ! Calculate the nonturbulent fresh water flux profile, and its
+    ! contribution to the salinity profile
+    if (Fw_surface) then
+       F_n = 0.0d0
+    else
+       Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
+       F_n = 29.626d0 * Fw
+    endif
   end subroutine freshwater_phys
 
-  subroutine freshwater_bio (qty, current_value, surf_flux, distrib_flux)
-! calculates the freshwater biological fluxes
+
+  subroutine freshwater_bio(qty, current_value, surf_flux, distrib_flux)
+    ! Calculate the freshwater biological fluxes.
 
     use grid_mod, only: grid
     implicit none
@@ -132,5 +240,37 @@ contains
        endif
     endif
   end subroutine freshwater_bio
+
+
+  subroutine alloc_freshwater_variables(M)
+    ! Allocate memory for fresh water variable arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Fresh water flux and salinity contribution profile arrays"
+    allocate(Fw(0:M), F_n(0:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_freshwater_variables
+
+
+  subroutine dalloc_freshwater_variables()
+    ! Deallocate memory for fresh water variable arrays.
+    use malloc, only: dalloc_check
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Deallocation return status
+    character(len=80) :: msg         ! Deallocation failure message prefix
+
+    msg = "Fresh water flux and salinity contribution profile arrays"
+    deallocate(Fw, F_n, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+  end subroutine dalloc_freshwater_variables
 
 end module freshwater
