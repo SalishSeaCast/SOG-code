@@ -118,7 +118,7 @@ module physics_eqn_builder
 
 contains
 
-  subroutine build_physics_equations(grid, dt, U, V, T, S)  ! in
+  subroutine build_physics_equations(dt, U, V, T, S)
     ! Build the terms for the diffusion/advection/Coriolis/baroclinic
     ! pressure gradient equations for the physics quantities.
     !
@@ -130,9 +130,6 @@ contains
 
     ! Element from other modules:
     !
-    ! Type Definitions:
-    use precision_defs, only: dp
-    use grid_mod, only: grid_
     ! Variable Declarations:
     use baroclinic_pressure, only: &
          dPdx_b, &  ! Cross-strait component of baroclinic pressure gradient
@@ -141,8 +138,6 @@ contains
     implicit none
 
     ! Arguments:
-    type(grid_), intent(in) :: &
-         grid  ! Grid arrays
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]
     real(kind=dp), dimension(0:), intent(in) :: &
@@ -157,18 +152,16 @@ contains
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
-    call init_phys_RHS_fluxes(grid, dt, U, V, T, S)  ! in
+    call init_phys_RHS_fluxes(dt, U, V, T, S)  ! in
 
 !!$    ! Add vertical advection due to upwelling to velocity components,
 !!$    ! temperature, and salinity RHS arrays
-!!$    call calc_phys_upwell_advection(grid, dt, U, V, T, S)
+!!$    call calc_phys_upwell_advection(dt, U, V, T, S)
 
     ! Calculate the Coriolis and baroclinic pressure gradient
     ! components of the RHS arrays for the velocity components
-    call Coriolis_and_pg(dt, -U, dPdy_b, &  ! in
-         V_RHS%C_pg%new)                  ! out
-    call Coriolis_and_pg(dt, V, dPdx_b, &   ! in
-         U_RHS%C_pg%new)                  ! out
+    call Coriolis_and_pg(dt, -U, dPdy_b, V_RHS%C_pg%new)
+    call Coriolis_and_pg(dt, V, dPdx_b, U_RHS%C_pg%new)
   end subroutine build_physics_equations
 
 
@@ -178,12 +171,11 @@ contains
 
     ! Element from other modules:
     !
-    ! Type Definitions:
-    use precision_defs, only: dp
-    ! Variable Declarations:
-    use turbulence, only: K
     ! Subroutines:
     use diffusion, only: diffusion_coeff
+    ! Variable Declarations:
+    use turbulence, only: &
+         K  ! Turbulent diffusivity profile arrays
     
     implicit none
 
@@ -192,41 +184,35 @@ contains
          dt  ! Time step [s]
 
     ! Velocity components
-    call diffusion_coeff(dt, K%m, & ! in
-         Bmatrix%vel%new)                     ! out
+    call diffusion_coeff(dt, K%m, Bmatrix%vel%new)
     ! Temperature
-    call diffusion_coeff(dt, K%T, & ! in
-         Bmatrix%T%new)                       ! out
+    call diffusion_coeff(dt, K%T, Bmatrix%T%new)
     ! Salinity
-    call diffusion_coeff(dt, K%S, & ! in
-         Bmatrix%S%new)                       ! out
+    call diffusion_coeff(dt, K%S, Bmatrix%S%new)
   end subroutine calc_phys_Bmatrices
 
 
-  subroutine init_phys_RHS_fluxes(grid, dt, U, V, T, S)  ! in
+  subroutine init_phys_RHS_fluxes(dt, U, V, T, S)
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
 
     ! Element from other modules:
     !
-    ! Type Definitions:
-    use precision_defs, only: dp
-    use grid_mod, only: grid_
     ! Subroutines:
     use diffusion, only: diffusion_bot_surf_flux, diffusion_nonlocal_fluxes
     ! Variable Declarations:
+    use grid_mod, only: &
+         grid  ! Grid parameters and depth & spacing arrays
     use turbulence, only: &
-         wbar, &  ! Turbulent kinematic flux profile arrays
-         K        ! Turbulent diffusivity profile arrays
-    use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
+         K, &  ! Turbulent diffusivity profile arrays
+         wbar  ! Turbulent kinematic flux profile arrays
     use buoyancy, only: &
          Bf  ! Surface buoyancy forcing
+    use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
     
     implicit none
     
     ! Arguments:
-    type(grid_), intent(in) :: &
-         grid  ! Grid arrays
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]
     real(kind=dp), dimension(0:), intent(in) :: &
@@ -253,16 +239,14 @@ contains
   end subroutine init_phys_RHS_fluxes
 
 
-!!$  subroutine calc_phys_upwell_advection(grid, dt, U, V, T, S)
+!!$  subroutine calc_phys_upwell_advection(dt, U, V, T, S)
 !!$    ! Add vertical advection due to upwelling to velocity components,
 !!$    ! temperature, and salinity RHS arrays
-!!$    use precision_defs, only: dp
-!!$    use grid_mod, only: grid_
 !!$    use upwelling, only: upwell_profile, upwelling_advection
+!!$    use grid_mod, only: &
+!!$         grid  ! Grid parameters and depth & spacing arrays
 !!$    implicit none
 !!$    ! Arguments:
-!!$    type(grid_), intent(in) :: &
-!!$         grid  ! Grid arrays
 !!$    real(kind=dp), intent(in) :: &
 !!$         dt  ! Time step [s]
 !!$    real(kind=dp), dimension(0:), intent(in) :: &
@@ -276,15 +260,15 @@ contains
 !!$    ! Apply upwelling advection
 !!$    !
 !!$    ! Velocity components
-!!$    call upwelling_advection (grid, dt, U, &  ! in
+!!$    call upwelling_advection(dt, U, &  ! in
 !!$         U_RHS%diff_adv%new)                  ! out
-!!$    call upwelling_advection (grid, dt, V, &  ! in
+!!$    call upwelling_advection(dt, V, &  ! in
 !!$         V_RHS%diff_adv%new)                  ! out
 !!$    ! Temperature
-!!$    call upwelling_advection (grid, dt, S, &  ! in
+!!$    call upwelling_advection(dt, S, &  ! in
 !!$         T_RHS%diff_adv%new)                  ! out
 !!$    ! Salinity
-!!$    call upwelling_advection (grid, dt, T, &  ! in
+!!$    call upwelling_advection(dt, T, &  ! in
 !!$         S_RHS%diff_adv%new)                  ! out
 !!$  end subroutine calc_phys_upwell_advection
 
@@ -292,8 +276,12 @@ contains
   subroutine Coriolis_and_pg(dt, vel, P_grad, RHS)
     ! Calculate the Coriolis and baroclinic pressure gradient
     ! components of the RHS vector for the specified velocity component.
+
+    ! Parameters values from other modules:
     use fundamental_constants, only: f
+    
     implicit none
+    
     ! Arguments:
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]

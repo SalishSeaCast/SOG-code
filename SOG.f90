@@ -242,7 +242,7 @@ program SOG
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
-     ! step
+     ! step.
      call new_to_old_physics()
      call new_to_old_vel_integrals()
      call new_to_old_phys_RHS()
@@ -320,7 +320,7 @@ program SOG
         ! Bmatrix%S%*), the RHS diffusion/advection term vectors
         ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
         ! pressure gradient term vectors (*_RHS%C_pg).
-        call build_physics_equations(grid, dt, U%new, V%new, T%new, S%new) ! in
+        call build_physics_equations(dt, U%new, V%new, T%new, S%new)
      
 ! *** Physics equations refactoring bridge code
 Gvector%u = U_RHS%diff_adv%new
