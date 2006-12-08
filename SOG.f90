@@ -294,12 +294,14 @@ program SOG
            F_n = 29.626 * Fw
         endif
 
-        ! Calculate buoyancy profile, and surface buoyancy forcing
+        ! Calculate the buoyancy profile, surface turbulent kinematic
+        ! buoyancy flux, and the surface buoyancy forcing.
         !
-        ! This sets the value of the surface buoyancy flux (Bf), and
-        ! the diagnostic buoyancy profile (B).
-        CALL calc_buoyancy(T%new, S%new, h%new, I, F_n,   &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface)
+        ! This sets the value of the diagnostic buoyancy profile (B),
+        ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
+        ! and the surface buoyancy flux (Bf).  .
+        call calc_buoyancy(T%new, S%new, h%new, I, F_n, rho%g, alpha%g, &
+             beta%g, Cp%g, Fw_surface)
    
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
@@ -402,12 +404,14 @@ S_RHS%diff_adv%new = Gvector%s
         ! Calculate the gradient of denisty at the grid point depths.
         rho%grad_g = gradient_g(rho%g)
 
-        ! Update buoyancy profile, and surface buoyancy forcing.
+        ! Update the buoyancy profile, surface turbulent kinematic
+        ! buoyancy flux, and the surface buoyancy forcing.
         !
-        ! This sets the value of the surface buoyancy flux (Bf), and
-        ! the diagnostic buoyancy profile (B).
-        call calc_buoyancy(T%new, S%new, h%new, I, F_n,   &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface)
+        ! This sets the value of the diagnostic buoyancy profile (B),
+        ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
+        ! and the surface buoyancy flux (Bf).  .
+        call calc_buoyancy(T%new, S%new, h%new, I, F_n, rho%g, alpha%g, &
+             beta%g, Cp%g, Fw_surface)
 
         ! Preserve the value of the mixing layer depth from the
         ! previous iteration to use in averaging below for convergence

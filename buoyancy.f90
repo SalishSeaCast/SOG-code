@@ -39,7 +39,8 @@ contains
 
 subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
      alpha, beta, Cp, Fw_surface)
-  ! Calculate the buoyancy profile, and the surface buoyancy forcing.
+  ! Calculate the buoyancy profile, surface turbulent kinematic
+  ! buoyancy flux, and the surface buoyancy forcing.
 
   ! Elements from other modules:
   ! Parameter values:
@@ -50,7 +51,10 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
   use grid_mod, only: &
        grid  ! Grid parameters and depth & spacing arrays
   use turbulence, only: &
-       wbar  ! Turbulent kinematic flux profile arrays; we need wbar%b(0)
+       wbar  ! Turbulent kinematic flux profile arrays; we need the
+             ! surface temperature and salinity values (wbar%t(0) &
+             ! wbar%s(0)), and we set the surface buoyancy value
+             ! wbar%b(0).
 
   implicit none
 
@@ -64,10 +68,10 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
        Itotal, &  ! Irradiance
        F_n        ! Fresh water contribution to salinity flux
   real(kind=dp), dimension(0:), intent(in) :: &
-       rho,   &  ! Density
-       alpha, &  ! Thermal expansion coefficient
-       beta,  &  ! Salinity expansion coefficient
-       Cp        ! Specific heat capacity
+       rho,   &  ! Density profile
+       alpha, &  ! Thermal expansion coefficient profile
+       beta,  &  ! Saline expansion coefficient profile
+       Cp        ! Specific heat capacity profile
   logical, intent(in) :: &
        Fw_surface
 
@@ -110,6 +114,9 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, F_n, rho, &  ! in
   else
      Bfw = g * (beta(0) * F_n(0) - beta_ml * Fn_ml)
   endif
+  ! Calculate the surface turbulent buoyancy flux (Large, et al
+  ! (1994), eqn A3b).
+  wbar%b(0) = g * (alpha(0) * wbar%t(0) - beta(0) * wbar%s(0))
   ! Calculate surface buoyancy forcing (an extension of Large, et al
   ! (1994) eqn A3d)
   Bf = -wbar%b(0) + Br + Bfw

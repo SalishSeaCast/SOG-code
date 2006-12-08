@@ -144,9 +144,5 @@ h_flux = lw_net+h_sens+h_latent
       else
          wbar%s(0) = 0.
       endif
-      ! Buoyancy (eq'n A3b)
-      wbar%b(0) = g * (alp * wbar%t(0) - bet * wbar%s(0))
 
 END SUBROUTINE surface_flux_sog
-
-
