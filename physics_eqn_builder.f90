@@ -208,7 +208,9 @@ contains
          wbar  ! Turbulent kinematic flux profile arrays
     use buoyancy, only: &
          Bf  ! Surface buoyancy forcing
-    use declarations, only: Q_n, F_n  ! *** Should come from somewhere else
+    use freshwater, only: &
+         F_n  ! Profile of fresh water contribution to salinity flux
+    use declarations, only: Q_n  ! *** Should come from somewhere else
     
     implicit none
     
