@@ -46,11 +46,11 @@ core_variables.o water_properties.o input_processor.o grid.o numerics.o \
 mean_param.o declarations.o surface_forcing.o \
 initial_sog.o \
 \
-turbulence.o buoyancy.o mixing_layer.o diffusion.o \
+turbulence.o freshwater.o buoyancy.o mixing_layer.o diffusion.o \
 baroclinic_pressure.o physics_eqn_builder.o \
 physics_model.o \
 find_upwell.o \
-fitbottom.o freshwater.o\
+fitbottom.o \
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
 forcing.o \
