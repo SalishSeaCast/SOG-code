@@ -64,6 +64,9 @@ program SOG
 
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
+  ! ** Temporary
+  use freshwater, only: S_riv
+
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -77,6 +80,7 @@ program SOG
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use air_sea_fluxes, only: wind_stress
+  use freshwater, only: freshwater_phys
   use buoyancy, only: calc_buoyancy
   use baroclinic_pressure, only: new_to_old_vel_integrals, &
        baroclinic_P_gradient
@@ -110,13 +114,12 @@ program SOG
 
   implicit none
 
+  ! Code identification string (maintained by CVS), for output file headers
+  character*70 :: &
+       codeId = "$Source$"
+
   real(kind=dp) :: &
-       upwell
-  ! Upwelling constant (tuned parameter)
-  !*** read in here, used by surface_flux_sog : eventually should be local
-  ! to the surface_forcing module (not be be confused with current 
-  ! surface_forcing module
-  real(kind=dp) :: upwell_const, S_riv, sumS=0, sumSriv=0
+       sumS=0, sumSriv=0
   integer :: scount=0
 
   ! Interpolated river flows
@@ -128,10 +131,6 @@ program SOG
   real(kind=dp) unow, vnow
 
   integer :: wind_n, met_n, river_n ! length of various forcing files
-
-  ! Code identification string (maintained by CVS), for output file headers
-  character*70 :: &
-       codeId = "$Source$"
 
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
@@ -199,15 +198,6 @@ program SOG
   call read_forcing (wind_n, met_n, river_n)
   call read_variation
 
-  ! Read the physic model parameter values
-  ! *** These should go into the freshwater module.
-  upwell_const = getpard("upwell_const")
-  Fw_scale = getpard('Fw_scale')     ! Fresh water scale factor for river flows
-  Fw_surface = getparl('Fw_surface') ! Add all fresh water on surface?
-  if (.not. Fw_surface) then
-     Fw_depth = getpard('Fw_depth')  ! Depth to distribute freshwater flux over
-  endif
-
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
@@ -266,13 +256,10 @@ program SOG
 
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
-        CALL surface_flux_sog(grid%M, rho%g, S%new(1),        &
-             S%old(1), S_riv, T%new(0), I, Q_t,        &
+        CALL surface_flux_sog(grid%M, rho%g, &
+             T%new(0), I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
-             atemp_value, humid_value, Qinter, &
-             day, dt/h%new, &
-             upwell_const, upwell, Einter,       &
-             u%new(1), dt, Fw_surface, Fw_scale, Ft, count) 
+             atemp_value, humid_value)
 
         ! Calculate the wind stress, and the turbulent kinenatic flux
         ! at the surface.
@@ -285,14 +272,13 @@ program SOG
         Q_n = I / (Cp%i * rho%i)
 
         ! Calculate the nonturbulent fresh water flux profile, and its
-        ! contribution to the salinity profile
-        ! *** Move to a subroutine
-        if (Fw_surface) then
-           F_n = 0.0d0
-        else
-           Fw = Ft * exp(-grid%d_i / (Fw_depth * h%new))
-           F_n = 29.626 * Fw
-        endif
+        ! contribution to the salinity profile.
+        !
+        ! This sets the values of the river salinity diagnostic
+        ! (S_riv), the surface turbulent kinematic salinity flux
+        ! (wbar%s(0)), and the profile of fresh water contribution to
+        ! the salinity (F_n).
+        call freshwater_phys(Qinter, Einter, S%old(1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
         ! buoyancy flux, and the surface buoyancy forcing.
@@ -300,8 +286,8 @@ program SOG
         ! This sets the value of the diagnostic buoyancy profile (B),
         ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
         ! and the surface buoyancy flux (Bf).  .
-        call calc_buoyancy(T%new, S%new, h%new, I, F_n, rho%g, alpha%g, &
-             beta%g, Cp%g, Fw_surface)
+        call calc_buoyancy(T%new, S%new, h%new, I, rho%g, alpha%g, &
+             beta%g, Cp%g)
    
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
@@ -329,7 +315,7 @@ Gvector%t = T_RHS%diff_adv%new
 Gvector%s = S_RHS%diff_adv%new
 
         ! Calculate profile of upwelling velocity
-        call upwell_profile(grid, Qinter, upwell, wupwell)
+        call upwell_profile(Qinter, wupwell)
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
         call vertical_advection (grid, dt, S%new, wupwell, &
@@ -410,8 +396,8 @@ S_RHS%diff_adv%new = Gvector%s
         ! This sets the value of the diagnostic buoyancy profile (B),
         ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
         ! and the surface buoyancy flux (Bf).  .
-        call calc_buoyancy(T%new, S%new, h%new, I, F_n, rho%g, alpha%g, &
-             beta%g, Cp%g, Fw_surface)
+        call calc_buoyancy(T%new, S%new, h%new, I, rho%g, alpha%g, &
+             beta%g, Cp%g)
 
         ! Preserve the value of the mixing layer depth from the
         ! previous iteration to use in averaging below for convergence
@@ -493,7 +479,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, Z, N%O, N%H, &! in
-          Si, D%DON, D%PON, D%refr, D%bSi, Ft, wupwell)                    ! in
+          Si, D%DON, D%PON, D%refr, D%bSi, wupwell)                        ! in
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
