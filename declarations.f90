@@ -17,22 +17,6 @@ module declarations
   TYPE(plankton2)::micro, nano
   TYPE(entrain)::euph
 
-!!$  ! Surface buoyancy forcing
-!!$  real(kind=dp) :: &
-!!$       Bf, &   ! Current iteration step value
-!!$       Bf_old  ! Previous iteration step value
-
-  ! Fresh water flux quantities:
-  ! *** Destined for a module (probably new surface_forcing) eventually
-  logical :: Fw_surface  ! Add all of the fresh water on the surface?
-  real(kind=dp) :: &
-       Ft, &        ! Total fresh water flux
-       Fw_scale, &  ! Fresh water scale factor for river flows
-       Fw_depth     ! Depth to distribute fresh water flux over
-  real(kind=dp), dimension(:), allocatable :: &
-       Fw, &  ! Fresh water flux profile
-       F_n    ! Fresh water contribution to salinity flux
-
   ! Heat fluxes
   real(kind=dp) :: Q_t  ! Turbulent surface heat flux
   real(kind=dp), dimension(:), allocatable :: Q_n  ! Nonturb heat flux profile
