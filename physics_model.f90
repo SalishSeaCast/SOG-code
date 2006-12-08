@@ -35,6 +35,7 @@ contains
     use turbulence, only: init_turbulence
     use buoyancy, only: alloc_buoyancy_variables
     use mixing_layer, only: init_mixing_layer
+    use freshwater, only: init_freshwater
     
     implicit none
     
@@ -58,6 +59,9 @@ contains
     ! Allocate memory for mixing layer depth calculation variables,
     ! and initialize them.
     call init_mixing_layer(M)
+    ! Allocate memory for fresh water variables, and read
+    ! parameter values from infile.
+    call init_freshwater(M)
   end subroutine init_physics
 
 
@@ -93,6 +97,7 @@ contains
     use turbulence, only: dalloc_turbulence_variables
     use buoyancy, only: dalloc_buoyancy_variables
     use mixing_layer, only: dalloc_mixing_layer_variables
+    use freshwater, only: dalloc_freshwater_variables
     
     implicit none
     
@@ -115,6 +120,8 @@ contains
     call dalloc_buoyancy_variables()
     ! Deallocate memory for mixing layer variables.
     call dalloc_mixing_layer_variables()
+    ! Deallocate memory for fresh water variables.
+    call dalloc_freshwater_variables()
   end subroutine dalloc_physics_variables
 
 end module physics_model
