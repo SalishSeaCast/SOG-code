@@ -23,7 +23,7 @@ module find_upwell
 
 contains
 
-  subroutine upwell_profile(grid, Qriver, upwell, wupwell)
+  subroutine upwell_profile(Qriver, wupwell)
     ! Calculate the vertical profile of the entrainment velocity based
     ! on the Fraser River flow, and the maximum upwelling velocity.
     ! The latter is a function of the Fraser River flow, and is
@@ -33,13 +33,12 @@ contains
 
     ! type definitions
     use precision_defs, only: dp, sp
-    use grid_mod, only: grid_
+    use grid_mod, only: grid
+    use freshwater, only: upwell
 
     implicit none
 
     ! Arguments:
-    type(grid_), intent(in) :: grid                 ! Grid properties
-    real(kind=dp), intent(in) :: upwell            ! Maximum upwelling velocity
     real(kind=sp), intent(in) :: Qriver            ! River flow
     ! Vertical upwelling velocity profile
     real(kind=dp), intent(out), dimension(0:) :: wupwell 
