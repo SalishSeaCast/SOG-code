@@ -66,6 +66,11 @@
 "nu_w_m"        1.0d-4          "internal wave breaking momentum mixing"
 "nu_w_s"        1.0d-5          "internal wave breaking scalar mixing"
 "shear smooth"	0.6d0		"shear diffusivity smoothing parameter"
+! Fresh water flux:
+"upwell_const"  1.25d-5         "maximum upwelling velocity [m/s]"
+"Fw_scale"	1.85d-7		"fresh water scale factor for river flows"
+"Fw_surface"	.false.		"add all of the fresh water on the surface?"
+"Fw_depth"      0.65d0             "interface thickness"
 
 ! Biology model parameters:
 ! Model complexity flags:
@@ -204,12 +209,6 @@
 "vary%wind%enabled"    .false.       "Variation of wind data?"
 "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
 "vary%rivers%enabled"  .false.       "Variation of river flow?"
-
-! Physics model parameters:
-"upwell_const"  1.25d-5         "maximum upwelling velocity [m/s]"
-"Fw_scale"	1.85d-7		"fresh water scale factor for river flows"
-"Fw_surface"	.false.		"add all of the fresh water on the surface?"
-"Fw_depth"      0.65d0             "interface thickness"
 
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
