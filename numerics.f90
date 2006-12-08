@@ -10,6 +10,12 @@ module numerics
   !
   !   tridiag -- Tridiagonal matrix arrays.
   !
+  !   converg_metrics -- Convergence metrics for implicit solver loop.
+  !                      *** Note that this is public due to a pgf90 bug
+  !                      that seems to require the types defs for all
+  !                      public variables in amodule to be made public
+  !                      if the module exports any type defs.
+  !
   ! Public Variables:
   !
   !   startDatetime -- Date/time of initial conditions
@@ -39,7 +45,12 @@ module numerics
   !                         depth values to calculate the convergence
   !                         metrics for the implicit solver loop.
   !
+  !   del -- Convergence metrics for implicit solver loop.
+  !
   ! Public Subroutines:
+  !
+  !   init_numerics -- Allocate memory for numerics arrays, and read
+  !                    parameter values from the infile.
   !
   !   check_negative -- Check for negative values in a vector.  Output
   !                     a message if a negative value is found, and
@@ -55,8 +66,14 @@ module numerics
   private
   public :: &
        ! Type definitions:
-       tridiag, &
-       ! Variables:
+       tridiag,         &  ! Tridiagonal matrix vectors
+       converg_metrics, &  ! Convergence metrics for implicit solver
+                           ! loop.  *** Note that this is public due
+                           ! to a pgf90 bug that seems to require the
+                           ! types defs for all public variables in a
+                           ! module to be made public if the module
+                           ! exports any type defs.
+       !  Variables:
        startDatetime, &   ! Date/time of initial conditions
        year, &   ! Year counter
        day,  &   ! Year-day counter
