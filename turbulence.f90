@@ -100,11 +100,12 @@ module turbulence
        kapa,   &  ! von Karman constant
        epsiln, &  ! Non-dimensional extent of the surface layer
        ! Variables:
-       K, &      ! Overall diffusivity profile; a continuous profile of
-                 ! K_ML%* in the mixing layer, and nu%*%total below it
-       wbar, &   ! Turbulent kinematic flux profiles
+       K,      &  ! Overall diffusivity profile; a continuous profile
+                  ! of K_ML%* in the mixing layer, and nu%*%total
+                  ! below it
+       wbar,   &  ! Turbulent kinematic flux profiles
        u_star, &  ! Turbulent friction velocity
-       L_mo, &    ! Monin-Obukhov length scale
+       L_mo,   &  ! Monin-Obukhov length scale
        ! *** Temporary until turbulence refactoring is completed
        w, &  ! Turbulent velocity scale profile arrays
              ! values at the mixing layer depth

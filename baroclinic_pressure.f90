@@ -46,7 +46,7 @@ module baroclinic_pressure
 
   ! Type Definitions:
   !
-  ! Private to module:
+  ! Private:
   !
   ! New/old array components:
   type :: new_old_arrays
@@ -57,7 +57,7 @@ module baroclinic_pressure
 
   ! Parameter Value Declarations:
   !
-  ! Private parameter value declarations:
+  ! Private:
   real(kind=dp) :: &
        Lx = 30.0d3, &  ! Minor axis (cross-strait) of model domain [m]
        Ly = 120.0d3     ! Major axis (along-strait) of model domain [m]
@@ -72,7 +72,7 @@ module baroclinic_pressure
        ut, &  ! Layer expansion (m) on eastern side
        vt     ! Layer expansion (m) on northern side
   !
-  ! Private variable declarations:
+  ! Private:
   real(kind=dp), dimension(:), allocatable :: &
        dze, &  ! Isopycnal depth profile array on eastern side
        dzw, &  ! Isopycnal depth profile array on western side
