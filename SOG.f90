@@ -32,8 +32,6 @@ program SOG
        alpha, &  ! Thermal expansion coefficient [K^-1]
        beta,  &  ! Saline contraction coefficient [K^-1]
        Cp        ! Specific heat capacity [J/kg.K]
-  use physics_model, only: &
-       B  ! Buoyancy profile array
   use buoyancy, only: &
        Bf  ! Surface buoyancy forcing
   use turbulence, only: &
@@ -298,10 +296,10 @@ program SOG
 
         ! Calculate buoyancy profile, and surface buoyancy forcing
         !
-        ! This sets the value of the surface buoyancy flux (Bf).
-        CALL calc_buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
-             B)                                           ! out
+        ! This sets the value of the surface buoyancy flux (Bf), and
+        ! the diagnostic buoyancy profile (B).
+        CALL calc_buoyancy(T%new, S%new, h%new, I, F_n,   &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface)
    
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
@@ -395,19 +393,21 @@ S_RHS%diff_adv%new = Gvector%s
         alpha%i = interp_i(alpha%g)
         beta%i = interp_i(beta%g)
         Cp%i = interp_i(Cp%g)
-        ! Calculate the gradients of thermal expansion and saline
-        ! contraction coefficients at the grid layer interface depths
+        ! Calculate the gradients of denisity, thermal expansion, and
+        ! saline contraction coefficients at the grid layer interface
+        ! depths.
         rho%grad_i = gradient_i(rho%g)
         alpha%grad_i = gradient_i(alpha%g)
         beta%grad_i = gradient_i(beta%g)
+        ! Calculate the gradient of denisty at the grid point depths.
+        rho%grad_g = gradient_g(rho%g)
 
         ! Update buoyancy profile, and surface buoyancy forcing.
         !
-        ! This sets the value of the surface buoyancy flux (Bf).
-        call calc_buoyancy(grid, T%new, S%new, h%new, I, F_n,   &  ! in
-             rho%g, alpha%g, beta%g, Cp%g, Fw_surface,     &  ! in
-             B)                                           ! out
-        rho%grad_g = gradient_g(rho%g)
+        ! This sets the value of the surface buoyancy flux (Bf), and
+        ! the diagnostic buoyancy profile (B).
+        call calc_buoyancy(T%new, S%new, h%new, I, F_n,   &  ! in
+             rho%g, alpha%g, beta%g, Cp%g, Fw_surface)
 
         ! Preserve the value of the mixing layer depth from the
         ! previous iteration to use in averaging below for convergence

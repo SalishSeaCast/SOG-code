@@ -2,12 +2,8 @@
 ! $Source$
 
 module physics_model
-  ! Type declarations, variables, parameters, and subroutines related
-  ! to the physics model in the code.
-  !
-  ! Public Variables:
-  !
-  !   B -- Water column buoyancy [m/s^2]
+  ! Wrapper subroutines for setting up and tearing down the physics
+  ! model in the SOG code.
   !
   ! Public Subroutines:
   !
@@ -24,28 +20,20 @@ module physics_model
 
   private
   public :: &
-       ! Variables:
-       B,      &  ! Buoyancy profile array
        ! Subroutines:
        init_physics, new_to_old_physics, dalloc_physics_variables
-
-  ! Public variable declarations:
-  real(kind=dp), dimension(:), allocatable :: &
-       B  ! Buoyancy profile array
 
 contains
 
   subroutine init_physics(M)
     ! Initialize physics model.
     
-    ! Elements from other modules:
-    ! Parameter values:
-    use fundamental_constants, only: latitude, pi
-    ! Subroutines:
+    ! Subroutines from other modules:
     use water_properties, only: alloc_water_props
     use physics_eqn_builder, only: alloc_phys_RHS_variables
     use baroclinic_pressure, only: init_baroclinic_pressure
     use turbulence, only: init_turbulence
+    use buoyancy, only: alloc_buoyancy_variables
     use mixing_layer, only: init_mixing_layer
     
     implicit none
@@ -53,8 +41,6 @@ contains
     ! Argument:
     integer :: M  ! Number of grid points
 
-    ! Allocate memory for physics model variables
-    call alloc_physics_variables(M)
     ! Allocate memory for water property arrays
     call alloc_water_props(M)
     ! Allocate memory for arrays for right-hand sides of
@@ -67,6 +53,8 @@ contains
     ! Allocate memory for turbulence model variables, and read
     ! parameter values from infile.
     call init_turbulence(M)
+    ! Allocate memory for buoyancy variables.
+    call alloc_buoyancy_variables(M)
     ! Allocate memory for mixing layer depth calculation variables,
     ! and initialize them.
     call init_mixing_layer(M)
@@ -94,23 +82,6 @@ contains
   end subroutine new_to_old_physics
 
 
-  subroutine alloc_physics_variables(M)
-    ! Allocate memory for physics model variables arrays.
-    use malloc, only: alloc_check
-    implicit none
-    ! Argument:
-    integer, intent(in) :: M  ! Number of grid points
-    ! Local variables:
-    integer           :: allocstat  ! Allocation return status
-    character(len=80) :: msg        ! Allocation failure message prefix
-
-    msg = "Buoyancy profile array"
-    allocate(B(0:M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-  end subroutine alloc_physics_variables
-
-
   subroutine dalloc_physics_variables
     ! Deallocate memory from physics model variables arrays.
 
@@ -120,6 +91,7 @@ contains
     use physics_eqn_builder, only: dalloc_phys_RHS_variables
     use baroclinic_pressure, only: dalloc_baro_press_variables
     use turbulence, only: dalloc_turbulence_variables
+    use buoyancy, only: dalloc_buoyancy_variables
     use mixing_layer, only: dalloc_mixing_layer_variables
     
     implicit none
@@ -128,10 +100,6 @@ contains
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Buoyancy profile array"
-    deallocate(B, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
     ! Deallocate memory for water property arrays
     call dalloc_water_props
     ! Deallocate memory from arrays for right-hand sides of
@@ -143,6 +111,8 @@ contains
     call dalloc_baro_press_variables()
     ! Deallocate memory for turbulence variables.
     call dalloc_turbulence_variables()
+    ! Deallocate memory for buoyancy variables.
+    call dalloc_buoyancy_variables()
     ! Deallocate memory for mixing layer variables.
     call dalloc_mixing_layer_variables()
   end subroutine dalloc_physics_variables
