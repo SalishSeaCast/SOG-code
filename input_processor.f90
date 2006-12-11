@@ -34,7 +34,8 @@ module input_processor
        ! Subroutines:
        init_input_processor, &
        ! Functions:
-       getpars, getpari, getpard, getparl, getpariv, getpardv
+       getpars, getpari, getpard, getparl, getpariv, getpardv, &
+       getpar_datetime
 
   ! Private variable declarations:
   logical :: show_report  ! getpar* routines report to stdout when TRUE
@@ -340,5 +341,121 @@ contains
        write(stdout,'(a50, " = ", a)') trim(desc), str
     endif
   end function getparl
+
+
+  function getpar_datetime(name, reportThis) result(date_time)
+    ! Read and validate the named datetime value, and report ti to
+    ! stdout, if requested.
+
+    ! Elements from other modules:
+    ! Type Definitions:
+    use datetime, only: datetime_
+    ! Functions:
+    use datetime, only: datetime_str, leapday, year_day, day_sec
+    ! Parameter Values:
+    use io_unit_defs, only: stdout, stripped_infile
+
+    implicit none
+
+    ! Arguments:
+    character(len=*), intent(in)  :: name
+    logical, intent(in), optional :: reportThis
+
+    ! Result:
+    type(datetime_) :: date_time
+
+    ! Local variables:
+    logical :: report_this             ! Report value to stdout?
+    character(len=label_len) :: label  ! Item label in infile
+    character(len=19) :: date_time_str ! Parameter value string in infile
+    character(len=desc_len) :: desc    ! Item description in infile
+    character(len=19) :: str           ! String representation of value
+    character(len=1), dimension(5) :: sep  ! Datetime string separators
+
+    ! Value reporting to stdout defaults to TRUE
+    if (present(reportThis)) then
+       report_this = reportThis
+    else
+       report_this = .true.
+    endif
+    ! Read and validate the value
+    read(stripped_infile, *) label, date_time_str, desc
+    ! Confirm we're reading the expected parameter
+    if (name /= label) then
+       write(stdout, *) "getpar_datetime: Expecting ", name, " but got ", &
+            trim(label), " instead."
+       call exit(1)
+    end if
+    ! Confirm that the string we read is the correct length
+    if (len(trim(date_time_str)) /= 19) then
+       write(stdout, *) "getpar_datetime: ", trim(label)
+       write(stdout, *) "  Expecting yyyy-mm-dd hh:mm:ss but got ", &
+            date_time_str
+       call exit(1)
+    endif
+    ! Read the datetime elements from the parameter string value
+    read(date_time_str, '(i4, 5(a1, i2))') &
+         date_time%yr, sep(1), date_time%mo, sep(2), date_time%day, sep(3), &
+         date_time%hr, sep(4), date_time%min, sep(5), date_time%sec
+    ! Check the separators
+    if (any(sep(1:2) /= '-') &
+         .or. sep(3) /= ' ' &
+         .or. any(sep(4:5) /= ':')) then
+       write(stdout, *) "getpar_datetime: ", trim(label)
+       write(stdout, *) "  Expecting yyyy-mm-dd hh:mm:ss but got ", &
+            date_time_str
+       call exit(1)
+    endif
+    ! Check the year (fairly lame, but better than nothing)
+    if (date_time%yr < 1900 .or. date_time%yr > 2100) then
+       write(stdout, *) "getpar_datetime:  ", trim(label)
+       write(stdout, *) "  Year seems odd: ", date_time_str
+       call exit(1)
+    endif
+    ! Check the month
+    if (date_time%mo < 1 .or. date_time%mo > 12) then
+       write(stdout, *) "getpar_datetime:  ", trim(label)
+       write(stdout, *) "  Invalid month: ", date_time_str
+       call exit(1)
+    endif
+    ! Check the day
+    if (date_time%day < 1 &
+         ! 31 day months
+         .or. ((date_time%mo == 1 .or. date_time%mo == 3 &
+               .or. date_time%mo == 5 .or. date_time%mo == 7 &
+               .or. date_time%mo == 8 .or. date_time%mo == 10 &
+               .or. date_time%mo == 12) .and. date_time%day > 31) &
+         ! 30 day months
+         .or. ((date_time%mo == 4 .or. date_time%mo == 6 &
+               .or. date_time%mo == 9 .or. date_time%mo == 11) &
+               .and. date_time%day > 30) &
+         ! February
+         .or. (date_time%mo == 2 &
+              .and. ((leapday(date_time%yr) == 1 &
+                      .and. date_time%day > 29) &
+              .or. (leapday(date_time%yr) == 0 &
+                    .and. date_time%day > 28)))) then
+       write(stdout, *) "getpar_datetime:  ", trim(label)
+       write(stdout, *) "  Invalid day: ", date_time_str
+       call exit(1)
+    endif
+    ! Check the time
+    if (date_time%hr < 0 .or. date_time%hr > 23 &
+         .or. date_time%min < 0 .or. date_time%min > 59 &
+         .or. date_time%sec < 0 .or. date_time%sec > 59) then
+       write(stdout, *) "getpar_datetime:  ", trim(label)
+       write(stdout, *) "  Invalid time: ", date_time_str
+       call exit(1)
+    endif
+    ! Set the other 2 elements of datetime to their correct values
+    date_time%yr_day = year_day(date_time)
+    date_time%day_sec = day_sec(date_time)
+    ! Report the value to stdout, if requested
+    if (show_report .and. report_this) then
+       ! Create a left justified string representation of the value
+       str = datetime_str(date_time)
+       write(stdout,'(a50, " = ", a)') trim(desc), str
+    endif
+  end function getpar_datetime
 
 end module input_processor
