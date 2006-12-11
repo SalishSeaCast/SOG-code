@@ -17,19 +17,25 @@ module datetime
 
   implicit none
 
-  ! *** We may need an interface block here to handle overloading of
-  ! *** functions that need to be defined for more than 1 type.
-
+  ! Date/time including year-day (1-Jan = 1), and day-second 
+  ! (midnight = 0).
   type :: datetime_
-     integer :: yr
-     integer :: mo
-     integer :: day
-     integer :: yr_day
-     integer :: hr
-     integer :: min
-     integer :: sec
-     integer :: day_sec
+     integer :: &
+          yr,     &
+          mo,     &
+          day,    &
+          yr_day, &
+          hr,     &
+          min,    &
+          sec,    &
+          day_sec
   end type datetime_
+  ! Difference between 2 datetime_ structures
+  type :: timedelta
+     integer :: &
+          days, &
+          secs
+  end type timedelta
 
 contains
 
@@ -52,11 +58,7 @@ contains
 
     yyyy = datetime%yr
     ddd = datetime%yr_day
-    t = 0
-    if(mod(yyyy, 4) == 0) t = 1
-
-    ! This statement is necessary if yyyy is < 1900 or > 2100
-    if(mod(yyyy, 400) /= 0 .and. mod(yyyy, 100) == 0) t = 0
+    t = leapday(yyyy)
 
     dd = ddd
     if(ddd > 59 + t) dd = dd + 2 - t
@@ -92,14 +94,36 @@ contains
   end subroutine clock_time
 
 
-  integer function day_sec(datetime) result(day_s)
-    ! 
+  function day_sec(datetime) result(day_s)
+    ! Return the day-sec value (seconds since midnight) for the
+    ! specified datetime structure.
     implicit none
     ! Argument:
     type(datetime_) :: datetime
+    ! Result:
+    integer :: day_s
 
     day_s = (datetime%hr * 3600) + (datetime%min * 60) + datetime%sec
   end function day_sec
+
+
+  function leapday(year) result(leap_day)
+    ! Return and integer (0 or 1) for the number of leap days in the
+    ! year of the specified datetime structure.
+    implicit none
+    ! Argument:
+    integer :: year
+    ! Result:
+    integer :: leap_day
+    
+    ! Most years aren't leapyears
+    leap_day = 0
+    ! Years that are evenly divisible by 4 are
+    if(mod(year, 4) == 0) leap_day = 1
+    ! But century years aren't unless they are evenly divisible by 400
+    if(mod(year, 400) /= 0 &
+         .and. mod(year, 100) == 0) leap_day = 0
+  end function leapday
 
 
   function datetime_str(datetime, date_sep, datetime_sep, time_sep) result(str)
@@ -182,7 +206,7 @@ contains
     datetime%sec = timeparts(7)
     ! timeparts(8) is milliseconds
 
-    ! Set the other 2 elements of datetime to zero
+    ! Set the other 2 elements of datetime to their correct values
     datetime%yr_day = year_day(datetime)
     datetime%day_sec = day_sec(datetime)
   end subroutine os_datetime
@@ -206,5 +230,65 @@ contains
          + (1 - (mod(yyyy, 4) + 3) / 4 + (mod(yyyy, 100) + 99) / 100 &
          - (mod(yyyy, 400) + 399) / 400) * (mm + 10) / 13 + dd
   end function year_day
+
+
+  function datetime_incr(datetime, del) result(new_datetime)
+    ! Return the datetime incremented by the specified timedelta.
+    ! Incremental timedelta must be positive.
+    use io_unit_defs, only: stdout
+    implicit none
+    ! Arguments:
+    type(datetime_), intent(in) :: &
+         datetime  ! Datetime to increment
+    type(timedelta), intent(in) :: &
+         del  ! Size of increment
+    ! Result:
+    type(datetime_) :: &
+         new_datetime
+    ! Local Variables:
+    integer :: &
+         days_in_yr  ! Number of days in the year
+
+    ! Only positive increments allowed
+    if (del%days < 0 .or. del%secs < 0) then
+       write(stdout, *)  "datetime_incr: Increment must be positive; ", &
+            "days = ", del%days, " secs = ", del%secs
+       call exit(1)
+    end if
+    ! Seconds increment must be less than a day
+    if (del%secs > 86399) then
+       write(stdout, *) "datetime_incr: Increment seconds must be < 86400"
+       call exit(1)
+    end if
+    ! Days increment must be less than a normal year
+    !
+    ! *** This restriction could be removed by figuring out how many
+    ! *** leap days are included in an arbitrarily large days
+    ! *** increment, but for present uses increments larger than 365
+    ! *** days seem unlikely.
+    if (del%days > 365) then
+       write(stdout, *) "datetime_incr: Increment days must be <= 365"
+       call exit(1)
+    end if
+    ! Increment using day-seconds, year-day, and year, then calculate
+    ! calendar date and clock time later.
+    days_in_yr = 365 + leapday(datetime%yr)
+    new_datetime%yr = datetime%yr
+    ! Day-seconds
+    new_datetime%day_sec = datetime%day_sec + del%secs
+    if (new_datetime%day_sec >= 86400) then
+       new_datetime%day_sec = mod(new_datetime%day_sec, 86400)
+       new_datetime%yr_day = datetime%yr_day + del%days + 1
+       ! Year-days
+       if (new_datetime%yr_day > days_in_yr) then
+          new_datetime%yr_day = mod(new_datetime%yr_day, days_in_yr)
+          ! Year
+          new_datetime%yr = new_datetime%yr + 1
+       endif
+    end if
+    ! Set the calendar date and clock time
+    call calendar_date(new_datetime)
+    call clock_time(new_datetime)
+  end function datetime_incr
 
 end module datetime
