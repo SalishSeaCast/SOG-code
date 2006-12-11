@@ -454,7 +454,8 @@ contains
     if (show_report .and. report_this) then
        ! Create a left justified string representation of the value
        str = datetime_str(date_time)
-       write(stdout,'(a50, " = ", a)') trim(desc), str
+       write(stdout, 100) trim(desc), str, date_time%yr_day, date_time%day_sec
+100    format(a50, " = ", a, " year-day = ", i3, " day-sec = ", i5) 
     endif
   end function getpar_datetime
 
