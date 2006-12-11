@@ -2,39 +2,108 @@
 ! $Source$
 
 module datetime
-  ! A collection of functions and subroutines for manipulating dates
-  ! and times.  Some are copied from the date_sub module (*** need a
-  ! ref) compiled by H.D. Knoble in Jan-1972, and converted to f90 by
-  ! Alan Miller on 1999-12-22.  Original references are cited in each
-  ! of those routines.
+  ! A collection of type definitions, functions, and subroutines for
+  ! manipulating dates and times.  Some are copied from the date_sub
+  ! module (http://users.bigpond.net.au/amiller/datesub.f90 or
+  ! http://ftp.cac.psu.edu/pub/ger/fortran/hdk/datesub.f90 or Google
+  ! "date_sub module f90") compiled by H.D. Knoble in Jan-1972, and
+  ! converted to f90 by Alan Miller on 1999-12-22.  Original
+  ! references are cited in each of those routines.
   !
-  ! Contents:
-  !  calendar -- Subroutine.  
-  !  year_day -- Function.  Given a calendar date (yyyy, mm, and dd) 
-  !              return the day of the year (1-Jan = 1).  Oceanographers 
-  !              may call this the Julian day (but it's not).  This 
-  !              function is called iday in the date_sub module.
+  ! Public Type Definitions:
+  !
+  !   datetime_ -- Date/time including year-day (1-Jan = 1), and
+  !                day-second (midnight = 0).
+  !
+  !   timedelta -- Difference between 2 datetime_ structures.
+  !
+  ! Public Functions:
+  !
+  !   day_sec -- Return the day-sec value (seconds since midnight) for
+  !              the specified datetime structure.
+  !
+  !   leapday -- Return and integer (0 or 1) for the number of leap
+  !              days in the year of the specified datetime structure.
+  !
+  !   datetime_str -- Return the datetime value as a string.
+  !
+  !   year_day -- Given a datetime struct return the year-day.
+  !
+  !   datetime_incr -- Return the datetime incremented by the
+  !                    specified timedelta.  Incremental timedelta
+  !                    must be positive.
+  !
+  !   datetime_diff -- Return the difference between the datetime
+  !                    structures as a timedelta strcuture.
+  !
+  ! Public Subroutines:
+  !
+  !   calendar_date -- Set the month, and day elements of the datetime
+  !                    structure provided from its year and year-day
+  !                    elements.
+  !
+  !   clock_time -- Set the hour, minute, and second elements of the
+  !                 datetime structure provided from its day_sec
+  !                 element.
+  !
+  !   os_datetime -- Read the operating system date and time and fill
+  !                  in the yr, mo, day, hr, min & sec elements of the
+  !                  datetime structure provided.
 
   implicit none
 
+  private
+  public :: &
+       ! Type Definitions:
+       datetime_, &  ! Date/time including year-day (1-Jan = 1), and
+                     ! day-second (midnight = 0).
+       timedelta, &  ! Difference between 2 datetime_ structures.
+       ! Functions:
+       day_sec,       &  ! Return the day-sec value (seconds since
+                         ! midnight) for the specified datetime
+                         ! structure.
+       leapday,       &  ! Return and integer (0 or 1) for the number
+                         ! of leap days in the year of the specified
+                         ! datetime structure.
+       datetime_str,  &  ! Return the datetime value as a string.
+       year_day,      &  ! Given a datetime struct return the year-day.
+       datetime_incr, &  ! Return the datetime incremented by the
+                         ! specified timedelta.  Incremental timedelta
+                         ! must be positive.
+       datetime_diff, &  ! Return the difference between the datetime
+                         ! structures as a timedelta strcuture.
+       ! Subroutines:
+       calendar_date, &  ! Set the month, and day elements of the
+                         ! datetime structure provided from its year
+                         ! and year-day elements.
+       clock_time,    &  ! Set the hour, minute, and second elements
+                         ! of the datetime structure provided from its
+                         ! day_sec element.
+       os_datetime       ! Read the operating system date and time and
+                         ! fill in the yr, mo, day, hr, min & sec
+                         ! elements of the datetime structure
+                         ! provided.
+
+  ! Public Type Definitions:
+  !
   ! Date/time including year-day (1-Jan = 1), and day-second 
   ! (midnight = 0).
   type :: datetime_
      integer :: &
-          yr,     &
-          mo,     &
-          day,    &
-          yr_day, &
-          hr,     &
-          min,    &
-          sec,    &
-          day_sec
+          yr,     &  ! Calendar year
+          mo,     &  ! Calendar month (1 to 12)
+          day,    &  ! Calendar day (1 to 31)
+          yr_day, &  ! Year-day (1-Jan = 1; 1 to 365 or 366)
+          hr,     &  ! Clock hour (0 to 23)
+          min,    &  ! Clock minute (0 to 59)
+          sec,    &  ! Clock second (0 to 59)
+          day_sec    ! Day-second (midnight = 0; 0 to 86399)
   end type datetime_
   ! Difference between 2 datetime_ structures
   type :: timedelta
      integer :: &
-          days, &
-          secs
+          days, &  ! Number of days
+          secs     ! Number of seconds (0 to 86399)
   end type timedelta
 
 contains
@@ -45,34 +114,38 @@ contains
     ! Based on calend subroutine from date_sub module.
     ! See ACM algorithm 398, Tableless Date Conversion, by Dick Stone,
     ! CACM 13(10):621.
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     type(datetime_), intent(inout) :: datetime
 
     ! Local variables:
-    integer :: yyyy
-    integer :: ddd
-    integer :: mm
-    integer :: dd
-    integer :: t
+    integer :: &
+         yyyy, &
+         ddd,  &
+         mm,   &
+         dd,   &
+         t
 
     yyyy = datetime%yr
     ddd = datetime%yr_day
     t = leapday(yyyy)
 
     dd = ddd
-    if(ddd > 59 + t) dd = dd + 2 - t
+    if (ddd > 59 + t) then
+       dd = dd + 2 - t
+    endif
     mm = ((dd + 91) * 100) / 3055
     dd = (dd + 91) - (mm * 3055) / 100
     mm = mm - 2
+
     datetime%mo = mm
     datetime%day = dd
     ! mm will be correct if, and only if, ddd is correct for yyyy
-    if(mm >= 1 .and. mm <= 12) return
-    write(*, 1) ddd
-1   format('Error: calendar(): day of the year input =', i11, &
-         ' is out of range.')
-    call exit(1)
+    if(mm < 1 .or. mm > 12) then
+       write(stdout, *) "calendar_date(): Year-day out of range:", ddd
+       call exit(1)
+    endif
   end subroutine calendar_date
 
 
@@ -212,20 +285,24 @@ contains
   end subroutine os_datetime
 
 
-  integer function year_day(datetime) result(yr_day)
+  function year_day(datetime) result(yr_day)
     ! Given a datetime struct return the year-day.
+    !
     ! Example: year_day(1984, 4, 22) = 113
+    !
     ! Based on code from the date_sub module compiled by H.D. Knoble
     ! in Jan-1972, and converted to f90 by Alan Miller on 1999-12-22.
     implicit none
     ! Argument:
     type(datetime_), intent(in) :: datetime
+    ! Result:
+    integer :: yr_day
     ! Local variables:
     integer :: yyyy, mm, dd
+
     yyyy = datetime%yr
     mm = datetime%mo
     dd = datetime%day
-
     yr_day = 3055 * (mm + 2) / 100 - (mm + 10) / 13 * 2 - 91         &
          + (1 - (mod(yyyy, 4) + 3) / 4 + (mod(yyyy, 100) + 99) / 100 &
          - (mod(yyyy, 400) + 399) / 400) * (mm + 10) / 13 + dd
@@ -251,13 +328,13 @@ contains
 
     ! Only positive increments allowed
     if (del%days < 0 .or. del%secs < 0) then
-       write(stdout, *)  "datetime_incr: Increment must be positive; ", &
+       write(stdout, *)  "datetime_incr(): Increment must be positive; ", &
             "days = ", del%days, " secs = ", del%secs
        call exit(1)
     end if
     ! Seconds increment must be less than a day
     if (del%secs > 86399) then
-       write(stdout, *) "datetime_incr: Increment seconds must be < 86400"
+       write(stdout, *) "datetime_incr(): Increment seconds must be < 86400"
        call exit(1)
     end if
     ! Days increment must be less than a normal year
@@ -267,28 +344,84 @@ contains
     ! *** increment, but for present uses increments larger than 365
     ! *** days seem unlikely.
     if (del%days > 365) then
-       write(stdout, *) "datetime_incr: Increment days must be <= 365"
+       write(stdout, *) "datetime_incr(): Increment days must be <= 365"
        call exit(1)
     end if
     ! Increment using day-seconds, year-day, and year, then calculate
     ! calendar date and clock time later.
     days_in_yr = 365 + leapday(datetime%yr)
     new_datetime%yr = datetime%yr
-    ! Day-seconds
+    new_datetime%yr_day = datetime%yr_day + del%days
     new_datetime%day_sec = datetime%day_sec + del%secs
+    ! Handle roll-overs
     if (new_datetime%day_sec >= 86400) then
+       ! Day-seconds
        new_datetime%day_sec = mod(new_datetime%day_sec, 86400)
-       new_datetime%yr_day = datetime%yr_day + del%days + 1
-       ! Year-days
-       if (new_datetime%yr_day > days_in_yr) then
-          new_datetime%yr_day = mod(new_datetime%yr_day, days_in_yr)
-          ! Year
-          new_datetime%yr = new_datetime%yr + 1
-       endif
-    end if
+       new_datetime%yr_day = datetime%yr_day + 1
+    endif
+    ! Year-days
+    if (new_datetime%yr_day > days_in_yr) then
+       new_datetime%yr_day = mod(new_datetime%yr_day, days_in_yr)
+       ! Year
+       new_datetime%yr = new_datetime%yr + 1
+    endif
     ! Set the calendar date and clock time
     call calendar_date(new_datetime)
     call clock_time(new_datetime)
   end function datetime_incr
 
+
+  function datetime_diff(dt_later, dt_earlier) result(del)
+    ! Return the difference between the datetime structures as a
+    ! timedelta strcuture.
+    !
+    ! *** For now we can only handle dt_later being after dt_earlier
+    ! *** such that dt is positive.
+    use io_unit_defs, only: stdout
+    implicit none
+    ! Arguments:
+    type(datetime_), intent(in) :: &
+         dt_later, &  ! Later in time datetime
+         dt_earlier   ! Earlier in time datetime
+    ! Result:
+    type(timedelta) :: &
+         del  ! Difference between specified datetimes
+    ! Local Variables:
+    integer :: &
+         leap_days, &  ! Number of leap days between datetimes
+         y             ! Index over years
+
+    ! Years
+    del%days = (dt_later%yr - dt_earlier%yr) * 365
+    ! Leap years
+    leap_days = 0
+    ! Count the potential leap days in the interval
+    do y = dt_earlier%yr, dt_later%yr
+       leap_days = leap_days + leapday(y)
+    end do
+    ! Leap day in the last year of the interval are included in
+    ! dt_later%yr_day.
+    if (leapday(dt_later%yr) == 1) then
+       leap_days = leap_days - 1
+    endif
+    del%days = del%days + leap_days
+    ! Days
+    del%days = del%days + (dt_later%yr_day - dt_earlier%yr_day)
+    ! Seconds
+    del%secs = dt_later%day_sec - dt_earlier%day_sec
+    if (del%secs < 0) then
+       del%secs = 86400 + del%secs
+       del%days = del%days - 1
+    endif
+    ! This code has not been full tested for negative differences.  It
+    ! certainly works for some cases, but until we're sure it's
+    ! robust, let's not push our luck.
+    if (del%days < 0) then
+       write(stdout, *) "datetime_diff(): Only positive differences allowed"
+       write(stdout, *) "  dt_later   = ", datetime_str(dt_later)
+       write(stdout, *) "  dt_earlier = ", datetime_str(dt_earlier)
+       call exit(1)
+    end if
+  end function datetime_diff
+    
 end module datetime
