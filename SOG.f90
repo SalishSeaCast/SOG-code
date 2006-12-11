@@ -40,12 +40,12 @@ program SOG
   use mixing_layer, only: &
        h  ! Mixing layer depth value & indices
   use numerics, only: &
-       startDatetime, &   ! Date/time of initial conditions
+       initDatetime, &   ! Date/time of initial conditions
        year, &   ! Year counter
        day,  &   ! Year-day counter
        day_time, &  ! Day-sec counter
-       time, &  ! Time counter through run; seconds since
-                ! startDatetime%day_sec
+       time, &  ! Time counter through run; seconds since midnight of 
+                ! initDatetime.
        dt, &      ! Time step [s]
        steps, &   ! Number of time steps in the main time loop
        max_iter, &  ! Maximum number of iterations allowed for
@@ -159,10 +159,10 @@ program SOG
 
   ! Initialize time series writing code
   call init_timeseries_output(codeId, datetime_str(runDatetime), &
-       startDatetime)
+       initDatetime)
   ! Initialize profiles writing code
   call init_profiles_output(codeId, datetime_str(runDatetime), &
-       startDatetime)
+       initDatetime)
 
   ! Allocate memory for the profiles arrays of the core variables that
   ! we are calculating, i.e. U, V, T, S, etc.
@@ -545,7 +545,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! For exploratory, debugging, etc. output use                 !!!
      ! !!! write_user_timeseries() below.                              !!!
      call write_std_profiles(codeId, datetime_str(runDatetime),       &
-          datetime_str(startDatetime), year, day, day_time, dt, grid, &
+          datetime_str(initDatetime), year, day, day_time, dt, grid, &
           T%new, S%new, rho%g, P%micro, P%nano, Z, N%O, N%H, Si,      &
           D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                 &
           I_par, U%new, V%new)
@@ -555,10 +555,10 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! Instead put use statements in your local copy of   !!!
      ! !!! write_user_profiles() in the user_output module.   !!!
      call write_user_profiles(codeId, datetime_str(runDatetime),      &
-          datetime_str(startDatetime), year, day, day_time, dt, grid)
+          datetime_str(initDatetime), year, day, day_time, dt, grid)
 
      ! Increment time, calendar date and clock time
-     call new_year(day_time, day, year, time, dt, startDatetime%mo)
+     call new_year(day_time, day, year, time, dt, initDatetime%mo)
      scount = scount + 1
      !*** Fix this to be grid independent
      sumS = sumS + 0.5*(S%new(2)+S%new(3))
