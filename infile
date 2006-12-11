@@ -14,16 +14,11 @@
 "lambda"	 0.d0	"grid spacing parameter"
 
 ! Run timing parameters:
-! Date/time at which the run starts (must match a CTD profile date/time)
-! *** This should be replaced with a calendar date & clock time, 
-! *** ideally on 1 line 
-"year_o"	2004	"year in which the run starts"
-"yr_day_o"	293	"year-day on which the run starts [1-Jan = 1]"
-"t_o"		44520	"day-second at which the run starts [midnight = 0]"
-! Duration of run in seconds
-! *** This should be replaced with another date/time
-"run_dur"	1124520. "run duration [s]"
-"dt"		900.	 "time step [s]"
+! Initial conditions date/time (must match a CTD profile date/time)
+"init datetime"	"2004-10-19 12:22:00"	"initialization CTD profile date/time"
+! End of run date/time
+"end datetime"	"2004-11-01 00:22:00"	"end of run date/time"
+"dt"		900	 "time step [s]"
 ! Implicit solver iteration limit
 "max_iter"		30	"implicit solver max iterations"
 
