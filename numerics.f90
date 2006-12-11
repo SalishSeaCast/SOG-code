@@ -18,7 +18,9 @@ module numerics
   !
   ! Public Variables:
   !
-  !   startDatetime -- Date/time of initial conditions
+  !   initDatetime -- Date/time of initial conditions
+  !
+  !   curDatetime -- Date/time of current time step
   !
   !   year -- Year counter
   !
@@ -26,8 +28,8 @@ module numerics
   !
   !   day_time -- Day-sec counter
   !
-  !   time -- Time counter through run; seconds since
-  !           startDatetime%day_sec
+  !   time -- Time counter through run; seconds since midnight of
+  !           initDatetime.
   !
   !   dt -- Time step [s]
   !
@@ -60,7 +62,7 @@ module numerics
   !                                variables.
 
   use precision_defs, only: dp
-  use datetime, only: datetime_
+  use datetime, only: datetime_, timedelta
   implicit none
 
   private
@@ -74,12 +76,13 @@ module numerics
                            ! module to be made public if the module
                            ! exports any type defs.
        !  Variables:
-       startDatetime, &   ! Date/time of initial conditions
+       initDatetime, &   ! Date/time of initial conditions
+       curDatetime,  &       ! Date/time of current time step
        year, &   ! Year counter
        day,  &   ! Year-day counter
        day_time, &  ! Day-sec counter
-       time, &  ! Time counter through run; seconds since
-                ! startDatetime%day_sec
+       time, &  ! Time counter through run; seconds since midnight of
+                ! initDatetime
        dt, &      ! Time step [s]
        steps, &   ! Number of time steps in the main time loop
        max_iter, &  ! Maximum number of iterations allowed for
@@ -124,15 +127,16 @@ module numerics
   !
   ! Public:
   type(datetime_) :: &
-       startDatetime   ! Date/time of initial conditions
+       initDatetime, &   ! Date/time of initial conditions
+       curDatetime       ! Date/time of current time step
   ! *** These should be replaced with a datetime structure
   integer :: &
        year, &   ! Year counter
        day   ! Year-day counter
   real(kind=dp) :: &
        day_time, &  ! Day-sec counter
-       time  ! Time counter through run; seconds since
-             ! startDatetime%day_sec
+       time  ! Time counter through run; seconds since midnight of
+             ! initDatetime.
   real(kind=dp) :: &
        dt      ! Time step [s]
   integer :: &
@@ -164,8 +168,11 @@ module numerics
        del  ! Convergence metrics for implicit solver loop.
   !
   ! Private:
-  real(kind=dp) :: &
-       t_f  ! Run duration [s]  *** should be replaced with endDatetime
+  type(datetime_) :: &
+       endDatetime  ! Datetime for end of run
+  type(timedelta) :: &
+       ndt, &  ! Time step
+       dur     ! Run duration
 
 contains
 
@@ -174,7 +181,7 @@ contains
     ! from the infile.
 
     ! Subroutines from other modules:
-    use datetime, only: calendar_date, clock_time
+    use datetime, only: calendar_date, clock_time, datetime_diff
     
     implicit none
 
@@ -185,32 +192,32 @@ contains
     call alloc_numerics_variables(M)
     ! Read numerics parameter values from the infile.
     call read_numerics_params()
-    ! Calculate the month number and month day for output file headers
-    call calendar_date(startDatetime)
-    call clock_time(startDatetime)
     ! Initialize the time counters
-    year = startDatetime%yr
-    day = startDatetime%yr_day
-    day_time = dble(startDatetime%day_sec)
-    time = dble(startDatetime%day_sec)
-    ! Calculate the number of time steps for the run (note that int()
-    ! rounds down)
-    steps = 1 + int((t_f - dble(startDatetime%day_sec)) / dt)
+    curDatetime = initDatetime
+    year = initDatetime%yr
+    day = initDatetime%yr_day
+    day_time = dble(initDatetime%day_sec)
+    time = dble(initDatetime%day_sec)
+    dt = dble(ndt%secs)
+    ! Calculate the number of time steps for the run (note that we're
+    ! using integer division here)
+    dur = datetime_diff(endDatetime, initDatetime)
+    steps = 1 + (dur%days * 86400 + dur%secs) / ndt%secs
   end subroutine init_numerics
 
 
   subroutine read_numerics_params()
     ! Read the fresh water parameter values from the infile.
-    use input_processor, only: getpari, getpard
+    use input_processor, only: getpari, getpar_datetime
     implicit none
 
     ! Initial conditions date/time for the run
-    startDatetime%yr = getpari("year_o")
-    startDatetime%yr_day = getpari("yr_day_o")
-    startDatetime%day_sec = getpari("t_o")
-    ! Run duration, and time step
-    t_f = getpard("run_dur")
-    dt = getpard("dt")
+    initDatetime = getpar_datetime("init datetime")
+    ! End of run date/time
+    endDatetime = getpar_datetime("end datetime")
+    ! Time step
+    ndt%days = 0
+    ndt%secs = getpari("dt")
     ! Maximum number of iterations allowed for implicit solver loop.
     max_iter = getpari('max_iter')     
   end subroutine read_numerics_params
