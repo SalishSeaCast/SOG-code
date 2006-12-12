@@ -40,6 +40,7 @@ module NPZD
        microzooplankton, &  ! Active or not
        ! diagnostics
        Mesozoo, &
+       Ppico, &
        f_ratio, &  ! Ratio of new to total production profile
        ! Subroutines:
        init_NPZD, derivs, &
@@ -69,22 +70,31 @@ module NPZD
           N_x, & ! exponent in inhibition equation
           Si_ratio, & ! silicon to nitrogen ratio in phyto     
           K_Si, & ! half-saturation for Si
-          Rm, & ! natural mortality rate
-          M_z ! mortality rate
+          Rm, &! natural mortality rate
+          winterconc, & ! winter concentration (pico only)
+          summerconc  ! summer concentration (pico only)
   end type rate_para_phyto
   ! Rate parameters for Zooplankton
   type :: rate_para_zoo
      real(kind=dp) :: & 
           winterconc, &      ! background, winter conc (mesozoo only)
+          summerconc      ! relative summer level (mesozoo only)
+     real(kind=dp), dimension(1:3) :: &  ! three summer Gaussians
+          sumpeakval, &   ! peak values
+          sumpeakpos, &   ! day of peak
+          sumpeakwid      ! width of peak
+     real(kind=dp) :: &
           R, &               ! max ingestion rate
+          eff, &             ! assimilation efficiency
           PredSlope, &       ! overall limit from predation
           HalfSat, &         ! overall half-saturation
           MicroPref, &       ! fractional preference for diatoms
           MicroPredSlope, &  ! limit from predation
-          NanoHalfSat, &    ! half-saturation for getting eaten
+          MicroHalfSat, &    ! half-saturation for getting eaten
           NanoPref, &       ! fractional preference for diatoms
           NanoPredSlope, &  ! limit from predation
-          MicroHalfSat, &    ! half-saturation for getting eaten
+          NanoHalfSat, &    ! half-saturation for getting eaten
+          PicoHalfSat, &    ! half-saturation for getting eaten
           PON_Pref, &        ! fraction preference for PON
           PON_PredSlope, &   ! limit from predation
           PON_HalfSat        ! half-saturation for PON
@@ -119,7 +129,7 @@ module NPZD
        flagellates, &    ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton ! use a microzooplantkon pool?
-  real(kind=dp), dimension(:), allocatable :: Mesozoo
+  real(kind=dp), dimension(:), allocatable :: Mesozoo, Ppico
 
   ! Private variable declarations:
   !
@@ -145,8 +155,8 @@ module NPZD
   real(kind=dp), dimension(:), allocatable :: PZ
   !
   ! Biological rate parameters
-  type(rate_para_phyto) :: rate_micro, rate_nano
-  type(rate_para_zoo) :: rate_mesozoo
+  type(rate_para_phyto) :: rate_micro, rate_nano, rate_pico
+  type(rate_para_zoo) :: rate_mesozoo, rate_mesorub
   type(nloss_param) :: frac_waste_DNM, & ! Diatom natural mortality
        frac_waste_NNM, & ! Nano natural mortality
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
@@ -169,7 +179,7 @@ contains
   subroutine init_NPZD(M)
     ! Initialize biological model.
     ! *** Incomplete...
-    use input_processor, only: getpard, getparl, getpari
+    use input_processor, only: getpard, getparl, getpari, getpardv
     use biology_eqn_builder, only: alloc_bio_RHS_variables
 
     ! Arguments:
@@ -198,8 +208,13 @@ contains
 
     ! Biological rate parameters
     ! zooplankton rates
-    ! winter concentration
+    ! winter concentration/ summer concentration
     rate_mesozoo%winterconc = getpard('Mesozoo, winter conc')
+    rate_mesozoo%summerconc = getpard('Mesozoo, summer conc')
+    ! parameters governing the summer conc 
+    call getpardv('Mesozoo, summer peak mag',3,rate_mesozoo%sumpeakval)
+    call getpardv('Mesozoo, summer peak pos', 3,rate_mesozoo%sumpeakpos)
+    call getpardv('Mesozoo, summer peak wid',3, rate_mesozoo%sumpeakwid)
     ! max igestion rate
     rate_mesozoo%R = getpard('Mesozoo, max ingestion')
     ! limit from predation
@@ -213,24 +228,33 @@ contains
     ! half saturation
     rate_mesozoo%MicroHalfSat = getpard('Mesozoo, micro half-sat')
     ! preference for nano
-    rate_mesozoo%MicroPref = getpard('Mesozoo, pref for nano')
+    rate_mesozoo%NanoPref = getpard('Mesozoo, pref for nano')
     ! limit from predation
-    rate_mesozoo%MicroPredSlope = getpard('Mesozoo, nano pred slope')
+    rate_mesozoo%NanoPredSlope = getpard('Mesozoo, nano pred slope')
     ! half saturation
-    rate_mesozoo%MicroHalfSat = getpard('Mesozoo, nano half-sat')
+    rate_mesozoo%NanoHalfSat = getpard('Mesozoo, nano half-sat')
     ! preference for PON
     rate_mesozoo%PON_Pref = getpard('Mesozoo, pref for PON')
     ! limit from predation
     rate_mesozoo%PON_PredSlope = getpard('Mesozoo, PON pred slope')
     ! half saturation
     rate_mesozoo%PON_HalfSat = getpard('Mesozoo, PON half-sat')
+    ! Mesodinium rates
+    rate_mesorub%R = getpard("Mesorub, max ingestion")
+    rate_mesorub%eff = getpard("Mesorub, assimilation eff")
+    rate_mesorub%PicoHalfSat = getpard('Mesorub, nano half-sat')
 
+    ! phytoplankton rates
+    rate_pico%winterconc = getpard('Pico, winter conc')
+    rate_pico%summerconc = getpard('Pico, summer conc')
     ! max growth rate for light limitation
     rate_micro%R = getpard('Micro, max growth')
     rate_nano%R = getpard('Nano, max growth')
+    rate_pico%R = getpard('Pico, max growth')
     ! optimum light level
     rate_micro%Iopt = getpard('Micro, I_opt')
     rate_nano%Iopt = getpard('Nano, I_opt')
+    rate_pico%Iopt = getpard('Pico, I_opt')
     ! maximum temp for growth
     rate_micro%maxtemp = getpard('Micro, max temp')
     rate_nano%maxtemp = getpard('Nano, max temp')
@@ -269,9 +293,6 @@ contains
     ! natural mortality rate
     rate_micro%Rm = getpard('Micro, nat mort')
     rate_nano%Rm = getpard('Nano, nat mort')
-    ! mortality rate
-    rate_micro%M_z = getpard('Micro, graze mort')
-    rate_nano%M_z = getpard('Nano, graze mort')
     ! Remineralization rates:
     ! Ammonium
     remin%NH = getpard('NH remin rate')
@@ -356,6 +377,10 @@ contains
     allocate(Mesozoo(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Pico phytoplankton diagnostic array"
+    allocate(Ppico(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
     msg = "Ratio of new to total production profile array"
     allocate(f_ratio(1:M), &
          stat=allocstat)
@@ -386,6 +411,10 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Mesozooplankton diagnostic array"
     deallocate(Mesozoo, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Pico phytoplankton diagnostic array"
+    deallocate(Ppico, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Ratio of new to total production profile array"
@@ -562,8 +591,10 @@ contains
     ! Calculate the derivatives of the biology quantities for odeint()
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
+    use fundamental_constants, only: pi
     use declarations, only: micro, nano
     use unit_conversions, only: KtoC
+    use grid_mod, only: depth_average
     implicit none
     ! Arguments:
     integer, intent(in) :: &
@@ -595,13 +626,15 @@ contains
           NatMort_nano,   &  ! Nano phytoplankton natural mortality profile
           GrazMort_nano,  &  ! Nano phytoplankton grazing mortality profile
           Graz_PON,       &  ! PON grazing mortality profile
+          Pico_growth,    &  ! maximum growth of pico
+          Mesorub_eat,    &  ! Mesorub eat pico
 ! new waste variables
           was_NH, was_DON, was_PON, was_Ref, was_Bsi, &
           Si_remin           ! Profile of dissolution of biogenic Si detritus
     real(kind=dp), dimension(1:M) :: temp_Q10
     ! temporary variable to calculate mortality scheme
     real(kind=dp) :: food_limitation, denominator, &
-         Meso_mort_micro, Meso_graz_PON , Meso_mort_nano
+         Meso_mort_micro, Meso_graz_PON , Meso_mort_nano, average_prey
    
     integer :: &
          bPZ, &  ! Beginning index for a quantity in the PZ array
@@ -744,8 +777,17 @@ contains
     ! Grazing processes
 
     ! Mesozooplankton
+    ! amount of Mesozoo : const. winter conc + 3 summer Gaussians
+    Mesozoo(1:M) = rate_mesozoo%winterconc + & 
+         rate_mesozoo%summerconc * &
+         sum ( rate_mesozoo%sumpeakval * &
+           exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) )
 
-    Mesozoo(1:M) = rate_mesozoo%winterconc  ! amount of Mesozoo 
+    average_prey = depth_average(Pmicro+D_PON+Pnano,0.25d0,37.75d0)
+
+    Mesozoo(1:M) = Mesozoo(1:M) * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M)) &
+         / average_prey
 
     do jj = 1,M
        ! global food limitation
@@ -811,9 +853,35 @@ contains
          frac_waste_DEM%BSi * GrazMort_micro * rate_micro%Si_ratio + &
          frac_waste_NEM%BSi * GrazMort_nano * rate_nano%Si_ratio
 
-    ! additional mortality???
+    ! pico phytoplankton
 
-    ! GrazMort_nano = GrazMort_nano + (rate_nano%M_z) * temp_Q10 * Pnano
+    Ppico = rate_pico%winterconc + & 
+         (rate_pico%summerconc - rate_pico%winterconc) * &
+         (1.d0 - cos(2.d0*pi*day/365.25))/2.d0
+ 
+    Pico_growth = &
+            ! Steeles scheme like but with extended high light range
+            ! (Steeles scheme has built in light inhibition)
+            ! 0.67, 2.7 and 1.8 are constants for making the fit
+            ! Steeles like at small light and making it fit Durbin for
+            ! Thalassosira nordelenski at higher light
+         (1.0d0 - exp(-I_par / (0.67d0 * rate_pico%Iopt))) * &
+         exp(-I_par / (2.7d0 * rate_pico%Iopt)) * 1.8d0
+
+    Pico_growth = rate_pico%R * Ppico * Pico_growth * temp_Q10
+
+!   currently (because of p_growth limit above) only allowing them to eat 
+! during the day
+
+    Mesorub_eat = 2.d0 & ! to make up for eating day and night
+         * rate_mesorub%R * Ppico / (rate_mesorub%PicoHalfSat + Ppico) &
+         * Pnano * temp_Q10
+
+    ! Mesorub get either max they want to eat or max prod of pico
+    do jj=1,M
+       Mesorub_eat(jj) = min(Pico_growth(jj), Mesorub_eat(jj)) * &
+            rate_mesorub%eff
+    enddo
 
     ! Remineralization:
     !
@@ -858,7 +926,7 @@ contains
     ePZ = PZ_bins%nano * M
     where (Pnano > 0.) 
        dPZdt(bPZ:ePZ) = nano%growth%new - NatMort_nano &
-               - GrazMort_nano
+               - GrazMort_nano + Mesorub_eat
     endwhere
     ! Microzooplantkon
     bPZ = (PZ_bins%zoo - 1) * M + 1
