@@ -75,44 +75,63 @@
 
 ! Zooplankton values:
 ! tuned
-"Mesozoo, winter conc"       0.133d0 "Mesozoo background concentration"
+"Mesozoo, winter conc"       0.062d0 "Mesozoo background concentration"
+"Mesozoo, summer conc"       0.023d0 "Mesozoo relative sumemr conc"
+"Mesozoo, summer peak mag"   2.5d0 5.5d0 2.5d0 "Height of summer peaks"
+"Mesozoo, summer peak pos"  110.d0 190.d0 260.d0 "Position (days) of summer peaks"
+"Mesozoo, summer peak wid" 25.d0 70.d0 40.d0 "Width of summer peaks"
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
 "Mesozoo, max ingestion"     1.39d-5 "Mesozoo, maximum intake rate"
 ! Alain 0.75
 "Mesozoo, pred slope"        0.2d0 "Mesozoo, limit on predation"
 ! Alain 2
 "Mesozoo, half-sat"          0.2d0 "Mesozoo, half sat const"
-! split it up evenly
-"Mesozoo, pref for diatoms"  0.35d0 "Mesozoo preference for diatoms"
+! easier to catch diatoms
+"Mesozoo, pref for diatoms"  0.5d0 "Mesozoo preference for diatoms"
 "Mesozoo, micro pred slope"  0.2d0 "Mesozoo, micro limit of predation"
 "Mesozoo, micro half-sat"    0.2d0 "Mesozoo, micro half-saturation"
-"Mesozoo, pref for nano"      0.35d0 "Mesozoo, preference for nano"
-"Mesozoo, nano pred slope"    0.2d0 "Mesozoo, nano limit of predation"
-"Mesozoo, nano half-sat"      0.2d0 "Mesozoo, nano half-saturation" 
-"Mesozoo, pref for PON"      0.3d0 "Mesozoo, preference for PON"
+"Mesozoo, pref for nano"      0.25d0 "Mesozoo, preference for nano"
+"Mesozoo, nano pred slope"    0.4d0 "Mesozoo, nano limit of predation"
+"Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation" 
+"Mesozoo, pref for PON"      0.25d0 "Mesozoo, preference for PON"
 "Mesozoo, PON pred slope"    0.2d0 "Mesozoo, PON limit of predation"
 "Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation" 
+! mesodinium as zoo rates
+! 0.24 growth / 0.6 efficiency = 4.63e-6
+"Mesorub, max ingestion"    4.63d-6   "Mesorub, max ingestion"
+"Mesorub, assimilation eff"  0.6d0    "Mesorub, assimiliation efficiency"
+"Mesorub, nano half-sat"     0.5d0    "Mesorub, nano half-saturation"
 ! Phytoplankton values:
+! pico conc = 0.5*1.5 in winter and 1.5*1.5 in summer
+"Pico, winter conc"     0.75d0  "Picoplankton, winter conc"
+"Pico, summer conc"     2.25d0  "Picoplankton, summer conc"
 ! Hitchcock 1980, 1.4 d-1 for T. nordenskelii at 10degrees
 "Micro, max growth"	3.24d-05      "micro maximum growth (s-1)"
 ! Yih 2004, 0.5 d-1 for Mesodinium rubrum (at 15 degrees) and Q10**2
-"Nano, max growth"      1.17d-05      "maximum growth (s-1)"
+! tuned up and at Q10**1
+"Nano, max growth"      1.20d-05      "maximum growth (s-1)"
+! a guess 1.5 d-1
+"Pico, max growth"      1.74d-05      "pico maximum growth (s-1)"
 ! Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
 "Micro, I_opt" 		38.4d0         "Micro, optimum light (W/m2)"
 ! Yih plus Cloern 1977 Half-sat very similar
-"Nano, I_opt"		38.4d0         "Nano, sigma"
+"Nano, I_opt"		38.4d0         "Nano, optimum light"
+! small
+"Pico, I_opt"           10.d0          "Pico, optimum light"
 ! Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
-"Micro, max temp"       18.d0          "Micro, max temp (oC)"
+! general diatoms increase this
+"Micro, max temp"       25.d0          "Micro, max temp (oC)"
 ! Mesodinium, Cloern 1977
 "Nano, max temp"        28.d0          "Nano, max temp (oC)"
 ! equal growth at 10 and 15 so range down 8 (which Q10 should be about const)
-"Micro, temp range"     8.d0           "Micro, temp range (oC)"
+"Micro, temp range"     15.d0           "Micro, temp range (oC)"
 ! starts turning over earlier
 "Nano, temp range"      12.d0           "Nano, temp range (oC)"
 ! 1 for T. n.  but 2 is better for S.c.
 "Micro, Q10 exp"        1.d0           "Micro, temp Q10 exp"
-! Cloern 1977 data
-"Nano, Q10 exp"         2.d0           "Nano, temp Q10 exp"
+! Cloern 1977 data 2.0
+! not working try 1.0
+"Nano, Q10 exp"         1.d0           "Nano, temp Q10 exp"
 ! set gamma loss to 0 for now
 "Micro, gamma loss"	0.d0          "Micro, gamma loss"
 "Nano, gamma loss"	0.d0          "Nano, gamma loss"
@@ -132,9 +151,6 @@
 "Nano, K Si"            0.d0           "Nano, half-saturation Si"
 "Micro, nat mort"	2.3d-06       "Micro, natural mortality"
 "Nano, nat mort" 	2.3d-06       "Nano, natural mortality"
-"Micro, graze mort"	3.75d-06     "Micro, grazing mortality"
-"Nano, graze mort"	3.75d-06     "Nano, grazing mortality"
-
 ! Remineralization rates
 ! 2 months at 10 degrees (Alain 0.1 d-1 at 10degrees)
 ! Denman 0.01d-1 at 10 degrees (2e-7)
@@ -154,21 +170,21 @@
 
 ! Waste and detritus
 ! Micro Natural Mortality
-"Waste, dnm, NH"        0.      "fraction of waste from micro nat mort to NH"
+"Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
 ! Denman and Pena about 1/2 to dissolved
-"Waste, dnm, DON"       0.475    "fraction of waste from micro nat mort to DON"
-"Waste, dnm, PON"       0.475    "fraction of waste from micro nat mort to PON"
+"Waste, dnm, DON"       0.475d0  "fraction of waste from micro nat mort to DON"
+"Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
 ! some loss
-"Waste, dnm, Ref"       0.05    "fraction of waste from micro nat mort to Ref"
-"Waste, dnm, Bsi"       1       "fraction of waste from micro nat mort to BSi"
+"Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
+"Waste, dnm, Bsi"       1.0d0    "fraction of waste from micro nat mort to BSi"
 ! Nano Natural Mortality
-"Waste, nnm, NH"        0.      "fraction of waste from nano nat mort to NH"
+"Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
 ! Denman and Pena about 1/2 to dissolved
-"Waste, nnm, DON"       0.475    "fraction of waste from nano nat mort to DON"
-"Waste, nnm, PON"       0.475    "fraction of waste from nano nat mort to PON"
+"Waste, nnm, DON"       0.475d0  "fraction of waste from nano nat mort to DON"
+"Waste, nnm, PON"       0.475d0  "fraction of waste from nano nat mort to PON"
 ! some loss
-"Waste, nnm, Ref"       0.05    "fraction of waste from nano nat mort to Ref"
-"Waste, nnm, Bsi"       1       "fraction of waste from nano nat mort to BSi"
+"Waste, nnm, Ref"       0.05d0  "fraction of waste from nano nat mort to Ref"
+"Waste, nnm, Bsi"       1.0d0    "fraction of waste from nano nat mort to BSi"
 ! Microphyto eaten by Mesozoo
 ! Alain, excretion rate to growth rate
 "Waste, dem, NH"  0.03d0 "fraction of waste from mesozoo eat microphyto to NH"
