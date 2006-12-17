@@ -230,7 +230,7 @@ contains
           distrib_flux = Fw * (phys_circ_Zoo)
        elseif (qty.eq."silicon") then
           do i=0,grid%M
-             distrib_flux = Fw(i) * phys_circ_silicon * &
+             distrib_flux(i) = Fw(i) * phys_circ_silicon * &
                   min(4.0, current_value(i))/4.0
           enddo
        else
