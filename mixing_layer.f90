@@ -280,7 +280,7 @@ contains
     ! discussion following eqn 22.
     hp = (1.0d0 + epsiln) * h%new
     call interp_value(hp, 0, grid%d_g, rho%g, rho_hp, j_junk)
-    call interp_value(hp, 0, grid%d_g, rho%grad_g, drho_dz_hp, j_junk)
+    call interp_value(hp, 1, grid%d_g, rho%grad_g, drho_dz_hp, j_junk)
     N = max(N_min, sqrt(-g * min(0.0d0, drho_dz_hp) / rho_hp))
     ! Set the value of the ratio of entrainment flux to surface
     ! buoyancy flux, and calculate the turbulent velocity shear
