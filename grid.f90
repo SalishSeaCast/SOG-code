@@ -35,6 +35,9 @@ module grid_mod
   !   interp_i(qty_g) -- Return the interpolated values of a quantity at
   !                      the grid interface depths from its values at the 
   !                      grid point depths.
+  !   interp_g(qty_i) -- Return the interpolated values of a quantity at
+  !                      the grid pionts depths from its values at the 
+  !                      grid interface depths.
   ! 
   ! Public Subroutines:
   !
@@ -67,7 +70,7 @@ module grid_mod
        ! Variables:
        grid, &
        ! Functions:
-       depth_average, gradient_g, gradient_i, interp_i, &
+       depth_average, gradient_g, gradient_i, interp_i, interp_g, &
        ! Subroutines:
        dalloc_grid, init_grid, interp_value
 
@@ -104,9 +107,9 @@ module grid_mod
   real(kind=dp), dimension(:), pointer :: xsi_i  ! Interface indices
   real(kind=dp), dimension(:), pointer :: xsi_g  ! Grid point indices
   ! Fraction of grid point spacing that interface j is above grid point j+1
-  type(interp_factor) :: above_g
+  type(interp_factor) :: above_g, above_i
   ! Fraction of grid point spacing that interface j is below grid point j
-  type(interp_factor) :: below_g
+  type(interp_factor) :: below_g, below_i
   ! Array of index numbers used by the inter_value function
   integer, dimension(:), pointer :: indices
 
@@ -167,7 +170,12 @@ contains
     below_g%factor(0) = 0.
     below_g%factor(1:grid%M) = abs(grid%d_g(1:grid%M) - grid%d_i(1:grid%M)) &
          / grid%g_space(1:grid%M)
-
+    ! Calculate the grid point interpolation factors
+    ! proportional to the other length
+    above_i%factor(1:grid%M) = abs(grid%d_g(1:grid%M) - grid%d_i(1:grid%M)) &
+         / grid%i_space(1:grid%M)
+    below_i%factor(1:grid%M) = abs(grid%d_i(0:grid%M-1) - grid%d_g(1:grid%M)) &
+         / grid%i_space(1:grid%M)
     ! Set index numbers for use by interp_value() function
     forall (j = 0:size(indices)-1) indices(j) = j
   end subroutine init_grid
@@ -317,6 +325,21 @@ contains
          + qty_g(1:) * below_g%factor
   end function interp_i
 
+  function interp_g(qty_i) result(qty_g)
+    ! Return the interpolated values of a quantity at the grid point depths
+    ! depths from its values at the grid interfaces.
+    implicit none
+    ! Arguments:
+    ! Quantity values at grid interfaces
+    real(kind=dp), dimension(0:), intent(in) :: qty_i
+    ! Result:
+    ! Quantity values at grid point depths
+    real(kind=dp), dimension(1:grid%M) :: qty_g
+
+    qty_g = qty_i(0:size(qty_g)-1) * above_i%factor &
+         + qty_i(1:) * below_i%factor
+  end function interp_g
+
 
   subroutine interp_value(value, lb, search_array, interp_array, &  ! in
        interp_val, j_below)                                         ! out
@@ -402,6 +425,7 @@ contains
     call alloc_check(allocstat, msg)
     msg = "Grid interface interpolation factor arrays"
     allocate(above_g%factor(1:grid%M+1), below_g%factor(0:grid%M), &
+         above_i%factor(1:grid%M), below_i%factor(1:grid%M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Grid index number array"
@@ -427,7 +451,8 @@ contains
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Grid interface interpolation factor arrays"
-    deallocate(above_g%factor, below_g%factor, stat=dallocstat)
+    deallocate(above_g%factor, below_g%factor, above_i%factor, &
+         below_i%factor, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Grid index number array"
     deallocate(indices, stat=dallocstat)
