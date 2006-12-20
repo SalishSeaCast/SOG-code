@@ -5,7 +5,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
      I_k, Qs, euphotic, Qriver, Pmicro, Pnano)
 
   use precision_defs, only: dp, sp
-  use grid_mod, only: grid_
+  use grid_mod, only: grid_, interp_g
   use fundamental_constants, only: pi, latitude
   use initial_sog, only: N2chl ! ratio of chl mg/m3 to N uMol for phytoplankton
       USE mean_param, only: entrain
@@ -34,6 +34,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
                         sunrise, sunset, Qso, a, b,KK
       REAL(KIND=DP):: II, cos_Z_max, IImax      
       REAL(KIND=DP), DIMENSION(0:d%M)::Iparmax
+      real(kind=dp), dimension(0:d%M) :: Ipar_i ! Ipar values on interfaces
 
 !!!Define Okta Cloud Model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! based on Dobson and Smith, table 5
@@ -107,11 +108,12 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
            180.0/PI/60.0*(SIN(PI/180.0*(sunset-12.0)*30.0)-SIN(PI/180.0*(sunrise-12.0)*30.0)))/24.0 
 
 
-      Ipar = 0.        !PAR
-      In = 0.          !total light!
+      Ipar_i = 0.        !PAR on interfaces
+      Ipar = 0.        !PAR on grid points
+      In = 0.          !total light on interfaces
 
       In(0) =  II        
-      Ipar(0) = II*0.44  !44% of total light is PAR at surface (Jerlov)
+      Ipar_i(0) = II*0.44  !44% of total light is PAR at surface (Jerlov)
       Iparmax(0) = IImax*0.44
 
 
@@ -127,10 +129,10 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
          KK = 0.0722d0 + 0.0377d0 * N2chl &
               * (Pmicro(k) + Pnano(k) + 0.5d0) ** 0.665 &
               + (2.307d-8 * Qriver ** 2 + 0.427d0) * exp(-d%d_g(k) / 2.09d0)
-         Ipar(k) = Ipar(k-1) * exp(-d%i_space(k) * KK)
+         Ipar_i(k) = Ipar_i(k-1) * exp(-d%i_space(k) * KK)
          Iparmax(k) = Iparmax(k-1) * exp(-d%i_space(k) * KK)
 
-         if (Ipar(k) < 0.01d0 * Ipar(0) .and. check == 0) then            
+         if (Ipar_i(k) < 0.01d0 * Ipar_i(0) .and. check == 0) then            
             I_k = k                                          
             check = 1                 
          end if               
@@ -141,6 +143,8 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
               * (0.8226d0 * KK - 0.0879d0))
       end do
 
+      Ipar(0) = Ipar_i(0)
+      Ipar(1:d%M) = interp_g(Ipar_i)
 
 !----------------------------------------------------------
  
