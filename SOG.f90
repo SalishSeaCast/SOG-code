@@ -453,7 +453,7 @@ S_RHS%diff_adv%new = Gvector%s
         ! Calculate baroclinic pressure gradient components
         !
         ! This calculates the values of the dPdx_b, and dPdy_b arrays.
-        call baroclinic_P_gradient(grid, dt, U%new, V%new, rho%g)
+        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
 
 
         ! Test for convergence of implicit solver
