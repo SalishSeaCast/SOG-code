@@ -92,33 +92,32 @@ contains
     call alloc_baro_press_variables(M)
     ! Initialize velocity component integrals for baroclinic pressure
     ! gradient calculations
-    ut%new = 0.
-    vt%new = 0.
+    ut%new = 0.0d0
+    vt%new = 0.0d0
   end subroutine init_baroclinic_pressure
 
 
-  subroutine baroclinic_P_gradient(grid, dt, U_new, V_new, rho_g)
+  subroutine baroclinic_P_gradient(dt, U_new, V_new, rho_g)
     ! Calculate the baroclinic pressure gradient components.
 
     ! Elements from other modules:
     !
     ! Type Definitions:
     use precision_defs, only: dp
-    use grid_mod, only: grid_
+    ! Functions:
+    use grid_mod, only: depth_average
     ! Parameter Values:
     use fundamental_constants, only: g
     ! Variable Declarations:
+    use grid_mod, only: &
+         grid  ! Grid parameters and depth & spacing arrays
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays; we need
                ! wbar%u(0) & wbar%v(0)
-    ! Functions:
-    use grid_mod, only: depth_average
     
     implicit none
     
     ! Agruments:
-    type(grid_) :: &
-         grid  ! Grid depth and spacing arrays
     real(kind=dp), intent(in) :: &
          dt    ! Time step [s]
     real(kind=dp), dimension(0:), intent(inout) :: &
@@ -128,22 +127,9 @@ contains
 
     ! Local variables:
     real(kind=dp) :: &
-         oLx, & ! 1/box size for ut
-         oLy, & ! 1/box size for vt
-         gorLx, & ! g/Lx
-         gorLy, & ! g/Ly
-         decayscale ! to keep the isopycnals less tilted than size of domain
-    integer :: yy ! array variable
-
-    oLx = 2./(Lx/2.) ! 2 infront because extra water
-         ! goes into a triangular region, height ut, length 1/2 width of strait
-    oLy = 2./(Ly/2.)
-
-    gorLx = g / Lx
-    gorLy = g / Ly
+         decayscale  ! to keep the isopycnals less tilted than size of domain
 
     ! Remove barotropic mode from velocity field
-                
     U_new = U_new - depth_average(U_new, 0.0d0, grid%D)
     V_new = V_new - depth_average(V_new, 0.0d0, grid%D)
 
@@ -152,92 +138,106 @@ contains
     !
     ! Calculate integrals of u and v over time.  This is from a
     ! geometrical argument that:
-    !    u * grid%i_space * dt = ut * grid*i_space * Lx/ 2 / 2
-    ! Thus, ut(j) is the amount in m that the u velocity
-    ! deepens the isopycnal
-
-    ! if the velocities get large enough the displacement of the
+    !
+    !    u * grid%i_space * dt = ut * grid*i_space * 2 / (Lx / 2)
+    !
+    ! Thus, ut(j) is the amount in m that the u velocity deepens the
+    ! isopycnal.  That is, the extra water goes into a triangular
+    ! region of height ut, and length 1/2 width of the strait.
+    !
+    ! If the velocities get large enough the displacement of the
     ! isopycnals reaches the 40 m scale of the model.  To keep the
     ! isopycnals displacements reasonable, say 6 m, introduce a decay which
     ! particularly impacts high flow situations (by being proportional to
-    ! the square) but only takes the 6 m displacements down slowly(90 days)
-
-    decayscale = sum(abs(ut%old(1:grid%M)))**2/(90.*86400.)/(6.**2)
+    ! the square) but only takes the 6 m displacements down slowly (90 days).
+    !
+    ! *** This statement probably needs to be modified if the grid
+    ! *** depth is changed from 40 m.
+    decayscale = sum(abs(ut%old(1:grid%M))) ** 2 / (90.0d0 * 86400.0d0) &
+         / (6.0d0 ** 2)
     
-    ! calculate the added thickness of each layer at the "east" and
-    ! "north" side of basin, respectively.  In units of m
-    ut%new(1:grid%M) = ut%old(1:grid%M) * (1 - decayscale * dt) &
-         + U_new(1:grid%M) * dt * oLx * grid%i_space(1:grid%M)
-    vt%new(1:grid%M) = vt%old(1:grid%M) * (1 - decayscale * dt) &
-         + V_new(1:grid%M) * dt * oLy * grid%i_space(1:grid%M)
+    ! Calculate the added thickness of each layer at the "east" and
+    ! "north" side of basin, respectively, in metres.
+    ut%new(1:grid%M) = ut%old(1:grid%M) * (1.0d0 - decayscale * dt) &
+         + U_new(1:grid%M) * dt * grid%i_space(1:grid%M) &
+           * (2.0d0 / (Lx / 2.0d0)) 
+    vt%new(1:grid%M) = vt%old(1:grid%M) * (1.0d0 - decayscale * dt) &
+         + V_new(1:grid%M) * dt * grid%i_space(1:grid%M) &
+           * (2.0d0 / (Ly / 2.0d0)) 
 
-    ! Calculate the depths of the distorted isopycnals
-    ! in m
-    call iso_distortion (grid%M, grid%i_space, ut%new, dze)
-    call iso_distortion (grid%M, grid%i_space, -ut%new, dzw)
-    call iso_distortion (grid%M, grid%i_space, vt%new, dzn)
-    call iso_distortion (grid%M, grid%i_space, -vt%new, dzs)
+    ! Calculate the depths of the distorted isopycnals in metres.
+    call iso_distortion(ut%new, dze)
+    call iso_distortion(-ut%new, dzw)
+    call iso_distortion(vt%new, dzn)
+    call iso_distortion(-vt%new, dzs)
 
     ! Calculate the baroclinic pressure gradient
+    call delta_p(dze, dzw, rho_g, dPdx_b)
+    call delta_p(dzn, dzs, rho_g, dPdy_b)
     
-    call delta_p (grid%M, dze, dzw, grid%d_g, rho_g, dPdx_b)
-    call delta_p (grid%M, dzn, dzs, grid%d_g, rho_g, dPdy_b)
-    
-    ! at this point we have calculated delta p, to make it into the 
-    ! pressure gradient term we need to multiply by g, divide by rho and
-    ! the distance between the sides and the center
-
-    ! also, to keep the flow purely baroclinic, take out the barotropic 
-    ! effect of the wind forcing
-
-    dPdx_b = dPdx_b * gorLx / rho_g(1:grid%M) - wbar%u(0) / grid%D
-    dPdy_b = dPdy_b * gorLy / rho_g(1:grid%M) - wbar%v(0) / grid%D
-    
+    ! At this point we have calculated delta P.  To make it into the
+    ! pressure gradient term we need to multiply by g, divide by rho
+    ! and the distance between the sides and the center of the domain.
+    !
+    ! Also, to keep the flow purely baroclinic, take out the
+    ! barotropic effect of the wind forcing
+    dPdx_b = dPdx_b * g / (Lx * rho_g(1:grid%M)) - wbar%u(0) / grid%D
+    dPdy_b = dPdy_b * g / (Ly * rho_g(1:grid%M)) - wbar%v(0) / grid%D
   end subroutine baroclinic_P_gradient
 
-  subroutine iso_distortion (M, grid_ispace, ut, dz)
 
+  subroutine iso_distortion(ut, dz)
+    ! Calculate the depths of the distorted isopycnals in metres.
+    
+    ! Variables from other modules:
+    use grid_mod, only: &
+         grid  !  Grid parameters and depth & spacing arrays
     implicit none
-    integer :: M
-    real(kind=dp), intent(in), dimension(1:) :: grid_ispace, ut
-    real(kind=dp), intent(out), dimension(1:) :: dz
+    ! Arguments:
+    real(kind=dp), intent(in), dimension(1:) :: &
+         ut
+    real(kind=dp), intent(out), dimension(1:) :: &
+         dz
+    ! Local Variables:
+    real(kind=dp) :: &
+         resid_u
+    integer :: &
+         yy
     
-    real(kind=dp) :: resid_u
-    integer :: yy
-    
-    if (ut(1).gt.-grid_ispace(1)) then
-       dz(1) = ut(1) + grid_ispace(1)
-       resid_u = 0.
+    if (ut(1) > -grid%i_space(1)) then
+       dz(1) = ut(1) + grid%i_space(1)
+       resid_u = 0.0d0
     else
-       dz(1) = 0.
-       resid_u = ut(1) + grid_ispace(1)
+       dz(1) = 0.0d0
+       resid_u = ut(1) + grid%i_space(1)
     endif
-    do yy = 2,M
-       if (ut(yy) + resid_u .gt. -grid_ispace(yy)) then
-          dz(yy) = dz(yy-1) + ut(yy) + grid_ispace(yy) + resid_u
-          resid_u = 0.
+    do yy = 2, grid%M
+       if (ut(yy) + resid_u > -grid%i_space(yy)) then
+          dz(yy) = dz(yy-1) + ut(yy) + grid%i_space(yy) + resid_u
+          resid_u = 0.0d0
        else
           dz(yy) = dz(yy-1)
-          resid_u = ut(yy) + grid_ispace(yy) + resid_u
+          resid_u = ut(yy) + grid%i_space(yy) + resid_u
        endif
     enddo
-    
   end subroutine iso_distortion
+  
 
-  subroutine delta_p (M, dzpos, dzneg, dg, rho, dPres)
-
+  subroutine delta_p (dzpos, dzneg, rho, dPres)
+    use grid_mod, only: full_depth_average
+    use grid_mod, only: &
+         grid
     implicit none
-    integer, intent(in) :: M
     real(kind=dp), intent(in), dimension(1:) :: dzpos, dzneg
-    real(kind=dp), intent(in), dimension(0:) :: dg, rho
+    real(kind=dp), intent(in), dimension(0:) :: rho
     real(kind=dp), intent(out), dimension(1:) :: dPres
 
     real(kind=dp) :: sumpbx, cpos, cneg
     integer :: ii, jj, yy
     
-    sumpbx = 0.
-    cpos = 0.
-    cneg = 0.
+    sumpbx = 0.0d0
+    cpos = 0.0d0
+    cneg = 0.0d0
     ii = 1
     jj = 1
 
@@ -247,49 +247,43 @@ contains
     ! but note that this sum must go down to the depth grid%d_g(yy)
     ! and not below
 
-    do yy = 1, M
-
-       ! initialize
+    do yy = 1, grid%M
+       ! Initialize
        if (yy == 1) then
-          dPres(1) = 0.
+          dPres(1) = 0.0d0
        else
           dPres(yy) = dPres(yy-1)
        endif
 
-       ! first part, add the pressure on the eastern side
-       do while (dzpos(ii) - dg(yy) < epsilon(dzpos(ii) - dg(yy))&
-                .and. ii < M)
-          dPres(yy) = dPres(yy) + rho(ii) * (dzpos(ii)-cpos)
+       ! First, add the pressure on the eastern side.
+       do while (dzpos(ii) - grid%d_g(yy) < epsilon(dzpos(ii) - grid%d_g(yy))&
+                .and. ii < grid%M)
+          dPres(yy) = dPres(yy) + rho(ii) * (dzpos(ii) - cpos)
           cpos = dzpos(ii)
           ii = ii + 1
        enddo
-       dPres(yy) = dPres(yy) + rho(ii) * (dg(yy)-cpos)
-       cpos = dg(yy)
+       dPres(yy) = dPres(yy) + rho(ii) * (grid%d_g(yy) - cpos)
+       cpos = grid%d_g(yy)
        
-       ! second part, substract the pressure on the western side
-       do while (dzneg(jj) - dg(yy) < epsilon(dzneg(jj) - dg(yy))&
-            .and. jj < M)
-          dPres(yy) = dPres(yy) - rho(jj)*(dzneg(jj)-cneg)
+       ! Then, substract the pressure on the western side.
+       do while (dzneg(jj) - grid%d_g(yy) < epsilon(dzneg(jj) - grid%d_g(yy))&
+            .and. jj < grid%M)
+          dPres(yy) = dPres(yy) - rho(jj) * (dzneg(jj) - cneg)
           cneg = dzneg(jj)
           jj = jj + 1
        enddo
-       dPres(yy) = dPres(yy) - rho(jj)*(dg(yy)-cneg)
-       cneg = dg(yy)
-       
-       sumpbx = sumpbx + dPres(yy)
+       dPres(yy) = dPres(yy) - rho(jj) * (grid%d_g(yy) - cneg)
+       cneg = grid%d_g(yy)
     enddo
     
-    ! at this point we have pressure on the grid points, assuming that the
+    ! At this point we have pressure on the grid points, assuming that the
     ! pressure at the surface is zero.
-    
-    ! sumpbx is the average pressure based on that calculation.  If we
-    ! assume that the average pressure should be zero, then we need to
-    ! subtract this value from the calculated pressure
-
-    sumpbx = sumpbx/float(M)
-    
-    dPres = dPres - sumpbx
+    !
+    ! If we assume that the average pressure should be zero, then we
+    ! need to subtract the average of the calculated pressure.
+    dPres = dPres - full_depth_average(dPres)
   end subroutine delta_p
+  
   
   subroutine new_to_old_vel_integrals()
     ! Copy %new component of the velocity component integrals to %old
