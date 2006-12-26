@@ -24,6 +24,14 @@ module grid_mod
   !   depth_average(qty_g, d1, d2) -- Return the average value of the
   !                                   grid point stored quantity qty_g
   !                                   between depths d1, and d2.
+  !
+  !   full_depth_average(qty_g) -- Return the average value of the
+  !                                grid point stored quantity qty_g
+  !                                over the entire depth of the grid.
+  !                                This is a special case wrapper for
+  !                                the depth_average() function for
+  !                                quantities defined as qty_g(1:M).
+  !
   !   gradient_g(qty_g) -- Return the values of the gradients at the
   !                        grid point depths of a quantity stored
   !                        at the grid point depths.
@@ -70,7 +78,8 @@ module grid_mod
        ! Variables:
        grid, &
        ! Functions:
-       depth_average, gradient_g, gradient_i, interp_i, interp_g, &
+       depth_average, full_depth_average, gradient_g, gradient_i, interp_i, &
+       interp_g, &
        ! Subroutines:
        dalloc_grid, init_grid, interp_value
 
@@ -78,40 +87,48 @@ module grid_mod
   !
   ! Grid parameters
   type :: grid_
-     integer :: M               ! Number of grid points
-     real(kind=dp) :: D         ! Depth of bottom of grid [m]
-     real(kind=dp), dimension(:), pointer :: d_g  ! Grid point depths [m]
-     real(kind=dp), dimension(:), pointer :: d_i  ! Grid interface depths [m]
-     real(kind=dp), dimension(:), pointer :: g_space  ! Grid point spacing [m]
-     real(kind=dp), dimension(:), pointer :: i_space  ! Grid i'face spacing [m]
+     integer :: &
+          M  ! Number of grid points
+     real(kind=dp) :: &
+          D  ! Depth of bottom of grid [m]
+     real(kind=dp), dimension(:), allocatable :: &
+          d_g,     &  ! Grid point depths [m]
+          d_i,     &  ! Grid interface depths [m]
+          g_space, &  ! Grid point spacing [m]
+          i_space     ! Grid interface spacing [m]
   end type grid_
 
-  ! Public variable declarations:
-  !
-  ! Grid point and interface depth and spacing arrays
-  type(grid_) :: grid
+  ! Public Variable Declarations:
+  type(grid_) :: &
+       grid  ! Grid point and interface depth and spacing arrays
 
-  ! Private type definition:
+  ! Private Type Definition:
   !
   ! Interpolation factors
   type :: interp_factor
-     real(kind=dp), dimension(:), pointer :: factor
+     real(kind=dp), dimension(:), allocatable :: &
+          factor
   end type interp_factor
 
   ! Private module variable declarations:
-  !
-  ! Grid spacing parameter (<0 concentrates resolution near
-  ! surface, =0 produced uniform grid, >0 concentrates resolution 
-  ! near bottom of grid).  See Large, et al (1994), App. D.
-  real(kind=dp) :: lambda
-  real(kind=dp), dimension(:), pointer :: xsi_i  ! Interface indices
-  real(kind=dp), dimension(:), pointer :: xsi_g  ! Grid point indices
-  ! Fraction of grid point spacing that interface j is above grid point j+1
-  type(interp_factor) :: above_g, above_i
-  ! Fraction of grid point spacing that interface j is below grid point j
-  type(interp_factor) :: below_g, below_i
-  ! Array of index numbers used by the inter_value function
-  integer, dimension(:), pointer :: indices
+  real(kind=dp) :: &
+       lambda  ! Grid spacing parameter (<0 concentrates resolution
+               ! near surface, =0 produced uniform grid, >0
+               ! concentrates resolution near bottom of grid).  See
+               ! Large, et al (1994), App. D.
+  real(kind=dp), dimension(:), allocatable :: &
+       xsi_i, &  ! Interface indices
+       xsi_g     ! Grid point indices
+  type(interp_factor) :: &
+       above_g, &  ! Fraction of grid point spacing that interface j
+                   ! is above grid point j+1.
+       above_i, &  ! Fraction of interface spacing that gridpoint ***
+       below_g, &  ! Fraction of grid point spacing that interface j
+                   ! is below grid point j.
+       below_i     ! Fraction of interface spacing that gridpoint  ***
+  integer, dimension(:), allocatable :: &
+       indices  ! Array of index numbers used by the inter_value
+                ! function.
 
 contains
 
@@ -221,9 +238,10 @@ contains
          j_junk         ! Unused j_below argument of interp_value()
 
     ! Validate the depth arguments
-    if (d1 < grid%d_g(0) .or. d2 > grid%d_g(grid%M + 1)) then
-       write(stdout, *) "Warning: depth(s) out of range in depth_average(): ",&
+    if (d1 < grid%d_g(0) .or. d2 > grid%D) then
+       write(stdout, *) "depth_average(): depth(s) out of range: ", &
             "(", d1, ", ", d2, ")"
+       call exit(1)
     endif
     ! Find the values of the quantity at the depth limits, and the
     ! indices of the grid points immediately below those depths
@@ -275,6 +293,39 @@ contains
        avg = avg / (d2 - d1)
     endif
   end function depth_average
+
+
+  function full_depth_average(qty_g) result(avg)
+    ! Return the average value of the grid point stored quantity qty_g
+    ! over the entire depth of the grid.  This is a special case
+    ! wrapper for the depth_average() function for quantities defined
+    ! as qty_g(1:M).
+    use io_unit_defs, only: stdout
+    implicit none
+    ! Arguments:
+    real(kind=dp), dimension(1:), intent(in) :: &
+         qty_g  ! Quantity values at grid point depths
+    ! Result:
+    real(kind=dp) :: &
+         avg  ! Average value
+    ! Local Variables:
+    real(kind=dp), dimension(0:grid%M+1) :: &
+         qty_g_extended  ! qty_g array extended to include values at
+                         ! depths 0 and grid%M+1.  Those values are
+                         ! copies of the ones at 1 and grid%M.
+    real(kind=dp) :: &
+         d1, &  ! Beginning of depth range to calculate average over;
+                ! i.e. 0.0d0
+         d2     ! End of depth range to calculate average over;
+                ! i.e. grid%D
+
+    d1 = 0.0d0
+    d2 = grid%D
+    qty_g_extended(0) = qty_g(1)
+    qty_g_extended(1:grid%M) = qty_g
+    qty_g_extended(grid%M+1) = qty_g(grid%M)
+    avg = depth_average(qty_g_extended, d1, d2)
+  end function full_depth_average
 
 
   function gradient_g(qty_g) result(grad_g)
