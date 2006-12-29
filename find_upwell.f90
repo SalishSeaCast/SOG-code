@@ -52,8 +52,10 @@ contains
     ! in entrainment.pdf. Using a value based on the current salinity
     ! profile was less stable. For 
     ! calculating d from the salinity, see code version 1.8
-    d = 11.7 * (Qriver/2720.)**(-0.23)
+!    d = 11.7 * (Qriver/2720.)**(-0.23)
 
+    ! fix d because fit is poor and not enough surface NO3 in winter
+    d = 11.7
     ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5*d
 
