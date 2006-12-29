@@ -118,17 +118,16 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
 
 ! Light is defined on interfaces
-! parameterization of Nov 2006 by S.Allen based on SOG data
-! and then slightly changed (+0.01 in constant -0.01 in exp) 
-! to make IPAR contours match better deep in water column (fit
-! was done to 11 m)
+! parameterization of Dec 2006 by S.Allen based on SOG data
 
       do k = 1, d%M    
          ! KK is evaluated on the grid points         
          ! N2chl is correction uM to mg/m3 chl, 0.5 is picoplankton
-         KK = 0.0722d0 + 0.0377d0 * N2chl &
+         ! limit of 2.5/m is set from Cruise 02-03 and 5 W/m2 seen at 2 m
+         KK = 0.0787d0 + 0.0368d0 * N2chl &
               * (Pmicro(k) + Pnano(k) + 0.5d0) ** 0.665 &
-              + (2.307d-8 * Qriver ** 2 + 0.427d0) * exp(-d%d_g(k) / 2.09d0)
+              + (5.97d-22 * Qriver ** 5.5 + 0.595d0) * exp(-d%d_g(k) / 1.72d0)
+         KK = min(2.5d0, KK)
          Ipar_i(k) = Ipar_i(k-1) * exp(-d%i_space(k) * KK)
          Iparmax(k) = Iparmax(k-1) * exp(-d%i_space(k) * KK)
 
