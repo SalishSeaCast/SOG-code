@@ -120,9 +120,15 @@ contains
 
     ! Calculate the profile of the bulk Richardson number.
     call calc_Ri_b()
-    ! Find the depth at which the bulk Richardson number exceeds the
-    ! critical value
-    call interp_value(Ri_c, 0, Ri_b, grid%d_g(0:grid%M), h%new, h%g)
+    ! check that the critical value Ri_c occurs, max(Ri_b) > Ri_c
+    if (maxval(Ri_b)-Ri_c > epsilon(Ri_c)) then
+       ! Find the depth at which the bulk Richardson number exceeds the
+       ! critical value
+       call interp_value(Ri_c, 0, Ri_b, grid%d_g(0:grid%M), h%new, h%g)
+    else
+       ! mixing to the bottom 
+       h%new = grid%D  
+    endif
 
     ! Apply the Ekman and Monin-Obukhov depth criteria to the mixing
     ! layer depth when stable forcing exists.  Note that abs(x) <
@@ -130,7 +136,7 @@ contains
     ! epsilon(x) is similarly for x /= 0.
     if (Bf > 0. &
          .or. (abs(Bf) < epsilon(Bf) &
-               .and. abs(u_star) > epsilon(u_star))) then
+         .and. abs(u_star) > epsilon(u_star))) then
        ! Calculate the Ekmann depth (Large, et al (1994), eqn 24)
        d_Ekman = 0.7d0 * u_star / f
        ! Under stable forcing, mixing layer depth is the minimum of
@@ -278,7 +284,9 @@ contains
     ! Calculate the buoyancy frequency at (1 + epsiln) times the
     ! previous mixing layer depth.  See Large, et al (1994),
     ! discussion following eqn 22.
+    ! Limit depth to maximum mixing layer depth
     hp = (1.0d0 + epsiln) * h%new
+    hp = min(hp, grid%d_g(grid%M-3)) 
     call interp_value(hp, 0, grid%d_g, rho%g, rho_hp, j_junk)
     call interp_value(hp, 1, grid%d_g, rho%grad_g, drho_dz_hp, j_junk)
     N = max(N_min, sqrt(-g * min(0.0d0, drho_dz_hp) / rho_hp))
