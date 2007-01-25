@@ -50,9 +50,7 @@ module freshwater
   !
   ! Circulation strength of a scalar is equal to deep value minus
   ! river value
-   real(kind=dp), parameter :: phys_circ_nitrate = 30.5d0 - 13.0d0
-! set to zero for Kate runs
-!  real(kind=dp), parameter :: phys_circ_nitrate = 0.d0
+  real(kind=dp), parameter :: phys_circ_nitrate = 30.5d0 - 13.0d0
   real(kind=dp), parameter :: phys_circ_Pmicro = 0.0d0
   real(kind=dp), parameter :: phys_circ_Pnano = 0.0d0
   real(kind=dp), parameter :: phys_circ_Zoo = 0.0d0
@@ -74,6 +72,8 @@ module freshwater
        S_riv  ! Surface salinity prediction from fit
   !
   ! Private:
+  logical :: &
+       use_Fw_nutrients  ! Include influence of Fw nutrients?
   real(kind=dp), dimension(:), allocatable :: &
        Fw  ! Fresh water flux profile
   real(kind=dp) :: &
@@ -112,6 +112,8 @@ contains
     if (.not. Fw_surface) then
        Fw_depth = getpard('Fw_depth')  
     endif
+    ! Include effect of Fw nutrients?
+    use_Fw_nutrients = getparl('use_Fw_nutrients')
   end subroutine read_freshwater_params
 
 
@@ -195,54 +197,60 @@ contains
 
     integer :: i
 
-    if (Fw_surface) then
-       distrib_flux = 0.
-       if (qty.eq."nitrate") then
-          ! if phyto are using the nitrate the grad is zero'd. 
-          ! 4.0 = 2 x (Michalis-Menton K)
-          surf_flux = Ft * phys_circ_nitrate * &
-               min(4.0, current_value(1))/ 4.0
-       elseif (qty.eq."Pmicro") then
-          surf_flux = Ft * (phys_circ_Pmicro)
-       elseif (qty.eq."Pnano") then
-          surf_flux = Ft * (phys_circ_Pnano)
-       elseif (qty.eq."Zoo") then
-          surf_flux = Ft * (phys_circ_Zoo)
-       elseif (qty.eq."silicon") then
-          surf_flux = Ft * phys_circ_silicon * &
-               min(4.0, current_value(1)) / 4.0
-       else
-          write (*,*) "problems in freshwater, river flux for ", qty, &
-               " is not defined."
-          call exit(1)
-       endif
-    else ! distributed fresh water and fluxes
-       surf_flux = 0.
-       if (qty.eq."nitrate") then
-          ! vector variation does not give the same results as the loop
-          do i=0,grid%M
+    if (use_Fw_nutrients) then
+       if (Fw_surface) then
+          distrib_flux = 0.
+          if (qty.eq."nitrate") then
              ! if phyto are using the nitrate the grad is zero'd. 
              ! 4.0 = 2 x (Michalis-Menton K)
-             distrib_flux(i) = Fw(i) * phys_circ_nitrate * &
-                  min(4.0,current_value(i))/4.0
-          enddo
-       elseif (qty.eq."Pmicro") then
-          distrib_flux = Fw * (phys_circ_Pmicro)
-       elseif (qty.eq."Pnano") then
-          distrib_flux = Fw * (phys_circ_Pnano)
-       elseif (qty.eq."Zoo") then
-          distrib_flux = Fw * (phys_circ_Zoo)
-       elseif (qty.eq."silicon") then
-          do i=0,grid%M
-             distrib_flux(i) = Fw(i) * phys_circ_silicon * &
-                  min(4.0, current_value(i))/4.0
-          enddo
-       else
-          write (*,*) "problems in freshwater, river flux for ", qty, &
-               " is not defined."
-          call exit(1)
+             surf_flux = Ft * phys_circ_nitrate * &
+                  min(4.0, current_value(1))/ 4.0
+          elseif (qty.eq."Pmicro") then
+             surf_flux = Ft * (phys_circ_Pmicro)
+          elseif (qty.eq."Pnano") then
+             surf_flux = Ft * (phys_circ_Pnano)
+          elseif (qty.eq."Zoo") then
+             surf_flux = Ft * (phys_circ_Zoo)
+          elseif (qty.eq."silicon") then
+             surf_flux = Ft * phys_circ_silicon * &
+                  min(4.0, current_value(1)) / 4.0
+          else
+             write (*,*) "problems in freshwater, river flux for ", qty, &
+                  " is not defined."
+             call exit(1)
+          endif
+       else ! distributed fresh water and fluxes
+          surf_flux = 0.
+          if (qty.eq."nitrate") then
+             ! vector variation does not give the same results as the loop
+             do i=0,grid%M
+                ! if phyto are using the nitrate the grad is zero'd. 
+                ! 4.0 = 2 x (Michalis-Menton K)
+                distrib_flux(i) = Fw(i) * phys_circ_nitrate * &
+                     min(4.0,current_value(i))/4.0
+             enddo
+          elseif (qty.eq."Pmicro") then
+             distrib_flux = Fw * (phys_circ_Pmicro)
+          elseif (qty.eq."Pnano") then
+             distrib_flux = Fw * (phys_circ_Pnano)
+          elseif (qty.eq."Zoo") then
+             distrib_flux = Fw * (phys_circ_Zoo)
+          elseif (qty.eq."silicon") then
+             do i=0,grid%M
+                distrib_flux(i) = Fw(i) * phys_circ_silicon * &
+                     min(4.0, current_value(i))/4.0
+             enddo
+          else
+             write (*,*) "problems in freshwater, river flux for ", qty, &
+                  " is not defined."
+             call exit(1)
+          endif
        endif
+    else
+       distrib_flux = 0
+       surf_flux = 0
     endif
+
   end subroutine freshwater_bio
 
 
