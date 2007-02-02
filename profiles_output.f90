@@ -245,8 +245,8 @@ contains
 
 
   subroutine write_std_profiles(codeId, str_run_Datetime, str_CTD_Datetime, &
-       year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Z, NO, NH,  &
-       Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
+       year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Ppico, Z,  &
+       NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
     ! close it.  Also write a line of data to the haloclines output
@@ -269,7 +269,8 @@ contains
          S(0:),       &  ! Salinity [-]
          rho(0:),     &  ! Density [kg/M^3]
          Pmicro(0:),  &  ! Micro phytoplankton (diatoms) [uM N]
-         Pnano(0:),   &  ! Nano phytoplankton (flagellates) [uM N]
+         Pnano(0:),   &  ! Nano phytoplankton (meso-rub) [uM N]
+         Ppico(0:),   &  ! Pico phytoplankton (flagellates) [uM N]
          Z(0:),       &  ! Micro zooplankton (uM N)
          NO(0:),      &  ! Nitrates [uM N]
          NH(0:),      &  ! Ammonium [uM N]
@@ -333,7 +334,7 @@ contains
                str_CTD_Datetime, profileDatetime(iprof), derS, dep)
           ! Write the profiles numbers, and close the profiles file
           call write_profiles_numbers(profiles, grid, T, S, rho,   &
-               Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr, &
+               Pmicro, Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, &
                D_bSi, Ku, Kt, Ks, I_par, U, V)
           close(profiles)          
           ! Increment profile counter
@@ -346,7 +347,7 @@ contains
        if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
           ! Write the profiles numbers
           call write_profiles_numbers(Hoffmueller, grid, T, S, rho, &
-               Pmicro, Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
+               Pmicro, Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
                D_bSi, Ku, Kt, Ks, I_par, U, V)
           ! Add empty line as separator
           write(Hoffmueller, *)
@@ -404,7 +405,7 @@ contains
     str_pro_Datetime = datetime_str(pro_Datetime)
     write(profiles, 400)
 400 format("! Profiles of Temperature, Salinity, Density, ",           &
-         "Phytoplankton (micro & nano),"/,                             &
+         "Phytoplankton (micro & nano & pico),"/,                      &
          "! Micro zooplankton, Nitrate, Ammonium, Silicon, and ",      &
          "Detritus (DON, PON, "/,                                      &
          "! refractory N & biogenic Si), Total Eddy Diffusivities ",   &
@@ -434,6 +435,7 @@ contains
     write(unit, 500)
 500 format("*FieldNames: depth, temperature, salinity, sigma-t, ",     &
          "micro phytoplankton, nano phytoplankton, ",                  &
+         "pico phytoplankton, ",                                       &
          "micro zooplankton, nitrate, ammonium, silicon, ",            &
          "DON detritus, PON detritus, refractory N detritus, ",        &
          "biogenic Si detritus, total momentum eddy diffusivity, ",    &
@@ -442,13 +444,13 @@ contains
          "photosynthetic available radiation, ",                       &
          "u velocity, v velocity"/,                                    &
          "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
-         "uM N, uM, uM N, uM N, uM N, uM, m^2/s, m^2/s, m^2/s, ",      &
+         "uM N, uM, uM N, uM N, uM N, uM N, uM, m^2/s, m^2/s, m^2/s, ",      &
          "W/m^2, m/s, m/s")
   end subroutine write_cmn_hdr_fields
 
 
   subroutine write_profiles_numbers(unit, grid, T, S, rho, Pmicro,    &
-       Pnano, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, &
+       Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, &
        I_par, U, V)
     ! Write the profiles numbers.  This is broken out to reduce code
     ! duplications.
@@ -467,7 +469,8 @@ contains
          S(0:),       &  ! Salinity [-]
          rho(0:),     &  ! Density [kg/M^3]
          Pmicro(0:),  &  ! Micro phytoplankton (diatoms) [uM N]
-         Pnano(0:),   &  ! Nano phytoplankton (flagellates) [uM N]
+         Pnano(0:),   &  ! Nano phytoplankton (meso-rub) [uM N]
+         Ppico(0:),   &  ! Pico phytoplankton (flagellates) [uM N]
          Z(0:),       &  ! Micro zooplankton (uM N)
          NO(0:),      &  ! Nitrates [uM N]
          NH(0:),      &  ! Ammonium [uM N]
@@ -492,7 +495,7 @@ contains
     sigma_t = rho(0) - 1000.
     write(unit, 600) grid%d_g(0), KtoC(T(0)), &
          S(0), sigma_t, Pmicro(0), Pnano(0),  &
-         Z(0), NO(0), NH(0), Si(0),           &
+         Ppico(0), Z(0), NO(0), NH(0), Si(0), &
          D_DON(0), D_PON(0), D_refr(0),       &
          D_bSi(0), 0., 0., 0.,                &
          I_par(0), U(0), V(0)
@@ -500,7 +503,7 @@ contains
     do i = 1, grid%M
        sigma_t = rho(i) - 1000.
        write(unit, 600) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
-            Pmicro(i), Pnano(i), Z(i), NO(i), NH(i), Si(i),     &
+            Pmicro(i), Pnano(i), Ppico(i), Z(i), NO(i), NH(i), Si(i),     &
             D_DON(i), D_PON(i), D_refr(i), D_bSi(i),            &
             Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
     enddo
@@ -509,6 +512,7 @@ contains
     sigma_t = rho(grid%M+1) - 1000.
     write(unit, 600) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),       &
          S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1), &
+         Ppico(grid%M+1),                                         &
          Z(grid%M+1), NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),   &
          D_DON(grid%M+1), D_PON(grid%M+1), D_refr(grid%M+1),      &
          D_bSi(grid%M+1), Ku(grid%M), Kt(grid%M), Ks(grid%M),     &
