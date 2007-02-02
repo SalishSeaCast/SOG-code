@@ -22,7 +22,7 @@ program SOG
        V,  &  ! Along-strait (305 deg) velocity component arrays
        T,  &  ! Temperature profile arrays
        S,  &  ! Salinity profile arrays
-       P,  &  ! Micro & nano phytoplankton profile arrays
+       P,  &  ! Micro & nano & pico phytoplankton profile arrays
        Z,  &  ! Microzooplankton profile array
        N,  &  ! Nitrate & ammonium concentation profile arrays
        Si, &  ! Silicon concentration profile arrays
@@ -202,7 +202,7 @@ program SOG
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
-       Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
+       P%pico, Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
        h%new, grid, cruise_id)
 
   ! Initialize the profiles of the water column properties
@@ -244,8 +244,7 @@ program SOG
           unow, vnow)
 
      CALL irradiance_sog(cf_value, day_time, day, &
-          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano)
-
+          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano, P%pico)
      DO count = 1, max_iter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the velocity field and water column
         ! temperature, and salinity at the grid layer interface depths
@@ -468,7 +467,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
      call calc_bio_rate(time, day, dt, grid%M, precision, step_guess, step_min,  &
-          T%new(0:grid%M), I_Par, P%micro, P%nano, Z, N%O, N%H, Si,              &
+          T%new(0:grid%M), I_Par, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,              &
           D%DON, D%PON, D%refr, D%bSi)
 
      ! Build the rest of the terms of the semi-implicit diffusion/advection
@@ -478,9 +477,8 @@ S_RHS%diff_adv%new = Gvector%s
      ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
-     call build_biology_equations(grid, dt, P%micro, P%nano, Z, N%O, N%H, &! in
+     call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, N%O, N%H, &! in
           Si, D%DON, D%PON, D%refr, D%bSi, wupwell)                        ! in
-
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
      ! 1st time step because the values just calculated are a better
@@ -492,7 +490,7 @@ S_RHS%diff_adv%new = Gvector%s
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
-     call solve_bio_eqns(grid%M, P%micro, P%nano, Z, N%O, N%H, Si, &
+     call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi, day, time)
      !
      !---------- End of Biology Model ----------
@@ -500,6 +498,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! Update boundary conditions at surface
      P%micro(0) = P%micro(1)
      P%nano(0) = P%nano(1)
+     P%pico(0) = P%pico(1)
      Z(0) = Z(1)
      N%O(0) = N%O(1)
      N%H(0) = N%H(1)
@@ -517,7 +516,7 @@ S_RHS%diff_adv%new = Gvector%s
      call bot_bound_time(day, day_time, &                             ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
           Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
-          P%nano(grid%M+1)) ! out
+          P%nano(grid%M+1), P%pico(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform(grid%M, Z, D%DON, D%PON, D%refr, D%bSi)
@@ -531,7 +530,7 @@ S_RHS%diff_adv%new = Gvector%s
        ! Variables for standard physics model output
        count, h%new, U%new, V%new, T%new, S%new,                      &
        ! Variables for standard biology model output
-       N%O , N%H, Si, P%micro, P%nano, Z, D%DON, D%PON, D%refr, D%bSi)
+       N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, D%bSi)
 
      ! Write user-specified time series results
      ! !!! Please don't add arguments to this call.           !!!
@@ -546,7 +545,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! write_user_timeseries() below.                              !!!
      call write_std_profiles(codeId, datetime_str(runDatetime),       &
           datetime_str(initDatetime), year, day, day_time, dt, grid, &
-          T%new, S%new, rho%g, P%micro, P%nano, Z, N%O, N%H, Si,      &
+          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,      &
           D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                 &
           I_par, U%new, V%new)
 
@@ -563,6 +562,9 @@ S_RHS%diff_adv%new = Gvector%s
      !*** Fix this to be grid independent
      sumS = sumS + 0.5*(S%new(2)+S%new(3))
      sumSriv = sumSriv + S_riv
+     ! Diagnostic, to check linearity of the freshwater forcing
+     ! comment out for production runs
+     ! write (*,*) S_riv, 0.5*(S%new(2)+S%new(3))
   end do  !--------- End of time loop ----------
 
   write (stdout,*) "For Ft tuning"
