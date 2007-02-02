@@ -96,7 +96,7 @@ contains
 
 
   subroutine bot_bound_time (day, day_time, &
-       Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot)
+       Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot, Ppbot)
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
@@ -106,7 +106,8 @@ contains
     ! Arguments:
     integer, intent(in) :: day
     real(kind=dp), intent(in) :: day_time
-    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot
+    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, &
+         Pnbot, Ppbot
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio
     
@@ -124,6 +125,7 @@ contains
     
     Pmbot = chl / (ratio + 1)
     Pnbot = ratio * Pmbot
+    Ppbot = Pnbot
   end subroutine bot_bound_time
   
 
