@@ -40,7 +40,6 @@ module NPZD
        microzooplankton, &  ! Active or not
        ! diagnostics
        Mesozoo, &
-       Ppico, &
        f_ratio, &  ! Ratio of new to total production profile
        ! Subroutines:
        init_NPZD, derivs, &
@@ -51,7 +50,7 @@ module NPZD
   ! Indices for quantities in PZ vector
   TYPE :: bins
      INTEGER :: &
-          Quant, micro, nano, zoo, NO, NH, Si, det, D_DON, D_PON, D_refr, D_bSi
+          Quant, micro, nano, pico, zoo, NO, NH, Si, det, D_DON, D_PON, D_refr, D_bSi
   END TYPE bins
   !
   ! Rate parameters for phytoplankton
@@ -70,9 +69,7 @@ module NPZD
           N_x, & ! exponent in inhibition equation
           Si_ratio, & ! silicon to nitrogen ratio in phyto     
           K_Si, & ! half-saturation for Si
-          Rm, &! natural mortality rate
-          winterconc, & ! winter concentration (pico only)
-          summerconc  ! summer concentration (pico only)
+          Rm      ! natural mortality rate
   end type rate_para_phyto
   ! Rate parameters for Zooplankton
   type :: rate_para_zoo
@@ -96,6 +93,8 @@ module NPZD
           NanoPref, &       ! fractional preference for diatoms
           NanoPredSlope, &  ! limit from predation
           NanoHalfSat, &    ! half-saturation for getting eaten
+          PicoPref, &       ! fractional preference for picoplankton
+          PicoPredSlope, &  ! limit from predation
           PicoHalfSat, &    ! half-saturation for getting eaten
           PON_Pref, &        ! fraction preference for PON
           PON_PredSlope, &   ! limit from predation
@@ -134,7 +133,7 @@ module NPZD
        flagellates, &    ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton ! use a microzooplantkon pool?
-  real(kind=dp), dimension(:), allocatable :: Mesozoo, Ppico
+  real(kind=dp), dimension(:), allocatable :: Mesozoo
 
   ! Private variable declarations:
   !
@@ -143,18 +142,19 @@ module NPZD
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
   type(bins):: PZ_bins
-  data PZ_bins%Quant /6/    ! Size of the biology (Quantities and Detritus)
+  data PZ_bins%Quant /7/    ! Size of the biology (Quantities vs Detritus)
   data PZ_bins%micro /1/    ! Position of Diatoms (micro plankton)
-  data PZ_bins%nano  /2/    ! Position of Flagellates (nano plankton)
-  data PZ_bins%zoo   /3/    ! Position of microzooplankton
-  data PZ_bins%NO    /4/    ! Position of Nitrate
-  data PZ_bins%NH    /5/    ! Position of Ammonium
-  data PZ_bins%Si    /6/    ! Position of Silicon
-  data PZ_bins%det   /7/    ! Start of detritus
-  data PZ_bins%D_DON   /7/  ! Position of dissolved organic nitrogen detritus
-  data PZ_bins%D_PON   /8/  ! Position of particulate organic nitrogen detritus
-  data PZ_bins%D_refr  /10/  ! Position of refractory nitrogen detritus
-  data PZ_bins%D_bSi   /9/  ! Position of dissolved biogenic silcon detritus
+  data PZ_bins%nano  /2/    ! Position of Meso rub (nano plankton)
+  data PZ_bins%pico  /3/    ! Position of Flagellates (pico plankton)
+  data PZ_bins%zoo   /4/    ! Position of microzooplankton
+  data PZ_bins%NO    /5/    ! Position of Nitrate
+  data PZ_bins%NH    /6/    ! Position of Ammonium
+  data PZ_bins%Si    /7/    ! Position of Silicon
+  data PZ_bins%det   /8/    ! Start of detritus
+  data PZ_bins%D_DON   /8/  ! Position of dissolved organic nitrogen detritus
+  data PZ_bins%D_PON   /9/  ! Position of particulate organic nitrogen detritus
+  data PZ_bins%D_refr  /11/  ! Position of refractory nitrogen detritus
+  data PZ_bins%D_bSi   /10/  ! Position of dissolved biogenic silcon detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
@@ -164,6 +164,7 @@ module NPZD
   type(rate_para_zoo) :: rate_mesozoo, rate_mesorub, rate_uzoo
   type(nloss_param) :: frac_waste_DNM, & ! Diatom natural mortality
        frac_waste_NNM, & ! Nano natural mortality
+       frac_waste_FNM, & ! Flagellates (pico) natural mortality
        frac_waste_ZNM, & ! uZoo natural mortality
        frac_waste_ZEX, & ! uZoo excretion
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
@@ -173,7 +174,9 @@ module NPZD
        frac_waste_PEZ, & ! PON eaten by uZoo
        frac_waste_DEZ, & ! Diatoms eaten by uZoo
        frac_waste_NEZ, & ! Nano eaten by uZoo
-       frac_waste_ZEZ    ! uZoo eaten by uZoo
+       frac_waste_FEZ, & ! Flagelattes (pico) eaten by uZoo
+       frac_waste_ZEZ, & ! uZoo eaten by uZoo
+       frac_waste_FEN    ! Flagelattes (pico) eaten by Mesorub (nano)
   !
   ! Nitrogen compound uptake diagnotics
   type(uptake_) :: uptake
@@ -261,14 +264,17 @@ contains
     rate_mesorub%R = getpard("Mesorub, max ingestion")
     rate_mesorub%eff = getpard("Mesorub, assimilation eff")
     rate_mesorub%PicoHalfSat = getpard('Mesorub, nano half-sat')
+    rate_mesorub%PicoPredSlope = getpard('Mesorub, nano predslope') 
     ! Microzoo rates
     rate_uzoo%R = getpard("Microzoo, max ingestion")
     rate_uzoo%eff = getpard("Microzoo, assimil. eff")
     rate_uzoo%Rm = getpard("Microzoo, nat mort")
     rate_uzoo%excr = getpard("Microzoo, excretion")
-    rate_uzoo%PicoHalfSat = getpard("Microzoo, pico half-sat")
     rate_uzoo%PredSlope = getpard('Microzoo, pred slope')
     rate_uzoo%HalfSat = getpard('Microzoo, half-sat')
+    rate_uzoo%PicoPref = getpard('Microzoo, pref for Pico')
+    rate_uzoo%PicoPredSlope = getpard('uzoo, Pico pred slope')
+    rate_uzoo%PicoHalfSat = getpard('uzoo, Pico half-sat')
     rate_uzoo%MicroPref = getpard('Microzoo, pref for Micro')
     rate_uzoo%MicroPredSlope = getpard('uzoo, Micro pred slope')
     rate_uzoo%MicroHalfSat = getpard('Microzoo, Micro half-sat')
@@ -282,9 +288,6 @@ contains
     rate_uzoo%Z_PredSlope = getpard('Microzoo, uZoo pred slope')
     rate_uzoo%Z_HalfSat = getpard('Microzoo, uZoo half-sat')
 
-    ! phytoplankton rates
-    rate_pico%winterconc = getpard('Pico, winter conc')
-    rate_pico%summerconc = getpard('Pico, summer conc')
     ! max growth rate for light limitation
     rate_micro%R = getpard('Micro, max growth')
     rate_nano%R = getpard('Nano, max growth')
@@ -296,41 +299,54 @@ contains
     ! maximum temp for growth
     rate_micro%maxtemp = getpard('Micro, max temp')
     rate_nano%maxtemp = getpard('Nano, max temp')
+    rate_pico%maxtemp = getpard('Pico, max temp')
     ! temp range of limitation below max
     rate_micro%temprange = getpard('Micro, temp range')
     rate_nano%temprange = getpard('Nano, temp range')
+    rate_pico%temprange = getpard('Pico, temp range')
     ! exponent for Q_10
     rate_micro%Q10exp = getpard('Micro, Q10 exp')
     rate_nano%Q10exp = getpard('Nano, Q10 exp')
+    rate_pico%Q10exp = getpard('Pico, Q10 exp')
     ! loss parameter under light limitation
     rate_micro%gamma = getpard('Micro, gamma loss')
     rate_nano%gamma = getpard('Nano, gamma loss')
+    rate_pico%gamma = getpard('Pico, gamma loss')
     ! NO3 half saturation constant
     rate_micro%k = getpard('Micro, NO3 k')
     rate_nano%k = getpard('Nano, NO3 k')
+    rate_pico%k = getpard('Pico, NO3 k')
     ! preference for NO3 over NH 
     rate_micro%kapa = getpard('Micro, kapa')
-    rate_nano%kapa = getpard('Nano, kapa')
+    rate_nano%kapa = getpard('Nano, kapa')    
+    rate_pico%kapa = getpard('Pico, kapa')
     ! exp strength of NH inhit of NO3 uptake
     rate_micro%gamma_o = getpard('Micro, NH inhib')
     rate_nano%gamma_o = getpard('Nano, NH inhib')
+    rate_pico%gamma_o = getpard('Pico, NH inhib')
     ! overall half saturation constant????
     rate_micro%N_o = getpard('Micro, N_o')
     rate_nano%N_o = getpard('Nano, N_o')
+    rate_pico%N_o = getpard('Pico, N_o')
     ! exponent in inhibition equation
     rate_micro%N_x = getpard('Micro, N_x')
     rate_nano%N_x = getpard('Nano, N_x')
+    rate_pico%N_x = getpard('Pico, N_x')
     ! silicon to nitrogen ratio in phyto
     rate_micro%Si_ratio = getpard('Micro, Si ratio')
     rate_nano%Si_ratio = getpard('Nano, Si ratio')
+    rate_pico%Si_ratio = getpard('Pico, Si ratio')
     ! half-saturation for Silicon
     rate_micro%K_Si = getpard('Micro, K Si')
     if (rate_micro%Si_ratio.eq.0) rate_micro%K_Si = 0. ! to eliminate Si limitn
     rate_nano%K_Si = getpard('Nano, K Si')
     if (rate_nano%Si_ratio.eq.0) rate_nano%K_Si = 0. ! to eliminate Si limitn
+    rate_pico%K_Si = getpard('Pico, K Si')
+    if (rate_pico%Si_ratio.eq.0) rate_pico%K_Si = 0. ! to eliminate Si limitn
     ! natural mortality rate
     rate_micro%Rm = getpard('Micro, nat mort')
     rate_nano%Rm = getpard('Nano, nat mort')
+    rate_pico%Rm = getpard('Pico, nat mort')
     ! Remineralization rates:
     ! Ammonium
     remin%NH = getpard('NH remin rate')
@@ -363,6 +379,13 @@ contains
     frac_waste_NNM%Ref = getpard('Waste, nnm, Ref')
     frac_waste_NNM%Bsi = getpard('Waste, nnm, Bsi')
 
+    ! Picophyto (flagellates) natural mortality
+    frac_waste_FNM%NH = getpard('Waste, fnm, NH')
+    frac_waste_FNM%DON = getpard('Waste, fnm, DON')
+    frac_waste_FNM%PON = getpard('Waste, fnm, PON')
+    frac_waste_FNM%Ref = getpard('Waste, fnm, Ref')
+    frac_waste_FNM%Bsi = getpard('Waste, fnm, Bsi')
+
     ! uZoo natural mortality
     frac_waste_ZNM%NH = getpard('Waste, znm, NH')
     frac_waste_ZNM%DON = getpard('Waste, znm, DON')
@@ -390,7 +413,6 @@ contains
     frac_waste_NEM%PON = getpard('Waste, nem, PON')
     frac_waste_NEM%Ref = getpard('Waste, nem, Ref')
     frac_waste_NEM%Bsi = getpard('Waste, nem, Bsi')
-
 
     ! PON eaten by Mesozoo
     frac_waste_PEM%NH = getpard('Waste, pem, NH')
@@ -420,6 +442,13 @@ contains
     frac_waste_NEZ%Ref = getpard('Waste, nez, Ref')
     frac_waste_NEZ%Bsi = getpard('Waste, nez, Bsi')
 
+    ! Pico (flagellates) eaten by uZoo
+    frac_waste_FEZ%NH = getpard('Waste, fez, NH')
+    frac_waste_FEZ%DON = getpard('Waste, fez, DON')
+    frac_waste_FEZ%PON = getpard('Waste, fez, PON')
+    frac_waste_FEZ%Ref = getpard('Waste, fez, Ref')
+    frac_waste_FEZ%Bsi = getpard('Waste, fez, Bsi')
+
     ! PON eaten by uZoo
     frac_waste_PEZ%NH = getpard('Waste, pez, NH')
     frac_waste_PEZ%DON = getpard('Waste, pez, DON')
@@ -433,6 +462,14 @@ contains
     frac_waste_ZEZ%PON = getpard('Waste, zez, PON')
     frac_waste_ZEZ%Ref = getpard('Waste, zez, Ref')
     frac_waste_ZEZ%Bsi = getpard('Waste, zez, Bsi')
+
+    ! Pico (flagellates) eaten by Mesorub
+    frac_waste_FEN%NH = getpard('Waste, fen, NH')
+    frac_waste_FEN%DON = getpard('Waste, fen, DON')
+    frac_waste_FEN%PON = getpard('Waste, fen, PON')
+    frac_waste_FEN%Ref = getpard('Waste, fen, Ref')
+    frac_waste_FEN%Bsi = getpard('Waste, fen, Bsi')
+
 
   end subroutine init_NPZD
 
@@ -461,10 +498,6 @@ contains
     call alloc_check(allocstat, msg)
     msg = "Mesozooplankton diagnostic array"
     allocate(Mesozoo(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Pico phytoplankton diagnostic array"
-    allocate(Ppico(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Ratio of new to total production profile array"
@@ -497,10 +530,6 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Mesozooplankton diagnostic array"
     deallocate(Mesozoo, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Pico phytoplankton diagnostic array"
-    deallocate(Ppico, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Ratio of new to total production profile array"
@@ -678,7 +707,7 @@ contains
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
     use fundamental_constants, only: pi
-    use declarations, only: micro, nano
+    use declarations, only: micro, nano, pico
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
     implicit none
@@ -698,7 +727,8 @@ contains
     ! Local variables
     real(kind=dp), dimension(1:M) :: &
           Pmicro,         &  ! Micro phytoplankton (diatoms) profile
-          Pnano,          &  ! Nano phytoplankton (flagellates) profile
+          Pnano,          &  ! Nano phytoplankton (mesorub) profile
+          Ppico,          &  ! Pico phytoplankton (flagellates) profile
           Z,              &  ! Micro zooplankton profile
           NO,             &  ! Nitrate concentrationy
           NH,             &  ! Ammonium concentration profile
@@ -711,14 +741,15 @@ contains
           GrazMort_micro, &  ! Micro phytoplankton grazing mortality profile
           NatMort_nano,   &  ! Nano phytoplankton natural mortality profile
           GrazMort_nano,  &  ! Nano phytoplankton grazing mortality profile
+          GrazMort_pico,  &  ! Pico phytoplankton grazaing mortality profile
+          NatMort_pico,   &  ! Pico phytoplankton natural mortality profile
           NatMort_uzoo,   &  ! uZoo natural mortality profile
           Excr_uzoo,      &  ! uZoo excretion
           Graz_PON,       &  ! PON grazing mortality profile
           GrazMort_Z,     &  ! Z grazing mortality profile
-          Pico_growth,    &  ! maximum growth of pico
           Mesorub_eat,    &  ! Mesorub eat pico
-          Microzoo_eat,  &   ! Microzoo eat pico
-          uZoo_R_left,   &  ! remaining egestion after uZoo eat their share of Pico
+          Microzoo_eat,   &  ! Micro zoo eat
+
 ! new waste variables
           was_NH, was_DON, was_PON, was_Ref, was_Bsi, &
           Si_remin           ! Profile of dissolution of biogenic Si detritus
@@ -727,7 +758,7 @@ contains
     real(kind=dp) :: food_limitation, denominator, &
          Meso_mort_micro, Meso_graz_PON , Meso_mort_nano, average_prey, &
          Meso_mort_Z, uZoo_mort_micro, uZoo_mort_nano, uZoo_graz_PON, &
-         uZoo_graz_Z
+         uZoo_graz_Z, uZoo_mort_pico
    
     integer :: &
          bPZ, &  ! Beginning index for a quantity in the PZ array
@@ -753,6 +784,15 @@ contains
        where (Pnano < 0.) Pnano = 0.
     else
        Pnano = 0.
+    endif
+    ! Pico phytoplankton
+    if (flagellates) then
+       bPZ = (PZ_bins%pico - 1) * M + 1
+       ePZ = PZ_bins%pico * M
+       Ppico = PZ(bPZ:ePZ)
+       where (Ppico < 0.) Ppico = 0.
+    else
+       Ppico = 0.
     endif
     ! Microzooplankton
     if (microzooplankton) then
@@ -846,26 +886,37 @@ contains
          Temp, & ! in
          rate_nano, nano)              ! in and out, in, out
 
+    call p_growth(M, NO, NH, Si, Ppico, I_par, temp_Q10**rate_pico%Q10exp, &
+         Temp, & ! in
+         rate_pico, pico)              ! in and out, in, out
+
     ! change growth to be total
     micro%growth%new = micro%growth%new * Pmicro
     nano%growth%new = nano%growth%new * Pnano
+    pico%growth%new = pico%growth%new * Ppico
 
     ! phytoplankton natural mortality:
 
     NatMort_micro= (rate_micro%Rm) * temp_Q10 * Pmicro
     NatMort_nano = (rate_nano%Rm) * temp_Q10 * Pnano
+    NatMort_pico = (rate_pico%Rm) * temp_Q10 * Ppico
 
     was_NH = was_NH + frac_waste_DNM%NH * NatMort_micro &
-         + frac_waste_NNM%NH * NatMort_nano
+         + frac_waste_NNM%NH * NatMort_nano &
+         + frac_waste_FNM%NH * NatMort_pico 
     was_DON = was_DON + frac_waste_DNM%DON * NatMort_micro &
-         + frac_waste_NNM%DON * NatMort_nano
+         + frac_waste_NNM%DON * NatMort_nano &        
+         + frac_waste_FNM%DON * NatMort_pico
     was_PON = was_PON + frac_waste_DNM%PON * NatMort_micro &
-         + frac_waste_NNM%PON * NatMort_nano
+         + frac_waste_NNM%PON * NatMort_nano &
+         + frac_waste_FNM%PON * NatMort_pico
     was_Ref = was_Ref + frac_waste_DNM%Ref * NatMort_micro &
-         + frac_waste_NNM%Ref * NatMort_nano
+         + frac_waste_NNM%Ref * NatMort_nano &
+         + frac_waste_FNM%Ref * NatMort_pico
     was_BSi = was_BSi &
          + frac_waste_DNM%BSi * NatMort_micro * rate_micro%Si_ratio &
-         + frac_waste_NNM%Bsi * NatMort_nano * rate_nano%Si_ratio
+         + frac_waste_NNM%Bsi * NatMort_nano * rate_nano%Si_ratio &
+         + frac_waste_FNM%Bsi * NatMort_pico * rate_pico%Si_ratio
 
     ! microzoo natural mortality:
     NatMort_uzoo = rate_uzoo%Rm * temp_Q10 * Z
@@ -946,16 +997,16 @@ contains
             + Meso_mort_Z
 
        GrazMort_micro(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * & 
-            max(0., Meso_mort_micro)
+            max(0.d0, Meso_mort_micro)
 
        GrazMort_nano(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
-            max(0., Meso_mort_nano)
+            max(0.d0, Meso_mort_nano)
 
        Graz_PON(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
-            max(0., Meso_graz_PON)
+            max(0.d0, Meso_graz_PON)
 
        GrazMort_Z(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
-            max(0., Meso_mort_Z)
+            max(0.d0, Meso_mort_Z)
     enddo
 
     was_NH = was_NH + frac_waste_PEM%NH * Graz_PON + &
@@ -979,63 +1030,39 @@ contains
          frac_waste_NEM%BSi * GrazMort_nano * rate_nano%Si_ratio + &
          frac_waste_ZEM%BSi * GrazMort_Z * 0.d0
 
-    ! pico phytoplankton
+    ! Mesodinium rubrum
 
-    Ppico = rate_pico%winterconc + & 
-         (rate_pico%summerconc - rate_pico%winterconc) * &
-         (1.d0 - cos(2.d0*pi*day/365.25))/2.d0
- 
-    Pico_growth = &
-            ! Steeles scheme like but with extended high light range
-            ! (Steeles scheme has built in light inhibition)
-            ! 0.67, 2.7 and 1.8 are constants for making the fit
-            ! Steeles like at small light and making it fit Durbin for
-            ! Thalassosira nordelenski at higher light
-         (1.0d0 - exp(-I_par / (0.67d0 * rate_pico%Iopt))) * &
-         exp(-I_par / (2.7d0 * rate_pico%Iopt)) * 1.8d0
-
-    do jj = 1,M
-       Pico_growth(jj) = min(Pico_growth(jj), (NH(jj)+NO(jj))/(0.5+NH(jj)+NO(jj)))
-       uptakeNH(jj) = min(NH(jj)/(0.5+NH(jj)), Pico_growth(jj)) 
-
-    enddo
-    uptake%NH = uptake%NH + uptakeNH * rate_pico%R * Ppico * temp_Q10
-    uptake%NO = uptake%NO + (Pico_growth-uptakeNH) * rate_pico%R * Ppico &
-         * temp_Q10
-    Pico_growth = rate_pico%R * Ppico * Pico_growth * temp_Q10
-       
-!   currently (because of p_growth limit above) only allowing them to eat 
-! during the day
-
-    Mesorub_eat = 2.d0 & ! to make up for eating day and night
-         * rate_mesorub%R * Ppico / (rate_mesorub%PicoHalfSat + Ppico) &
+    Mesorub_eat = rate_mesorub%R * (Ppico - rate_mesorub%PicoPredSlope) / &
+         (rate_mesorub%PicoHalfSat + Ppico - rate_mesorub%PicoPredSlope) &
          * Pnano * temp_Q10
-    Microzoo_eat = 2.d0 &
-         * rate_uzoo%R * Ppico / (rate_uzoo%PicoHalfSat + Ppico) &
-         * Z * temp_Q10
 
-    ! Mesorub/Microzoo get either max they want to eat or prop. max prod of pico
     do jj=1,M
-       Mesorub_eat(jj) = min(Pico_growth(jj) * Pnano(jj)/ &
-            (Pnano(jj) + Z(jj)), Mesorub_eat(jj)) * &
-            rate_mesorub%eff
-       Microzoo_eat(jj) = min(Pico_growth(jj) * Z(jj) / &
-            (Pnano(jj) + Z(jj)), Microzoo_eat(jj)) * &
-            rate_uzoo%eff
+       GrazMort_pico(jj)= max(Mesorub_eat(jj), 0.d0) 
+       Mesorub_eat = GrazMort_pico(jj) * rate_mesorub%eff
     enddo
 
-    uZoo_R_left = rate_uzoo%R - Microzoo_eat &
-         / (Z * rate_uzoo%eff * temp_Q10)
+    was_NH = was_NH + (frac_waste_FEN%NH) * GrazMort_pico * &
+         (1-rate_mesorub%eff)
+    was_DON = was_DON + (frac_waste_FEN%DON) * GrazMort_pico * &
+         (1-rate_mesorub%eff)
+    was_PON = was_PON + (frac_waste_FEN%PON) * GrazMort_pico * &
+         (1-rate_mesorub%eff)
+    was_Ref = was_Ref + (frac_waste_FEN%Ref) * GrazMort_pico * &
+         (1-rate_mesorub%eff)
+    was_BSi = was_BSi + (frac_waste_FEN%BSi) * GrazMort_pico * &
+         (1-rate_mesorub%eff)
 
+    ! Microzooplankton grazing
     do jj= 1, M
-       food_limitation = (Pmicro(jj) + Pnano(jj) + D_PON(jj) + Z(jj) &
-            - rate_uzoo%PredSlope) / &
-            (rate_uzoo%HalfSat + Pmicro(jj) + Pnano(jj) + D_PON(jj) &
-            - rate_uzoo%PredSlope &
+       food_limitation = (Pmicro(jj) + Pnano(jj) + Ppico(jj) + &
+            D_PON(jj) + Z(jj) - rate_uzoo%PredSlope) / &
+            (rate_uzoo%HalfSat + Pmicro(jj) + Pnano(jj) + Ppico(jj) &
+            + D_PON(jj) - rate_uzoo%PredSlope &
             + epsilon(rate_uzoo%HalfSat))
        
        denominator = (rate_uzoo%MicroPref * Pmicro(jj) + &
             rate_uzoo%NanoPref * Pnano(jj) + &
+            rate_uzoo%PicoPref * Ppico(jj) + &
             rate_uzoo%PON_Pref * D_PON(jj) + &
             rate_uzoo%Z_Pref * Z(jj) + &
             epsilon(Pmicro(jj)) )
@@ -1054,6 +1081,13 @@ contains
             - rate_uzoo%NanoPredSlope + &
             epsilon(rate_uzoo%NanoHalfSat)) )
 
+       uZoo_mort_pico = min(rate_uzoo%PicoPref * food_limitation &
+            * Ppico(jj) / denominator, &
+            (Ppico(jj) - rate_uzoo%PicoPredslope) / &
+            (rate_uzoo%PicoHalfSat + Ppico(jj) &
+            - rate_uzoo%PicoPredSlope + &
+            epsilon(rate_uzoo%PicoHalfSat)) )
+
        uZoo_graz_PON = min(rate_uzoo%PON_Pref * food_limitation &
             * D_PON(jj) / denominator, &
             (D_PON(jj) - rate_uzoo%PON_Predslope) / &
@@ -1069,41 +1103,50 @@ contains
             epsilon(rate_uzoo%Z_HalfSat)) )
 
 
-       uZoo_mort_micro = + uZoo_R_left(jj) * temp_Q10(jj) &       
-            * Z(jj) * max(0., uZoo_mort_micro)
-       uZoo_mort_nano = + uZoo_R_left(jj) * temp_Q10(jj) &       
-            * Z(jj) * max(0., uZoo_mort_nano)
-       uZoo_graz_PON = uZoo_R_left(jj) * temp_Q10(jj) &
-            * Z(jj) * max(0., uZoo_graz_PON)
-       uZoo_graz_Z = uZoo_R_left(jj) * temp_Q10(jj) &
-            * Z(jj) * max(0., uZoo_graz_Z)
+       uZoo_mort_micro = rate_uzoo%R * temp_Q10(jj) &       
+            * Z(jj) * max(0.d0, uZoo_mort_micro)
+       uZoo_mort_nano = rate_uzoo%R * temp_Q10(jj) &       
+            * Z(jj) * max(0.d0, uZoo_mort_nano)
+       uZoo_mort_pico = rate_uzoo%R * temp_Q10(jj) &       
+            * Z(jj) * max(0.d0, uZoo_mort_pico)
+       uZoo_graz_PON = rate_uzoo%R * temp_Q10(jj) &
+            * Z(jj) * max(0.d0, uZoo_graz_PON)
+       uZoo_graz_Z = rate_uzoo%R * temp_Q10(jj) &
+            * Z(jj) * max(0.d0, uZoo_graz_Z)
 
        GrazMort_micro(jj) = GrazMort_micro(jj) + uZoo_mort_micro
        GrazMort_nano(jj) = GrazMort_nano(jj) + uZoo_mort_nano
+       GrazMort_pico(jj) = GrazMort_pico(jj) + uZoo_mort_pico
        Graz_PON(jj) = Graz_PON(jj) + uZoo_graz_PON
        GrazMort_Z(jj) = GrazMort_Z(jj) + uZoo_graz_Z
-       MicroZoo_eat(jj) = Microzoo_eat(jj) + (uZoo_mort_micro + uZoo_mort_nano &
+       MicroZoo_eat(jj) = (uZoo_mort_micro + &
+            uZoo_mort_nano + uzoo_mort_pico &
             + uZoo_graz_PON + uZoo_graz_Z) * rate_uZoo%eff
 
        was_NH(jj) = was_NH(jj) + (frac_waste_PEZ%NH * UZoo_graz_PON + &
             frac_waste_DEZ%NH * uZoo_mort_micro + &
             frac_waste_NEZ%NH * uZoo_mort_nano + &
+            frac_waste_FEZ%NH * uZoo_mort_pico + &
             frac_waste_ZEZ%NH * uZoo_graz_Z) * (1-rate_uZoo%eff)
        was_DON(jj) = was_DON(jj) + (frac_waste_PEZ%DON * UZoo_graz_PON + &
             frac_waste_DEZ%DON * uZoo_mort_micro + &
             frac_waste_NEZ%DON * uZoo_mort_nano + &
+            frac_waste_FEZ%DON * uZoo_mort_pico + &
             frac_waste_ZEZ%DON * uZoo_graz_Z) * (1-rate_uZoo%eff)
        was_PON(jj) = was_PON(jj) + (frac_waste_PEZ%PON * UZoo_graz_PON + &
             frac_waste_DEZ%PON * uZoo_mort_micro + &
             frac_waste_NEZ%PON * uZoo_mort_nano + &
+            frac_waste_FEZ%PON * uZoo_mort_pico + &
             frac_waste_ZEZ%PON * uZoo_graz_Z)  * (1-rate_uZoo%eff)
        was_Ref(jj) = was_Ref(jj) + (frac_waste_PEZ%Ref * UZoo_graz_PON + &
             frac_waste_DEZ%Ref * uZoo_mort_micro + &
             frac_waste_NEZ%Ref * uZoo_mort_nano + &
+            frac_waste_FEZ%Ref * uZoo_mort_pico + &
             frac_waste_ZEZ%Ref * uZoo_graz_Z)  * (1-rate_uZoo%eff)
        was_BSi(jj) = was_BSi(jj) + frac_waste_PEZ%BSi * UZoo_graz_PON * 0.d0+ &
             frac_waste_DEZ%BSi * uZoo_mort_micro * rate_micro%Si_ratio + &
             frac_waste_NEZ%BSi * uZoo_mort_nano * rate_nano%Si_ratio + &
+            frac_waste_FEZ%BSi * uZoo_mort_pico * rate_pico%Si_ratio + &
             frac_waste_ZEZ%BSi * uZoo_graz_Z * 0.d0
 
     enddo
@@ -1155,6 +1198,14 @@ contains
        dPZdt(bPZ:ePZ) = nano%growth%new - NatMort_nano &
                - GrazMort_nano + Mesorub_eat
     endwhere
+    ! Pico phytoplankton
+    bPZ = (PZ_bins%pico - 1) * M + 1
+    ePZ = PZ_bins%pico * M
+    where (Ppico > 0.) 
+       dPZdt(bPZ:ePZ) = pico%growth%new - NatMort_pico &
+               - GrazMort_pico
+    endwhere
+
     ! Microzooplantkon
     bPZ = (PZ_bins%zoo - 1) * M + 1
     ePZ = PZ_bins%zoo *M
@@ -1181,6 +1232,7 @@ contains
     where (Si > 0.) 
        dPZdt(bPZ:ePZ) = -micro%growth%new * rate_micro%Si_ratio &
             - nano%growth%new * rate_nano%Si_ratio &
+            - pico%growth%new * rate_pico%Si_ratio &
             + Si_remin
     endwhere
     ! Dissolved organic ditrogen detritus
