@@ -53,6 +53,7 @@ module freshwater
   real(kind=dp), parameter :: phys_circ_nitrate = 30.5d0 - 13.0d0
   real(kind=dp), parameter :: phys_circ_Pmicro = 0.0d0
   real(kind=dp), parameter :: phys_circ_Pnano = 0.0d0
+  real(kind=dp), parameter :: phys_circ_Ppico = 0.0d0
   real(kind=dp), parameter :: phys_circ_Zoo = 0.0d0
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 
@@ -209,6 +210,8 @@ contains
              surf_flux = Ft * (phys_circ_Pmicro)
           elseif (qty.eq."Pnano") then
              surf_flux = Ft * (phys_circ_Pnano)
+          elseif (qty.eq."Ppico") then
+             surf_flux = Ft * (phys_circ_Ppico)
           elseif (qty.eq."Zoo") then
              surf_flux = Ft * (phys_circ_Zoo)
           elseif (qty.eq."silicon") then
@@ -233,6 +236,8 @@ contains
              distrib_flux = Fw * (phys_circ_Pmicro)
           elseif (qty.eq."Pnano") then
              distrib_flux = Fw * (phys_circ_Pnano)
+          elseif (qty.eq."Ppico") then
+             distrib_flux = Fw * (phys_circ_Ppico)
           elseif (qty.eq."Zoo") then
              distrib_flux = Fw * (phys_circ_Zoo)
           elseif (qty.eq."silicon") then
