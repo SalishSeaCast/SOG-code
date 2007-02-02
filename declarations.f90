@@ -14,7 +14,7 @@ module declarations
   character*4 :: cruise_id  ! four number code that labels the start cruise
 
   type(UVST):: Gvector
-  TYPE(plankton2)::micro, nano
+  TYPE(plankton2)::micro, nano, pico
   TYPE(entrain)::euph
 
   ! Heat fluxes
@@ -37,7 +37,6 @@ module declarations
   !I = intensity
   DOUBLE PRECISION, DIMENSION(:),  ALLOCATABLE:: I, I_par
 
-  DOUBLE PRECISION, DIMENSION(1)::microQ1_p,nanoQ1_p
   ! Surface biological flux == 0
   DOUBLE PRECISION::pflux_o
 
