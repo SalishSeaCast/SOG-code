@@ -43,8 +43,8 @@ module initial_sog
 
 contains
 
-  subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, Z, &
-       NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
+  subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, Ppico, &
+       Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
        hml, d, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
@@ -59,6 +59,7 @@ contains
          S_new,  &  ! Salinity profile
          Pmicro, &  ! Micro phytoplankton profile
          Pnano,  &  ! Nano phytoplankton profile
+         Ppico,  &  ! Pico phytoplankton profile
          Z,      &  ! Microzooplankton profile
          NO,     &  ! Nitrate profile
          NH,     &  ! Ammonium profile
@@ -132,9 +133,10 @@ contains
        T_new(i) = T_new(i) + 273.15
        ! convert fluorescence to uMol N
        Pmicro(i) = Pmicro(i)/N2chl
-       ! split between micro and nano plankton
-       Pmicro(i) = 5.0/6.0*Pmicro(i)
-       Pnano(i) = 1.0/5.0*Pmicro(i)
+       ! split between micro and nano and pico plankton
+       Pmicro(i) = 4.0/6.0*Pmicro(i)
+       Pnano(i) = 1.0/4.0*Pmicro(i)
+       Ppico(i) = Pnano(i)
        Z(i) = Pnano(i) !*** hard value to estimate
        D_PON(i) = Pmicro(i)/5. ! estimate
        D_DON(i) = D_PON(i)/10. ! estimate
@@ -147,6 +149,7 @@ contains
     S_new(0) = S_new(1)  !Boundary
     Pmicro(0) = Pmicro(1)
     Pnano(0) = Pnano(1)
+    Ppico(0) = Ppico(1)
     Z(0) = Z(1)
     NH(0) = NH(1)
     D_PON(0) = D_PON(1)
@@ -163,6 +166,7 @@ contains
           S_new(i) = S_new(j)
           Pmicro(i) = Pmicro(j) 
           Pnano(i) = Pnano(j)
+          Ppico(i) = Ppico(j)
           Z(i) = Z(j)
           D_PON(i) = D_PON(j)
           D_DON(i) = D_DON(j)
@@ -174,6 +178,7 @@ contains
           S_new(i) = S_new(j) * 0.5 + S_new(j+1) * 0.5
           Pmicro(i) = Pmicro(j) * 0.5 + Pmicro(j+1) * 0.5
           Pnano(i) = Pnano(j) * 0.5 + Pnano(j+1) * 0.5
+          Ppico(i) = Ppico(j) * 0.5 + Ppico(j+1) * 0.5
           Z(i) = Z(j) * 0.5 + Z(j+1) * 0.5
           D_PON(i) = D_PON(j) * 0.5 + D_PON(j+1) * 0.5
           D_DON(i) = D_DON(j) * 0.5 + D_DON(j+1) * 0.5
