@@ -13,7 +13,7 @@ module mean_param
 
   ! Phytoplankton component of UVST type
   type :: phyto                     
-     real(kind=dp), dimension(:), pointer :: micro, nano
+     real(kind=dp), dimension(:), pointer :: micro, nano, pico
   end type phyto
 
   ! Type for Gvectors and Hvector used in implicit solver
