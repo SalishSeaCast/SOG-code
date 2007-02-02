@@ -161,7 +161,7 @@ contains
 200 format("! SOG code standard time series output from biology model"/,     &
          "! Time series of nitrate, ammonium, & silicon ",                   &
          "concentration; and "/,                                             &
-         "! phytoplankton (micro & nano) & microzooplankton biomass, ",      &
+         "! phytoplankton (micro & nano & pico) & microzooplankton biomass, ",      &
          "at surface, and "/,                                                &
          "! averaged over top 3 m of water column; and detritus (DON, ",     &
          "PON, refractory N, and "/,                                         &
@@ -177,12 +177,14 @@ contains
          "3 m avg micro phytoplankton biomass, ",                            &
          "surface nano phytoplankton biomass, ",                             &
          "3 m avg nano phytoplankton biomass, ",                             &
+         "surface pico phytoplankton biomass, ",                             &
+         "3 m avg pico phytoplankton biomass, ",                             &
          "surface micro zooplankton biomass, ",                              &
          "3 m avg micro zooplankton biomass, ",                              &
          "DON detritus at 20 m, PON detritus at 20 m, ",                     &
          "refractory N detritus at 20 m, biogenic Si detritus at 20 m"/,     &
          "*FieldUnits: hr since ", a, " LST, uM N, uM N, uM N, uM N, ",      &
-         "uM, uM, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, ",   &
+         "uM, uM, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, ",   &
          "uM"/,                                                              &
          "*EndOfHeader")
   end subroutine write_std_bio_timeseries_header
@@ -192,7 +194,7 @@ contains
        ! Variables for standard physics model output
        iter_cnt, h, U, V, T, S, &
        ! Variables for standard biology model output
-       NO, NH, Si, Pmicro, Pnano, Z, D_DON, D_PON, D_refr, D_bSi)
+       NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi)
     ! Write results of the current time step to the time series files.
     use precision_defs, only: dp
     use io_unit_defs, only: std_phys_timeseries, std_bio_timeseries
@@ -218,6 +220,7 @@ contains
          Si,     &  ! Silicon conc profile [uM]
          Pmicro, &  ! Micro phytoplankton biomass profile [uM N]
          Pnano,  &  ! Nano phytoplankton biomass profile [uM N]
+         Ppico,  &  ! Pico phytoplankton biomass profile [uM N]
          Z,      &  ! Micro zooplankton biomass profile [uM N]
          D_DON,  &  ! Dissolved organic nitrogen detritus profile [uM N]
          D_PON,  &  ! Particulate organic nitrogen detritus profile [uM N]
@@ -234,6 +237,7 @@ contains
          Si_avg_3m,      &   ! Silicon averaged over top 3 m [-]
          Pmicro_avg_3m,  &   ! Micro phytoplankton averaged over top 3 m [-]
          Pnano_avg_3m,   &   ! Nano phytoplankton averaged over top 3 m [-]
+         Ppico_avg_3m,   &   ! Pico phytoplankton averaged over top 3 m [-]
          Z_avg_3m,       &   ! Micro zooplankton averaged over top 3 m [-]
          D_DON_20m,      &   ! DON detritus at 20 m [uM N]
          D_PON_20m,      &   ! PON detritus at 20 m [uM N]
@@ -276,6 +280,7 @@ contains
     Si_avg_3m = depth_average(Si, 0.0d0, 3.0d0)
     Pmicro_avg_3m = depth_average(Pmicro, 0.0d0, 3.0d0)
     Pnano_avg_3m = depth_average(Pnano, 0.0d0, 3.0d0)
+    Ppico_avg_3m = depth_average(Ppico, 0.0d0, 3.0d0)
     Z_avg_3m = depth_average(Z, 0.0d0, 3.0d0)
     call interp_value(20.0d0, 0, grid%d_g, D_DON, D_DON_20m, j_below)
     call interp_value(20.0d0, 0, grid%d_g, D_PON, D_PON_20m, j_below)
@@ -283,6 +288,7 @@ contains
     call interp_value(20.0d0, 0, grid%d_g, D_bSi, D_bSi_20m, j_below)
     write(std_bio_timeseries, 200) time, NO(0), NO_avg_3m, NH(0), NH_avg_3m, &
          Si(0), Si_avg_3m, Pmicro(0), Pmicro_avg_3m, Pnano(0), Pnano_avg_3m, &
+         Ppico(0), Ppico_avg_3m, &
          Z(0), Z_avg_3m, D_DON_20m, D_PON_20m, D_refr_20m, D_bSi_20m
 200 format(f10.4, 80(2x, f8.4))
   end subroutine write_std_timeseries
