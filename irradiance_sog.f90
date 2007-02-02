@@ -2,7 +2,7 @@
 ! $Source$
 
 SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
-     I_k, Qs, euphotic, Qriver, Pmicro, Pnano)
+     I_k, Qs, euphotic, Qriver, Pmicro, Pnano, Ppico)
 
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_, interp_g
@@ -25,7 +25,8 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       real, intent(in) :: Qriver
       real(kind=dp), dimension(0:d%M), intent(in) :: &
            Pmicro, &  ! Micro phytoplankton
-           Pnano      ! Nano phytoplankton
+           Pnano, &   ! Nano phytoplankton
+           Ppico      ! Pico phytoplankton
 
       ! Local variables:
       real(kind=dp) :: lat  ! Latitude of centre of model domain [rad]
@@ -122,10 +123,10 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
       do k = 1, d%M    
          ! KK is evaluated on the grid points         
-         ! N2chl is correction uM to mg/m3 chl, 0.5 is picoplankton
+         ! N2chl is correction uM to mg/m3 chl
          ! limit of 2.5/m is set from Cruise 02-03 and 5 W/m2 seen at 2 m
          KK = 0.0787d0 + 0.0368d0 * N2chl &
-              * (Pmicro(k) + Pnano(k) + 0.5d0) ** 0.665 &
+              * (Pmicro(k) + Pnano(k) + Ppico(k)) ** 0.665 &
               + (5.97d-22 * Qriver ** 5.5 + 0.595d0) * exp(-d%d_g(k) / 1.72d0)
          KK = min(2.5d0, KK)
          Ipar_i(k) = Ipar_i(k-1) * exp(-d%i_space(k) * KK)
