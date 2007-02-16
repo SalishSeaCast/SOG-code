@@ -132,7 +132,8 @@ module NPZD
   logical :: &
        flagellates, &    ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
-       microzooplankton ! use a microzooplantkon pool?
+       microzooplankton, & ! use a microzooplantkon pool?
+       strong_limitation ! impose single species strong light limitation
   real(kind=dp), dimension(:), allocatable :: Mesozoo
 
   ! Private variable declarations:
@@ -595,6 +596,10 @@ contains
 
        ! don't include Rmax effect until end
 
+       strong_limitation = .false.
+
+       if (strong_limitation) then
+
        plank%growth%light(j) = &
             ! Steeles scheme like but with extended high light range
             ! (Steeles scheme has built in light inhibition)
@@ -603,6 +608,19 @@ contains
             ! Thalassosira nordelenski at higher light
             (1.0d0 - exp(-I_par(j) / (0.67d0 * rate%Iopt)) ) * &
             exp(-I_par(j) / (2.7d0 * rate%Iopt)) * 1.8d0
+
+       else
+
+       plank%growth%light(j) = &
+            ! Steeles scheme like but with extended high light range
+            ! (Steeles scheme has built in light inhibition)
+            ! 0.67, 2.7 and 1.8 are constants for making the fit
+            ! Steeles like at small light and making it fit Durbin for
+            ! Thalassosira nordelenski at higher light
+            (1.0d0 - exp(-I_par(j) / (0.33d0 * rate%Iopt)) ) * &
+            (exp(-I_par(j) / (30.d0 * rate%Iopt))) * 1.06d0
+
+    end if
 
        Uc(j) = (1.0d0 - rate%gamma) * plank%growth%light(j)
     END DO
@@ -940,9 +958,16 @@ contains
     ! amount of Mesozoo : const. winter conc + 3 summer Gaussians
     Mesozoo(1:M) = rate_mesozoo%winterconc + & 
          rate_mesozoo%summerconc * &
-         sum ( rate_mesozoo%sumpeakval * &
-           exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
-                                rate_mesozoo%sumpeakwid**2 ) )
+         ( sum ( rate_mesozoo%sumpeakval * &
+            exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) ) &
+         + sum ( rate_mesozoo%sumpeakval * &
+            exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) ) &
+         + sum ( rate_mesozoo%sumpeakval * &
+            exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) ) )
+
 
     average_prey = full_depth_average(Pmicro+D_PON+Pnano+Z)
 
@@ -1057,7 +1082,7 @@ contains
        food_limitation = (Pmicro(jj) + Pnano(jj) + Ppico(jj) + &
             D_PON(jj) + Z(jj) - rate_uzoo%PredSlope) / &
             (rate_uzoo%HalfSat + Pmicro(jj) + Pnano(jj) + Ppico(jj) &
-            + D_PON(jj) - rate_uzoo%PredSlope &
+            + D_PON(jj) + Z(jj) - rate_uzoo%PredSlope &
             + epsilon(rate_uzoo%HalfSat))
        
        denominator = (rate_uzoo%MicroPref * Pmicro(jj) + &
