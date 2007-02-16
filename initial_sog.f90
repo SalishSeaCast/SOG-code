@@ -134,8 +134,8 @@ contains
        ! convert fluorescence to uMol N
        Pmicro(i) = Pmicro(i)/N2chl
        ! split between micro and nano and pico plankton
-       Pmicro(i) = 4.0/6.0*Pmicro(i)
-       Pnano(i) = 1.0/4.0*Pmicro(i)
+       Pmicro(i) = 2.0/6.0*Pmicro(i)
+       Pnano(i) = Pmicro(i)
        Ppico(i) = Pnano(i)
        Z(i) = Pnano(i) !*** hard value to estimate
        D_PON(i) = Pmicro(i)/5. ! estimate
