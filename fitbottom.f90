@@ -96,7 +96,7 @@ contains
 
 
   subroutine bot_bound_time (day, day_time, &
-       Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot, Ppbot)
+       Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot, Ppbot, uZbot)
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
@@ -107,7 +107,7 @@ contains
     integer, intent(in) :: day
     real(kind=dp), intent(in) :: day_time
     real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, &
-         Pnbot, Ppbot
+         Pnbot, Ppbot, uZbot
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio
     
@@ -126,10 +126,11 @@ contains
     Pmbot = chl / (ratio + 1)
     Pnbot = ratio * Pmbot
     Ppbot = Pnbot
+    uZbot = Pnbot
   end subroutine bot_bound_time
   
 
-  subroutine bot_bound_uniform (M, Z, D_DON, D_PON, D_refr, D_bSi)
+  subroutine bot_bound_uniform (M, D_DON, D_PON, D_refr, D_bSi)
     ! Set the values at the bottom of the grid for those
     ! quantities that we don't have time series data for.
     use precision_defs, only: dp
@@ -137,13 +138,11 @@ contains
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), intent(inout), dimension(0:) :: &
-         Z,      &  ! microzooplantkon
          D_DON,  &  ! Dissolved organic nitrogen concentration profile array
          D_PON,  &  ! Particulate organic nitrogen concentration profile array
          D_refr, &  ! Refractory nitrogen concentration profile array
          D_bSi      ! Biogenic silicon concentration profile array
 
-    Z(M+1) = min(Z(M), 5.0d0)
     D_DON(M+1) = D_DON(M)
     D_PON(M+1) = D_PON(M)
     D_refr(M+1) = D_refr(M)

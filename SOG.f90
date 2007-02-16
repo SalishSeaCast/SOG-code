@@ -516,10 +516,10 @@ S_RHS%diff_adv%new = Gvector%s
      call bot_bound_time(day, day_time, &                             ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
           Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
-          P%nano(grid%M+1), P%pico(grid%M+1)) ! out
+          P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
-     call bot_bound_uniform(grid%M, Z, D%DON, D%PON, D%refr, D%bSi)
+     call bot_bound_uniform(grid%M, D%DON, D%PON, D%refr, D%bSi)
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason. !!!
