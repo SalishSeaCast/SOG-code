@@ -451,6 +451,12 @@ contains
             + (interp_array(j_below) - interp_array(j_below-1)) &
             * (value - search_array(j_below-1)) &
             / (search_array(j_below) - search_array(j_below-1))
+       if (search_array(j_below) == search_array(j_below-1)) then
+          write (*,*) "Problem in interp_value"
+          write (*,*) search_array(j_below), j_below
+          write (*,*) interp_array(j_below),interp_array(j_below-1)
+          stop
+       endif
     else
        write(stdout, *) "Warning: value = ", value, &
             " out of range in interp_value()"
