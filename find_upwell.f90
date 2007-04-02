@@ -96,6 +96,10 @@ contains
     do index = 1, grid%M
        inbottom = wupwell(index) * qty(index+1) ! upwind scheme
        squashing = wupwell(index) - wupwell(index-1)
+       if (-squashing*dt > grid%i_space(index)) then
+          write (*,*) "Problem in find_upwell, upwelling too strong for dt"
+          stop
+       endif
        valuelost = ( qty(index) * & 
             (grid%i_space(index) - wupwell(index-1) * dt) + & 
             qty(index+1) * (wupwell(index) * dt) ) / &
