@@ -101,11 +101,11 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
 
 ! so II is the incoming radiation
 
-      Qs = Qso*(((cloud%type(of)%A+cloud%type(of)%B*a)*a+cloud%type(of)%B*b**2.0/2.0)*&
+      Qs = Qso*(((cloud%type(of)%A+cloud%type(of)%B*a)*a+cloud%type(of)%B*b**2 /2.0)*&
            day_length+&
            (cloud%type(of)%A*b+2.0*cloud%type(of)%B*a*b)*&
            180.0/PI/15.0*(SIN(PI/180.0*(sunset-12.0)*15.0)-SIN(PI/180.0*(sunrise-12.0)*15.0)) + &
-           cloud%type(of)%B*b**2.0*&
+           cloud%type(of)%B*b**2 *&
            180.0/PI/60.0*(SIN(PI/180.0*(sunset-12.0)*30.0)-SIN(PI/180.0*(sunrise-12.0)*30.0)))/24.0 
 
 
