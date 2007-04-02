@@ -371,52 +371,65 @@ contains
     ! turbulent friction velocity, convective velocity scale, and
     ! Monin-Obukhov length scale
     u_star = (wbar%u(0) ** 2 + wbar%v(0) ** 2) ** (1.0d0/4.0d0)
-    w_star = (-Bf * h) ** (1.0d0/3.0d0)
-    L_mo = u_star ** 3 / (kapa * Bf)
+    ! the cube root of a negative number is defined but F90 has trouble and
+    ! gets a NaN: so do it explicitly
+    if (-Bf*h < 0) then
+       w_star = - (Bf * h) ** (1.0d0/3.0d0)
+    else
+       w_star = (-Bf * h) ** (1.0d0/3.0d0)
+    endif
+    L_mo = u_star ** 3 / (kapa * Bf + epsilon(Bf))
 
-    ! Calculate the coefficients of the non-dimension vertical shape
-    ! functions (Large, et al (1994), eqn 11).
-    call G_shape_parameters(h, h_i, Bf)
+    ! there is only a mixing layer if there is wind or negative buoyancy
+    if (abs(u_star) > epsilon(u_star) .or. Bf < epsilon(Bf)) then
+       ! Calculate the coefficients of the non-dimension vertical shape
+       ! functions (Large, et al (1994), eqn 11).
+       call G_shape_parameters(h, h_i, Bf)
 
-    ! Calculate the profiles of turbulent momentum, thermal & salinity
-    ! diffusivities in the mixing layer (Large, et al (1994), eqn 10).
-    K_ML%m = 0.0d0
-    K_ML%T = 0.0d0
-    K_ML%S = 0.0d0
-    do j = 1, h_i
-       if (grid%d_i(j) > h) then
-          K_ML%m(j) = 0.0d0
-          K_ML%T(j) = 0.0d0
-          K_ML%S(j) = 0.0d0
-       else
-          sigma = grid%d_i(j) / h
-          K_ML%m(j) = h &
-               * w_scale(h, grid%d_i(j), Bf, nondim_momentum_flux, c_m) &
-               * G_shape(G%m, sigma)
-          K_ML%T(j) = h &
-               * w_scale(h, grid%d_i(j), Bf, nondim_scalar_flux, c_s) &
-               * G_shape(G%T, sigma)
-          K_ML%S(j) = h &
-               * w_scale(h, grid%d_i(j), Bf, nondim_scalar_flux, c_s) &
-               * G_shape(G%S, sigma)
-       endif
-    enddo
+       ! Calculate the profiles of turbulent momentum, thermal & salinity
+       ! diffusivities in the mixing layer (Large, et al (1994), eqn 10).
+       K_ML%m = 0.0d0
+       K_ML%T = 0.0d0
+       K_ML%S = 0.0d0
+       do j = 1, h_i
+          if (grid%d_i(j) > h) then
+             K_ML%m(j) = 0.0d0
+             K_ML%T(j) = 0.0d0
+             K_ML%S(j) = 0.0d0
+          else
+             sigma = grid%d_i(j) / h
+             K_ML%m(j) = h &
+                  * w_scale(h, grid%d_i(j), Bf, nondim_momentum_flux, c_m) &
+                  * G_shape(G%m, sigma)
+             K_ML%T(j) = h &
+                  * w_scale(h, grid%d_i(j), Bf, nondim_scalar_flux, c_s) &
+                  * G_shape(G%T, sigma)
+             K_ML%S(j) = h &
+                  * w_scale(h, grid%d_i(j), Bf, nondim_scalar_flux, c_s) &
+                  * G_shape(G%S, sigma)
+          endif
+       enddo
 
-    ! Modify the values of the diffusivities at the grid layer
-    ! interface just above the mixing layer depth (Large, et al
-    ! (1994), eqn D6).  This reduces the mixing layer depth bias
-    ! discussed in Large, et al (1994), App. C.  See fig D1 to
-    ! understand why we use (h_g - 1) as the index.
-    !
-    ! Momentum
-    K_ML%m(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_momentum_flux, &
-         c_m, G%m, nu%m%total(h_g-1), K_ML%m(h_g-1))
-    ! Temperature
-    K_ML%T(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_scalar_flux, &
-         c_s, G%T, nu%T%total(h_g-1), K_ML%T(h_g-1))
-    ! Salinity
-    K_ML%S(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_scalar_flux, &
-         c_s, G%S, nu%S%total(h_g-1), K_ML%S(h_g-1))
+       ! Modify the values of the diffusivities at the grid layer
+       ! interface just above the mixing layer depth (Large, et al
+       ! (1994), eqn D6).  This reduces the mixing layer depth bias
+       ! discussed in Large, et al (1994), App. C.  See fig D1 to
+       ! understand why we use (h_g - 1) as the index.
+       !
+       ! Momentum
+       K_ML%m(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_momentum_flux, &
+            c_m, G%m, nu%m%total(h_g-1), K_ML%m(h_g-1))
+       ! Temperature
+       K_ML%T(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_scalar_flux, &
+            c_s, G%T, nu%T%total(h_g-1), K_ML%T(h_g-1))
+       ! Salinity
+       K_ML%S(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_scalar_flux, &
+            c_s, G%S, nu%S%total(h_g-1), K_ML%S(h_g-1))       
+    else ! no mixing layer
+       K_ML%m = 0.0d0
+       K_ML%T = 0.0d0
+       K_ML%S = 0.0d0
+    endif
 
     ! Calculate the overall profiles of turbulent momentum, thermal & salinity
     ! diffusivities in the water column
@@ -565,7 +578,7 @@ contains
          j  ! Loop index over depth
 
     ! Calculate double diffusion density ratio (Large, et al, (1994) eq'n 30)
-    R_rho = alpha%i(1:) * T%grad_i / (beta%i(1:) * S%grad_i)
+    R_rho = alpha%i(1:) * T%grad_i / (beta%i(1:) * S%grad_i + epsilon(S%grad_i(1)))
       
     do j = 1, grid%M
        ! Determine if there is double diffision, and if so, what type,
@@ -676,8 +689,10 @@ contains
        if (d < d_surf) then
           ! In the surface layer
           sigma = d / h
-       elseif (d_surf <= d .and. d < h) then
+       elseif (d_surf <= d ) then
           ! Between the surface layer and mixing layer depths
+          ! and below the mixing layer as scales in unstable circumstances
+          ! should continue (below Eqn 13)
           sigma = epsiln
        endif
        ! Calculate the turbulent velocity scale value
@@ -714,7 +729,7 @@ contains
                ! length scale
 
     ! Calculate the stability parameter value at the specified depth
-    zeta = d / L_mo
+    zeta = d / (L_mo + epsilon(L_mo))
     if (0.0d0 <= zeta) then
        ! Stable (eqn B1a)
        phi_m = 1.0d0 + 5.0d0 * zeta
@@ -753,7 +768,7 @@ contains
                ! length scale
 
     ! Calculate the stability parameter value at the specified depth
-    zeta = d / L_mo
+    zeta = d / (L_mo + epsilon(L_mo))
     if (0.0d0 <= zeta) then
        ! Stable (eqn B1a)
        phi_s = 1.0d0 + 5.0d0 * zeta
@@ -819,7 +834,11 @@ contains
     ! Momentum
     w%m%h = w_scale(h, h, Bf, nondim_momentum_flux, c_m)
     ! Calculate the stability parameter value at the mixing layer depth
-    zeta_h = h / (L_mo + epsilon(L_mo))
+    if (abs(L_mo) > epsilon(L_mo)) then
+       zeta_h = h / L_mo
+    else ! this gets the sign right, the value is infinite
+       zeta_h = Bf
+    endif
     if (zeta_h <= 0.d0) then
        ! Unstable and neutral forcing; gradients are zero (Large, et
        ! al (1994), below eqn 18)
@@ -931,9 +950,9 @@ contains
 
     ! Calculate mixing layer shape function value, and its gradient at
     ! mixing layer depth (eqn 18)
-    G%h = nu%tot_h / (h * w%h)
+    G%h = nu%tot_h / (h * w%h + epsilon(h))
     G%grad_h = -nu%tot_grad_h / w%h - nu%tot_h * w%grad_h &
-         / (h * w%h ** 2)
+         / (h * w%h ** 2 + epsilon(h))
     if (G%h < 0.0d0) then
        ! Diffusivity must be positive
        G%h = 0.0d0
@@ -1107,7 +1126,7 @@ contains
        ! specified flux, and depth,
        gamma_value = C_star * kapa                     &
             * (c_s * kapa * epsiln) ** (1.0d0 / 3.0d0) &
-            * flux / (w_S * h)
+            * flux / (w_S * h + epsilon(h))
     else
        ! No forcing, or it's stable, or we're below the mixing layer.
        gamma_value = 0.0d0
