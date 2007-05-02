@@ -74,6 +74,7 @@ contains
 
   subroutine read_forcing (wind_n, met_n, river_n)
 
+    use input_processor, only: getpari
     use unit_conversions, only: CtoK
 
     implicit none
@@ -84,8 +85,18 @@ contains
     ! Local variables:
     integer :: ic, j, para, stn, year, day, month
     real(kind=sp) :: hour
+    integer :: integration ! number of days to integrate the Englishman river
+    integer, parameter :: Ieriver = 10000
+    real(kind=sp) :: EriverI(Ieriver)
 
+    if (river_n > Ieriver) then
+       write (*,*) "in forcing.f90 need to increase size of EriverI array"
+       stop
+    endif
     
+    ! read the number of days over which to integrate the Englishman river
+    integration = getpari("Englishman integ days")
+
     ! WIND
     open(unit = 12, file = "../sog-forcing/wind/SHcompRotFmt.dat", &
          status = "OLD", action = "READ")
@@ -148,8 +159,16 @@ contains
        read(12, *) year, month, day, Eriver(ic)
     enddo
     ! checking day, month, year, here would be a GOOD THING
-    close(12) 
 
+    ! Want integrated Englishman River data over "integration" days
+    do ic=1, integration
+       EriverI(ic) = sum(Eriver(1:ic))/float(ic)
+    enddo
+    do ic=integration+1,river_n
+       EriverI(ic) = sum(Eriver(ic-integration:ic))/integration
+    enddo
+    Eriver(1:river_n) = EriverI(1:river_n)
+    close(12) 
   end subroutine read_forcing
        
   subroutine get_forcing (year, day, day_time, &
