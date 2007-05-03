@@ -58,14 +58,14 @@
 
 ! Physics model parameters
 ! Turbulence:
-"nu_w_m"        1.0d-4          "internal wave breaking momentum mixing"
-"nu_w_s"        1.0d-5          "internal wave breaking scalar mixing"
-"shear smooth"	0.6d0		"shear diffusivity smoothing parameter"
+"nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
+"nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
+"shear smooth"	0.8d0		"shear diffusivity smoothing parameter"
 ! Fresh water flux:
 "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
-"Fw_scale"	3.5d-7		"fresh water scale factor for river flows"
+"Fw_scale"	8.48d-10		"fresh water scale factor for river flows"
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
-"Fw_depth"      3.0d0             "interface thickness"
+"Fw_depth"      3.5d0             "interface thickness"
 "use_Fw_nutrients" .true.       "include influence of Fw nutrients"
 
 ! Biology model parameters:
