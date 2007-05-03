@@ -30,11 +30,6 @@ module initial_sog
   DOUBLE PRECISION, PARAMETER:: &
        Uo = 0.0d0,     &  ! m/s
        Vo = 0.0d0,     &  ! m/s
-!!$       P_micro = 0.3D-3, &
-! *** Parameter value setting of P_nano replaced by a variable version in 
-! *** initial_mean below, so that initial value of flagellates biomass may
-! *** be set to zero without recompiling
-!       P_nano = 2.6D-3 * 0., & !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
 
        ! estimate of deep NH from Nitrate/Salinity fits.  Gives deep
        ! nitrate as 31.5 uM but we measure 30.5 --- rest must be
@@ -49,7 +44,7 @@ contains
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_
-    use input_processor, only: getpars
+    use input_processor, only: getpars, getpardv
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(out) :: &
@@ -78,14 +73,9 @@ contains
     character*80 :: fn           
     ! Place holders for reading CTD data file
     integer :: dum1
+    ! fraction to split Micro/Nano/Pico into
+    real (kind=dp) :: split(3)
     real :: depth, dumc, dumt, dump, dumo
-    ! *** P_nano variable replaces parameter version above,
-    ! *** so that initial value of flagellates biomass may
-    ! *** be set to zero without recompiling
-    real(kind=dp) :: P_nano
-
-       !V.flagella.01 add comm. 3.6D-3, &!2.6D-3 , & !7.5D-04 gN/m^3, winter estimate
-       P_nano = 2.6d-3
 
     U_new(1) = Uo
     V_new(1) = Vo
@@ -126,6 +116,10 @@ contains
     open(unit=46, file=fn, status="old")
     ! *** Maybe rework this so we can read orginal (not stripped) CTD
     ! *** data files?
+
+    ! split between micro and nano and pico plankton
+    call getpardv("initial chl split", 3, split)
+
     do i = 1, d%M + 1
        read(46, *) dum1, depth, T_new(i), dumc, Pmicro(i), &
             dumt, dump, dumo, S_new(i)  
@@ -133,10 +127,12 @@ contains
        T_new(i) = T_new(i) + 273.15
        ! convert fluorescence to uMol N
        Pmicro(i) = Pmicro(i)/N2chl
-       ! split between micro and nano and pico plankton
-       Pmicro(i) = 2.0/6.0*Pmicro(i)
-       Pnano(i) = Pmicro(i)
-       Ppico(i) = Pnano(i)
+
+       ! split up photoplankton
+       Ppico(i) = split(3)*Pmicro(i)
+       Pnano(i) = split(2)*Pmicro(i)
+       Pmicro(i) = split(1)*Pmicro(i)
+
        Z(i) = Pnano(i) !*** hard value to estimate
        D_PON(i) = Pmicro(i)/5. ! estimate
        D_DON(i) = D_PON(i)/10. ! estimate
