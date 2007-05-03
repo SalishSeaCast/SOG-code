@@ -592,7 +592,7 @@ contains
             ! and organisms can have a maximum growth temp
             * min(max(rate%maxtemp - KtoC(temp(j)), 0.0d0), &
                   rate%temprange) / &
-            rate%temprange
+            (rate%temprange + epsilon(rate%temprange))
 
        ! don't include Rmax effect until end
 
@@ -640,7 +640,7 @@ contains
           Oup_cell(j) = NO(j) * rate%kapa * NH_effect / &
                (rate%k + NO(j) * rate%kapa * NH_effect + NH(j)) * &
                (NO(j) + NH(j))**rate%N_x / &
-               (rate%N_o + (NO(j) + NH(j))**rate%N_x)
+               (rate%N_o + (NO(j) + NH(j))**rate%N_x + epsilon(rate%N_o))
        ELSE
           Oup_cell(j) = 0.
        END IF
@@ -648,7 +648,7 @@ contains
           Hup_cell(j) = NH(j) / &
                (rate%k + NO(j) * rate%kapa * NH_effect + NH(j))* &
                (NO(j) + NH(j))**rate%N_x / &
-               (rate%N_o + (NO(j) + NH(j))**rate%N_x)
+               (rate%N_o + (NO(j) + NH(j))**rate%N_x + epsilon(rate%N_o))
        ELSE
           Hup_cell(j) = 0.
        END IF
@@ -973,7 +973,7 @@ contains
 
     Mesozoo(1:M) = Mesozoo(1:M) &
          * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) +Z(1:M)) &
-         / average_prey
+         / ( average_prey + epsilon(average_prey))
 
     do jj = 1,M
        ! global food limitation
@@ -1058,7 +1058,8 @@ contains
     ! Mesodinium rubrum
 
     Mesorub_eat = rate_mesorub%R * (Ppico - rate_mesorub%PicoPredSlope) / &
-         (rate_mesorub%PicoHalfSat + Ppico - rate_mesorub%PicoPredSlope) &
+         (rate_mesorub%PicoHalfSat + Ppico - rate_mesorub%PicoPredSlope &
+         + epsilon(rate_mesorub%PicoHalfSat)) &
          * Pnano * temp_Q10
 
     do jj=1,M
