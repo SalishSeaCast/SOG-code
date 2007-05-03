@@ -13,10 +13,6 @@ module freshwater
   !
   !   F_n -- Fresh water contribution to salinity flux
   !
-  !   F_temp -- Fresh water contribution to temperature flux **FTV**
-  !
-  !   vel_press -- Fresh water contribution to velocity **FTV**
-  !
   ! Public Subroutines:
   !
   !   init_freshwater -- Allocate memory for fresh water quantity
@@ -40,8 +36,6 @@ module freshwater
        Fw_surface, &  ! Add all of the fresh water on the surface?
        Ft,         &  ! Total fresh water flux
        F_n,        &  ! Fresh water contribution to salinity flux
-       F_temp,     &  ! Fresh water contribution to temperature flux **FTV**
-       vel_press,  &  ! Fresh water contribution to velocity **FTV**
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
        ! Diagnostics:
@@ -72,9 +66,7 @@ module freshwater
        Ft,  &  ! Total fresh water flux
        upwell  ! Upwelling velocity from river flows parameterization
   real(kind=dp), dimension(:), allocatable :: &
-       F_n, &     ! Fresh water contribution to salinity flux
-       F_temp, &  ! Fresh water contribution to temperature flux **FTV**
-       vel_press  ! Fresh water contribution to velocity **FTV**
+       F_n     ! Fresh water contribution to salinity flux
   !
   ! Diagnostic:
   real(kind=dp) :: &
@@ -89,9 +81,6 @@ module freshwater
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
        upwell_const  ! Maximum upwelling velocity (tuning parameter)
-  real(kind=dp), dimension(366) :: &
-       delta_temp ! difference in temp from surface to bottom (fit) **FTV**    
-
 
 contains
 
@@ -112,10 +101,7 @@ contains
   subroutine read_freshwater_params()
     ! Read the fresh water parameter values from the infile.
     use input_processor, only: getpard, getparl
-    use fundamental_constants, only: pi   ! **FTV**
     implicit none
-
-    integer :: day ! count through the days in a year ! **FTV**
 
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
@@ -129,17 +115,6 @@ contains
     endif
     ! Include effect of Fw nutrients?
     use_Fw_nutrients = getparl('use_Fw_nutrients')
-
-! **FTV**
-    ! difference in temps from surface to deep, -1 is difference from surface
-    ! temperatures to river temperatures.
-    do day=1,366
-       delta_temp(day) = 5.567 - 4.907 * (1 + cos(2*pi*(day - 16.3)/365.25)) &
-            + 1.188 * (1 + cos(4*pi*(day - 38.0)/365.25)) &
-            + 0.484 * (1 + cos(6*pi*(day + 11.7)/365.25)) &
-            - 0.194 * (1 + cos(8*pi*(day - 8.2)/365.25)) - 1.
-    enddo
- ! **FTV**
 
   end subroutine read_freshwater_params
 
@@ -156,8 +131,6 @@ contains
     ! Variables:
     use grid_mod, only: &
          grid  ! Grid parameters and depth & spacing arrays
-    use numerics, only: &
-         day    ! Year-day counter **FTV**
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
 
@@ -223,18 +196,10 @@ contains
     ! contribution to the salinity profile
     if (Fw_surface) then
        F_n = 0.0d0
-       ! add the river effect to the surface temp heating effect
-       wbar%t(0) = wbar%t(0) + Ft * delta_temp(day) ! **FTV**
-       F_temp = 0.d0 ! **FTV**
-       vel_press = 0.d0  ! **FTV**
     else
        Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
        F_n = cbeta * Fw
-       F_temp = Fw * delta_temp(day) !  **FTV**
-       vel_press = 0.30 *(Qriver/Qmean)  * exp(-grid%d_i / (Fw_depth * h)) ! **FTV**
     endif
-    F_temp = 0.d0  ! this removes the effect **FTV**
-    vel_press = 0.d0 ! this removes the effect **FTV**
 
   end subroutine freshwater_phys
 
@@ -324,8 +289,8 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Fresh water flux and salinity contribution profile arrays"
-    allocate(Fw(0:M), F_n(0:M), F_temp(0:M), vel_press(0:M), &
-         stat=allocstat)  ! **FTV**
+    allocate(Fw(0:M), F_n(0:M), &
+         stat=allocstat) 
     call alloc_check(allocstat, msg)
   end subroutine alloc_freshwater_variables
 
@@ -339,8 +304,8 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "Fresh water flux and salinity contribution profile arrays"
-    deallocate(Fw, F_n, F_temp, vel_press, &
-         stat=dallocstat)  ! **FTV**
+    deallocate(Fw, F_n, &
+         stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_freshwater_variables
 
