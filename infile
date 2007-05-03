@@ -319,6 +319,9 @@
 ! match N03 particles
 "bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
+! Englishman River Integration
+"Englishman integ days"  20       "Days over which to integrate Englishman River"
+
 ! Vary parameters
 "vary%wind%enabled"    .false.       "Variation of wind data?"
 "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
@@ -330,5 +333,6 @@
 "ctd_in"
 	"input/ctd_in/SG0414004.str"	     
 	"initial conditions CTD file"
+"initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
 
 ! end of file
