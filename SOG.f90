@@ -65,7 +65,7 @@ program SOG
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! ** Temporary
-  use freshwater, only: S_riv
+  use freshwater, only: S_riv, upwell
 
   !
   ! Subroutines and functions:
@@ -146,6 +146,9 @@ program SOG
   ! below.
   call init_input_processor(datetime_str(runDatetime))
 
+!  ! Initialize the salinity linearity file
+!  open (unit=129, file="salinity_check")
+
   ! Initialize fundamental constants
   ! *** This is here because of the pgf90 bug that prevents f from
   ! *** being a parameter
@@ -160,6 +163,7 @@ program SOG
   ! Initialize time series writing code
   call init_timeseries_output(codeId, datetime_str(runDatetime), &
        initDatetime)
+
   ! Initialize profiles writing code
   call init_profiles_output(codeId, datetime_str(runDatetime), &
        initDatetime)
@@ -211,6 +215,7 @@ program SOG
   ! This calculates the values of the grid point depth arrays (*%g) of
   ! the 4 water properties.
   call calc_rho_alpha_beta_Cp_profiles(T%new, S%new)
+
   ! Interpolate the values of density and specific heat capacity at
   ! the grid layer interface depths
   rho%i = interp_i(rho%g)
@@ -245,6 +250,7 @@ program SOG
 
      CALL irradiance_sog(cf_value, day_time, day, &
           I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano, P%pico)
+
      DO count = 1, max_iter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the velocity field and water column
         ! temperature, and salinity at the grid layer interface depths
@@ -276,7 +282,7 @@ program SOG
         ! This sets the values of the river salinity diagnostic
         ! (S_riv), the surface turbulent kinematic salinity flux
         ! (wbar%s(0)), and the profile of fresh water contribution to
-        ! the salinity (F_n).
+        ! the salinity (F_n)
         call freshwater_phys(Qinter, Einter, S%old(1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
@@ -287,7 +293,7 @@ program SOG
         ! and the surface buoyancy flux (Bf).  .
         call calc_buoyancy(T%new, S%new, h%new, I, rho%g, alpha%g, &
              beta%g, Cp%g)
-   
+
         ! Calculate the turbulent diffusivity profile arrays using the
         ! K Profile Parameterization (KPP) of Large, et al (1994)
         !
@@ -295,7 +301,7 @@ program SOG
         ! variables that are declared in the turbulence module so that
         ! they can be used by other modules.
         call calc_KPP_diffusivity(Bf, h%new, h%i, h%g)
-        
+
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
         ! the physics quantities.
@@ -306,7 +312,7 @@ program SOG
         ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
         ! pressure gradient term vectors (*_RHS%C_pg).
         call build_physics_equations(dt, U%new, V%new, T%new, S%new)
-     
+
 ! *** Physics equations refactoring bridge code
 Gvector%u = U_RHS%diff_adv%new
 Gvector%v = V_RHS%diff_adv%new
@@ -315,6 +321,7 @@ Gvector%s = S_RHS%diff_adv%new
 
         ! Calculate profile of upwelling velocity
         call upwell_profile(Qinter, wupwell)
+
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
         call vertical_advection (grid, dt, S%new, wupwell, &
@@ -325,6 +332,7 @@ Gvector%s = S_RHS%diff_adv%new
              Gvector%u)
         call vertical_advection (grid, dt, V%new, wupwell, &
              Gvector%v)
+
 ! *** Physics equations refactoring bridge code
 U_RHS%diff_adv%new = Gvector%u
 V_RHS%diff_adv%new = Gvector%v
@@ -352,6 +360,10 @@ S_RHS%diff_adv%new = Gvector%s
         call solve_phys_eqns(grid%M, day, time, &  ! in
              U%old, V%old, T%old, S%old,        &  ! in
              U%new, V%new, T%new, S%new)           ! out
+        if (minval(S%new) < 0) then
+           write (*,*) 'Salinity less than 0'
+           stop
+        endif
 
         ! Update boundary conditions at surface, and bottom of grid
         U%new(0) = U%new(1)
@@ -374,6 +386,7 @@ S_RHS%diff_adv%new = Gvector%s
         ! This calculates the values of the grid point depth arrays (*%g) of
         ! the 4 water properties.
         call calc_rho_alpha_beta_Cp_profiles(T%new, S%new)
+
         ! Interpolate the values of density and specific heat capacity at
         ! the grid layer interface depths
         rho%i = interp_i(rho%g)
@@ -564,7 +577,8 @@ S_RHS%diff_adv%new = Gvector%s
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
-     ! write (*,*) S_riv, 0.5*(S%new(2)+S%new(3))
+!      write (129,*) S_riv, 0.5*(S%new(2)+S%new(3)), upwell
+
   end do  !--------- End of time loop ----------
 
   write (stdout,*) "For Ft tuning"
@@ -574,6 +588,7 @@ S_RHS%diff_adv%new = Gvector%s
   ! Close output files
   call timeseries_output_close
   call profiles_output_close
+!  close(129)
 
   ! Deallocate memory
   call dalloc_numerics_variables
