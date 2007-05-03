@@ -13,6 +13,10 @@ module freshwater
   !
   !   F_n -- Fresh water contribution to salinity flux
   !
+  !   F_temp -- Fresh water contribution to temperature flux **FTV**
+  !
+  !   vel_press -- Fresh water contribution to velocity **FTV**
+  !
   ! Public Subroutines:
   !
   !   init_freshwater -- Allocate memory for fresh water quantity
@@ -36,6 +40,8 @@ module freshwater
        Fw_surface, &  ! Add all of the fresh water on the surface?
        Ft,         &  ! Total fresh water flux
        F_n,        &  ! Fresh water contribution to salinity flux
+       F_temp,     &  ! Fresh water contribution to temperature flux **FTV**
+       vel_press,  &  ! Fresh water contribution to velocity **FTV**
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
        ! Diagnostics:
@@ -66,7 +72,9 @@ module freshwater
        Ft,  &  ! Total fresh water flux
        upwell  ! Upwelling velocity from river flows parameterization
   real(kind=dp), dimension(:), allocatable :: &
-       F_n  ! Fresh water contribution to salinity flux
+       F_n, &     ! Fresh water contribution to salinity flux
+       F_temp, &  ! Fresh water contribution to temperature flux **FTV**
+       vel_press  ! Fresh water contribution to velocity **FTV**
   !
   ! Diagnostic:
   real(kind=dp) :: &
@@ -81,6 +89,9 @@ module freshwater
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
        upwell_const  ! Maximum upwelling velocity (tuning parameter)
+  real(kind=dp), dimension(366) :: &
+       delta_temp ! difference in temp from surface to bottom (fit) **FTV**    
+
 
 contains
 
@@ -101,7 +112,10 @@ contains
   subroutine read_freshwater_params()
     ! Read the fresh water parameter values from the infile.
     use input_processor, only: getpard, getparl
+    use fundamental_constants, only: pi   ! **FTV**
     implicit none
+
+    integer :: day ! count through the days in a year ! **FTV**
 
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
@@ -115,6 +129,18 @@ contains
     endif
     ! Include effect of Fw nutrients?
     use_Fw_nutrients = getparl('use_Fw_nutrients')
+
+! **FTV**
+    ! difference in temps from surface to deep, -1 is difference from surface
+    ! temperatures to river temperatures.
+    do day=1,366
+       delta_temp(day) = 5.567 - 4.907 * (1 + cos(2*pi*(day - 16.3)/365.25)) &
+            + 1.188 * (1 + cos(4*pi*(day - 38.0)/365.25)) &
+            + 0.484 * (1 + cos(6*pi*(day + 11.7)/365.25)) &
+            - 0.194 * (1 + cos(8*pi*(day - 8.2)/365.25)) - 1.
+    enddo
+ ! **FTV**
+
   end subroutine read_freshwater_params
 
 
@@ -130,6 +156,8 @@ contains
     ! Variables:
     use grid_mod, only: &
          grid  ! Grid parameters and depth & spacing arrays
+    use numerics, only: &
+         day    ! Year-day counter **FTV**
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
 
@@ -146,25 +174,42 @@ contains
     ! Local variables
     real(kind=dp), parameter :: &
          Qmean = 2720.0d0 ! Mean fraser river flow from entrainment fit
+    ! totalfresh water into system (Fraser + rest multiplied up from Englishman
+    real (kind=dp) :: totalfresh 
+    ! coefficients for surface salinity fit
+    real (kind=dp) :: calpha, cbeta, cgamma
+
+
+    ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
+    totalfresh = Qriver + 55.0*Eriver
 
     ! Parameterized fit of the surface salinity of the Strait of
-    ! Georgia at station S3 based on the river flows.  (Derived by
-    ! Kate Collins 16-Jun-2005)  This value is not directly used
-    ! in the model but is used to make sure the tuned Ft value
-    ! is correct.
-    S_riv = 29.1166d0 - Qriver * (0.0019d0) - Eriver * (0.0392d0)
-    
-    ! Tuned fresh water flux value (to give, on average) the parameterized
-    ! value above.  
-    Ft = Fw_scale * (0.0019d0 * Qriver + 0.0392d0 * Eriver) * &
-         (Qriver/ Qmean) ** (0.d0-0.41d0)
-    
+    ! Georgia at station S3 based on the river flows.  (Re-derived by
+    ! 26-Mar-2007, labbook 49 and then on 59, 63, 71 and finally 74)  
+    ! This value is not 
+    ! directly used in the model but is used to make sure the tuned Ft value
+    ! is correct. tanh fn means no matter what the total fresh, a salinity
+    ! below 0 is not predicted.
+
+    cbeta = 30.0d0  ! basic salinity
+    calpha = -9919.0d0
+    cgamma = 19387.0d0
+
+    S_riv = cbeta * (1.d0 - tanh((totalfresh-calpha)/cgamma) ) &
+         / (1.0d0 - tanh(-calpha/cgamma))
+
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
-    ! Jun-2006 (See entrainment.pdf) exponent is 0.41 from entrainment
-    ! reduced to 0.25 based on match to Olivier and more NO3 needed in winter
-    upwell = upwell_const * (Qriver / Qmean) ** 0.d0
+    ! Jun-2006 (See entrainment.pdf) exponent with significant modifications
+    ! in Mar-2007 (labbook pg 59)
+    
+    upwell = upwell_const * totalfresh/3624.d0 * exp(-totalfresh/3624.d0) &
+         /0.368
 
+    ! Tuned fresh water flux value (to give, on average) the parameterized
+    ! value above.  
+    Ft = Fw_scale*totalfresh*S_old/cbeta
+    
     ! Calculate the surface turbulent kinematic salinity flux (Large,
     ! et al (1994), eqn A2d).  Note that fresh water flux is added via
     ! Bf in calc_buoyancy().
@@ -178,10 +223,19 @@ contains
     ! contribution to the salinity profile
     if (Fw_surface) then
        F_n = 0.0d0
+       ! add the river effect to the surface temp heating effect
+       wbar%t(0) = wbar%t(0) + Ft * delta_temp(day) ! **FTV**
+       F_temp = 0.d0 ! **FTV**
+       vel_press = 0.d0  ! **FTV**
     else
        Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
-       F_n = 29.626d0 * Fw
+       F_n = cbeta * Fw
+       F_temp = Fw * delta_temp(day) !  **FTV**
+       vel_press = 0.30 *(Qriver/Qmean)  * exp(-grid%d_i / (Fw_depth * h)) ! **FTV**
     endif
+    F_temp = 0.d0  ! this removes the effect **FTV**
+    vel_press = 0.d0 ! this removes the effect **FTV**
+
   end subroutine freshwater_phys
 
 
@@ -270,8 +324,8 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Fresh water flux and salinity contribution profile arrays"
-    allocate(Fw(0:M), F_n(0:M), &
-         stat=allocstat)
+    allocate(Fw(0:M), F_n(0:M), F_temp(0:M), vel_press(0:M), &
+         stat=allocstat)  ! **FTV**
     call alloc_check(allocstat, msg)
   end subroutine alloc_freshwater_variables
 
@@ -285,8 +339,8 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "Fresh water flux and salinity contribution profile arrays"
-    deallocate(Fw, F_n, &
-         stat=dallocstat)
+    deallocate(Fw, F_n, F_temp, vel_press, &
+         stat=dallocstat)  ! **FTV**
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_freshwater_variables
 
