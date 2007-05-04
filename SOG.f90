@@ -105,6 +105,7 @@ program SOG
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
+  use increment_time, only: new_year
 
   ! Inherited modules
   ! *** Goal is to make these go away
@@ -570,7 +571,8 @@ S_RHS%diff_adv%new = Gvector%s
           datetime_str(initDatetime), year, day, day_time, dt, grid)
 
      ! Increment time, calendar date and clock time
-     call new_year(day_time, day, year, time, dt, initDatetime%mo)
+     call new_year(day_time, day, year, time, dt)
+     write (*,*) day_time, day, year, time
      scount = scount + 1
      !*** Fix this to be grid independent
      sumS = sumS + 0.5*(S%new(2)+S%new(3))
