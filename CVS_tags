@@ -50,4 +50,9 @@ turbulence_refactoring_completed - immediately after completion of
 			           lots of subroutine into the
 			           turbulence module. (2006/11/29)
 
+after_freshwater_reparameterization - immediately after completion of
+				      reparameterization of freshwater
+				      part of model based on Susan's
+				      March 2007 work.  (2007/05/03)
+
 # end of file
