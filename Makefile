@@ -61,7 +61,7 @@ allocate1.o	\
 \
 irradiance_sog.o 	\
 air_sea_fluxes.o surface_flux_sog.o \
-new_year.o \
+increment_time.o \
 \
 SOG.o
 
