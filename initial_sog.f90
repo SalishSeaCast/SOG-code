@@ -5,7 +5,7 @@ module initial_sog
   ! Initialization of core variables including the reading of the CTD start
   ! file
   !
-  ! Public Parameters:
+  ! Public Parameters:     
   !
   ! N2chl -- ratio of mg/m3 of chl to uM of N in phytoplankton
   !
