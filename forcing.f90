@@ -10,20 +10,23 @@ module forcing
 
   implicit none
   private
-  public :: read_variation, read_forcing, get_forcing
+  public :: read_variation, read_forcing, get_forcing, &
+! and for varying bottom and initial temperatures
+       vary_forcing, vary
 
   ! control variable
   TYPE :: vary_quantity
-     logical :: enabled ! is the parameter (wind, cf, rivers) to be varied
+     logical :: enabled ! is the parameter (wind, cf, rivers, T) to be varied
      real(kind=dp) :: shift ! use wind/rivers shifted in time (in years)
      real(kind=dp) :: fraction ! multiply wind/rivers strength by this amount
      logical :: fixed ! use a fixed value 
      ! (if this is set to true, shift and fraction are not used and value is)
      real(kind=dp) :: value ! use this value if fixed is set true
+     real(kind=dp) :: addition ! add this value (after fraction is multiplied)
   END TYPE vary_quantity
 
   TYPE :: vary_forcing
-     TYPE(vary_quantity) :: wind, cf, rivers
+     TYPE(vary_quantity) :: wind, cf, rivers, temperature
   END TYPE vary_forcing
 
   TYPE (vary_forcing) :: vary
@@ -50,23 +53,57 @@ contains
 
     call read_vary ("vary%wind",vary%wind)
 
+    if (vary%wind%enabled) then
+       if  (vary%wind%fixed) then
+          write (*,*) 'Fixed wind magnitude has not been implemented'
+          call exit(1)
+       else
+          if (vary%wind%shift /= dint(vary%wind%shift)) then
+             write (*,*) 'Non-full year shifts have not been implemented ',&
+                  'for the wind'
+             call exit(1)
+          endif
+          if (vary%wind%addition /= 0) then
+             write (*,*) "addtion not implemented for wind"
+             call exit(1)
+          endif
+       endif
+    endif
+
     call read_vary ("vary%cf",vary%cf)
     if (vary%cf%enabled .and. .not.vary%cf%fixed) then
        if (vary%cf%shift /= int(vary%cf%shift)) then
           write (*,*) "non-integer cf shifts not implemented"
           call exit(1)
        endif
+       if (vary%cf%addition /= 0) then
+          write (*,*) "addition not impleemented for cf"
+          call exit(1)
+       endif
     endif
-    
+
     call read_vary ("vary%rivers",vary%rivers)
-    if (vary%wind%enabled) then
-       if  (vary%wind%fixed) then
-          write (*,*) 'Fixed wind magnitude has not been implemented'
+    if (vary%rivers%enabled .and. .not.vary%rivers%fixed) then
+       if (vary%rivers%addition /= 0 ) then
+          write (*,*) "addition not implemented for rivers"
           call exit(1)
-       elseif (vary%wind%shift /= dint(vary%wind%shift)) then
-          write (*,*) 'Non-full year shifts have not been implemented ',&
-               'for the wind'
-          call exit(1)
+       endif
+    endif
+
+    call read_vary ("vary%temperature", vary%temperature)
+    if (vary%temperature%enabled) then
+       if (vary%temperature%fixed) then
+          write (*,*) "Fixed temperature not enabled"
+          call exit (1)
+       else
+          if (vary%temperature%shift /= 0) then
+             write (*,*) "Fixed temperature not enabled"
+             call exit (1)
+          endif
+          if (vary%temperature%fraction /= 1) then
+             write (*,*) "Multiplication of temperature not enabled, use addition"
+             call exit(1)
+          endif
        endif
     endif
 
@@ -153,7 +190,7 @@ contains
     close(12)
 
     ! Englishman River
-    open(12, file="../sog-forcing/rivers/eng200123456.dat", &
+    open(12, file="../sog-forcing/rivers/english20012345.fmt", &
          status = "OLD", action = "READ")
     do ic = 1, river_n
        read(12, *) year, month, day, Eriver(ic)
@@ -241,7 +278,14 @@ contains
 
     accul_day = accum_day(year, day)
     
-    atemp_value = atemp(accul_day,j)
+    ! TEMPERATURE
+
+    if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
+       atemp_value = atemp(accul_day,j) + sngl(vary%temperature%addition)
+    else
+       atemp_value = atemp(accul_day,j)
+    endif
+
     humid_value = humid(accul_day,j)
 
     ! WIND
@@ -290,6 +334,7 @@ contains
        else
           quantity%shift = getpard(quantity_string//"%shift")
           quantity%fraction = getpard(quantity_string//"%fraction")
+          quantity%addition = getpard(quantity_string//"%addition")
        endif
     endif
 
