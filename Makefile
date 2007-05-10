@@ -44,20 +44,18 @@ malloc.o unit_conversions.o datetime.o \
 core_variables.o water_properties.o input_processor.o grid.o numerics.o \
 \
 mean_param.o declarations.o surface_forcing.o \
-initial_sog.o \
 \
 turbulence.o freshwater.o buoyancy.o mixing_layer.o diffusion.o \
 baroclinic_pressure.o physics_eqn_builder.o \
 physics_model.o \
 find_upwell.o \
-fitbottom.o \
+forcing.o fitbottom.o \
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
-forcing.o \
 \
 user_output.o timeseries_output.o profiles_output.o \
 \
-allocate1.o	\
+initial_sog.o allocate1.o	\
 \
 irradiance_sog.o 	\
 air_sea_fluxes.o surface_flux_sog.o \
