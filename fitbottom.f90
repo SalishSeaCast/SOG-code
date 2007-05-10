@@ -102,6 +102,7 @@ contains
     use precision_defs, only: dp
     use unit_conversions, only: CtoK
     use fundamental_constants, only: pi
+    use forcing, only: vary_forcing, vary
     implicit none
     ! Arguments:
     integer, intent(in) :: day
@@ -114,7 +115,11 @@ contains
     arg = 2 * pi * (day + day_time / 86400.) / 365.25
     
     Tbot = bottom_value(arg, 'temperature')          ! in Celcius
-    Tbot = CtoK(Tbot)
+    if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
+       Tbot = CtoK(Tbot) + vary%temperature%addition
+    else
+       Tbot = CtoK(Tbot)
+    endif
     Sbot = bottom_value(arg, 'salinity')
     Nobot = bottom_value(arg, 'nitrate')
     Sibot = bottom_value(arg, 'silicon')
