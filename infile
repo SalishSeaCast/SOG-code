@@ -326,6 +326,7 @@
 "vary%wind%enabled"    .false.       "Variation of wind data?"
 "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
 "vary%rivers%enabled"  .false.       "Variation of river flow?"
+"vary%temperature%enabled" .false.   "Variation of temperature?"
 
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
