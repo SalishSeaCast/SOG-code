@@ -11,6 +11,8 @@ module initial_sog
   !
 
   use precision_defs, only: dp
+  use unit_conversions, only: CtoK
+  use forcing, only: vary_forcing, vary
 
   implicit none
   private
@@ -123,8 +125,12 @@ contains
     do i = 1, d%M + 1
        read(46, *) dum1, depth, T_new(i), dumc, Pmicro(i), &
             dumt, dump, dumo, S_new(i)  
-       ! *** Maybe we should have a degC2degK function? 
-       T_new(i) = T_new(i) + 273.15
+       ! Change temperature to Kelvin
+       if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
+          T_new(i) = CtoK(T_new(i)) + vary%temperature%addition
+       else
+          T_new(i) = CtoK(T_new(i))
+       endif
        ! convert fluorescence to uMol N
        Pmicro(i) = Pmicro(i)/N2chl
 
