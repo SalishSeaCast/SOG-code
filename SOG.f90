@@ -572,7 +572,6 @@ S_RHS%diff_adv%new = Gvector%s
 
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt)
-     write (*,*) day_time, day, year, time
      scount = scount + 1
      !*** Fix this to be grid independent
      sumS = sumS + 0.5*(S%new(2)+S%new(3))
