@@ -281,7 +281,9 @@ contains
     ! TEMPERATURE
 
     if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
-       atemp_value = atemp(accul_day,j) + sngl(vary%temperature%addition)
+       ! multiply water temperature increment but 1.33 to get observed 
+       ! Masson and Cummins 2004 air temperature increment
+       atemp_value = atemp(accul_day,j) + sngl(vary%temperature%addition)*1.33
     else
        atemp_value = atemp(accul_day,j)
     endif
