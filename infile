@@ -73,7 +73,7 @@
 "flagellates_on"	.true.	"include flagellates in model?"
 "remineralization"	.true.	"include remineralization loop in model?"
 "use microzooplankton"  .true.  "include microzooplankton in model?"
-
+"single species light"  .false.  "high light limitation for single species case"
 ! Zooplankton values:
 ! tuned
 "Mesozoo, winter conc"       0.1d0 "Mesozoo background concentration"
