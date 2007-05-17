@@ -14,6 +14,8 @@ module NPZD
   !
   !   microzooplankton -- are they eating things?
   !
+  !   strong_limitation -- light pattern for a single species
+  !
   ! Public subroutines:
   !
   !   init_biology -- Initialize biology model.
@@ -38,6 +40,7 @@ module NPZD
        flagellates, &       ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton, &  ! Active or not
+       strong_limitation, & ! single species light limitation
        ! diagnostics
        Mesozoo, &
        f_ratio, &  ! Ratio of new to total production profile
@@ -220,6 +223,7 @@ contains
     flagellates = getparl('flagellates_on')
     remineralization = getparl('remineralization')
     microzooplankton = getparl('use microzooplankton')
+    strong_limitation = getparl('single species light')
 
 
     ! Biological rate parameters
@@ -596,8 +600,6 @@ contains
 
        ! don't include Rmax effect until end
 
-       strong_limitation = .false.
-
        if (strong_limitation) then
 
        plank%growth%light(j) = &
@@ -614,9 +616,7 @@ contains
        plank%growth%light(j) = &
             ! Steeles scheme like but with extended high light range
             ! (Steeles scheme has built in light inhibition)
-            ! 0.67, 2.7 and 1.8 are constants for making the fit
-            ! Steeles like at small light and making it fit Durbin for
-            ! Thalassosira nordelenski at higher light
+            ! much broader pattern for a bucket of organisms
             (1.0d0 - exp(-I_par(j) / (0.33d0 * rate%Iopt)) ) * &
             (exp(-I_par(j) / (30.d0 * rate%Iopt))) * 1.06d0
 
