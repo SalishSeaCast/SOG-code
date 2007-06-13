@@ -67,6 +67,7 @@
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
 "Fw_depth"      3.5d0             "interface thickness"
 "use_Fw_nutrients" .true.       "include influence of Fw nutrients"
+"northern_return_flow_on" .false. "include a return freshwater flow from the north?"
 
 ! Biology model parameters:
 ! Model complexity flags:
