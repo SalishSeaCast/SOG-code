@@ -109,6 +109,9 @@ module turbulence
        ! *** Temporary until turbulence refactoring is completed
        w, &  ! Turbulent velocity scale profile arrays
              ! values at the mixing layer depth
+       ! Types (as required by new pg compiler)
+       turbulent_fluxes, & ! type for wbar
+       mTS_arrays, & ! type for k
        ! Subroutines:
        init_turbulence, calc_KPP_diffusivity, calc_turbulent_fluxes, &
        dalloc_turbulence_variables, &
