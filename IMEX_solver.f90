@@ -35,6 +35,8 @@ module IMEX_solver
        ! Variables:
        ! *** Temporary for refactoring
        Hvector, &
+       ! Types (as required by new pg compiler)
+       RHS, & ! type for Hvector
        ! Subroutines:
        init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
