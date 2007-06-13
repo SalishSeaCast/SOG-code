@@ -55,6 +55,12 @@ module core_variables
        N,  &  ! Nitrate & ammonium concentation profile arrays
        Si, &  ! Silicon concentration profile arrays
        D,  &  ! Detritus concentration profile arrays
+       ! Types (as required by new pg compiler)
+       profiles, & ! type for U, V, T, S
+       nitrogen, & ! type for N
+       plankton, & ! type for P
+       detritus, & ! type for D
+                   ! Z and Si are just dp real
        ! Subroutines:
        alloc_core_variables, dalloc_core_variables
 
