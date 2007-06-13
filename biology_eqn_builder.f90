@@ -77,6 +77,11 @@ module biology_eqn_builder
        D_PON_RHS,       &  ! Particulate organic nitrogen detritus RHS arrays
        D_refr_RHS,      &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS,       &  ! Biogenic silicon detritus RHS arrays
+       ! Types (as required by new pg compiler)
+       diff_coeffs_matrix, & ! type for Bmatrix
+       new_old,            & ! sub-type for Bmatrix
+       RHS,                & ! type for *_RHS
+       new_old_arrays,     & ! sub-type of RHS
        ! Subroutines:
        read_sink_params, build_biology_equations, &
        new_to_old_bio_RHS, new_to_old_bio_Bmatrix, &

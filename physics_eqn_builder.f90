@@ -55,6 +55,11 @@ module physics_eqn_builder
        V_RHS,   &  ! V velocity component (along-strait) right-hand side arrays
        T_RHS,   &  ! Temperature right-hand side arrays
        S_RHS,   &  ! Salinity right-hand side arrays
+       ! Types (as required by new pg compiler)
+       diff_coeffs_matrix, & ! type for Bmatrix
+       new_old, &            ! sub-type of diff_coeffs_matrix
+       RHS, &                ! type for *_RHS
+       new_old_arrays, &     ! sub-type for RHS
        ! Subroutines:
        build_physics_equations, &
        new_to_old_phys_RHS, new_to_old_phys_Bmatrix, &
