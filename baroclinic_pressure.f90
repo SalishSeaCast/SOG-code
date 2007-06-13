@@ -40,6 +40,8 @@ module baroclinic_pressure
        dPdy_b, &  ! Baroclinic pressure gradient y (along-strait) component
        ut,     &  ! Layer expansion (m) at eastern side
        vt,     &  ! layer expansion (m) at western side
+       ! Types (as required by new pg compiler)
+       new_old_arrays, & ! type for ut, vt
        ! Subroutines:
        init_baroclinic_pressure, baroclinic_P_gradient, &
        new_to_old_vel_integrals, dalloc_baro_press_variables
