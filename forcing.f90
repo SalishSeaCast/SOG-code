@@ -12,7 +12,10 @@ module forcing
   private
   public :: read_variation, read_forcing, get_forcing, &
 ! and for varying bottom and initial temperatures
-       vary_forcing, vary
+       vary_forcing, vary, &
+       ! Types (as required by new pg compiler)
+       vary_quantity ! sub-type of vary_forcing
+
 
   ! control variable
   TYPE :: vary_quantity
