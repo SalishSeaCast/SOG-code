@@ -125,9 +125,11 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
          ! KK is evaluated on the grid points         
          ! N2chl is correction uM to mg/m3 chl
          ! limit of 2.5/m is set from Cruise 02-03 and 5 W/m2 seen at 2 m
-         KK = 0.0787d0 + 0.0368d0 * (N2chl &
+         ! re-fit Jun 13, 2007 pg 113 lab-book and in fitlight
+         ! 1.5d0 is correction for CTD fluoresence which seems high
+         KK = 0.0910d0 + 0.0289d0*1.5d0 * (N2chl &
               * (Pmicro(k) + Pnano(k) + Ppico(k))) ** 0.665 &
-              + (5.97d-22 * Qriver ** 5.5 + 0.595d0) * exp(-d%d_g(k) / 1.72d0)
+              + (2.62d-22 * Qriver ** 5.5 + 0.445d0) * exp(-d%d_g(k) / 2.56d0)
          KK = min(2.5d0, KK)
          Ipar_i(k) = Ipar_i(k-1) * exp(-d%i_space(k) * KK)
          Iparmax(k) = Iparmax(k-1) * exp(-d%i_space(k) * KK)
