@@ -83,8 +83,8 @@ module freshwater
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
        upwell_const, &  ! Maximum upwelling velocity (tuning parameter)
-       Northern_frac ! fraction of outgoing freshwater returned from the North
-
+       Northern_frac, & ! fraction of outgoing freshwater returned from the North
+       phyto_sum
 contains
 
   subroutine init_freshwater(M)
@@ -98,6 +98,8 @@ contains
     call alloc_freshwater_variables(M)
     ! Read fresh water parameter values from the infile.
     call read_freshwater_params()
+
+    phyto_sum = 3.d0
   end subroutine init_freshwater
 
 
@@ -165,18 +167,19 @@ contains
 
     ! Parameterized fit of the surface salinity of the Strait of
     ! Georgia at station S3 based on the river flows.  (Re-derived by
-    ! 26-Mar-2007, labbook 49 and then on 59, 63, 71 and finally 74)  
+    ! S.Allen numerous times.  This time, late June 2007
+    ! Labbook 125 to 131)  
     ! This value is not 
     ! directly used in the model but is used to make sure the tuned Ft value
     ! is correct. tanh fn means no matter what the total fresh, a salinity
     ! below 0 is not predicted.
 
     cbeta = 30.0d0  ! basic salinity
-    calpha = -9919.0d0
-    cgamma = 19387.0d0
+    calpha = 2440.0d0
+    cgamma = 0.0633d0
 
-    S_riv = cbeta * (1.d0 - tanh((totalfresh-calpha)/cgamma) ) &
-         / (1.0d0 - tanh(-calpha/cgamma))
+    S_riv = cbeta * exp(-totalfresh/calpha) / &
+         ( cgamma + exp(-totalfresh/calpha) )
 
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
@@ -188,7 +191,8 @@ contains
 
     ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
-    Ft = Fw_scale*totalfresh*S_old/cbeta
+    Ft = Fw_scale*totalfresh*S_old/cbeta * &
+         ((totalfresh)/3624.d0)**0.120
     
     ! Calculate the surface turbulent kinematic salinity flux (Large,
     ! et al (1994), eqn A2d).  Note that fresh water flux is added via
@@ -206,12 +210,12 @@ contains
     else
        Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
        if (Northern_return) then
-          FN = Northern_frac * 0.5d0 * &
-               (1.d0 - tanh((grid%d_i - 2.d0 * Fw_depth * h)/(Fw_depth * h)))
+          FN = Northern_frac * 0.5d0 * Ft * &
+               (1.d0 - tanh((grid%d_i - 15.d0)/(7.5d0)))
        else
           FN = 0.
        endif
-       F_n = cbeta * (Fw + FN)
+       F_n = cbeta * (Fw + FN*0.d0)  ! remove salinity effect of return flow
     endif
 
   end subroutine freshwater_phys
@@ -221,6 +225,7 @@ contains
     ! Calculate the freshwater biological fluxes.
 
     use grid_mod, only: grid
+    use core_variables, only: S, P
     implicit none
     
     character (len=*), intent(in) :: qty
@@ -229,6 +234,11 @@ contains
     real (kind=dp), dimension(0:), intent(out) :: distrib_flux
 
     integer :: i
+    real (kind=dp) :: use_value
+
+    phyto_sum = phyto_sum*(1.d0-900./(30.*86400.)) + 900./(30*86400.) &
+         * sum(P%micro(1:10))/10.
+    write (*,*) phyto_sum,' pp'
 
     if (use_Fw_nutrients) then
        if (Fw_surface) then
@@ -258,12 +268,36 @@ contains
           surf_flux = 0.
           if (qty.eq."nitrate") then
              ! vector variation does not give the same results as the loop
+             if (current_value(1).gt.4.5) then
+                use_value = phyto_sum
+             elseif (current_value(1).lt.3.5) then
+                use_value = (30.5-1.0-current_value(1))
+             else
+                use_value = phyto_sum*(4.5-current_value(1)) +  &
+                (current_value(1)-3.5)*(30.5-1.0-current_value(1))
+             endif
              do i=0,grid%M
                 ! if phyto are using the nitrate the grad is zero'd. 
                 ! 4.0 = 2 x (Michalis-Menton K)
                 distrib_flux(i) = Fw(i) * phys_circ_nitrate * &
-                     min(4.0,current_value(i))/4.0
+                     min(4.0,current_value(i))/4.0 + &
+                     FN(i) * 2 * use_value *30.d0/  &
+                     (30.d0-S%new(0)) * &
+                     min(4.0,current_value(i))/4.0 
+!                if (current_value(1).lt.10.) then
+!                   write (*,134) i, 0.5*i, Fw(i) * phys_circ_nitrate * &
+!                     min(4.0,current_value(i))/4.0, &
+!                     FN(i) * 2 * (30.0 - current_value(1)) *30.d0/  &
+!                     (30.d0-20.d0) * &
+!                     min(4.0,current_value(i))/4.0 
+!0134 format (1x,i3,1x,f5.2,1x,e13.5,1x,e13.5)
+!                endif
              enddo
+             do i=grid%M,1,-1
+                if (distrib_flux(i).gt.distrib_flux(i-1)) &
+                     distrib_flux(i-1) = distrib_flux(i)
+             enddo
+!             if (current_value(1).lt.10.) stop
           elseif (qty.eq."Pmicro") then
              distrib_flux = Fw * (phys_circ_Pmicro)
           elseif (qty.eq."Pnano") then
