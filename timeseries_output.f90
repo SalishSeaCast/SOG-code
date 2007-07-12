@@ -120,6 +120,7 @@ contains
          "! velocity components, temperature, & salinity; at surface, ",     &
          "and averaged over"/,                                               &
          "! top 3 m of water column"/,                                       &
+         "and surface par"/,                                                 &
          "*FromCode: ", a/,                                                  &
          "*RunDateTime: ", a/,                                               &
          "*InitialCTDDateTime: ", a/,                                        &
@@ -128,8 +129,9 @@ contains
          "surface v velocity, 3 m avg v velocity, ",                         &
          "surface temperature, 3 m avg temperature, ",                       &
          "surface salinity, 3 m avg salinity"/,                              &
+         "surface PAR"/,                                                     &
          "*FieldUnits: hr since ", a, " LST, None, m, m/s, m/s, m/s, m/s, ", &
-         "deg C, deg C, None, None"/,                                        &
+         "deg C, deg C, None, None, W/m2"/,                                  &
          "*EndOfHeader")
   end subroutine write_std_phys_timeseries_header
 
@@ -192,7 +194,7 @@ contains
 
   subroutine write_std_timeseries(time, grid, &
        ! Variables for standard physics model output
-       iter_cnt, h, U, V, T, S, &
+       iter_cnt, h, U, V, T, S, Ipar, &
        ! Variables for standard biology model output
        NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi)
     ! Write results of the current time step to the time series files.
@@ -209,7 +211,8 @@ contains
     integer, intent(in) :: &
          iter_cnt  ! Timestep iteration count
     real(kind=dp), intent(in) :: &
-         h  ! Mixing layer depth [m]
+         h, &  ! Mixing layer depth [m]
+         Ipar  ! Surface PAR
     real(kind=dp), dimension(0:), intent(in) :: &
          U,      &  ! Cross-strait velocity component profile [m/s]
          V,      &  ! Along-strait velocity component profile [m/s]
@@ -261,7 +264,7 @@ contains
     T_avg_3m = depth_average(KtoC(T), 0.0d0, 3.0d0)
     S_avg_3m = depth_average(S, 0.0d0, 3.0d0)
     write(std_phys_timeseries, 100) time, iter_cnt, h, U(0), U_avg_3m, &
-         V(0), V_avg_3m, KtoC(T(0)), T_avg_3m, S(0), S_avg_3m
+         V(0), V_avg_3m, KtoC(T(0)), T_avg_3m, S(0), S_avg_3m, Ipar
 100 format(f10.4, 2x, i3, 80(2x, f8.4))
 
     ! Write standard biology model time series results file header.

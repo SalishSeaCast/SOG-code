@@ -542,7 +542,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! write_user_timeseries() below.                              !!!
      call write_std_timeseries(time / 3600., grid,                    &
        ! Variables for standard physics model output
-       count, h%new, U%new, V%new, T%new, S%new,                      &
+       count, h%new, U%new, V%new, T%new, S%new, I_par(0),             &
        ! Variables for standard biology model output
        N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, D%bSi)
 
