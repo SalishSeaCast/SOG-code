@@ -36,6 +36,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       REAL(KIND=DP):: II, cos_Z_max, IImax      
       REAL(KIND=DP), DIMENSION(0:d%M)::Iparmax
       real(kind=dp), dimension(0:d%M) :: Ipar_i ! Ipar values on interfaces
+      real(kind=dp) :: Ired, Iblue ! light in red and blue part of spectrum
 
 !!!Define Okta Cloud Model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! based on Dobson and Smith, table 5
@@ -116,6 +117,8 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
       In(0) =  II        
       Ipar_i(0) = II*0.44  !44% of total light is PAR at surface (Jerlov)
       Iparmax(0) = IImax*0.44
+      Iblue = 0.70*In(0)
+      Ired = 0.30*In(0)
 
 
 ! Light is defined on interfaces
@@ -125,7 +128,7 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
          ! KK is evaluated on the grid points         
          ! N2chl is correction uM to mg/m3 chl
          ! limit of 2.5/m is set from Cruise 02-03 and 5 W/m2 seen at 2 m
-         ! re-fit Jun 13, 2007 pg 113 lab-book and in fitlight
+         ! re-fit Jun 13, 2007 pg 113-114 lab-book and in fitlight
          ! 1.5d0 is correction for CTD fluoresence which seems high
          KK = 0.0910d0 + 0.0289d0*1.5d0 * (N2chl &
               * (Pmicro(k) + Pnano(k) + Ppico(k))) ** 0.665 &
@@ -139,10 +142,12 @@ SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
             check = 1                 
          end if               
          ! Total light for heat budget
-         In(k) = 0.70d0 * In(k-1) * exp(-d%i_space(k) &
-              * (0.8102d0 * KK + 1.1854d0)) &
-              + 0.30d0 * In(k-1) * exp(-d%i_space(k) &
+         Iblue = Iblue * exp(-d%i_space(k) &
+              * (0.8102d0 * KK + 1.1854d0))
+         Ired = Ired * exp(-d%i_space(k) &
               * (0.8226d0 * KK - 0.0879d0))
+         In(k) = Iblue + Ired
+
       end do
 
       Ipar(0) = Ipar_i(0)
