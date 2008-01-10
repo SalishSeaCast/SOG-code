@@ -238,7 +238,6 @@ contains
 
     phyto_sum = phyto_sum*(1.d0-900./(30.*86400.)) + 900./(30*86400.) &
          * sum(P%micro(1:10))/10.
-    write (*,*) phyto_sum,' pp'
 
     if (use_Fw_nutrients) then
        if (Fw_surface) then
