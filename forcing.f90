@@ -2,8 +2,10 @@ module forcing
   ! package to return forcing values and allow them to be shifted in
   ! time or multiply them up or set them constant
 
-  ! we will assume that all data starts on Jan 1, 2001.  Wind data is in
-  ! a single array with 1 hour per line, cf, atemp and humid are in array
+  ! Data is coming from historic data files. We have ctd data for some 70,80,90's.
+  ! Metar data goes back to 50's and river data goes back 10's.  
+  ! Read in 2 years of data at a time. Wind data is in a single array 
+  ! with 1 hour per line, cf, atemp and humid are in array
   ! of day and time, and the river flows are one value per day.
 
   use precision_defs, only: dp, sp
@@ -34,15 +36,23 @@ module forcing
 
   TYPE (vary_forcing) :: vary
 
-  ! Number of years of data (maximum for all the files)
-  integer, parameter :: noyears=6
 
+  ! Number of years of data  (set to 2 years)
+  !
+  integer, parameter :: wind_n=((365+366)*24), & ! number of days used for wind array
+       met_n=(365+366), &  !# days used for met arrays (CF,AT,HUM)
+       river_n=(365+366)   !# days used for river array
   ! Data variables
-  real(kind=dp) :: wind_eastnorth(noyears*366*24), &
-       wind_northwest(noyears*366*24)
-  real(kind=sp) :: cf(noyears*366,24), atemp(noyears*366,24), &
-       humid(noyears*366,24)
-  real(kind=sp) :: Qriver(noyears*366), Eriver(noyears*366)
+
+  real(kind=dp) :: wind_eastnorth(wind_n), &
+       wind_northwest(wind_n)
+  real(kind=sp) :: cf(met_n,24), atemp(met_n,24), &
+       humid(731,24)
+  real(kind=sp) :: Qriver(river_n), Eriver(river_n)
+
+  !The starting year (startyear + 1 more year of data)
+
+  integer :: startyear
 
 contains
 
@@ -112,22 +122,24 @@ contains
 
   END SUBROUTINE read_variation
 
-  subroutine read_forcing (wind_n, met_n, river_n)
+  subroutine read_forcing 
 
     use input_processor, only: getpari
     use unit_conversions, only: CtoK
 
     implicit none
 
-    integer, intent(in) :: wind_n, met_n, river_n ! length of input files
-    ! should switch this to being read in.
-
     ! Local variables:
-    integer :: ic, j, para, stn, year, day, month
+    integer :: ic, jc,j,  para, stn, year, day, month
     real(kind=sp) :: hour
     integer :: integration ! number of days to integrate the Englishman river
     integer, parameter :: Ieriver = 10000
     real(kind=sp) :: EriverI(Ieriver)
+    logical ::  found_data
+    real(kind=dp) :: wind_en, wind_nw, fraser, englishman ! temporary variables    
+    ! startyears for the various variables that can be shifted
+    integer :: wind_startyear, cf_startyear, rivers_startyear 
+    integer :: rivers_startday ! startday for rivers allowing part year shifts
 
     if (river_n > Ieriver) then
        write (*,*) "in forcing.f90 need to increase size of EriverI array"
@@ -136,69 +148,163 @@ contains
     
     ! read the number of days over which to integrate the Englishman river
     integration = getpari("Englishman integ days")
+    
+    ! read the start year in for initialization of runtime for model
+    startyear = getpari("startyear")
 
     ! WIND
-    open(unit = 12, file = "../sog-forcing/wind/SHcompRotFmt.dat", &
-         status = "OLD", action = "READ")
+    ! shift the start year if requested
+    if (vary%wind%enabled) then
+       wind_startyear = startyear + int(vary%wind%shift)
+    else
+       wind_startyear = startyear
+    endif
 
-    do ic = 1,wind_n
-       read(12, *) day, month, year, hour, &
-            wind_eastnorth(ic), wind_northwest(ic)
+    open(unit = 12, file = "../sog-forcing/wind/SH_total.dat", &
+         status = "OLD", action = "READ")
+    
+    found_data = .false.
+    do while (.not. found_data)
+       read (12,*) day, month, year, hour, wind_en, wind_nw
+
+       if (year == wind_startyear) then
+          
+          wind_eastnorth(1) = wind_en
+          wind_northwest(1) = wind_nw
+
+          do jc = 2, wind_n             
+             read(12,*) day, month, year, hour, wind_eastnorth(jc), &
+                  wind_northwest(jc)
+          enddo          
+          found_data = .true.
+       endif
     enddo
-    ! checking day, month, year, time here would be a GOOD THING
+
     close (12)
 
     ! Cloud Fraction
+    ! shift the start year if requested
+    if (vary%cf%enabled .and. .not.(vary%cf%fixed) ) then
+       cf_startyear = startyear + int(vary%cf%shift)
+    else
+       cf_startyear = startyear
+    endif
 
-    open(12, file="../sog-forcing/met/YVRCombCF.dat", &
+    open(12, file="../sog-forcing/met/YVRhistCF", &
          status = "OLD", action = "READ")
-    do ic = 1, met_n
-       read(12, *) stn, year, month, day, para, (cf(ic,j), j = 1, 24)
+        
+    found_data = .false.
+    do while (.not. found_data)
+       read (12,*) stn, year, month, day, para, (cf(1,j),j=1,24)
+
+       if (year == cf_startyear)then
+
+          do jc = 2, met_n             
+             read(12,*)stn,year,month,day,para,(cf(jc,j),j=1,24)
+          enddo
+          found_data = .true.
+       endif
     enddo
-    ! checking day, month, year, stn and para here would be a GOOD THING
+
     close (12)
 
 
     ! Air Temperature
 
-    open(12, file="../sog-forcing/met/YVRCombATemp.dat", &
+    open (12, file="../sog-forcing/met/YVRhistAT", &
          status = "OLD", action = "READ")
-    do ic = 1, met_n
-       read(12, *) stn, year, month, day, para, (atemp(ic,j), j = 1, 24)
-       do j= 1, 24
-!          atemp(ic,j) = CtoK(atemp(ic,j)/10.)
-          atemp(ic,j) = atemp(ic,j) / 10. + 273.15
-       enddo
+    
+    found_data = .false.
+    do while (.not. found_data)
+       read (12,*) stn, year, month, day, para, (atemp(1,j),j=1,24)
+
+       if (year == startyear)then
+
+          do jc = 2, met_n
+             read (12,*) stn, year, month, day, para,(atemp(jc,j),j=1,24)
+             do j= 1, 24
+                atemp(jc,j) = CtoK(atemp(jc,j) / 10.)
+             enddo
+          enddo
+          found_data = .true.
+       endif
     enddo
-    ! checking day, month, year, stn and para here would be a GOOD THING
+
+    write(6,*)(atemp(1,j),j=1,24)
+
+    close (5)
+
     close(12)
 
     ! Humidity
 
-    open(12, file="../sog-forcing/met/YVRCombHum.dat", &
+    open(12, file="../sog-forcing/met/YVRhistHum", &
          status = "OLD", action = "READ")
-    do ic = 1, met_n
-       read(12, *) stn, year, month, day, para, (humid(ic,j), j = 1, 24)
+    
+    found_data = .false.
+    do while (.not. found_data)
+       read (12,*) stn, year, month, day, para, (humid(1,j),j=1,24)
+
+       if (year == startyear)then
+
+          do jc = 2, met_n             
+             read(12,*)stn,year,month,day,para,(humid(jc,j),j=1,24)
+          enddo          
+          found_data = .true.
+       endif
     enddo
-    ! checking day, month, year, stn and para here would be a GOOD THING
+
     close(12)
 
     ! Fraser River
-    open(12, file="../sog-forcing/rivers/Fraser_2001_2005.dat", &
-         status = "OLD", action = "READ")
-    do ic = 1, river_n
-       read(12, *) year, month, day, Qriver(ic)
+    ! shift the start year if requested
+    if (vary%rivers%enabled .and. .not. vary%rivers%fixed) then
+       call shift_time (1, startyear, vary%rivers%shift, &
+            rivers_startday, rivers_startyear)
+    else
+       rivers_startday = 1
+       rivers_startyear = startyear
+    endif
+
+    open(12, file="../sog-forcing/rivers/Fraser_historic.dat", &
+         status = "OLD", action = "READ")  
+
+    found_data = .false.
+    do while(.not. found_data)
+       read(12,*) year, month, day, fraser
+
+       if(year == rivers_startyear .and. day == rivers_startday) then
+          
+          Qriver(1) = fraser
+
+          do jc = 2, river_n             
+             read(12,*) year, month, day, Qriver(jc)
+          enddo          
+          found_data = .true.
+       endif
     enddo
-    ! checking day, month, year, here would be a GOOD THING
+
     close(12)
 
     ! Englishman River
-    open(12, file="../sog-forcing/rivers/english20012345.fmt", &
+    ! uses same shift as Fraser
+    open(12, file="../sog-forcing/rivers/Englishman_historic.dat", &
          status = "OLD", action = "READ")
-    do ic = 1, river_n
-       read(12, *) year, month, day, Eriver(ic)
+
+    found_data = .false.
+    do while (.not. found_data)
+       read (12,*) year, month, day, englishman
+
+       if (year == rivers_startyear .and. day == rivers_startday) then
+          
+          Eriver(1) = englishman
+
+          do jc = 2, river_n             
+             read (12,*) year, month, day, Eriver(jc)
+          enddo          
+          found_data = .true.
+       endif
     enddo
-    ! checking day, month, year, here would be a GOOD THING
 
     ! Want integrated Englishman River data over "integration" days
     do ic=1, integration
@@ -227,17 +333,18 @@ contains
     real(kind=sp), intent(out) :: humid_value  ! humidity
     real(kind=dp), intent(out) :: unow, vnow ! wind components
 
-    ! we will assume that all data starts on Jan 1, 2001.  Wind data is in
-    ! a single array with 1 hour per line, cf, atemp and humid are in array
-    ! of day and time, and the river flows are one value per day.
+    ! Wind data is in a single array with 1 hour per line, cf, atemp and
+    ! hmid are in array of day and time, and the river flows are one value per day.
 
     ! local variable
 
-    integer:: accul_day ! accumulated day number with Jan 1, 2001 being 1
-    integer:: shift_day, shift_year ! shifted day and year
+    integer:: accul_day ! accumulated day number starting from startyear
     integer:: j ! index to hour, 1 am has j=2 
     integer:: index_day ! index into wind data for the end of the day before
     real(kind=dp) :: hr_frac ! fraction of the hour
+
+
+    accul_day = accum_day(year,day)
 
     ! RIVERS
 
@@ -245,13 +352,6 @@ contains
        Qinter = SNGL(vary%rivers%value)
        Einter = 0.
     else
-       if (vary%rivers%enabled) then
-          call shift_time (day, year, vary%rivers%shift, &
-               shift_day, shift_year)
-          accul_day = accum_day(shift_year, shift_day)
-       else
-          accul_day = accum_day(year,day)
-       endif 
        Qinter = (day_time * Qriver(accul_day) & 
             + (86400 - day_time) * Qriver(accul_day-1)) / 86400.
        Einter = (day_time * Eriver(accul_day) &
@@ -271,16 +371,12 @@ contains
        if (vary%cf%fixed) then
           cf_value = sngl(vary%cf%value)
        else
-          accul_day = accum_day(year+int(vary%cf%shift), day)
           cf_value = sngl(cf(accul_day,j)*vary%cf%fraction)
        endif
     else
-       accul_day = accum_day(year, day)
        cf_value = cf(accul_day,j)
     endif
 
-    accul_day = accum_day(year, day)
-    
     ! TEMPERATURE
 
     if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
@@ -294,12 +390,6 @@ contains
     humid_value = humid(accul_day,j)
 
     ! WIND
-
-    if (vary%wind%enabled) then ! note no fixed wind values
-       accul_day = accum_day(year+int(vary%wind%shift), day)
-    else
-       accul_day = accum_day(year, day)
-    endif
 
     ! wind for the previous day, last value is at
     index_day = (accul_day-1) * 24
@@ -347,27 +437,20 @@ contains
 
   integer function accum_day (year, day) result(day_met)
 
-    ! calculates the accumulated day based on Jan 1, 2001 being day 1.
+    ! calculates the accumulated day from Jan 1,startyear.Based on the fact that 2 years of data is read in.
 
     INTEGER,INTENT(IN) :: day, year ! year day and year
     
-    IF (year==2001) then
-       day_met=day
-    else if (year==2002) then
-       day_met=day + 365
-    else if (year==2003) then
-       day_met=day + 730
-    else if (year==2004) then
-       day_met=day + 1095
-    else if (year==2005) then
-       day_met=day + 1461
-    else if (year==2006) then
-       day_met=day + 1826
+    if (year == startyear) then
+       day_met = day
     else
-       write (*,*) "unknown year in met data", year
-       call exit(1)
+       if (leapyear(year-1)) then
+          day_met = day + 366
+       else
+          day_met = day + 365
+       endif
     endif
-
+    
   end function accum_day
 
   subroutine shift_time (day, year, shift, &
@@ -420,5 +503,5 @@ contains
     endif
     
   end function leapyear
-
+      
 end module forcing
