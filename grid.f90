@@ -81,7 +81,7 @@ module grid_mod
        depth_average, full_depth_average, gradient_g, gradient_i, interp_i, &
        interp_g, &
        ! Subroutines:
-       dalloc_grid, init_grid, interp_value
+       dalloc_grid, init_grid, interp_value,interp_array
 
   ! Public type definition:
   !
@@ -89,6 +89,7 @@ module grid_mod
   type :: grid_
      integer :: &
           M  ! Number of grid points
+          
      real(kind=dp) :: &
           D  ! Depth of bottom of grid [m]
      real(kind=dp), dimension(:), allocatable :: &
@@ -391,6 +392,75 @@ contains
          + qty_i(1:) * below_i%factor
   end function interp_g
 
+  subroutine interp_array(x,y,x1,y1)
+    ! Interpolates to find y1, the values of the function y at 
+    ! the points in x.
+    ! Example: depth is the depth array, y is the temperature array, 
+    ! x1 is the new depth array where you want to interpolate 
+    ! to find the temperatures at.
+    !
+    !
+
+    implicit none
+    !Local Variables
+    integer :: i,j, k_index,count
+    !Arguments:
+    real(kind=dp), dimension(0:81), intent(in) :: &
+         x,        &
+         x1,       &
+         y        
+    
+    real(kind=dp), dimension(0:81), intent(out) :: &
+         y1
+    
+    real dx(0:80),dy(0:80), k(0:81)
+
+    k_index = 0
+    
+
+    ! Set y1 to zeros (in our case we want same name for original array and interpolated array
+   
+
+
+    do i=0,size(x)-2,1
+       do j=0,size(x1)-1,1
+          if(x1(j) < x(i+1) .AND. x1(j) >= x(i)) then
+             k_index = k_index + 1
+             k(k_index-1) = i
+          endif
+       enddo
+    enddo
+
+
+
+    
+    !Diff 
+
+    do i=0,size(x)-2
+       dx(i) = x(i+1) - x(i)
+       dy(i) = y(i+1) - y(i)
+    enddo
+
+    !Interpolation 
+
+
+    do i=0,size(x1)-1
+
+       if (i<size(x1)) then
+          y1(i) = y(k(i)) + (x1(i) - x(k(i))) * (dy(k(i))/dx(k(i)))
+       else
+          if (k(i) < size(x)) then
+             y1(i) = y(k(i)) + (x1(i) - x(k(i))) * (dy(k(i))/dx(k(i)))
+          else
+             y1(i) = y(k(i)) + (x1(i) - x(k(i))) * (dy(k(i-1))/dx(k(i-1)))
+          endif
+       endif
+    enddo
+
+
+    
+    
+  end subroutine interp_array
 
   subroutine interp_value(value, lb, search_array, interp_array, &  ! in
        interp_val, j_below)                                         ! out
@@ -465,6 +535,7 @@ contains
   end subroutine interp_value
 
 
+
   subroutine alloc_grid
     ! Allocate memory for grid arrays.
     use malloc, only: alloc_check
@@ -517,3 +588,4 @@ contains
   end subroutine dalloc_grid
   
 end module grid_mod
+
