@@ -131,11 +131,12 @@ program SOG
   ! Wind data
   real(kind=dp) unow, vnow
 
-  integer :: wind_n, met_n, river_n ! length of various forcing files
+
 
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
 
+  
 
   ! ---------- Beginning of Initialization Section ----------
   ! Get the current date/time from operating system to timestamp the
@@ -197,10 +198,8 @@ program SOG
   END DO
 
   ! Length of forcing data files (move to be read in)
-  wind_n = 46056 - 8 ! with wind shifted to LST we lose 8 records
-  met_n = 1918
-  river_n = 1826
-  call read_forcing (wind_n, met_n, river_n)
+
+  call read_forcing 
   call read_variation
 
   ! Read the cruise id from stdin to use to build the file name for
@@ -209,6 +208,7 @@ program SOG
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        P%pico, Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
        h%new, grid, cruise_id)
+
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
@@ -231,7 +231,11 @@ program SOG
 
   ! Close the input parameters file
   close(stripped_infile)
-  ! ---------- End of Initialization Section ----------
+
+ 
+
+
+  ! ---------- End of Initialization Section ---------
 
   do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store %new components of various variables from time step just
@@ -245,9 +249,12 @@ program SOG
      call new_to_old_bio_Bmatrix()
 
      ! Get forcing data
-     call get_forcing (year, day, day_time, &
+     call get_forcing(year, day, day_time, &
           Qinter, Einter, cf_value, atemp_value, humid_value, &
           unow, vnow)
+     
+
+     
 
      CALL irradiance_sog(cf_value, day_time, day, &
           I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano, P%pico)
@@ -570,6 +577,8 @@ S_RHS%diff_adv%new = Gvector%s
      call write_user_profiles(codeId, datetime_str(runDatetime),      &
           datetime_str(initDatetime), year, day, day_time, dt, grid)
 
+     
+
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt)
      scount = scount + 1
@@ -601,4 +610,7 @@ S_RHS%diff_adv%new = Gvector%s
 
   ! Return a successful exit status to the operating system
   call exit(0)
+
+
+  
 end program SOG
