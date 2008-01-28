@@ -288,7 +288,7 @@ contains
 
     ! Englishman River
     ! uses same shift as Fraser
-    open(12, file="../sog-forcing/rivers/Nanimo_historic.dat", &
+    open(12, file="../sog-forcing/rivers/Englishman_historic.dat", &
          status = "OLD", action = "READ")
 
     found_data = .false.
