@@ -242,7 +242,7 @@ contains
       index = 1
 
       do 
-         read(46,*,END=177)(data(index,i),i=1,mcol_ctd)
+         read(45,*,END=177)(data(index,i),i=1,mcol_ctd)
          index = index +1
 
       enddo
