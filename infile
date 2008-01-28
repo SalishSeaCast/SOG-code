@@ -17,7 +17,7 @@
 ! Initial conditions date/time (must match a CTD profile date/time)
 "init datetime"	"2004-10-19 12:22:00"	"initialization CTD profile date/time"
 ! End of run date/time
-"end datetime"	"2004-11-01 00:22:00"	"end of run date/time"
+"end datetime"	"2005-10-11 00:22:00"	"end of run date/time"
 "dt"		900	 "time step [s]"
 ! Implicit solver iteration limit
 "max_iter"		30	"implicit solver max iterations"
@@ -323,6 +323,9 @@
 ! Englishman River Integration
 "Englishman integ days"  20       "Days over which to integrate Englishman River"
 
+! Start year to run model: used in forcing.f90
+"startyear"     2004    "initialization of runtime for model"
+
 ! Vary parameters
 "vary%wind%enabled"    .false.       "Variation of wind data?"
 "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
@@ -332,9 +335,8 @@
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
 "cruise_id"	"0414"		"Cruise id number"
-"ctd_in"
-	"input/ctd_in/SG0414004.str"	     
-	"initial conditions CTD file"
+"ctd_in"	"input/ctd_in/SG0414004.str"	"initialization CTD file"
+"bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
 "initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
 
 ! end of file
