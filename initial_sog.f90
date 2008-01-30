@@ -147,7 +147,6 @@ contains
     
     open(unit=46, file=fn, status="old")
 
-
     header_length = 11
     
     ! Read past header
@@ -161,16 +160,20 @@ contains
     mcol_ctd =max(position(1),position(2),position(3),position(4),position(5),position(6),position(7))
 
     
-    !Read in data of entire file
-    
-    index = 1
-
-    do 
-       read(46,*,END=176)(data(index,i),i=1,mcol_ctd)
-       index = index +1
-
-    enddo
+    !Read in data of upper 40m or if data ends before 40m,will read entire file
+    found_depth =.false.
+    index = 0
+    do while(.not. found_depth)
+       read(46,*,END=176)(data(index+1,i),i=1,mcol_ctd)
+       if(data(index+1,position(1)) > 40)then
       
+          found_depth =.true.
+
+       endif
+       index = index + 1
+   
+    enddo
+    
     !Check to see if there is fluores data in ctd file
 
 176 noFluores = .false.
@@ -216,8 +219,6 @@ contains
    enddo
    close(46)
 
-
-
    fn = getpars("bot_in")
 
    if(noFluores)then
@@ -237,17 +238,22 @@ contains
 
       mcol_bot =max(position_bot(1),position_bot(2),position_bot(3),position_bot(4),position_bot(5),position_bot(6),position_bot(7))
 
-      !Read in data of entire bottle file
+      !Read in data of upper 40m
+      found_depth =.false.
+      index1 = 0
+      do while(.not. found_depth)
+         read(45,*,END=177)(databot(index1+1,i),i=1,mcol_bot)
+   
+         if(databot(index1+1,position_bot(1)) > 40)then
     
-      index = 1
+            found_depth =.true.
 
-      do 
-         read(45,*,END=177)(data(index,i),i=1,mcol_ctd)
-         index = index +1
-
+         endif
+         index1 = index1 + 1
+      
       enddo
 
-177   input = 0  ! clear out input from ctd file  
+177   input = 0  ! clear out input from ctd file
    
       ! Check to see if theres fluores data. If not, then check to see if theres chl data. If not, Check to see if theres phyto data. If not, Pmicro = 0
 
@@ -338,7 +344,7 @@ contains
     D_Refr(0) = D_refr(1)
 
     
-
+    
     !Defining depth_interp array: assuming dz = 0.5m 
 
     count=0
