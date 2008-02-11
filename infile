@@ -335,7 +335,7 @@
 ! Initial conditions
 ! *** Perhaps these should be moved higher in the file?
 "cruise_id"	"0414"		"Cruise id number"
-"ctd_in"	"input/ctd_in/SG0414004.str"	"initialization CTD file"
+"ctd_in"	"input/ctd_in/ctd_test2004"	"initialization CTD file"
 "bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
 "initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
 
