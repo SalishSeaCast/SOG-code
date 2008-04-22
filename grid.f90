@@ -403,7 +403,7 @@ contains
 
     implicit none
     !Local Variables
-    integer :: i,j, k_index,count
+    integer :: i,j,m,index, k_index,count
     !Arguments:
     real(kind=dp), dimension(0:81), intent(in) :: &
          x,        &
@@ -413,11 +413,46 @@ contains
     real(kind=dp), dimension(0:81), intent(out) :: &
          y1
     
-    real dx(0:80),dy(0:80), k(0:81)
+    real dx(0:80),dy(0:80), k(0:81),x_test(0:81),y_test(0:81)
 
     k_index = 0
+    ! Examine array for any missing values.  Data set may have -99.0 values 
+    ! or -99999 or some variation of this.  Will search for values less 
+    ! than 0 and remove them from the array.
+    index = 0
+    m=0
+    j=0
     
+    do while (index < size(y))
+   
+       if(y(index)< 0 ) then
+          j = j+1
+          
+          
+       else
+          x_test(m) = x(j)
+          y_test(m) = y(j)
+          m = m+1
+          j = j+1
+       endif
 
+       index = index +1
+       
+    enddo
+
+    x = x_test   
+    y = y_test
+
+    if(size(x) == size(y))then
+    else   
+       write(*,*) 'x and y arrays are not the same length'
+       stop
+    endif
+
+    y(0) = y(1)
+    x(0) = 0 
+
+   
     ! Set y1 to zeros (in our case we want same name for original array and interpolated array
    
 
@@ -433,7 +468,7 @@ contains
 
 
 
-    
+
     !Diff 
 
     do i=0,size(x)-2
