@@ -56,6 +56,9 @@
 "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
 "Hoffmueller interval"	1.			"days between Hoff outputs"
 
+! Bottom temperature constant
+"temp_constant"    .false.       "Is bottom temperature constant over time?"
+
 ! Physics model parameters
 ! Turbulence:
 "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
