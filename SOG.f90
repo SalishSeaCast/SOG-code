@@ -101,7 +101,7 @@ program SOG
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
   use find_upwell, only: upwell_profile, vertical_advection
-  use fitbottom, only: bot_bound_time, bot_bound_uniform
+  use fitbottom, only:init_fitbottom, bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
@@ -170,6 +170,9 @@ program SOG
   call init_profiles_output(codeId, datetime_str(runDatetime), &
        initDatetime)
 
+  ! Initialize fitbottom
+  call init_fitbottom()
+
   ! Allocate memory for the profiles arrays of the core variables that
   ! we are calculating, i.e. U, V, T, S, etc.
   call alloc_core_variables(grid%M)
@@ -208,6 +211,7 @@ program SOG
   CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        P%pico, Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
        h%new, grid, cruise_id)
+
 
 
   ! Initialize the profiles of the water column properties
@@ -534,7 +538,7 @@ S_RHS%diff_adv%new = Gvector%s
      !
      ! For those variables that we have data, use the annual fit
      ! calculated from the data
-     call bot_bound_time(day, day_time, &                             ! in
+     call bot_bound_time(year, day, day_time, &                             ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
           Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
           P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
