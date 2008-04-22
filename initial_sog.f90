@@ -163,20 +163,35 @@ contains
     !Read in data of upper 40m or if data ends before 40m,will read entire file
     found_depth =.false.
     index = 0
-    do while(.not. found_depth)
+    do while (.not. found_depth)
        read(46,*,END=176)(data(index+1,i),i=1,mcol_ctd)
+      
        if(data(index+1,position(1)) > 40)then
       
           found_depth =.true.
 
        endif
        index = index + 1
-   
-    enddo
-    
-    !Check to see if there is fluores data in ctd file
 
+    enddo
+
+!Check to see if there is fluores data in ctd file
+
+    
 176 noFluores = .false.
+
+    ! if there is not enough data to reach below 40m, set
+    ! a depth at 50m with same values as the previous depth  
+
+    if(.not. found_depth) then         
+       
+       data(index+1, 1) = 50
+
+       do i = 2,mcol_ctd
+          data(index+1, i) = data(index, i)
+       enddo
+
+    endif
 
     if (position(5)==-1)then
 
@@ -199,7 +214,7 @@ contains
          input = 0
        
     else
-         do j=1,index
+         do j=1,index+1
             input(j) = data(j,position(i))
          enddo
      
@@ -254,7 +269,19 @@ contains
       enddo
 
 177   input = 0  ! clear out input from ctd file
-   
+       
+      if(.not. found_depth) then     ! if there is not enough data to reach below 40m, set
+                                     ! a depth at 50m with same values as the previous depth
+       
+         
+         databot(index1+1, 1) = 50
+
+         do i = 2,mcol_bot
+            databot(index1+1, i) = databot(index1, i)
+         enddo
+
+      endif
+
       ! Check to see if theres fluores data. If not, then check to see if theres chl data. If not, Check to see if theres phyto data. If not, Pmicro = 0
 
       
@@ -269,7 +296,7 @@ contains
                 
                 else
                 
-                   do j=1,index1
+                   do j=1,index1+1
                       input(j) = databot(j,position_bot(7))
     
                    enddo
@@ -278,7 +305,7 @@ contains
              
            else
 
-             do j=1,index1
+             do j=1,index1+1
                   input(j) = databot(j,position_bot(4))
     
              enddo
@@ -287,7 +314,7 @@ contains
 
        else
 
-          do j=1,index1
+          do j=1,index1+1
                input(j) = databot(j,position_bot(5))
     
           enddo
@@ -303,6 +330,7 @@ contains
       
    
    endif
+
 
     ! split between micro and nano and pico plankton
     call getpardv("initial chl split", 3, split)
@@ -330,28 +358,15 @@ contains
     enddo
     close(45)
     
-
-    T_new(0) = T_new(1)  !Surface
-    S_new(0) = S_new(1)  !Boundary
-    Pmicro(0) = Pmicro(1)
-    Pnano(0) = Pnano(1)
-    Ppico(0) = Ppico(1)
-    Z(0) = Z(1)
-    NH(0) = NH(1)
-    D_PON(0) = D_PON(1)
-    D_DON(0) = D_DON(1)
-    D_Bsi(0) = D_BSi(1)
-    D_Refr(0) = D_refr(1)
-
-    
-    
+   
     !Defining depth_interp array: assuming dz = 0.5m 
-
+    
     count=0
     do i=0,81,1
        depth_interp(i)=count/2
        count = count +1
     enddo
+  
 
     !Linear interpolation to obtain variables at every .5m depth
 
@@ -377,13 +392,11 @@ contains
     D_Bsi = D_BSi_interp
     D_Refr = D_Refr_interp
 
+
     !If the bottom fluxes are fixed, use the following 
     !tp reevaluate M+1 values:
     V_new(0) = V_new(1)  !Conditions
     U_new(0) = U_new(1)
-    
-
-   
    
   end subroutine initial_mean
 
