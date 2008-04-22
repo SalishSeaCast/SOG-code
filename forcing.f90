@@ -39,15 +39,15 @@ module forcing
 
   ! Number of years of data  (set to 2 years)
   !
-  integer, parameter :: wind_n=((365+366)*24), & ! number of days used for wind array
-       met_n=(365+366), &  !# days used for met arrays (CF,AT,HUM)
-       river_n=(365+366)   !# days used for river array
+  integer, parameter :: wind_n=((366+366)*24), & ! number of days used for wind array
+       met_n=(366+366), &  !# days used for met arrays (CF,AT,HUM)
+       river_n=(366+366)   !# days used for river array
   ! Data variables
 
   real(kind=dp) :: wind_eastnorth(wind_n), &
        wind_northwest(wind_n)
   real(kind=sp) :: cf(met_n,24), atemp(met_n,24), &
-       humid(731,24)
+       humid(732,24)
   real(kind=sp) :: Qriver(river_n), Eriver(river_n)
 
   !The starting year (startyear + 1 more year of data)
@@ -293,7 +293,7 @@ contains
 
     found_data = .false.
     do while (.not. found_data)
-       read (12,*) year, month, day, englishman
+       read (12,*,END=175) year, month, day, englishman
 
        if (year == rivers_startyear .and. day == rivers_startday) then
           
@@ -305,6 +305,27 @@ contains
           found_data = .true.
        endif
     enddo
+
+175 if(.not. found_data) then
+       open(12, file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
+         status = "OLD", action = "READ")
+       
+       do while (.not. found_data)
+          read (12,*,END=175) year, month, day, englishman
+
+          if (year == rivers_startyear .and. day == rivers_startday) then
+          
+             Eriver(1) = englishman
+
+             do jc = 2, river_n             
+                read (12,*) year, month, day, Eriver(jc)
+             enddo
+             found_data = .true.
+          endif
+       enddo
+    endif
+       
+    
 
     ! Want integrated Englishman River data over "integration" days
     do ic=1, integration
