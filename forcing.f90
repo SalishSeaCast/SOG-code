@@ -230,7 +230,7 @@ contains
        endif
     enddo
 
-    write(6,*)(atemp(1,j),j=1,24)
+   
 
     close (5)
 
@@ -265,6 +265,8 @@ contains
        rivers_startday = 1
        rivers_startyear = startyear
     endif
+
+
 
     open(12, file="../sog-forcing/rivers/Fraser_historic.dat", &
          status = "OLD", action = "READ")  
