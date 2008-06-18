@@ -46,7 +46,7 @@ contains
     ! *** What's it do?
     use precision_defs, only: dp
     use grid_mod, only: grid_,interp_array
-    use input_processor, only: getpars, getpardv
+    use input_processor, only: getpars, getpardv, getparl
     implicit none
     ! Arguments:
     real(kind=dp), dimension(0:), intent(out) :: &
@@ -69,12 +69,14 @@ contains
      real(kind=dp), dimension(0:81):: &    
          input,        &  ! Place holder for incoming data for different variables
          
-         depth,         &  ! Depth profile from ctd data file
+         depth,         &  ! Depth profile from ctd data file 
+         depth_index,   &  ! Depth profile from ctd data file
          T_interp,      &  ! Temperature interpolted at every .5m
          depth_interp,  &  ! Depth at every .5m
          S_interp,      &  ! Interpolated Salinity profile
          Pmicro_interp, &  ! Interpolated Micro phyto profile
-
+         dummyNO,       &  ! Dummy Nitrate valu
+         NO_interp,     &  ! Interpolated NO profile
          Pnano_interp,  &  ! Interpolated Nano phyto profile
          Ppico_interp,  &  ! Interpolated Pico phyto profile
          Z_interp,      &  ! Interpolated micro zooplankton profile
@@ -92,9 +94,9 @@ contains
     ! Local variables:
     integer :: i, j      ! loop index
     real :: position(7), position_bot(7) !variable placeholders
-    real :: index, index1,count, mcol_ctd, mcol_bot, header_length        ! data index
+    real :: index, index1,length,count, mcol_ctd, mcol_bot, header_length        ! data index
     real :: data(50,20),databot(50,20)   !Place holders for ctd/bot data
-    logical :: found_depth, noFluores   !used to find bottom of 40m andwhether ctd file has fluores data 
+    logical :: found_depth, noFluores, Nitrate   !used to find bottom of 40m andwhether ctd file has fluores data 
     ! File name to open
     character*80 :: fn           
     ! Place holders for reading CTD data file
@@ -121,21 +123,29 @@ contains
 
 
     ! read in nutrients data
+
+    ! Do we have ctd nitrate data, i.e every .5 m?
+    Nitrate  = getparl('Nitrate')
+    
     write (fn,'("../sog-initial/Nuts_",a4,".txt")') cruise_id
     open(unit=66, file=fn, status="OLD", action="READ")
-
+    
     do i = 0, d%M
-       read(66, *) depth1, NO(i), Si(i)
+       read(66, *) depth1, dummyNO(i), Si(i)
        if (depth1.ne.i*0.5) then
           write (*,*) 'Expecting nutrients, NO3 and Silicon at 0.5 m intervals'
           call exit(1)
        endif
     enddo
     close (66)
-    NO(d%M+1) = NO(d%M)
+   
     Si(d%M+1) = Si(d%M)
-    
+   if(Nitrate)then 
+      NO = dummyNO
+      NO(d%M+1) = NO(d%M)
+   endif
 
+  
 
     ! STRATOGEM CTD data from station S3 to initialize temperature,
     ! phytoplacnkton biomass, and salinity in water column
@@ -203,9 +213,22 @@ contains
           Pmicro(j) = data(j,position(5))
 
        enddo
+
+       length = index +1  ! for calculating C2K later on
+
     endif
 
-    
+    ! Importing Nitrate data
+    if(.not. Nitrate) then
+       
+       do j=1,index+1
+
+          NO(j) = data(j,position(6))
+
+       enddo
+     
+    endif
+
     !Importing temperature,sal and depth 
     do i=1,3
 
@@ -233,6 +256,7 @@ contains
  
    enddo
    close(46)
+
 
    fn = getpars("bot_in")
 
@@ -279,9 +303,20 @@ contains
          do i = 2,mcol_bot
             databot(index1+1, i) = databot(index1, i)
          enddo
+         
+         length = index1+1
 
       endif
+    ! Importing Nitrate data if not in CTD file
+    if(.not. Nitrate) then
+       
+       do j=1,index1+1
 
+          NO(j) = data(j,position(6))
+
+       enddo
+      
+    endif
       ! Check to see if theres fluores data. If not, then check to see if theres chl data. If not, Check to see if theres phyto data. If not, Pmicro = 0
 
       
@@ -332,10 +367,12 @@ contains
    endif
 
 
+
     ! split between micro and nano and pico plankton
     call getpardv("initial chl split", 3, split)
-
-    do i = 1, index  
+  
+     
+    do i = 1, length 
        ! Change temperature to Kelvin
        if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
           T_new(i) = CtoK(T_new(i)) + vary%temperature%addition
@@ -358,28 +395,47 @@ contains
     enddo
     close(45)
     
-   
-    !Defining depth_interp array: assuming dz = 0.5m 
+
+!Defining depth_interp array: assuming dz = 0.5m 
     
     count=0
     do i=0,81,1
        depth_interp(i)=count/2
        count = count +1
     enddo
-  
+
+!Define depth index to keep track of original depths
+
+    depth_index = depth
 
     !Linear interpolation to obtain variables at every .5m depth
 
+
     call interp_array(depth,T_New,depth_interp,T_interp)
+    depth = depth_index
     call interp_array(depth,S_New,depth_interp,S_interp)
+    depth = depth_index
     call interp_array(depth,Pmicro,depth_interp,Pmicro_interp)
+    depth = depth_index    
+    if(.not.Nitrate) then
+       call interp_array(depth,NO,depth_interp,NO_interp)
+       depth = depth_index
+       NO = NO_interp
+    endif
     call interp_array(depth,Pnano,depth_interp,Pnano_interp)
+    depth = depth_index
     call interp_array(depth,Ppico,depth_interp,Ppico_interp)
+    depth = depth_index
     call interp_array(depth,Z,depth_interp,Z_interp)
+    depth = depth_index
     call interp_array(depth,D_PON,depth_interp,D_PON_interp)
+    depth = depth_index
     call interp_array(depth,D_DON,depth_interp,D_DON_interp)
+    depth = depth_index
     call interp_array(depth,D_Bsi,depth_interp,D_Bsi_interp)
+    depth = depth_index
     call interp_array(depth,D_Refr,depth_interp,D_Refr_interp)
+    depth = depth_index
 
     T_new  = T_interp  !Surface
     S_new = S_interp  !Boundary
@@ -391,6 +447,7 @@ contains
     D_DON = D_DON_interp
     D_Bsi = D_BSi_interp
     D_Refr = D_Refr_interp
+
 
 
     !If the bottom fluxes are fixed, use the following 
