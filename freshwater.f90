@@ -174,12 +174,13 @@ contains
     ! is correct. tanh fn means no matter what the total fresh, a salinity
     ! below 0 is not predicted.
 
+
     cbeta = 30.0d0  ! basic salinity
     calpha = 2440.0d0
     cgamma = 0.0633d0
 
     S_riv = cbeta * exp(-totalfresh/calpha) / &
-         ( cgamma + exp(-totalfresh/calpha) )
+         ( cgamma + exp(-totalfresh/calpha) )   
 
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
