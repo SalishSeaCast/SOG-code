@@ -149,7 +149,7 @@ program SOG
   call init_input_processor(datetime_str(runDatetime))
 
 !  ! Initialize the salinity linearity file
-!  open (unit=129, file="salinity_check")
+   open (unit=129, file="salinity_check")
 
   ! Initialize fundamental constants
   ! *** This is here because of the pgf90 bug that prevents f from
@@ -591,8 +591,8 @@ S_RHS%diff_adv%new = Gvector%s
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
-!      write (129,*) S_riv, 0.5*(S%new(2)+S%new(3)), upwell
-
+     
+       write (129,*) S_riv, 0.5*(S%new(2)+S%new(3)), upwell
   end do  !--------- End of time loop ----------
 
   write (stdout,*) "For Ft tuning"
@@ -602,7 +602,7 @@ S_RHS%diff_adv%new = Gvector%s
   ! Close output files
   call timeseries_output_close
   call profiles_output_close
-!  close(129)
+  close(129)
 
   ! Deallocate memory
   call dalloc_numerics_variables
