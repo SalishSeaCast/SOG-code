@@ -278,15 +278,19 @@ contains
        if(year == rivers_startyear .and. day == rivers_startday) then
           
           Qriver(1) = fraser
-
+          
           do jc = 2, river_n             
              read(12,*) year, month, day, Qriver(jc)
           enddo          
           found_data = .true.
+          
+
        endif
     enddo
 
     close(12)
+
+
 
     ! Englishman River
     ! uses same shift as Fraser
@@ -326,8 +330,7 @@ contains
           endif
        enddo
     endif
-       
-    
+
 
     ! Want integrated Englishman River data over "integration" days
     do ic=1, integration
@@ -337,7 +340,9 @@ contains
        EriverI(ic) = sum(Eriver(ic-integration:ic))/integration
     enddo
     Eriver(1:river_n) = EriverI(1:river_n)
-    close(12) 
+    close(12)    
+
+
   end subroutine read_forcing
        
   subroutine get_forcing (year, day, day_time, &
