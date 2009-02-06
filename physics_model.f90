@@ -101,10 +101,6 @@ contains
     
     implicit none
     
-    ! Local variables:
-    integer           :: dallocstat  ! Allocation return status
-    character(len=80) :: msg        ! Allocation failure message prefix
-
     ! Deallocate memory for water property arrays
     call dalloc_water_props
     ! Deallocate memory from arrays for right-hand sides of
