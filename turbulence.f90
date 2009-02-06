@@ -332,8 +332,6 @@ contains
          sigma  ! Non-dimensional depth coordinate within mixing layer
     integer :: &
          j  ! Loop index over profile depth
-    logical, dimension(1:grid%M) :: &
-         mask
 
     ! Step 1: Calculate total turbulent momentum, thermal &
     ! salinity diffusivities for the whole water column based on
@@ -808,11 +806,6 @@ contains
 
     ! Local Variables:
     real(kind=dp) :: &
-         R, Rdel_n, Rdel_np1, &  ! Weighting factor for calculation of
-                                 ! values of the total interior
-                                 ! diffusivities, and their vertical
-                                 ! gradients at the mixing layer
-                                 ! depth.
          zeta_h  ! Value of stability parameter at mixing layer depth
 
     ! Calculate the values of the total interior diffusivities, and
