@@ -234,10 +234,9 @@ contains
     real(kind=dp), intent(in), dimension(0:) :: rho
     real(kind=dp), intent(out), dimension(1:) :: dPres
 
-    real(kind=dp) :: sumpbx, cpos, cneg
+    real(kind=dp) :: cpos, cneg
     integer :: ii, jj, yy
     
-    sumpbx = 0.0d0
     cpos = 0.0d0
     cneg = 0.0d0
     ii = 1
