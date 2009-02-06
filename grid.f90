@@ -234,7 +234,6 @@ contains
     integer :: &
          j_below_d1, &  ! Index of grid point below depth d1
          j_below_d2, &  ! Index of grid point below depth d2
-         j_above_d1, &  ! Index of grid point above depth d1
          j_above_d2, &  ! Index of grid point above depth d2
          j_junk         ! Unused j_below argument of interp_value()
 
@@ -255,8 +254,7 @@ contains
        avg = q_d1
        return
     endif
-    ! Set the indices of the grid points immediately above d1, and d2
-    j_above_d1 = j_below_d1 - 1
+    ! Set the indices of the grid points immediately above d2
     j_above_d2 = j_below_d2 - 1
     ! Check for d1 and d2 close together
     if (d2 < grid%d_g(j_below_d1+1)) then
@@ -398,12 +396,10 @@ contains
     ! Example: depth is the depth array, y is the temperature array, 
     ! x1 is the new depth array where you want to interpolate 
     ! to find the temperatures at.
-    !
-    !
 
     implicit none
     !Local Variables
-    integer :: i,j,m,index, k_index,count
+    integer :: i, j, m, index, k_index
     !Arguments:
     real(kind=dp), dimension(0:81), intent(in) :: &
          x,        &
@@ -413,12 +409,13 @@ contains
     real(kind=dp), dimension(0:81), intent(out) :: &
          y1
     
-    real dx(0:80),dy(0:80), k(0:81),x_test(0:81),y_test(0:81)
+    real(kind=dp) dx(0:80), dy(0:80), x_clean(0:81), y_clean(0:81)
+    integer :: k(0:81)
 
     k_index = 0
     ! Examine array for any missing values.  Data set may have -99.0 values 
     ! or -99999 or some variation of this.  Will search for values less 
-    ! than 0 and remove them from the array.
+    ! than 0 and remove them from the array.  Call this the "clean" array
     index = 0
     m=0
     j=0
@@ -430,8 +427,8 @@ contains
           
           
        else
-          x_test(m) = x(j)
-          y_test(m) = y(j)
+          x_clean(m) = x(j)
+          y_clean(m) = y(j)
           m = m+1
           j = j+1
        endif
@@ -440,54 +437,45 @@ contains
        
     enddo
 
-    x = x_test   
-    y = y_test
-
-    if(size(x) == size(y))then
+    if(size(x_clean) == size(y_clean))then
     else   
        write(*,*) 'x and y arrays are not the same length'
        stop
     endif
 
-    y(0) = y(1)
-    x(0) = 0 
+    y_clean(0) = y_clean(1)
+    x_clean(0) = 0 
 
    
     ! Set y1 to zeros (in our case we want same name for original array and interpolated array
    
-
-
-    do i=0,size(x)-2,1
+    do i=0,size(x_clean)-2,1
        do j=0,size(x1)-1,1
-          if(x1(j) < x(i+1) .AND. x1(j) >= x(i)) then
+          if(x1(j) < x_clean(i+1) .AND. x1(j) >= x_clean(i)) then
              k_index = k_index + 1
              k(k_index-1) = i
           endif
        enddo
     enddo
 
-
-
-
     !Diff 
 
-    do i=0,size(x)-2
-       dx(i) = x(i+1) - x(i)
-       dy(i) = y(i+1) - y(i)
+    do i=0,size(x_clean)-2
+       dx(i) = x_clean(i+1) - x_clean(i)
+       dy(i) = y_clean(i+1) - y_clean(i)
     enddo
 
     !Interpolation 
 
-
     do i=0,size(x1)-1
 
        if (i<size(x1)) then
-          y1(i) = y(k(i)) + (x1(i) - x(k(i))) * (dy(k(i))/dx(k(i)))
+          y1(i) = y_clean(k(i)) + (x1(i) - x_clean(k(i))) * (dy(k(i))/dx(k(i)))
        else
-          if (k(i) < size(x)) then
-             y1(i) = y(k(i)) + (x1(i) - x(k(i))) * (dy(k(i))/dx(k(i)))
+          if (k(i) < size(x_clean)) then
+             y1(i) = y_clean(k(i)) + (x1(i) - x_clean(k(i))) * (dy(k(i))/dx(k(i)))
           else
-             y1(i) = y(k(i)) + (x1(i) - x(k(i))) * (dy(k(i-1))/dx(k(i-1)))
+             y1(i) = y_clean(k(i)) + (x1(i) - x_clean(k(i))) * (dy(k(i-1))/dx(k(i-1)))
           endif
        endif
     enddo
