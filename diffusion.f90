@@ -129,8 +129,6 @@ contains
          gamma_j, gamma_jm1  ! Non-local transport term values at the
                              ! present grid layer interface depth, and
                              ! the one above.
-    integer :: M  ! Number of grid points (to improve readability of
-                  ! vectorized code).
     integer :: &
          j  ! Index over the grid depth
 
