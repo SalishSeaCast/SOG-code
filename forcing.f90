@@ -166,6 +166,7 @@ contains
     found_data = .false.
     do while (.not. found_data)
        read (12,*) day, month, year, hour, wind_en, wind_nw
+       hour = hour  ! this is just to use "hour" to stop an unused warning
 
        if (year == wind_startyear) then
           
