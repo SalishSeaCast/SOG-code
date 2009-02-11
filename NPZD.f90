@@ -204,8 +204,6 @@ contains
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     ! Local variables
-    integer :: xx ! counter through detritus bins
-    integer :: binno ! detritus bin as read
 
     ! Number of detritus bins, dissolved, slow sink and fast sink
     D_bins = 4
@@ -771,7 +769,7 @@ contains
 ! new waste variables
           was_NH, was_DON, was_PON, was_Ref, was_Bsi, &
           Si_remin           ! Profile of dissolution of biogenic Si detritus
-    real(kind=dp), dimension(1:M) :: temp_Q10, uptakeNH
+    real(kind=dp), dimension(1:M) :: temp_Q10
     ! temporary variable to calculate mortality scheme
     real(kind=dp) :: food_limitation, denominator, &
          Meso_mort_micro, Meso_graz_PON , Meso_mort_nano, average_prey, &
