@@ -28,8 +28,8 @@ module fitbottom
   integer, parameter :: NQ = 7
   ! Quantity names
   character(len=12), dimension(NQ), parameter :: quantity &
-       = ['salinity', 'temperature', 'chl fluor', 'nitrate', 'silicon', &
-          'ammonium', 'plank ratio']
+       = [character(len=12) :: 'salinity', 'temperature', 'chl fluor', & 
+          'nitrate', 'silicon', 'ammonium', 'plank ratio']
 
     ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
     ! fitted.m in
