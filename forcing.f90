@@ -167,6 +167,7 @@ contains
     do while (.not. found_data)
        read (12,*) day, month, year, hour, wind_en, wind_nw
        hour = hour  ! this is just to use "hour" to stop an unused warning
+       month = month ! this is just to use "month" to stop an unused warning
 
        if (year == wind_startyear) then
           
@@ -197,6 +198,7 @@ contains
     found_data = .false.
     do while (.not. found_data)
        read (12,*) stn, year, month, day, para, (cf(1,j),j=1,24)
+       para = para ! this is just to use "para" to stop an unused warning
 
        if (year == cf_startyear)then
 
