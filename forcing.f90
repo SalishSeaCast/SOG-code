@@ -54,6 +54,18 @@ module forcing
 
   integer :: startyear
 
+  !File names for Met, wind and river data
+  character* 80 :: &
+       Wind,   &   ! file name for wind data
+       AT,     &   ! file name for Air temp  data
+       Cloud,  &   ! file name for Cloud data
+       Hum,    &   ! file name for Humidity data
+       MajorRiv, &     ! file name for Major River data
+       MinorRiv         ! file name for Minor River data
+ 
+  ! Is there data for a minor river?
+  logical :: isMinorRiv    
+
 contains
 
   subroutine read_variation
@@ -124,7 +136,7 @@ contains
 
   subroutine read_forcing 
 
-    use input_processor, only: getpari
+    use input_processor, only: getpari,getpars,getparl
     use unit_conversions, only: CtoK
 
     implicit none
@@ -136,7 +148,7 @@ contains
     integer, parameter :: Ieriver = 10000
     real(kind=sp) :: EriverI(Ieriver)
     logical ::  found_data
-    real(kind=dp) :: wind_en, wind_nw, fraser, englishman ! temporary variables    
+    real(kind=dp) :: wind_en, wind_nw, MajRiv, MinRiv ! temporary variables    
     ! startyears for the various variables that can be shifted
     integer :: wind_startyear, cf_startyear, rivers_startyear 
     integer :: rivers_startday ! startday for rivers allowing part year shifts
@@ -152,6 +164,17 @@ contains
     ! read the start year in for initialization of runtime for model
     startyear = getpari("startyear")
 
+    ! read the file names for input data (Wind, Met, Rivers)
+    
+    Wind = getpars("Wind")
+    AT = getpars("Air temp")
+    Cloud = getpars("Cloud")
+    Hum = getpars("Humidity")
+    MajorRiv = getpars("Major_River")
+    isMinorRiv = getparl("isMinRiv")
+    MinorRiv = getpars("Minor_River")
+    
+
     ! WIND
     ! shift the start year if requested
     if (vary%wind%enabled) then
@@ -160,7 +183,7 @@ contains
        wind_startyear = startyear
     endif
 
-    open(unit = 12, file = "../sog-forcing/wind/SH_total.dat", &
+    open(unit = 12, file = Wind, &
          status = "OLD", action = "READ")
     
     found_data = .false.
@@ -192,7 +215,7 @@ contains
        cf_startyear = startyear
     endif
 
-    open(12, file="../sog-forcing/met/YVRhistCF", &
+    open(12, file= Cloud, &
          status = "OLD", action = "READ")
         
     found_data = .false.
@@ -214,7 +237,7 @@ contains
 
     ! Air Temperature
 
-    open (12, file="../sog-forcing/met/YVRhistAT", &
+    open (12, file= AT, &
          status = "OLD", action = "READ")
     
     found_data = .false.
@@ -241,7 +264,7 @@ contains
 
     ! Humidity
 
-    open(12, file="../sog-forcing/met/YVRhistHum", &
+    open(12, file= Hum, &
          status = "OLD", action = "READ")
     
     found_data = .false.
@@ -259,7 +282,7 @@ contains
 
     close(12)
 
-    ! Fraser River
+    ! Major River
     ! shift the start year if requested
     if (vary%rivers%enabled .and. .not. vary%rivers%fixed) then
        call shift_time (1, startyear, vary%rivers%shift, &
@@ -271,16 +294,16 @@ contains
 
 
 
-    open(12, file="../sog-forcing/rivers/Fraser_historic.dat", &
+    open(12, file= MajorRiv, &
          status = "OLD", action = "READ")  
 
     found_data = .false.
     do while(.not. found_data)
-       read(12,*) year, month, day, fraser
+       read(12,*) year, month, day, MajRiv
 
        if(year == rivers_startyear .and. day == rivers_startday) then
           
-          Qriver(1) = fraser
+          Qriver(1) = MajRiv
           
           do jc = 2, river_n             
              read(12,*) year, month, day, Qriver(jc)
@@ -293,38 +316,21 @@ contains
 
     close(12)
 
+    if(isMinorRiv) then
 
 
-    ! Englishman River
-    ! uses same shift as Fraser
-    open(12, file="../sog-forcing/rivers/Englishman_historic.dat", &
-         status = "OLD", action = "READ")
+       ! Minor  River
+       ! uses same shift as Major
+       open(12, file=MinorRiv, &
+            status = "OLD", action = "READ")
 
-    found_data = .false.
-    do while (.not. found_data)
-       read (12,*,END=175) year, month, day, englishman
-
-       if (year == rivers_startyear .and. day == rivers_startday) then
-          
-          Eriver(1) = englishman
-
-          do jc = 2, river_n             
-             read (12,*) year, month, day, Eriver(jc)
-          enddo          
-          found_data = .true.
-       endif
-    enddo
-
-175 if(.not. found_data) then
-       open(12, file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
-         status = "OLD", action = "READ")
-       
+       found_data = .false.
        do while (.not. found_data)
-          read (12,*,END=175) year, month, day, englishman
-
+          read (12,*,END=175) year, month, day, MinRiv
+       
           if (year == rivers_startyear .and. day == rivers_startday) then
           
-             Eriver(1) = englishman
+             Eriver(1) = MinRiv
 
              do jc = 2, river_n             
                 read (12,*) year, month, day, Eriver(jc)
@@ -332,19 +338,44 @@ contains
              found_data = .true.
           endif
        enddo
+
+
+   !    FOR SOG, if there is not enough data in the englishman river, than use nanimo data.
+175    if(.not. found_data) then
+          open(12, file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
+               status = "OLD", action = "READ")
+       
+          do while (.not. found_data)
+             read (12,*,END=175) year, month, day,MinRiv
+
+             if (year == rivers_startyear .and. day == rivers_startday) then
+          
+                Eriver(1) = MinRiv
+
+                do jc = 2, river_n             
+                   read (12,*) year, month, day, Eriver(jc)
+                enddo
+                found_data = .true.
+             endif
+          enddo
+       endif
+
+       ! Want integrated Englishman River data over "integration" days
+       do ic=1, integration
+          EriverI(ic) = sum(Eriver(1:ic))/float(ic)
+       enddo
+       do ic=integration+1,river_n
+          EriverI(ic) = sum(Eriver(ic-integration:ic))/integration
+       enddo
+       Eriver(1:river_n) = EriverI(1:river_n)
+       close(12)  
+    else 
+       
+       do jc = 1, river_n             
+          Eriver(jc)=0
+       enddo
+  
     endif
-
-
-    ! Want integrated Englishman River data over "integration" days
-    do ic=1, integration
-       EriverI(ic) = sum(Eriver(1:ic))/float(ic)
-    enddo
-    do ic=integration+1,river_n
-       EriverI(ic) = sum(Eriver(ic-integration:ic))/integration
-    enddo
-    Eriver(1:river_n) = EriverI(1:river_n)
-    close(12)    
-
 
   end subroutine read_forcing
        
