@@ -67,6 +67,9 @@ module freshwater
        upwell  ! Upwelling velocity from river flows parameterization
   real(kind=dp), dimension(:), allocatable :: &
        F_n     ! Fresh water contribution to salinity flux
+    
+  character* 20 :: basin  ! Basin location
+
   !
   ! Diagnostic:
   real(kind=dp) :: &
@@ -90,16 +93,23 @@ contains
   subroutine init_freshwater(M)
     ! Allocate memory for fresh water quantity arrays, and read
     ! parameter values from the infile.
+    
+    ! To read basin location from infile
+    use input_processor, only: getpars
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
+    
 
     ! Allocate memory for fresh water quantity arrays
     call alloc_freshwater_variables(M)
     ! Read fresh water parameter values from the infile.
     call read_freshwater_params()
 
-    phyto_sum = 3.d0
+    phyto_sum = 3.d0 
+   
+    ! Which basin are we in 
+    basin = getpars("basin_location")
   end subroutine init_freshwater
 
 
@@ -124,9 +134,10 @@ contains
     Northern_return = getparl('northern_return_flow_on')
     if (Northern_return) then
        Northern_frac = getpard('northern_return_flow_frac')
-    end if
-  end subroutine read_freshwater_params
+    end if 
 
+  end subroutine read_freshwater_params
+  
 
   subroutine freshwater_phys(Qriver, Eriver, S_old, h)
     ! Calculate the strength of upwelling/entrainment, the freshwater
@@ -142,7 +153,7 @@ contains
          grid  ! Grid parameters and depth & spacing arrays
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
-
+   
     implicit none
 
     ! Arguments
@@ -160,27 +171,59 @@ contains
     real (kind=dp) :: totalfresh 
     ! coefficients for surface salinity fit
     real (kind=dp) :: calpha, cbeta, cgamma
-
+ 
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
-    totalfresh = Qriver + 55.0*Eriver
+    totalfresh = Qriver + Eriver
 
-    ! Parameterized fit of the surface salinity of the Strait of
-    ! Georgia at station S3 based on the river flows.  (Re-derived by
-    ! S.Allen numerous times.  This time, late June 2007
+    ! Parameterized fit of the surface salinity 
+    ! Read in from infile which basin
+
+  
+
+   if (basin == 'SoG') then
+    ! For the  Strait of Georgia at station S3 based on the river flows.  
+    !(Re-derived by S.Allen numerous times.  This time, late June 2007
     ! Labbook 125 to 131)  
     ! This value is not 
     ! directly used in the model but is used to make sure the tuned Ft value
     ! is correct. tanh fn means no matter what the total fresh, a salinity
-    ! below 0 is not predicted.
+    ! below 0 is not predicted.  
 
-
+    ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
+    totalfresh = Qriver + 55.0*Eriver
+    
     cbeta = 30.0d0  ! basic salinity
     calpha = 2440.0d0
     cgamma = 0.0633d0
 
     S_riv = cbeta * exp(-totalfresh/calpha) / &
          ( cgamma + exp(-totalfresh/calpha) )   
+
+
+   elseif (basin =="rivers") then
+
+    ! For Rivers Inlet  based on the river flows.  
+    ! This value is not 
+    ! directly used in the model but is used to make sure the tuned Ft value
+    ! is correct. tanh fn means no matter what the total fresh, a salinity
+    ! below 0 is not predicted.
+    
+
+    ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
+    totalfresh = Qriver + Eriver    
+    
+    cbeta = 30.0d0  ! basic salinity
+    calpha = 500.0d0
+   
+
+       S_riv = cbeta / exp(totalfresh/calpha) 
+    
+    open(12,file="S_riv_check")
+    write(12,*)S_riv
+    close(12) 
+
+ endif
 
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
@@ -189,7 +232,7 @@ contains
     
     upwell = upwell_const * totalfresh/3624.d0 * exp(-totalfresh/3624.d0) &
          /0.368
-
+ 
     ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
     Ft = Fw_scale*totalfresh*S_old/cbeta * &
