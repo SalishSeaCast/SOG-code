@@ -337,7 +337,7 @@
 "Cloud"         "../sog-forcing/met/YVRhistCF"                 "file for Cloud data"
 "Humidity"      "../sog-forcing/met/YVRhistHum"                "file for Humidity data"
 "Major_River"  "../sog-forcing/rivers/Fraser_historic.dat"     "file for Maj Riv data"
-"isMinRiv"     .true.               " Is there data for a minor river?"
+"isMinRiv"     .true.               "Is there data for a minor river?"
 
 "Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data"
 
