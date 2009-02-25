@@ -9,7 +9,7 @@ EXEC = SOG
 
 # The Tool List
 # Fortran 90 compiler, linker/loader, and their flags
-ifeq "$(HOST)" "coho.eos.ubc.ca"
+ifeq "$(FCOMPILER)" "pgf90"
   # Use pgf90 compiler on coho
   F90 = pgf90
   # Don't compile with optimization until the code runs properly without it
