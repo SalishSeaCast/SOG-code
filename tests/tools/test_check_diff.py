@@ -92,6 +92,16 @@ surface PAR
         self.assertEqual(sys.stdout.getvalue(), '')
 
 
+    def test_missing_file(self):
+        """print nothing & exit with status=1 if a file doesn't exist.
+        """
+        argv = ['check_diff.py', self.file1, 'spam']
+        exception = self.assertRaises(SystemExit, check_diff, argv)
+        self.assertEqual(exception.code, 1)
+        self.assertEqual(sys.stdout.getvalue(),
+                         'diff: spam: No such file or directory\n\n')
+
+
     def test_files_different(self):
         """print diff & exit with status=1 if files differ other than date.
         """

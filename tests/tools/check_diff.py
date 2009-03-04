@@ -16,7 +16,7 @@ from subprocess import Popen, PIPE, STDOUT
 
 
 def check_diff(argv):
-    """"diff checker for SOG buildbot.
+    """diff checker for SOG buildbot.
 
     diff the specified files and check the result.  If the files
     differ only in the content of the RunDateTime or Date: header
@@ -29,12 +29,15 @@ def check_diff(argv):
         raise SystemExit(return_code)
     # diff the files
     proc = Popen(['diff', argv[1], argv[2]],
-                 stderr=STDOUT, stdout=PIPE)
+                 stderr=PIPE, stdout=PIPE)
     proc.wait()
-    diff = proc.communicate()[0]
+    diff, stderr = proc.communicate()
     split_diff = diff.split('\n')
     # Check the result
-    if len(split_diff) == 1:
+    if stderr.strip():
+        return_code = 1
+        diff = stderr
+    elif len(split_diff) == 1:
         return_code = 0
     elif len(split_diff) > 5:
         return_code = 1
