@@ -5,12 +5,11 @@ Use `python test_check_diff.py` to run the test suite.
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
 :Created: 2009-02-02
 """
-from __future__ import with_statement
 import os
 import sys
 import StringIO
-from tempfile import mkstemp
 import unittest
+from tempfile import mkstemp
 from check_diff import check_diff
 
 
@@ -40,8 +39,8 @@ class Test_check_diff(unittest.TestCase):
         # (instead of using tempfile.NamedTemporaryFile) so that the
         # subprocess that runs diff can see them (at least on OS/X).
         handle, self.file1 = mkstemp()
-        with open(self.file1, 'w') as fp:
-            fp.write("""\
+        fp = open(self.file1, 'w')
+        fp.write("""\
 ! SOG code standard time series output from physics model
 ! Time series of iteration count for each time step; mixing layer depth;
 ! velocity components, temperature, & salinity; at surface, and averaged over
@@ -53,6 +52,7 @@ and surface par
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity
 surface PAR
 """)
+        fp.close()
 
 
     def tearDown(self):
@@ -97,8 +97,8 @@ surface PAR
         """
         # Create temporary test file with 1 more line than self.file1
         handle, file2 = mkstemp()
-        with open(file2, 'w') as fp:
-            fp.write("""\
+        fp = open(file2, 'w')
+        fp.write("""\
 ! SOG code standard time series output from physics model
 ! Time series of iteration count for each time step; mixing layer depth;
 ! velocity components, temperature, & salinity; at surface, and averaged over
@@ -111,6 +111,7 @@ and surface par
 surface PAR
 spam
 """)
+        fp.close()
         argv = ['check_diff.py', self.file1, file2]
         exception = self.assertRaises(SystemExit, check_diff, argv)
         self.assertEqual(exception.code, 1)
@@ -132,8 +133,8 @@ spam
         # Create temporary test file with different RunDateTime line
         # from self.file1
         handle, file2 = mkstemp()
-        with open(file2, 'w') as fp:
-            fp.write("""\
+        fp = open(file2, 'w')
+        fp.write("""\
 ! SOG code standard time series output from physics model
 ! Time series of iteration count for each time step; mixing layer depth;
 ! velocity components, temperature, & salinity; at surface, and averaged over
@@ -145,6 +146,7 @@ and surface par
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity
 surface PAR
 """)
+        fp.close()
         argv = ['check_diff.py', self.file1, file2]
         exception = self.assertRaises(SystemExit, check_diff, argv)
         self.assertEqual(exception.code, 0)
@@ -158,9 +160,8 @@ surface PAR
         # Create temporary file stubs like top of stdout from SOG with
         # different lines
         handle, stdout1 = mkstemp()
-        with open(stdout1, 'w') as fp:
-            # TODO: capture stdout from SOG
-            fp.write("""\
+        fp = open(stdout1, 'w')
+        fp.write("""\
                                               Date = 2009-03-03 02:00:46
                       depth of modelled domain [m] = 40.000000       
                              number of grid points = 80              
@@ -170,10 +171,10 @@ surface PAR
                                      time step [s] = 900             
                     implicit solver max iterations = 30              
 """)
+        fp.close()
         handle, stdout2 = mkstemp()
-        with open(stdout2, 'w') as fp:
-            # TODO: change Date line in stdout from SOG
-            fp.write("""\
+        fp = open(stdout2, 'w')
+        fp.write("""\
                                               Date = 2009-03-01 17:36:16
                       depth of modelled domain [m] = 40.000000       
                              number of grid points = 80              
@@ -183,6 +184,7 @@ surface PAR
                                      time step [s] = 900             
                     implicit solver max iterations = 30              
 """)
+        fp.close()
         argv = ['check_diff.py', stdout1, stdout2]
         exception = self.assertRaises(SystemExit, check_diff, argv)
         self.assertEqual(exception.code, 0)
