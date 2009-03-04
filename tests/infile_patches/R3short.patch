@@ -2,11 +2,11 @@
 
 # This patch is used by buildbot.  To apply this patch manually, do::
 
-#  $ cd SOG
-#  $ patch -i tests/infile_patches/patch_file -o path_to/new_infile
+#  $ cd SOG path_to/patch_file -o path_to/new_infile
 
-# where patch_file is the name of this file, and path_to/new_infile is the
-# path and the name of the new infile to be created.
+# where path_to/patch_file is the path and name of this file, and
+# path_to/new_infile is the path and the name of the new infile to be
+# created.
 
 --- infile	2009-02-24 12:56:37.000000000 -0800
 +++ tests/infiles/R3base	2009-03-01 06:46:51.000000000 -0800
