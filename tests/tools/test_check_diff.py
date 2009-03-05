@@ -168,7 +168,7 @@ surface PAR
         """print nothing & exit w/ status=0 if files differ only by Date.
         """
         # Create temporary file stubs like top of stdout from SOG with
-        # different lines
+        # different Date lines
         handle, stdout1 = mkstemp()
         fp = open(stdout1, 'w')
         fp.write("""\
@@ -198,6 +198,69 @@ surface PAR
         argv = ['check_diff.py', stdout1, stdout2]
         exception = self.assertRaises(SystemExit, check_diff, argv)
         self.assertEqual(exception.code, 0)
+        self.assertEqual(sys.stdout.getvalue(), '')
+        os.remove(stdout1)
+        os.remove(stdout2)
+
+
+    def test_files_with_different_outfile_names(self):
+        """print nothing & exit w/ status=0 if files differ only by outfiles.
+        """
+        # Create temporary file stubs like top of stdout from SOG with
+        # different output filename lines
+        handle, stdout1 = mkstemp()
+        fp = open(stdout1, 'w')
+        fp.write("""\
+                                              Date = 2009-03-04 21:41:23
+                      depth of modelled domain [m] = 40.000000       
+                             number of grid points = 80              
+                            grid spacing parameter = 0.0000000       
+              initialization CTD profile date/time = 2003-10-09 11:47:00 year-day = 282 day-sec = 42420
+                              end of run date/time = 2004-11-01 12:00:00 year-day = 306 day-sec = 43200
+                                     time step [s] = 900             
+                    implicit solver max iterations = 30              
+                       standard physics timeseries = timeseries/std_phys_R3-test.out
+                   user-defined physics timeseries = timeseries/user_phys_R3-test.out
+                       standard biology timeseries = timeseries/std_bio_R3-test.out
+                   user-defined biology timeseries = timeseries/user_bio_R3-test.out
+                          no. of profiles to print = 1               
+                            yr-day for profile [1] = 77              
+                           day-sec for profile [1] = 48480.000       
+                        file for halocline results = profiles/halo_R3.out
+        profile file base (datetime will be added) = profiles/prof_R3
+                      file for Hoffmueller results = profiles/Hoffmueller_R3.dat
+                           yr to start Hoff output = 2004            
+                       yr-day to start Hoff output = 294 
+""")
+        fp.close()
+        handle, stdout2 = mkstemp()
+        fp = open(stdout2, 'w')
+        fp.write("""\
+                                              Date = 2009-03-04 21:41:23
+                      depth of modelled domain [m] = 40.000000       
+                             number of grid points = 80              
+                            grid spacing parameter = 0.0000000       
+              initialization CTD profile date/time = 2003-10-09 11:47:00 year-day = 282 day-sec = 42420
+                              end of run date/time = 2004-11-01 12:00:00 year-day = 306 day-sec = 43200
+                                     time step [s] = 900             
+                    implicit solver max iterations = 30              
+                       standard physics timeseries = timeseries/std_phys_R3-test.out
+                   user-defined physics timeseries = timeseries/user_phys_R3-test.out
+                       standard biology timeseries = timeseries/std_bio_R3-test.out
+                   user-defined biology timeseries = timeseries/user_bio_R333-test.out
+                          no. of profiles to print = 1               
+                            yr-day for profile [1] = 77              
+                           day-sec for profile [1] = 48480.000       
+                        file for halocline results = profiles/halo_R3.out
+        profile file base (datetime will be added) = profiles/prof_R3
+                      file for Hoffmueller results = profiles/Hoffmueller.dat
+                           yr to start Hoff output = 2004            
+                       yr-day to start Hoff output = 294 
+""")
+        fp.close()
+        argv = ['check_diff.py', stdout1, stdout2]
+        exception = self.assertRaises(SystemExit, check_diff, argv)
+#         self.assertEqual(exception.code, 0)
         self.assertEqual(sys.stdout.getvalue(), '')
         os.remove(stdout1)
         os.remove(stdout2)
