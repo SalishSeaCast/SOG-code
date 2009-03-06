@@ -77,9 +77,8 @@ $(EXEC): $(OBJS)
 # creates the directories that the code expects to find
 .PHONY: install
 install: FFLAGS = $(FFLAGS-DEV)
-install: clean $(OBJS)
+install: clean dirs $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
-	mkdir infiles outfiles profiles timeseries
 
 # "make tags" builds a list of tags for subroutines, modules, etc. to
 # make source file navigation in Emacs easier.  By convention the tags
@@ -87,6 +86,12 @@ install: clean $(OBJS)
 .PHONY: tags
 tags:
 	$(ETAGS) $(ETFLAGS) *.f90
+
+# "make dirs" creates the directories that the code expects to find.
+# Useful for setting up fresh checkouts.
+.PHONY: dirs
+dirs:
+	mkdir -p infiles outfiles profiles timeseries
 
 # "make clean" deletes all object, and module files,
 # any core dump file, and the executable
