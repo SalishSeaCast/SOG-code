@@ -10,7 +10,6 @@ test_check_diff.py is the test suite for this script.
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
 :Created: 2009-03-01
 """
-
 import sys
 from subprocess import Popen, PIPE, STDOUT
 
