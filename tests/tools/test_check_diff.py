@@ -3,7 +3,7 @@
 Use `python test_check_diff.py` to run the test suite.
 
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
-:Created: 2009-02-02
+:Created: 2009-03-02
 """
 import os
 import sys
@@ -260,7 +260,7 @@ surface PAR
         fp.close()
         argv = ['check_diff.py', stdout1, stdout2]
         exception = self.assertRaises(SystemExit, check_diff, argv)
-#         self.assertEqual(exception.code, 0)
+        self.assertEqual(exception.code, 0)
         self.assertEqual(sys.stdout.getvalue(), '')
         os.remove(stdout1)
         os.remove(stdout2)
