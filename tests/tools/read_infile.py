@@ -18,17 +18,11 @@ def read_infile(argv):
     Read the specified SOG infile and return the output file names
     separated by newlines.
     """
-    if len(argv) != 2:
+    if len(argv) != 3:
         return_code = 1
-        print 'usage: %(prog)s infile' % {'prog':argv[0]}
+        print 'usage: %(prog)s infile key' % {'prog':argv[0]}
         raise SystemExit(return_code)
-    outfile_keys = ['std_phys_ts_out',
-                    'user_phys_ts_out',
-                    'std_bio_ts_out',
-                    'user_bio_ts_out',
-                    'haloclinefile',
-                    'profile_base',
-                    'Hoffmueller file']
+    key = ' '.join(argv[2:])
     p = re.compile(r'"\s')
     try:
         infile = open(argv[1]).readlines()
@@ -42,7 +36,7 @@ def read_infile(argv):
             continue
         # Split line into [key, value, comment]
         split_line = p.split(line)
-        if split_line[0].strip('"') in outfile_keys:
+        if split_line[0].strip('"')  == key:
             if split_line[1].strip('"').strip().rstrip('\n'):
                 # Value on the same line as key
                 print split_line[1].strip('"')
