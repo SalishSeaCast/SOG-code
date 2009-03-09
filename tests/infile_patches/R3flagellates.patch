@@ -1,0 +1,87 @@
+# SOG infile patch to produce a testcase infile from the repository infile
+
+# This patch is used by buildbot.  To apply this patch manually, do::
+
+#  $ cd SOG path_to/patch_file -o path_to/new_infile
+
+# where path_to/patch_file is the path and name of this file, and
+# path_to/new_infile is the path and the name of the new infile to be
+# created.
+
+--- infile	Wed Mar  4 14:32:04 2009
++++ R3flagellates	Mon Mar  9 13:10:20 2009
+@@ -15,9 +15,9 @@
+ 
+ ! Run timing parameters:
+ ! Initial conditions date/time (must match a CTD profile date/time)
+-"init datetime"	"2004-10-19 12:22:00"	"initialization CTD profile date/time"
++"init datetime"	"2003-10-09 11:47:00"	"initialization CTD profile date/time"
+ ! End of run date/time
+-"end datetime"	"2005-10-11 00:22:00"	"end of run date/time"
++"end datetime"	"2004-11-01 12:00:00"	"end of run date/time"
+ "dt"		900	 "time step [s]"
+ ! Implicit solver iteration limit
+ "max_iter"		30	"implicit solver max iterations"
+@@ -25,29 +25,29 @@
+ 
+ ! Time series output files
+ "std_phys_ts_out"  
+-	"timeseries/std_phys_nov04-test.out"  
++	"timeseries/std_phys_R3_flagellates.out"  
+ 	"standard physics timeseries"
+ "user_phys_ts_out" 
+-	"timeseries/user_phys_nov04-test.out" 
++	"timeseries/user_phys_R3_flagellates.out" 
+ 	"user-defined physics timeseries"
+ "std_bio_ts_out"   
+-	"timeseries/std_bio_nov04-test.out"   
++	"timeseries/std_bio_R3_flagellates.out"   
+ 	"standard biology timeseries"
+ "user_bio_ts_out"
+-	"timeseries/user_bio_nov04-test.out"  
++	"timeseries/user_bio_R3_flagellates.out"  
+ 	"user-defined biology timeseries"
+ 
+ ! Profiles output
+ "noprof"	1		"no. of profiles to print"
+ ! *** It would be nice to replace the yr-day and day-sec lists with a list
+ ! *** of dates/times for profiles output
+-"profday"	303		"yr-day for profile"
+-"proftime"	43200.		"day-sec for profile"
+-"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
+-"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
++"profday"	077		"yr-day for profile"
++"proftime"	48480.		"day-sec for profile"
++"haloclinefile"	"profiles/halo_R3.out"	"file for halocline results"
++"profile_base"	"profiles/prof_R3"	"profile file base (datetime will be added)"
+ ! Hoffmueller diagram output (a collection of profiles at time intervals
+ ! for contour or colourmap plotting)
+-"Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"
++"Hoffmueller file"	"profiles/Hoffmueller_R3.dat"	"file for Hoffmueller results"
+ "Hoffmueller start yr"	2004			"yr to start Hoff output"
+ "Hoffmueller start day"	294			"yr-day to start Hoff output"
+ "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
+@@ -328,7 +328,7 @@
+ "Englishman integ days"  20       "Days over which to integrate Englishman River"
+ 
+ ! Start year to run model: used in forcing.f90
+-"startyear"     2004    "initialization of runtime for model"
++"startyear"     2003    "initialization of runtime for model"
+ 
+ ! File names for input data (wind,met,rivers)
+ 
+@@ -352,12 +352,12 @@
+ 
+ ! Initial conditions
+ ! *** Perhaps these should be moved higher in the file?
+-"cruise_id"	"0414"		"Cruise id number"
++"cruise_id"	"0320"		"Cruise id number"
+ 
+ ! Nitrate data
+ "Nitrate"    .true.       "Is nitrate data every .5m from CTD?"
+ 
+-"ctd_in"	"input/ctd_in/ctd_test2004"	"initialization CTD file"
++"ctd_in"	"input/ctd_in/ctd_test2003"	"initialization CTD file"
+ "bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
+ 
+ "initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
