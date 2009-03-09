@@ -50,8 +50,8 @@
 -"proftime"	43200.		"day-sec for profile"
 -"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
 -"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
-+"profday"	077		"yr-day for profile"
-+"proftime"	48480.		"day-sec for profile"
++"profday"	303		"yr-day for profile"
++"proftime"	43200.		"day-sec for profile"
 +"haloclinefile"	"profiles/halo_R3.out"	"file for halocline results"
 +"profile_base"	"profiles/prof_R3"	"profile file base (datetime will be added)"
  ! Hoffmueller diagram output (a collection of profiles at time intervals
