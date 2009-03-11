@@ -14,25 +14,23 @@
 # path_to/new_infile is the path and the name of the new infile to be
 # created.
 
---- infile	2009-03-01 08:02:56.000000000 -0800
-+++ SoG_spring_flagellates	2009-03-11 07:12:03.000000000 -0700
-@@ -1,12 +1,9 @@
- ! -*- mode: f90 -*-  ! This line must be at the top of the file!
--! $Id$
--! $Source$
-+! $Id$
-+! $Source$
+--- infile	Wed Mar 11 13:06:55 2009
++++ SoG_spring_flagellates	Wed Mar 11 13:09:44 2009
+@@ -2,12 +2,9 @@
+ ! $Id$
+ ! $Source$
  
 -! SOG code infile template
--
++! SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
++! modelling the spring flagellate bloom.
+ 
 -! SOG code infile for 300 hr run starting at cruise 04-14 station S3
 -! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
 -! quick tests during code development and refactoring.
-+!*** SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
-+!*** modelling the spring flagellate bloom.
- 
+-
  ! Grid parameters:
  "maxdepth"	40.d0	"depth of modelled domain [m]"
+ "gridsize"	80	"number of grid points"
 @@ -15,43 +12,40 @@
  
  ! Run timing parameters:
@@ -349,9 +347,9 @@
  
  ! Start year to run model: used in forcing.f90
 -"startyear"     2004    "initialization of runtime for model"
--
--! File names for input data (wind,met,rivers)
 +"startyear"     2001    "initialization of runtime for model"
+ 
+-! File names for input data (wind,met,rivers)
  
 -"Wind"          "../sog-forcing/wind/SH_total.dat"             "file for wind data"
 -"Air temp"      "../sog-forcing/met/YVRhistAT"                 "file for AT data"
@@ -361,7 +359,7 @@
 -"isMinRiv"     .true.               "Is there data for a minor river?"
  
 -"Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data"
- 
+-
 -
 -! Vary parameters
 +! Vary parameters1
