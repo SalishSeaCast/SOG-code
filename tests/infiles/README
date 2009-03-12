@@ -1,5 +1,0 @@
-This directory receives patched infiles for tests.  It is mostly used
-by buildbot.
-
-This file exists mostly to force CVS to create this directory in new
-working copies.

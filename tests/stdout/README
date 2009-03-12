@@ -1,4 +1,0 @@
-This directory receives a copy of STDOUT from buildbot test runs.
-
-This file exists mostly to force CVS to create this directory in new
-working copies.
