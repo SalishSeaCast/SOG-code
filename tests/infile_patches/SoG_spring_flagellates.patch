@@ -4,18 +4,21 @@
 
 # It was created with:
 #    $ cd SOG
-#    $ diff -u infile path_to/sample_new_file > path_to/patch_file
+#    $ cat tests/infile_patches/patch_comments >> path_to/patch_file
+#    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
 
-#  To apply this patch manually, do::
+#  To apply this patch manually, do:
 #    $ cd SOG
 #    $ patch -i path_to/patch_file -o path_to/new_infile
 
-# where path_to/patch_file is the path and name of this file, and
-# path_to/new_infile is the path and the name of the new infile to be
-# created.
+# where:
+#   - tests/infile_patches/patch_comments contains these comments
+#   - path_to/patch_file is the path and name of this file
+#   - path_to/new_infile is the path and the name of the new infile to be
+#     created.
 
 --- infile	Wed Mar 11 13:06:55 2009
-+++ SoG_spring_flagellates	Wed Mar 11 13:09:44 2009
++++ SoG_spring_flagellates	Wed Mar 11 13:10:25 2009
 @@ -2,12 +2,9 @@
  ! $Id$
  ! $Source$
