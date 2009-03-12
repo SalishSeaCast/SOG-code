@@ -1,0 +1,19 @@
+# SOG infile patch to produce a testcase infile from the repository infile
+
+# This patch is used by buildbot.
+
+# It was created with:
+#    $ cd SOG
+#    $ cat tests/infile_patches/patch_comments >> path_to/patch_file
+#    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
+
+#  To apply this patch manually, do:
+#    $ cd SOG
+#    $ patch -i path_to/patch_file -o path_to/new_infile
+
+# where:
+#   - tests/infile_patches/patch_comments contains these comments
+#   - path_to/patch_file is the path and name of this file
+#   - path_to/new_infile is the path and the name of the new infile to be
+#     created.
+
