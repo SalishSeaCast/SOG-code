@@ -4,19 +4,37 @@
 
 # It was created with:
 #    $ cd SOG
-#    $ diff -u infile path_to/sample_new_file > path_to/patch_file
+#    $ cat tests/infile_patches/patch_comments >> path_to/patch_file
+#    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
 
-#  To apply this patch manually, do::
+#  To apply this patch manually, do:
 #    $ cd SOG
 #    $ patch -i path_to/patch_file -o path_to/new_infile
 
-# where path_to/patch_file is the path and name of this file, and
-# path_to/new_infile is the path and the name of the new infile to be
-# created.
+# where:
+#   - tests/infile_patches/patch_comments contains these comments
+#   - path_to/patch_file is the path and name of this file
+#   - path_to/new_infile is the path and the name of the new infile to be
+#     created.
 
---- infile	2009-02-24 12:56:37.000000000 -0800
-+++ tests/infiles/R3base	2009-03-01 06:46:51.000000000 -0800
-@@ -15,9 +15,9 @@
+--- infile	Wed Mar 11 13:06:55 2009
++++ R3base	Wed Mar 11 13:02:02 2009
+@@ -4,10 +4,11 @@
+ 
+ ! SOG code infile template
+ 
+-! SOG code infile for 300 hr run starting at cruise 04-14 station S3
+-! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
+-! quick tests during code development and refactoring.
++! SOG code infile for ~1 yr run starting at cruise 03-20 station S3
++! CTD cast.  This is the R3 baseline regression test infile.  All
++! biology model complexity is turned off.
+ 
++
+ ! Grid parameters:
+ "maxdepth"	40.d0	"depth of modelled domain [m]"
+ "gridsize"	80	"number of grid points"
+@@ -15,9 +16,9 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -28,24 +46,24 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"		30	"implicit solver max iterations"
-@@ -25,29 +25,29 @@
+@@ -25,29 +26,29 @@
  
  ! Time series output files
  "std_phys_ts_out"  
 -	"timeseries/std_phys_nov04-test.out"  
-+	"timeseries/std_phys_R3-test.out"  
++	"timeseries/std_phys_R3base.out"  
  	"standard physics timeseries"
  "user_phys_ts_out" 
 -	"timeseries/user_phys_nov04-test.out" 
-+	"timeseries/user_phys_R3-test.out" 
++	"timeseries/user_phys_R3base.out" 
  	"user-defined physics timeseries"
  "std_bio_ts_out"   
 -	"timeseries/std_bio_nov04-test.out"   
-+	"timeseries/std_bio_R3-test.out"   
++	"timeseries/std_bio_R3base.out"   
  	"standard biology timeseries"
  "user_bio_ts_out"
 -	"timeseries/user_bio_nov04-test.out"  
-+	"timeseries/user_bio_R3-test.out"  
++	"timeseries/user_bio_R3base.out"  
  	"user-defined biology timeseries"
  
  ! Profiles output
@@ -58,16 +76,28 @@
 -"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
 +"profday"	077		"yr-day for profile"
 +"proftime"	48480.		"day-sec for profile"
-+"haloclinefile"	"profiles/halo_R3.out"	"file for halocline results"
-+"profile_base"	"profiles/prof_R3"	"profile file base (datetime will be added)"
++"haloclinefile"	"profiles/halo_R3base.out"	"file for halocline results"
++"profile_base"	"profiles/prof_R3base"	"profile file base (datetime will be added)"
  ! Hoffmueller diagram output (a collection of profiles at time intervals
  ! for contour or colourmap plotting)
 -"Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"
-+"Hoffmueller file"	"profiles/Hoffmueller_R3.dat"	"file for Hoffmueller results"
++"Hoffmueller file"	"profiles/Hoffmueller_R3base.dat"	"file for Hoffmueller results"
  "Hoffmueller start yr"	2004			"yr to start Hoff output"
  "Hoffmueller start day"	294			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
-@@ -328,7 +328,7 @@
+@@ -75,9 +76,9 @@
+ 
+ ! Biology model parameters:
+ ! Model complexity flags:
+-"flagellates_on"	.true.	"include flagellates in model?"
++"flagellates_on"	.false.	"include flagellates in model?"
+ "remineralization"	.true.	"include remineralization loop in model?"
+-"use microzooplankton"  .true.  "include microzooplankton in model?"
++"use microzooplankton"  .false.  "include microzooplankton in model?"
+ "single species light"  .false.  "high light limitation for single species case"
+ ! Zooplankton values:
+ ! tuned
+@@ -328,7 +329,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
@@ -76,7 +106,7 @@
  
  ! File names for input data (wind,met,rivers)
  
-@@ -352,12 +352,12 @@
+@@ -352,12 +353,12 @@
  
  ! Initial conditions
  ! *** Perhaps these should be moved higher in the file?
