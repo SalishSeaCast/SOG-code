@@ -47,7 +47,5 @@ def read_infile(argv):
     raise SystemExit(return_code)
 
 
-
 if __name__== '__main__':
     read_infile(sys.argv)
-
