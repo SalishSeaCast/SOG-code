@@ -22,6 +22,8 @@ module physics_model
   public :: &
        ! Subroutines:
        init_physics, new_to_old_physics, dalloc_physics_variables
+       ! Variables
+
 
 contains
 
@@ -36,11 +38,14 @@ contains
     use buoyancy, only: alloc_buoyancy_variables
     use mixing_layer, only: init_mixing_layer
     use freshwater, only: init_freshwater
-    
+    use irradiance_sog, only: init_irradiance
+
     implicit none
     
     ! Argument:
     integer :: M  ! Number of grid points
+
+   
 
     ! Allocate memory for water property arrays
     call alloc_water_props(M)
@@ -62,6 +67,10 @@ contains
     ! Allocate memory for fresh water variables, and read
     ! parameter values from infile.
     call init_freshwater(M)
+    ! Allocate memory for Kpar variables, and read parameter values
+    ! from infile
+    call init_irradiance()
+
   end subroutine init_physics
 
 
