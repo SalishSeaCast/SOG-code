@@ -55,6 +55,7 @@ module freshwater
   real(kind=dp), parameter :: phys_circ_Pnano = 0.0d0
   real(kind=dp), parameter :: phys_circ_Ppico = 0.0d0
   real(kind=dp), parameter :: phys_circ_Zoo = 0.0d0
+
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 
   ! Variable Declarations:
@@ -67,8 +68,8 @@ module freshwater
        upwell  ! Upwelling velocity from river flows parameterization
   real(kind=dp), dimension(:), allocatable :: &
        F_n     ! Fresh water contribution to salinity flux
-    
-  character* 20 :: basin  ! Basin location
+      
+  character* 20 :: basin  ! Basin location 
 
   !
   ! Diagnostic:
@@ -87,15 +88,19 @@ module freshwater
        Fw_depth, &   ! Depth to distribute fresh water flux over
        upwell_const, &  ! Maximum upwelling velocity (tuning parameter)
        Northern_frac, & ! fraction of outgoing freshwater returned from the North
-       phyto_sum
+       phyto_sum, &
+       cbottom, &       ! bottom salinity   
+       ! values for salinity fit
+       calpha, &        
+       calpha2, &
+       cgamma, &
+       cbeta
 contains
 
   subroutine init_freshwater(M)
     ! Allocate memory for fresh water quantity arrays, and read
     ! parameter values from the infile.
     
-    ! To read basin location from infile
-    use input_processor, only: getpars
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
@@ -107,9 +112,7 @@ contains
     call read_freshwater_params()
 
     phyto_sum = 3.d0 
-   
-    ! Which basin are we in 
-    basin = getpars("basin_location")
+
   end subroutine init_freshwater
 
 
@@ -136,6 +139,12 @@ contains
        Northern_frac = getpard('northern_return_flow_frac')
     end if 
 
+    ! Values for salinity fit
+    cbottom = getpard('cbottom')
+    calpha = getpard('calpha')
+    calpha2 = getpard('calpha2')
+    cgamma = getpard('cgamma')
+    cbeta = getpard('cbeta')
   end subroutine read_freshwater_params
   
 
@@ -169,8 +178,7 @@ contains
          Qmean = 2720.0d0 ! Mean fraser river flow from entrainment fit
     ! totalfresh water into system (Fraser + rest multiplied up from Englishman
     real (kind=dp) :: totalfresh 
-    ! coefficients for surface salinity fit
-    real (kind=dp) :: calpha, cbeta, cgamma
+
  
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
@@ -181,10 +189,14 @@ contains
 
   
 
-   if (basin == 'SoG') then
+
     ! For the  Strait of Georgia at station S3 based on the river flows.  
     !(Re-derived by S.Allen numerous times.  This time, late June 2007
-    ! Labbook 125 to 131)  
+    ! Labbook 125 to 131)
+
+    ! For Rivers Inlet at Station DF02 based on river flows - derived by M.Wolfe, 
+    ! March 2009 labbok March19th.
+  
     ! This value is not 
     ! directly used in the model but is used to make sure the tuned Ft value
     ! is correct. tanh fn means no matter what the total fresh, a salinity
@@ -193,38 +205,14 @@ contains
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qriver + 55.0*Eriver
     
-    cbeta = 30.0d0  ! basic salinity
-    calpha = 2440.0d0
-    cgamma = 0.0633d0
 
-    S_riv = cbeta * exp(-totalfresh/calpha) / &
-         ( cgamma + exp(-totalfresh/calpha) )   
+    S_riv = cbottom * ((exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)) / &
+         ( cgamma + exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)))   
 
-
-   elseif (basin =="rivers") then
-
-    ! For Rivers Inlet  based on the river flows.  
-    ! This value is not 
-    ! directly used in the model but is used to make sure the tuned Ft value
-    ! is correct. tanh fn means no matter what the total fresh, a salinity
-    ! below 0 is not predicted.
-    
-
-    ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
-    totalfresh = Qriver + Eriver    
-    
-    cbeta = 30.0d0  ! basic salinity
-    calpha = 500.0d0
-   
-
-       S_riv = cbeta / exp(totalfresh/calpha) 
-    
     open(12,file="S_riv_check")
     write(12,*)S_riv
-    close(12) 
-
- endif
-
+    close(12)
+ 
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
     ! Jun-2006 (See entrainment.pdf) exponent with significant modifications
@@ -235,7 +223,7 @@ contains
  
     ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
-    Ft = Fw_scale*totalfresh*S_old/cbeta * &
+    Ft = Fw_scale*totalfresh*S_old/cbottom * &
          ((totalfresh)/3624.d0)**0.120
     
     ! Calculate the surface turbulent kinematic salinity flux (Large,
@@ -259,7 +247,7 @@ contains
        else
           FN = 0.
        endif
-       F_n = cbeta * (Fw + FN*0.d0)  ! remove salinity effect of return flow
+       F_n = cbottom * (Fw + FN*0.d0)  ! remove salinity effect of return flow
     endif
 
   end subroutine freshwater_phys
