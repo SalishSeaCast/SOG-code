@@ -106,6 +106,7 @@ program SOG
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
   use increment_time, only: new_year
+  use irradiance_sog, only: irradiance_sog
 
   ! Inherited modules
   ! *** Goal is to make these go away
