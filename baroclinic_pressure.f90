@@ -1,3 +1,5 @@
+
+! $Id$
 ! $Id$
 ! $Source$
 
@@ -61,8 +63,8 @@ module baroclinic_pressure
   !
   ! Private:
   real(kind=dp) :: &
-       Lx = 30.0d3, &  ! Minor axis (cross-strait) of model domain [m]
-       Ly = 120.0d3     ! Major axis (along-strait) of model domain [m]
+       Lx, &  ! Minor axis (cross-strait) of model domain [m]
+       Ly     ! Major axis (along-strait) of model domain [m]
 
   ! Variable Declarations:
   !
@@ -85,9 +87,14 @@ contains
 
   subroutine init_baroclinic_pressure(M)
     ! Initialize baroclinic pressure gradient calculation quantities.
+    use input_processor, only: getpard
     implicit none
     ! Argument:
     integer :: M  ! Number of grid points
+    
+    ! Initializes x and y model domain axes
+    Lx = getpard('Lx')
+    Ly = getpard('Ly')
 
     ! Allocate memory for baroclinic pressure gradient calculation
     ! quantities
