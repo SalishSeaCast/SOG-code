@@ -25,16 +25,16 @@
 
 ! Time series output files
 "std_phys_ts_out"  
-	"timeseries/std_phys_nov04-test.out"  
+	"timeseries/std_phys_sog-test1.out"  
 	"standard physics timeseries"
 "user_phys_ts_out" 
-	"timeseries/user_phys_nov04-test.out" 
+	"timeseries/user_phys_sog-test1.out" 
 	"user-defined physics timeseries"
 "std_bio_ts_out"   
-	"timeseries/std_bio_nov04-test.out"   
+	"timeseries/std_bio_sog-test1.out"   
 	"standard biology timeseries"
 "user_bio_ts_out"
-	"timeseries/user_bio_nov04-test.out"  
+	"timeseries/user_bio_sog-test1.out"  
 	"user-defined biology timeseries"
 
 ! Profiles output
@@ -43,11 +43,11 @@
 ! *** of dates/times for profiles output
 "profday"	303		"yr-day for profile"
 "proftime"	43200.		"day-sec for profile"
-"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
-"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
+"haloclinefile"	"profiles/halo-sog-test1.out"	"file for halocline results"
+"profile_base"	"profiles/sog-test1"	"profile file base (datetime will be added)"
 ! Hoffmueller diagram output (a collection of profiles at time intervals
 ! for contour or colourmap plotting)
-"Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"
+"Hoffmueller file"	"profiles/hoff-sog-test1.dat"	"file for Hoffmueller results"
 "Hoffmueller start yr"	2004			"yr to start Hoff output"
 "Hoffmueller start day"	294			"yr-day to start Hoff output"
 "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
@@ -60,6 +60,10 @@
 "temp_constant"    .false.       "Is bottom temperature constant over time?"
 
 ! Physics model parameters
+
+!Basin axis lengths (km)
+"Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
+"Ly"            120.0d3         "Major axis (along-strait) of model domain [m]"
 ! Turbulence:
 "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
 "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
@@ -71,7 +75,22 @@
 "Fw_depth"      3.5d0             "interface thickness"
 "use_Fw_nutrients" .true.       "include influence of Fw nutrients"
 "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
-"basin_location"     "SoG"         "Which basin are we working in?"
+! Salinity Fit 
+'cbottom'  30.0d0          "bottom salinity"
+'calpha'   2440.0d0             "alpha"
+'calpha2'  1.0d0              "alpha2"
+!- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
+'cgamma'   0.0633d0             "gamma"
+'cbeta'    0.0d0            "beta"
+
+! Kpar Fit  - Collins et al 2008 equation 8
+'ialpha'   0.0910d0             "alpha"
+'ibeta'   0.0433d0              "beta - relates to chl"
+'igamma'  2.62d-22               "gamma - relates to river flow"
+'isigma'  5.5d0              "sigma - exponent on river flow"
+'itheta'   0.445d0             "theta"
+'idl'    2.56d0            "dl"
+
 
 ! Biology model parameters:
 ! Model complexity flags:
@@ -337,8 +356,7 @@
 "Cloud"         "../sog-forcing/met/YVRhistCF"                 "file for Cloud data"
 "Humidity"      "../sog-forcing/met/YVRhistHum"                "file for Humidity data"
 "Major_River"  "../sog-forcing/rivers/Fraser_historic.dat"     "file for Maj Riv data"
-"isMinRiv"     .true.               "Is there data for a minor river?"
-
+"isMinRiv"     .true.               " Is there data for a minor river?"
 "Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data"
 
 
