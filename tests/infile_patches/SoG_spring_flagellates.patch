@@ -51,13 +51,13 @@
 -
  ! Time series output files
 -"std_phys_ts_out"  
--	"timeseries/std_phys_nov04-test.out"  
+-	"timeseries/std_phys_sog-test1.out"  
 -	"standard physics timeseries"
 -"user_phys_ts_out" 
--	"timeseries/user_phys_nov04-test.out" 
+-	"timeseries/user_phys_sog-test1.out" 
 -	"user-defined physics timeseries"
 -"std_bio_ts_out"   
--	"timeseries/std_bio_nov04-test.out"   
+-	"timeseries/std_bio_sog-test1.out"   
 -	"standard biology timeseries"
 +"std_phys_ts_out"
 +	"timeseries/std_phys_myear_wflmz_R1.out"
@@ -69,7 +69,7 @@
 +	"timeseries/std_bio_myear_wflmz_R1.out"
 +	"biology model time series"
  "user_bio_ts_out"
--	"timeseries/user_bio_nov04-test.out"  
+-	"timeseries/user_bio_sog-test1.out"  
 -	"user-defined biology timeseries"
 +	"timeseries/user_bio_myear_wflmz_R1.out"
 +	"user biology time series"
@@ -80,11 +80,11 @@
 -! *** of dates/times for profiles output
 -"profday"	303		"yr-day for profile"
 -"proftime"	43200.		"day-sec for profile"
--"haloclinefile"	"profiles/halo-nov04-test.out"	"file for halocline results"
--"profile_base"	"profiles/nov04-test"	"profile file base (datetime will be added)"
+-"haloclinefile"	"profiles/halo-sog-test1.out"	"file for halocline results"
+-"profile_base"	"profiles/sog-test1"	"profile file base (datetime will be added)"
 -! Hoffmueller diagram output (a collection of profiles at time intervals
 -! for contour or colourmap plotting)
--"Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"
+-"Hoffmueller file"	"profiles/hoff-sog-test1.dat"	"file for Hoffmueller results"
 -"Hoffmueller start yr"	2004			"yr to start Hoff output"
 -"Hoffmueller start day"	294			"yr-day to start Hoff output"
 +"noprof"        16       "number of profiles to be produced"
