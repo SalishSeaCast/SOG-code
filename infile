@@ -76,20 +76,20 @@
 "use_Fw_nutrients" .true.       "include influence of Fw nutrients"
 "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
 ! Salinity Fit 
-'cbottom'  30.0d0          "bottom salinity"
-'calpha'   2440.0d0             "alpha"
-'calpha2'  1.0d0              "alpha2"
+"cbottom"  30.0d0          "bottom salinity"
+"calpha"   2440.0d0             "alpha"
+"calpha2"  1.0d0              "alpha2"
 !- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
-'cgamma'   0.0633d0             "gamma"
-'cbeta'    0.0d0            "beta"
+"cgamma"   0.0633d0             "gamma"
+"cbeta"    0.0d0            "beta"
 
 ! Kpar Fit  - Collins et al 2008 equation 8
-'ialpha'   0.0910d0             "alpha"
-'ibeta'   0.0433d0              "beta - relates to chl"
-'igamma'  2.62d-22               "gamma - relates to river flow"
-'isigma'  5.5d0              "sigma - exponent on river flow"
-'itheta'   0.445d0             "theta"
-'idl'    2.56d0            "dl"
+"ialpha"   0.0910d0             "alpha"
+"ibeta"   0.0433d0              "beta - relates to chl"
+"igamma"  2.62d-22               "gamma - relates to river flow"
+"isigma"  5.5d0              "sigma - exponent on river flow"
+"itheta"   0.445d0             "theta"
+"idl"    2.56d0            "dl"
 
 
 ! Biology model parameters:
