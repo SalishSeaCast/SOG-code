@@ -27,9 +27,7 @@ def check_diff(argv):
         print 'usage: %(prog)s file1 file2' % {'prog':argv[0]}
         raise SystemExit(return_code)
     # diff the files
-    proc = Popen(['diff', argv[1], argv[2]],
-                 stderr=PIPE, stdout=PIPE)
-    proc.wait()
+    proc = Popen(['diff', argv[1], argv[2]], stderr=PIPE, stdout=PIPE)
     diff, stderr = proc.communicate()
     split_diff = diff.split('\n')
     if not split_diff[-1]: split_diff.pop()
