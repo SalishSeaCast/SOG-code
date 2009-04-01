@@ -68,9 +68,6 @@ module freshwater
        upwell  ! Upwelling velocity from river flows parameterization
   real(kind=dp), dimension(:), allocatable :: &
        F_n     ! Fresh water contribution to salinity flux
-      
-  character* 20 :: basin  ! Basin location 
-
   !
   ! Diagnostic:
   real(kind=dp) :: &
@@ -185,10 +182,6 @@ contains
     totalfresh = Qriver + Eriver
 
     ! Parameterized fit of the surface salinity 
-    ! Read in from infile which basin
-
-  
-
 
     ! For the  Strait of Georgia at station S3 based on the river flows.  
     !(Re-derived by S.Allen numerous times.  This time, late June 2007
