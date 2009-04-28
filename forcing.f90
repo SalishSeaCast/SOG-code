@@ -48,7 +48,7 @@ module forcing
        wind_northwest(wind_n)
   real(kind=sp) :: cf(met_n,24), atemp(met_n,24), &
        humid(732,24)
-  real(kind=sp) :: Qriver(river_n), Eriver(river_n)
+  real(kind=dp) :: Qriver(river_n), Eriver(river_n)
 
   !The starting year (startyear + 1 more year of data)
 
@@ -146,7 +146,7 @@ contains
     real(kind=sp) :: hour
     integer :: integration ! number of days to integrate the Englishman river
     integer, parameter :: Ieriver = 10000
-    real(kind=sp) :: EriverI(Ieriver)
+    real(kind=dp) :: EriverI(Ieriver)
     logical ::  found_data
     real(kind=dp) :: wind_en, wind_nw, MajRiv, MinRiv ! temporary variables    
     ! startyears for the various variables that can be shifted
@@ -221,7 +221,10 @@ contains
     found_data = .false.
     do while (.not. found_data)
        read (12,*) stn, year, month, day, para, (cf(1,j),j=1,24)
-       para = para ! this is just to use "para" to stop an unused warning
+       ! Assign stn and para to themselves to prevent g95 from
+       ! throwing "set but never used" warnings
+       stn = stn
+       para = para
 
        if (year == cf_startyear)then
 
@@ -389,7 +392,7 @@ contains
     integer, intent(in) :: day ! current year day
     real(kind=dp), intent(in) :: day_time ! current time of day in seconds
     
-    real(kind=sp), intent(out) :: Qinter, Einter ! values of river flows
+    real(kind=dp), intent(out) :: Qinter, Einter ! values of river flows
     real(kind=sp), intent(out) :: cf_value     ! cloud fraction
     real(kind=sp), intent(out) :: atemp_value  ! air temperature
     real(kind=sp), intent(out) :: humid_value  ! humidity
@@ -406,7 +409,7 @@ contains
     real(kind=dp) :: hr_frac ! fraction of the hour
 
 
-    accul_day = accum_day(year,day)
+    accul_day = accum_day(year, day)
 
     ! RIVERS
 
@@ -415,7 +418,7 @@ contains
        Einter = 0.
     else
        Qinter = (day_time * Qriver(accul_day) & 
-            + (86400 - day_time) * Qriver(accul_day-1)) / 86400.
+            + (86400 - day_time) * Qriver(accul_day - 1)) / 86400.
        Einter = (day_time * Eriver(accul_day) &
             + (86400 - day_time) * Eriver(accul_day-1)) / 86400.
        if (vary%rivers%enabled) then
