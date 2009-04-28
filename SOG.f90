@@ -125,8 +125,8 @@ program SOG
   integer :: scount=0
 
   ! Interpolated river flows
-  real(kind=sp) :: Qinter  ! Fraser River
-  real(kind=sp) :: Einter  ! Englishman River
+  real(kind=dp) :: Qinter  ! Fraser River
+  real(kind=dp) :: Einter  ! Englishman River
   ! Current time met data
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
