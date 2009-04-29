@@ -94,8 +94,8 @@ contains
     ! Local variables:
     integer :: i, j      ! loop index
     integer :: position(7), position_bot(7) !variable placeholders
-    integer :: index, index1, length, count, mcol_ctd  ! data indices
-    integer :: mcol_bot, header_length
+    integer :: index, index1        ! data index
+    integer :: length, count, mcol_ctd, mcol_bot, header_length
     real :: data(50,20),databot(50,20)   !Place holders for ctd/bot data
     ! Used to find bottom of 40m and whether ctd file has fluores data 
     logical :: found_depth, noFluores, Nitrate
