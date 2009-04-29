@@ -163,7 +163,7 @@ contains
     implicit none
 
     ! Arguments
-    real(kind=sp), intent(in) :: &
+    real(kind=dp), intent(in) :: &
          Qriver, &  ! Fraser River flow
          Eriver     ! Englishman River flow
     real(kind=dp), intent(in) :: &

@@ -84,7 +84,7 @@ contains
     ! Integrated daily solar contribution to the heat flux
     real(kind=dp), intent(out) :: Qs   
     type(entrain), intent(out) :: euphotic !euphotic%depth, euphotic%i
-    real, intent(in) :: Qriver
+    real(kind=dp), intent(in) :: Qriver
     real(kind=dp), dimension(0:d%M), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano, &   ! Nano phytoplankton

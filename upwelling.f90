@@ -42,7 +42,7 @@ contains
     ! Arguments:
     type(grid_), intent(in) :: grid                 ! Grid properties
     real(kind=dp), intent(in) :: upwell            ! Maximum upwelling velocity
-    real(kind=sp), intent(in) :: Qriver            ! River flow
+    real(kind=dp), intent(in) :: Qriver            ! River flow
     ! Vertical upwelling velocity profile
     real(kind=dp), intent(out), dimension(0:) :: wupwell 
 
