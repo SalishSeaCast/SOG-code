@@ -32,14 +32,14 @@ contains
     ! in late June 2006.
 
     ! type definitions
-    use precision_defs, only: dp, sp
+    use precision_defs, only: dp
     use grid_mod, only: grid
     use freshwater, only: upwell
 
     implicit none
 
     ! Arguments:
-    real(kind=sp), intent(in) :: Qriver            ! River flow
+    real(kind=dp), intent(in) :: Qriver            ! River flow
     ! Vertical upwelling velocity profile
     real(kind=dp), intent(out), dimension(0:) :: wupwell 
 
