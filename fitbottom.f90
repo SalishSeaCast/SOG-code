@@ -20,16 +20,17 @@ module fitbottom
   implicit none
 
   private
-  public :: bot_bound_time, bot_bound_uniform
+  public :: &
+       ! Subroutines:
+       init_fitbottom, bot_bound_time, bot_bound_uniform
 
   ! Private module variable declarations:
   ! 
   ! Number of different quantities
   integer, parameter :: NQ = 7
   ! Quantity names
-  character(len=12), dimension(NQ), parameter :: quantity &
-       = ['salinity', 'temperature', 'chl fluor', 'nitrate', 'silicon', &
-          'ammonium', 'plank ratio']
+  character(len=3), dimension(NQ), parameter :: quantity &
+       = ['sal', 'tmp', 'chl', 'nit', 'sil', 'NH4', 'prt']
 
     ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
     ! fitted.m in
@@ -47,7 +48,7 @@ module fitbottom
          0.58316137d0, -0.11206845d0, 0.26241523d0, 0.d0, 0.d0,0.d0, &
          ! Nitrate (constant) ! from salinity versus nitrate fit Nov 06 LB 91
          30.5d0, 0.d0, 0.d0, 0.d0, 0.d0,0.d0, & 
-         ! Silicon (constant) ! from salinity versus silicon fit NOv 06 LB 91
+         ! Silicon (constant) ! from salinity versus silicon fit Nov 06 LB 91
          54.0d0, 0.d0, 0.d0, 0.d0, 0.d0,0.d0, &
          ! Ammonium (constant) ! from salinity versus nitrate fit Nov 06 LB 91
          1.0d0, 0.d0, 0.d0, 0.d0, 0.d0,0.d0, &
@@ -142,19 +143,19 @@ contains
 
   
 
-    Tbot = bottom_value(arg, 'temperature')          ! in Celcius
+    Tbot = bottom_value(arg, 'tmp')          ! in Celcius
     if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
        Tbot = CtoK(Tbot) + vary%temperature%addition
     else
        Tbot = CtoK(Tbot)
     endif
-    Sbot = bottom_value(arg, 'salinity')
-    Nobot = bottom_value(arg, 'nitrate')
-    Sibot = bottom_value(arg, 'silicon')
-    Nhbot = bottom_value(arg, 'ammonium')
+    Sbot = bottom_value(arg, 'sal')
+    Nobot = bottom_value(arg, 'nit')
+    Sibot = bottom_value(arg, 'sil')
+    Nhbot = bottom_value(arg, 'NH4')
     
-    chl = bottom_value(arg, 'chl fluor')
-    ratio = bottom_value(arg, 'plank ratio')
+    chl = bottom_value(arg, 'chl')
+    ratio = bottom_value(arg, 'prt')
     
     Pmbot = chl / (ratio + 1)
     Pnbot = ratio * Pmbot
