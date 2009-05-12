@@ -17,11 +17,14 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	Wed Mar 11 13:06:55 2009
-+++ SoG_spring_flagellates	Wed Mar 11 13:10:25 2009
-@@ -2,12 +2,9 @@
- ! $Id$
- ! $Source$
+--- infile	Tue Mar 31 17:28:31 2009
++++ SoG_spring_flagellates	Tue May 12 15:48:15 2009
+@@ -1,13 +1,10 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
+-! $Id$
+-! $Source$
++! $Id$
++! $Source$
  
 -! SOG code infile template
 +! SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
@@ -93,7 +96,7 @@
 + 		"time of day for profiles (s)"
 +"haloclinefile" "profiles/halo-myear_wflmz_R1.dat" 	"file for halocline results"
 +"profile_base"	"profiles/myear_wflmz_R1"	"profiles file base (datetime will be adnded)"
-+"Hoffmueller file" "hoff/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
++"Hoffmueller file" "profiles/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
 +"Hoffmueller start yr"	2001			"yr to start Hoff output"
 +"Hoffmueller start day" 263			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
@@ -102,15 +105,17 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -59,150 +53,149 @@
+@@ -59,8 +53,7 @@
  ! Bottom temperature constant
  "temp_constant"    .false.       "Is bottom temperature constant over time?"
  
 -! Physics model parameters
--! Turbulence:
+-
 +! Physics model parameters:
- "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
- "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
+ !Basin axis lengths (km)
+ "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
+ "Ly"            120.0d3         "Major axis (along-strait) of model domain [m]"
+@@ -70,19 +63,19 @@
  "shear smooth"	0.8d0		"shear diffusivity smoothing parameter"
  ! Fresh water flux:
  "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
@@ -120,10 +125,26 @@
  "Fw_depth"      3.5d0             "interface thickness"
 -"use_Fw_nutrients" .true.       "include influence of Fw nutrients"
 -"northern_return_flow_on" .false. "include a return freshwater flow from the north?"
--"basin_location"     "SoG"         "Which basin are we working in?"
 +"use_Fw_nutrients" .false.       "include influence of Fw nutrients"
-+"northern_return_flow_on" .false.  "include back flow from the north?"
++"northern_return_flow_on" .false.  "include freshwater return flow from the north?"
+ ! Salinity Fit 
+ "cbottom"  30.0d0          "bottom salinity"
+ "calpha"   2440.0d0             "alpha"
+ "calpha2"  1.0d0              "alpha2"
+-!- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
++! doesn't really have an alpha2 value but we don't want to
++! divide by zero - beta = 0 to get rid of term
+ "cgamma"   0.0633d0             "gamma"
+ "cbeta"    0.0d0            "beta"
+-
+ ! Kpar Fit  - Collins et al 2008 equation 8
+ "ialpha"   0.0910d0             "alpha"
+ "ibeta"   0.0433d0              "beta - relates to chl"
+@@ -91,137 +84,137 @@
+ "itheta"   0.445d0             "theta"
+ "idl"    2.56d0            "dl"
  
+-
  ! Biology model parameters:
  ! Model complexity flags:
  "flagellates_on"	.true.	"include flagellates in model?"
@@ -320,7 +341,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -211,7 +204,6 @@
+@@ -230,7 +223,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -328,7 +349,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -220,7 +212,7 @@
+@@ -239,7 +231,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -337,7 +358,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -313,7 +305,6 @@
+@@ -332,7 +324,6 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
@@ -345,27 +366,44 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -328,40 +319,25 @@
+@@ -347,39 +338,50 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
 -"startyear"     2004    "initialization of runtime for model"
 +"startyear"     2001    "initialization of runtime for model"
  
--! File names for input data (wind,met,rivers)
- 
+ ! File names for input data (wind,met,rivers)
+-
 -"Wind"          "../sog-forcing/wind/SH_total.dat"             "file for wind data"
 -"Air temp"      "../sog-forcing/met/YVRhistAT"                 "file for AT data"
 -"Cloud"         "../sog-forcing/met/YVRhistCF"                 "file for Cloud data"
 -"Humidity"      "../sog-forcing/met/YVRhistHum"                "file for Humidity data"
 -"Major_River"  "../sog-forcing/rivers/Fraser_historic.dat"     "file for Maj Riv data"
--"isMinRiv"     .true.               "Is there data for a minor river?"
- 
++"Wind"
++	"../sog-forcing/wind/SH_total.dat"
++	"file for wind data"
++"Air temp"
++	"../sog-forcing/met/YVRhistAT"
++	"file for AT data"
++"Cloud"
++	"../sog-forcing/met/YVRhistCF"
++	"file for Cloud data"
++"Humidity"
++	"../sog-forcing/met/YVRhistHum"
++	"file for Humidity data"
++"Major_River"
++	"../sog-forcing/rivers/Fraser_historic.dat"
++	"file for Maj Riv data"
+ "isMinRiv"     .true.               "Is there data for a minor river?"
 -"Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data"
--
++"Minor_River"
++	"../sog-forcing/rivers/Englishman_historic.dat"
++	"file for Min Riv data"
+ 
 -
 -! Vary parameters
-+! Vary parameters1
++! Vary parameters:
  "vary%wind%enabled"    .false.       "Variation of wind data?"
  "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
  "vary%rivers%enabled"  .false.       "Variation of river flow?"
@@ -387,8 +425,14 @@
 -"initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
 -
 -
-+"ctd_in"	"input/ctd_in/SG0101004_sog.txt"	"initialization CTD file"
-+"bot_in"        "../sog_initial/Nuts_0208"              "bottle fluorscense initialization file"
-+"initial chl split" 0.5d0 0.d0 0.5d0 "Split of chl data into 3 classes of plankton"
++"ctd_in"
++	"input/ctd_in/SG0101004_sog.txt"
++	"initialization CTD file"
++"bot_in"
++	"../sog_initial/Nuts_0208"
++	"bottle fluorscense initialization file"
++"initial chl split"
++	0.5d0 0.d0 0.5d0
++	"Split of chl data into 3 classes of plankton"
  
  ! end of file
