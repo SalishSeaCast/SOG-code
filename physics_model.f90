@@ -38,7 +38,7 @@ contains
     use buoyancy, only: alloc_buoyancy_variables
     use mixing_layer, only: init_mixing_layer
     use freshwater, only: init_freshwater
-    use irradiance_sog, only: init_irradiance
+    use irradiance, only: init_irradiance
 
     implicit none
     
