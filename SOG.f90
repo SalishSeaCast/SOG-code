@@ -101,12 +101,12 @@ program SOG
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
   use find_upwell, only: upwell_profile, vertical_advection
-  use fitbottom, only:init_fitbottom, bot_bound_time, bot_bound_uniform
+  use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
   use increment_time, only: new_year
-  use irradiance_sog, only: irradiance_sog
+  use irradiance, only: irradiance_sog
 
   ! Inherited modules
   ! *** Goal is to make these go away
@@ -261,8 +261,8 @@ program SOG
 
      
 
-     CALL irradiance_sog(cf_value, day_time, day, &
-          I, I_par, grid, jmax_i, Q_sol, euph, Qinter, P%micro, P%nano, P%pico)
+     CALL irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
+          Qinter, P%micro, P%nano, P%pico, jmax_i, Q_sol, euph)
 
      DO count = 1, max_iter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the velocity field and water column
