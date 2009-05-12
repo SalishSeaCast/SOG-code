@@ -1,102 +1,92 @@
 ! $Id$
 ! $Source$
-module irradiance_sog
+
+module irradiance
   ! Type definitions, variable & parameter value declarations, and
-  ! subroutines related to light and heat influences in  SOG code.
-  !
-  !
-  !
+  ! subroutines related to light and heat influences in SOG code.
   !
   ! Public Subroutines:
   !
+  !    init_irradiance -- Allocate memory for parameters for Kpar fit
+  !                       and read parameter values from infile.
   !
-  !    init_irradiance -- Allocate memory for parameters for Kpar fit and read 
-  !                       parameter values from infile.
-  !
-  !
-  !
-  !    irradiance_sog -- Contains cloud model which calculates the light filtered from sun, 
-  !                      and the parameterizations for the deposition of PAR and total light
-  !                      available for heat.
-  
-
+  !    irradiance_sog -- Contains cloud model which calculates the
+  !                      light filtered from sun, and the
+  !                      parameterizations for the deposition of PAR
+  !                      and total light available for heat.
    
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_, interp_g
   use fundamental_constants, only: pi, latitude
   use initial_sog, only: N2chl ! ratio of chl mg/m3 to N uMol for phytoplankton
-  USE mean_param, only: entrain
-  USE surface_forcing, only: albedo, Q_o
+  use mean_param, only: entrain
+  use surface_forcing, only: albedo, Q_o
   use input_processor, only: getpard
-
   implicit none
 
-  ! Private
+  private
+  public :: &
+       ! Subroutines:
+       init_irradiance, irradiance_sog
+
+  ! Private module variable declarations:
   real(kind=dp) :: &     ! Values for the Kpar fit
-       ialpha, &
-       ibeta, &
-       igamma, &
-       isigma, &
-       itheta, &
-       idl
+       ialpha, ibeta, igamma, isigma, itheta, idl
 
 contains
 
   subroutine init_irradiance()
-    ! Allocate memory for light  quantity arrays (right now there aren't any!), and read
-    ! parameter values from the infile.
-    
+    ! Initialize irradiance model
     implicit none
 
-    ! Read Kpar  parameter values from infile
+    ! Read Kpar parameter values from infile
     call read_irradiance_params()
-
   end subroutine init_irradiance
+
 
   subroutine read_irradiance_params()
     ! Read the Kpar parameter values from the infile
     use input_processor, only: getpard
     implicit none 
 
-    ! Values for Kpar fit- Collins et al 2008 equation 8.
-    
+    ! Read values for Kpar fit- Collins et al 2008 equation 8.
     ialpha = getpard('ialpha')
     ibeta = getpard('ibeta')
     igamma = getpard('igamma')
     isigma = getpard('isigma')
     itheta = getpard('itheta')
-    idl    = getpard('idl')
+    idl = getpard('idl')
   end subroutine read_irradiance_params
 
 
-  SUBROUTINE irradiance_sog(cf, day_time, day, In, Ipar, d, &
-       I_k, Qs, euphotic, Qriver, Pmicro, Pnano, Ppico)
+  subroutine irradiance_sog(cf, day_time, day, In, Ipar, d, Qriver, &
+       Pmicro, Pnano, Ppico, I_k, Qs, euphotic)
 
+    implicit none
 
-    IMPLICIT NONE
     ! Arguments:
     real(kind=sp), intent(in) :: cf        ! cloud fraction
     real(kind=dp), intent(in) :: day_time  ! day-second
     integer, intent(in) :: day             ! year-day 
     type(grid_), intent(in) :: d           ! grid
-    real(kind=dp), dimension(0:d%M), intent(out) :: In, Ipar  
-    integer, intent(out) :: I_k
-    ! Integrated daily solar contribution to the heat flux
-    real(kind=dp), intent(out) :: Qs   
-    type(entrain), intent(out) :: euphotic !euphotic%depth, euphotic%i
-    real(kind=dp), intent(in) :: Qriver
+    real(kind=dp), intent(in) :: Qriver    ! dominant river flow
     real(kind=dp), dimension(0:d%M), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano, &   ! Nano phytoplankton
          Ppico      ! Pico phytoplankton
+    real(kind=dp), dimension(0:d%M), intent(out) :: In, Ipar  
+    integer, intent(out) :: I_k
+    real(kind=dp), intent(out) :: Qs   ! Integrated daily solar
+                                       ! contribution to the heat flux
+    type(entrain), intent(out) :: euphotic !euphotic%depth, euphotic%i
     
     ! Local variables:
     real(kind=dp) :: lat  ! Latitude of centre of model domain [rad]
-    INTEGER::k, check, of                          
-    REAL(KIND=DP)::declination, hour, cos_Z, day_length, hour_angle, &
+    integer :: k, check, of                          
+    real(kind=dp) :: declination, hour, cos_Z, day_length, hour_angle, &
          sunrise, sunset, Qso, a, b,KK
-    REAL(KIND=DP):: II, cos_Z_max, IImax      
-    REAL(KIND=DP), DIMENSION(0:d%M)::Iparmax
+    real(kind=dp):: II, cos_Z_max, IImax      
+    real(kind=dp), dimension(0:d%M)::Iparmax
     real(kind=dp), dimension(0:d%M) :: Ipar_i ! Ipar values on interfaces
     real(kind=dp) :: Ired, Iblue ! light in red and blue part of spectrum
     
@@ -255,4 +245,4 @@ contains
 
    END SUBROUTINE irradiance_sog
 
-end module irradiance_sog
+end module irradiance
