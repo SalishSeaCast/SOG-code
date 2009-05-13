@@ -18,13 +18,10 @@
 #     created.
 
 --- infile	Tue Mar 31 17:28:31 2009
-+++ SoG_spring_flagellates	Tue May 12 15:48:15 2009
-@@ -1,13 +1,10 @@
- ! -*- mode: f90 -*-  ! This line must be at the top of the file!
--! $Id$
--! $Source$
-+! $Id$
-+! $Source$
++++ SoG_spring_flagellates	Tue May 12 17:08:13 2009
+@@ -2,12 +2,9 @@
+ ! $Id$
+ ! $Source$
  
 -! SOG code infile template
 +! SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
