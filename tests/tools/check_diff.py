@@ -1,10 +1,5 @@
 """diff checker for SOG buildbot.
 
-diff the specified files and check the result.  If the files differ
-only in the content of the *RunDateTime header line, or Date, or 1 or
-more output filename lines, exit with status 0 and no output.
-Otherwise, exit with status 1 and the diff as output.
-
 test_check_diff.py is the test suite for this script.
 
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
@@ -18,7 +13,7 @@ def check_diff(argv):
     """diff checker for SOG buildbot.
 
     diff the specified files and check the result.  If the files
-    differ only in the content of the *RunDateTime header line, or
+    differ only in the content of the ``*RunDateTime`` header line, or
     Date, or 1 or more output filename lines, exit with status 0 and
     no output.  Otherwise, exit with status 1 and the diff as output.
     """

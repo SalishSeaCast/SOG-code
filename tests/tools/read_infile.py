@@ -1,8 +1,5 @@
 """infile reader for SOG buildbot.
 
-Read the specified SOG infile and return the output file names
-separated by newlines.
-
 test_infile_reader.py is the test suite for this script.
 
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
