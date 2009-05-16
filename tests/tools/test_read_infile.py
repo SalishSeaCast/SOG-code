@@ -5,70 +5,44 @@ Use `python test_read_infile.py` to run the test suite.
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
 :Created: 2009-03-07
 """
-import sys
+import os
 import StringIO
-import unittest
+import subprocess
+import sys
 import tempfile
+import unittest
 from read_infile import read_infile
 
 
-class Test_check_diff(unittest.TestCase):
-    def assertRaises(self, excClass, callableObj, *args, **kwargs):
-        """Monkey-patch unittest.assertRaises() to return exception
-        instance.
-        """
-        try:
-            callableObj(*args, **kwargs)
-        except excClass, exc_instance:
-            return exc_instance
-        else:
-            if hasattr(excClass,'__name__'): excName = excClass.__name__
-            else: excName = str(excClass)
-            raise self.failureException, "%s not raised" % excName
+# Name of module under test
+module = 'read_infile.py'
 
-
-    def setUp(self):
-        """Pre-test setup.
-        """
-        # Capture stdout
-        sys.stdout = StringIO.StringIO()
-
-
-    def tearDown(self):
-        """Post-test tear-down.
-        """
-        # Restore stdout to default
-        sys.stdout = sys.__stdout__
-
-
+class Test_read_infile_cli(unittest.TestCase):
+    """Tests for the commandline interface to read_infile.
+    """
     def test_too_few_args(self):
-        """print usage and exit with status=1 if too few arguments.
+        """print usage and exit with status=2 if too few arguments.
         """
-        argv = 'read_infile.py'.split()
-        exception = self.assertRaises(SystemExit, read_infile, argv)
-        self.assertEqual(exception.code, 1)
-        self.assertEqual(sys.stdout.getvalue(), 
-                         'usage: %(prog)s infile key\n' % {'prog':argv[0]})
+        cmd = ['python', os.path.join('.', module)]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(stdout.strip(), 
+                         'Usage: %(module)s infile key' % globals())
 
 
-    def test_too_many_args(self):
-        """print usage and exit with status=1 if too many arguments.
-        """
-        argv = 'read_infile.py infile key extra'.split()
-        exception = self.assertRaises(SystemExit, read_infile, argv)
-        self.assertEqual(exception.code, 1)
-        self.assertEqual(sys.stdout.getvalue(), 
-                         'usage: %(prog)s infile key\n' % {'prog':argv[0]})
-
-
+class Test_read_infile_function(unittest.TestCase):
+    """Tests for the read_infile function.
+    """
     def test_bad_file(self):
-        """print error and exit with status=1 if file can't be read.
+        """print error and exit with status=2 if file can't be read.
         """
-        argv = 'read_infile.py badfile key'.split()
-        exception = self.assertRaises(SystemExit, read_infile, argv)
-        self.assertEqual(exception.code, 1)
-        self.assertEqual(sys.stdout.getvalue(), 
-                        "[Errno 2] No such file or directory: 'badfile'\n")
+        cmd = ['python', os.path.join('.', module), 'badfile', 'key']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(stdout.strip(), 
+                        "[Errno 2] No such file or directory: 'badfile'")
 
 
     def test_1_line_params(self):
@@ -98,12 +72,12 @@ class Test_check_diff(unittest.TestCase):
 "Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"\
 """)
         test_file.flush()
-        argv = ['read_infile.py', test_file.name, 'haloclinefile']
-        exception = self.assertRaises(SystemExit, read_infile, argv)
-        self.assertEqual(exception.code, 0)
-        self.assertEqual(sys.stdout.getvalue(), """\
-profiles/halo-nov04-test.out
-""")
+        cmd = ['python', os.path.join('.', module),
+               test_file.name, 'haloclinefile']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        self.assertEqual(proc.returncode, 0)
+        self.assertEqual(stdout.strip(), "profiles/halo-nov04-test.out")
 
 
     def test_key_with_whitespace(self):
@@ -133,12 +107,12 @@ profiles/halo-nov04-test.out
 "Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"\
 """)
         test_file.flush()
-        argv = ['read_infile.py', test_file.name, 'haloclinefile']
-        exception = self.assertRaises(SystemExit, read_infile, argv)
-        self.assertEqual(exception.code, 0)
-        self.assertEqual(sys.stdout.getvalue(), """\
-profiles/halo-nov04-test.out
-""")
+        cmd = ['python', os.path.join('.', module),
+               test_file.name, 'Hoffmueller file']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        self.assertEqual(proc.returncode, 0)
+        self.assertEqual(stdout.strip(), "profiles/hoff-nov04-test.dat")
 
 
     def test_multiline_params(self):
@@ -172,12 +146,12 @@ profiles/halo-nov04-test.out
 "Hoffmueller file"	"profiles/hoff-nov04-test.dat"	"file for Hoffmueller results"\
 """)
         test_file.flush()
-        argv = ['read_infile.py', test_file.name, 'std_phys_ts_out']
-        exception = self.assertRaises(SystemExit, read_infile, argv)
-        self.assertEqual(exception.code, 0)
-        self.assertEqual(sys.stdout.getvalue(), """\
-timeseries/std_phys_nov04-test.out
-""")
+        cmd = ['python', os.path.join('.', module),
+               test_file.name, 'std_phys_ts_out']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        self.assertEqual(proc.returncode, 0)
+        self.assertEqual(stdout.strip(), "timeseries/std_phys_nov04-test.out")
 
 
 if __name__ == '__main__':

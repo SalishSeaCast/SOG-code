@@ -1,32 +1,47 @@
 """infile reader for SOG buildbot.
 
+Read the specified SOG infile and return the value for the specified key.
+
+Commandline usage: python read_infile.py infile key
+
 test_infile_reader.py is the test suite for this script.
 
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
 :Created: 2009-03-07
 """
+import logging
+import optparse
+import os
 import re
 import sys
 
 
-def read_infile(argv):
-    """infile reader for SOG buildbot.
+# Minimalist logging to sys.stderr.  Use logging.debug() for debug
+# printing.
+logging.basicConfig(format='%(message)s', level=logging.DEBUG)
 
-    Read the specified SOG infile and return the output file names
-    separated by newlines.
+
+def read_infile(infile, key):
+    """Read the specified SOG infile and return the value for the
+    specified key.
+
+    :arg infile: path and filename of infile to read
+    :type infile: string
+
+    :arg key: key to return value for; whitespace in key is okay
+    :type key: string
+
+    :returns: value for the specified key
+    :rtype: string
     """
-    if len(argv) != 3:
-        return_code = 1
-        print 'usage: %(prog)s infile key' % {'prog':argv[0]}
-        raise SystemExit(return_code)
-    key = ' '.join(argv[2:])
-    p = re.compile(r'"\s')
     try:
-        infile = open(argv[1]).readlines()
+        infile = open(infile).readlines()
     except IOError, msg:
-        return_code = 1
+        return_code = 2
         print msg
         raise SystemExit(return_code)
+    # Key is separated from value by "+whitespace
+    p = re.compile(r'"\s')
     for i, line in enumerate(infile):
         # Skip empty lines and comments
         if line.startswith('\n') or line.startswith('!'):
@@ -34,9 +49,10 @@ def read_infile(argv):
         # Split line into [key, value, comment]
         split_line = p.split(line)
         if split_line[0].strip('"')  == key:
-            if split_line[1].strip('"').strip().rstrip('\n'):
+            value = split_line[1].strip('"').strip().rstrip('\n')
+            if value:
                 # Value on the same line as key
-                print split_line[1].strip('"')
+                print value
             else:
                 # Value on line after key
                 print p.split(infile[i+1])[0].strip().strip('"')
@@ -45,4 +61,14 @@ def read_infile(argv):
 
 
 if __name__== '__main__':
-    read_infile(sys.argv)
+    # Parse the commandline and call read_infile
+    usage = 'Usage: %prog infile key'
+    parser = optparse.OptionParser(usage, prog=os.path.basename(__file__))
+    options, args = parser.parse_args(args=sys.argv[1:])
+    if len(args) < 2:
+        return_code = 2
+        parser.print_usage()
+        raise SystemExit(return_code)
+    infile = args[0]
+    key = ' '.join(args[1:])
+    read_infile(infile, key)
