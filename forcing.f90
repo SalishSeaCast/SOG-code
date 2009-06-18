@@ -551,12 +551,12 @@ contains
     
     INTEGER, INTENT(IN) :: year
     
-    if (year.gt.1953.and.year.lt.2007) then
+    if (year.gt.1953.and.year.lt.2013) then
        if (year.eq.1956.or.year.eq.1960.or.year.eq.1964.or. &
             year.eq.1968.or.year.eq.1972.or.year.eq.1976.or. &
             year.eq.1980.or.year.eq.1984.or.year.eq.1988.or. &
             year.eq.1992.or.year.eq.1996.or.year.eq.2000.or. &
-            year.eq.2004) then
+            year.eq.2004.or.year.eq.2008.or.year.eq.2012) then
           leapyear = .TRUE.
        else
           leapyear = .FALSE.
