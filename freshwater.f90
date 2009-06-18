@@ -42,7 +42,8 @@ module freshwater
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
        init_freshwater, freshwater_phys, freshwater_bio, &
-       dalloc_freshwater_variables
+       dalloc_freshwater_variables, &
+       totalfresh
 
   ! Parameter Value Declarations:
   !
@@ -68,7 +69,8 @@ module freshwater
        upwell  ! Upwelling velocity from river flows parameterization
   real(kind=dp), dimension(:), allocatable :: &
        F_n     ! Fresh water contribution to salinity flux
-  !
+  real (kind=dp) :: totalfresh   !total freshwater -use to read in SOG
+
   ! Diagnostic:
   real(kind=dp) :: &
        S_riv  ! Surface salinity prediction from fit
@@ -83,7 +85,11 @@ module freshwater
   real(kind=dp) :: &
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
-       upwell_const, &  ! Maximum upwelling velocity (tuning parameter)
+       upwell_const, &  ! Maximum upwelling velocity (tuning parameter)  
+       Qbar, &          ! mean total freshwater 
+       F_SOG, &          ! exponential of SOG component of Ft     
+       F_RI, &           ! exponential of RI component of Ft     
+       Fm, &             ! scale factor for RI river flow
        Northern_frac, & ! fraction of outgoing freshwater returned from the North
        phyto_sum, &
        cbottom, &       ! bottom salinity   
@@ -121,6 +127,11 @@ contains
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
     ! Fresh water scale factor for river flows
+   ! Fresh water scale factor for river flows 
+    Qbar = getpard("Qbar")
+    F_SOG = getpard("F_SOG") 
+    F_RI = getpard("F_RI")
+    Fm = getpard("Fm")
     Fw_scale = getpard('Fw_scale')     
     ! Add all fresh water on surface?
     Fw_surface = getparl('Fw_surface') 
@@ -174,7 +185,7 @@ contains
     real(kind=dp), parameter :: &
          Qmean = 2720.0d0 ! Mean fraser river flow from entrainment fit
     ! totalfresh water into system (Fraser + rest multiplied up from Englishman
-    real (kind=dp) :: totalfresh 
+    !real (kind=dp) :: totalfresh 
 
  
 
@@ -198,7 +209,11 @@ contains
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qriver + 55.0*Eriver
     
+    open(12,file="total_check")
+    write(12,*)totalfresh, Qriver
+    close(12)    
 
+ 
     S_riv = cbottom * ((exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)) / &
          ( cgamma + exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)))   
 
@@ -211,13 +226,13 @@ contains
     ! Jun-2006 (See entrainment.pdf) exponent with significant modifications
     ! in Mar-2007 (labbook pg 59)
     
-    upwell = upwell_const * totalfresh/3624.d0 * exp(-totalfresh/3624.d0) &
+    upwell = upwell_const * totalfresh/Qbar * exp(-totalfresh/Qbar) &
          /0.368
  
     ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
-    Ft = Fw_scale*totalfresh*S_old/cbottom * &
-         ((totalfresh)/3624.d0)**0.120
+    Ft = Fw_scale*totalfresh*S_old/cbottom * (1-exp(-totalfresh/Fm))**F_RI * &
+         ((totalfresh)/Qbar)**F_SOG
     
     ! Calculate the surface turbulent kinematic salinity flux (Large,
     ! et al (1994), eqn A2d).  Note that fresh water flux is added via
