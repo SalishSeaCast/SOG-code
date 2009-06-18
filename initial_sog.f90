@@ -221,28 +221,37 @@ contains
     ! Importing Nitrate data
     if(.not. Nitrate) then
        
-       do j=1,index+1
+       if (position(6)==-1)then
+          
+          Nitrate = .false.
+       else
 
-          NO(j) = data(j,position(6))
+          do j=1,index+1
 
-       enddo
+             NO(j) = data(j,position(6))
+
+          enddo
+          Nitrate = .true.
+  
+       endif
      
     endif
+    
 
     !Importing temperature,sal and depth 
     do i=1,3
 
-    if(position(i) == -1)then
-       
-         input = 0
-       
-    else
-         do j=1,index+1
-            input(j) = data(j,position(i))
-         enddo
+       if(position(i) == -1)then
+             
+          input = 0
+             
+       else
+          do j=1,index+1
+             input(j) = data(j,position(i))
+          enddo
      
 
-    endif
+       endif
    
     SELECT CASE (INT(i))   
          CASE (1)                          
@@ -260,7 +269,7 @@ contains
 
    fn = getpars("bot_in")
 
-   if(noFluores)then
+   if(noFluores .OR. .not. Nitrate)then
       !Open up the bottle file corresponding to the ctd file
 
       
@@ -304,7 +313,7 @@ contains
             databot(index1+1, i) = databot(index1, i)
          enddo
          
-         length = index1+1
+         
 
       endif
     ! Importing Nitrate data if not in CTD file
@@ -312,7 +321,7 @@ contains
        
        do j=1,index1+1
 
-          NO(j) = data(j,position(6))
+          NO(j) = databot(j,position_bot(6))
 
        enddo
       
@@ -320,41 +329,43 @@ contains
       ! Check to see if theres fluores data. If not, then check to see if theres chl data. If not, Check to see if theres phyto data. If not, Pmicro = 0
 
       
+ if(noFluores) then
 
-         if(position_bot(5) == -1)then
+    if(position_bot(5) == -1)then
          
-            if(position_bot(4) == -1)then
+       if(position_bot(4) == -1)then
             
-                if(position_bot(7) == -1)then
+          if(position_bot(7) == -1)then
 
-                   input = 0
+             input = 0
                 
-                else
+          else
                 
-                   do j=1,index1+1
-                      input(j) = databot(j,position_bot(7))
-    
-                   enddo
-
-                endif
-             
-           else
-
              do j=1,index1+1
-                  input(j) = databot(j,position_bot(4))
-    
+                      input(j) = databot(j,position_bot(7))
+                      
              enddo
 
           endif
-
+             
        else
 
           do j=1,index1+1
-               input(j) = databot(j,position_bot(5))
+                input(j) = databot(j,position_bot(4))
     
           enddo
 
        endif
+
+     else
+
+          do j=1,index1+1
+             input(j) = databot(j,position_bot(5))
+    
+          enddo
+
+     endif
+  endif
        
         
           Pmicro = input
@@ -447,7 +458,6 @@ contains
     D_DON = D_DON_interp
     D_Bsi = D_BSi_interp
     D_Refr = D_Refr_interp
-
 
 
     !If the bottom fluxes are fixed, use the following 
