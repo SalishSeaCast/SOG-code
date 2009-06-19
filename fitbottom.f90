@@ -35,38 +35,44 @@ module fitbottom
     ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
     ! fitted.m in
     ! sog-forcing/bottom for details of how these coefficient values
-    ! were derived.
-    real(kind=dp), dimension(6, NQ) :: c &
-         = reshape([ &
-         ! Salinity (constant, seasonal and biseasonal components)
-         29.62605865d0, 0.10374454d0, -0.03562458d0, -0.14156091d0, &
-         -0.06348989d0,0.d0, &
-         ! Temperature (constant, seasonal and biseasonal components)
-         9.3044d0, 0.06384430d0, -0.84712324d0,-0.05355254d0, &
-         -0.05775216d0,0.00007993d0, &
-         ! Phytoplankton from fluor (constant and seasonal)
-         0.58316137d0, -0.11206845d0, 0.26241523d0, 0.d0, 0.d0,0.d0, &
-         ! Nitrate (constant) ! from salinity versus nitrate fit Nov 06 LB 91
-         30.5d0, 0.d0, 0.d0, 0.d0, 0.d0,0.d0, & 
-         ! Silicon (constant) ! from salinity versus silicon fit Nov 06 LB 91
-         54.0d0, 0.d0, 0.d0, 0.d0, 0.d0,0.d0, &
-         ! Ammonium (constant) ! from salinity versus nitrate fit Nov 06 LB 91
-         1.0d0, 0.d0, 0.d0, 0.d0, 0.d0,0.d0, &
-         ! Ratio of pico/micro plankton (constant and biseasonal)
-         1.25948868d0, 0.d0, 0.d0, 0.97697686d0, 0.46289294d0, 0.d0 &
-         ], [6, NQ])
+    ! were derived. - Need to read in values from infile
+    real(kind=dp), dimension(7, NQ) :: c 
+
     ! Flag for constant bottom temperature
     logical :: temp_constant  !is the temperature coming up through the 
                               !bottom constant?
+     
 contains
 
   subroutine init_fitbottom()
     ! Read the bottom temperature constraints
-    use input_processor, only: getparl
+    use input_processor, only: getparl,getpardv
     implicit none
+
+    ! Local variable
+    
+    ! fraction to split NQ variables into
+    real (kind=dp) :: split(7)
 
     ! Is the temperature coming up through the bottom constant?
     temp_constant = getparl('temp_constant')
+    
+    ! Read in values for temp,sal, chl,nit,sil,NH4,prt and set up c matrix
+
+    call getpardv("salinity", 7, split)
+    c(1:7,1) = split(1:7)
+    call getpardv("temperature", 7, split)
+    c(1:7,2) = split(1:7)
+    call getpardv("Phytoplankton", 7, split)
+    c(1:7,3) = split(1:7)
+    call getpardv("Nitrate", 7, split)
+    c(1:7,4) = split(1:7)
+    call getpardv("Silicon", 7, split)
+    c(1:7,5) = split(1:7)
+    call getpardv("Ammonium", 7, split)
+    c(1:7,6) = split(1:7)
+    call getpardv("Ratio", 7, split)
+    c(1:7,7) = split(1:7)
   end subroutine init_fitbottom
 
   function bottom_value (arg, qty) result(value)
@@ -115,8 +121,8 @@ contains
        call exit(1)
     endif
 
-    value = c(1,index) + c(2,index)*cos(arg) + c(3,index)*sin(arg) &
-         + c(4,index)*cos(3.*arg) + c(5,index)*sin(3.*arg) + c(6,index)*((arg*365.25) /( 2 * pi)) 
+    value = c(1,index) + c(2,index)*cos(arg) + c(3,index)*sin(arg+c(4,index)) &
+         + c(5,index)*cos(3.*arg) + c(6,index)*sin(3.*arg) + c(7,index)*((arg*365.25) /( 2 * pi)) 
   end function bottom_value
 
 
