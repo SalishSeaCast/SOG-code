@@ -56,8 +56,16 @@
 "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
 "Hoffmueller interval"	1.			"days between Hoff outputs"
 
-! Bottom temperature constant
+! Bottom temperature parameters
 "temp_constant"    .false.       "Is bottom temperature constant over time?"
+
+"salinity"  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0  "Salinity (constant, seasonal and biseasonal components)"
+"temperature"  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.00007993d0     "Temperature (constant, seasonal and biseasonal components)"
+"Phytoplankton"0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0   " Phytoplankton from fluor (constant and seasonal)"
+"Nitrate"   30.5d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Nitrate (constant)"
+"Silicon"  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Silicon (constant)"
+"Ammonium"   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Ammonium (constant)"
+"Ratio"   1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0   "Ratio of pico/micro plankton (constant and biseasonal)"
 
 ! Physics model parameters
 
