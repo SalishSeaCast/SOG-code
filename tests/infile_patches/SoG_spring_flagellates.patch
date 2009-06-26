@@ -17,10 +17,12 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	Tue Mar 31 17:28:31 2009
-+++ SoG_spring_flagellates	Tue May 12 17:08:13 2009
-@@ -2,12 +2,9 @@
- ! $Id$
+--- infile	Thu Jun 25 16:22:53 2009
++++ SoG_spring_flagellates	Thu Jun 25 17:05:27 2009
+@@ -1,13 +1,10 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
+-! $Id$
++! $Id$
  ! $Source$
  
 -! SOG code infile template
@@ -102,26 +104,17 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -59,8 +53,7 @@
- ! Bottom temperature constant
- "temp_constant"    .false.       "Is bottom temperature constant over time?"
- 
--! Physics model parameters
--
-+! Physics model parameters:
- !Basin axis lengths (km)
- "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
- "Ly"            120.0d3         "Major axis (along-strait) of model domain [m]"
-@@ -70,19 +63,19 @@
- "shear smooth"	0.8d0		"shear diffusivity smoothing parameter"
- ! Fresh water flux:
- "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
--"Fw_scale"	8.48d-10		"fresh water scale factor for river flows"
-+"Fw_scale"	8.30d-10		"fresh water scale factor for river flows"
+@@ -82,20 +76,19 @@
+ "F_SOG"         0.12d0              "exponential for SOG component of Ft"
+ "F_RI"          0.0d0              "exponential for RI component of Ft"
+ "Fm"            450.0d0              "fresh water scale factor for RI river flow"
+-"Fw_scale"	8.48d-10	"fresh water scale factor for river flows"
++"Fw_scale"	8.30d-10	"fresh water scale factor for river flows"
  "Fw_surface"	.false.		"add all of the fresh water on the surface?"
  "Fw_depth"      3.5d0             "interface thickness"
 -"use_Fw_nutrients" .true.       "include influence of Fw nutrients"
 -"northern_return_flow_on" .false. "include a return freshwater flow from the north?"
+-
 +"use_Fw_nutrients" .false.       "include influence of Fw nutrients"
 +"northern_return_flow_on" .false.  "include freshwater return flow from the north?"
  ! Salinity Fit 
@@ -137,7 +130,7 @@
  ! Kpar Fit  - Collins et al 2008 equation 8
  "ialpha"   0.0910d0             "alpha"
  "ibeta"   0.0433d0              "beta - relates to chl"
-@@ -91,137 +84,137 @@
+@@ -104,137 +97,137 @@
  "itheta"   0.445d0             "theta"
  "idl"    2.56d0            "dl"
  
@@ -338,7 +331,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -230,7 +223,6 @@
+@@ -243,7 +236,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -346,7 +339,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -239,7 +231,7 @@
+@@ -252,7 +244,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -355,7 +348,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -332,7 +324,6 @@
+@@ -345,7 +337,6 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
@@ -363,7 +356,7 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -347,39 +338,50 @@
+@@ -360,39 +351,50 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
