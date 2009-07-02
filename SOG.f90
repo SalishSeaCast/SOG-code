@@ -209,11 +209,9 @@ program SOG
   ! Read the cruise id from stdin to use to build the file name for
   ! nutrient initial conditions data file
   cruise_id = getpars("cruise_id")
-  CALL initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
+  call initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
        P%pico, Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
-       h%new, grid, cruise_id)
-
-
+       h%new, cruise_id)
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
@@ -236,9 +234,6 @@ program SOG
 
   ! Close the input parameters file
   close(stripped_infile)
-
- 
-
 
   ! ---------- End of Initialization Section ---------
 
