@@ -42,10 +42,10 @@ contains
 
   subroutine initial_mean(U_new, V_new, T_new, S_new, Pmicro, Pnano, Ppico, &
        Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, &
-       hml, d, cruise_id)       
+       hml, cruise_id)       
     ! *** What's it do?
     use precision_defs, only: dp
-    use grid_mod, only: grid_,interp_array
+    use grid_mod, only: grid, interp_array
     use input_processor, only: getpars, getpardv, getparl
     implicit none
     ! Arguments:
@@ -64,15 +64,14 @@ contains
          D_DON,       &  ! Dissolved organic nitrogen detritus profile
          D_PON,       &  ! Particulate organic nitrogen detritus profile
          D_refr,      &  ! Refractory nitrogen detritus profile
-         D_bSi          ! Biogenic silicon detritus profile
-
-     real(kind=dp), dimension(0:81):: &    
+         D_bSi           ! Biogenic silicon detritus profile
+    real(kind=dp), intent(in) :: hml  ! Mixing layer depth
+    character*4, intent(in) ::  cruise_id  ! cruise_id
+    ! Local variables:
+     real(kind=dp), dimension(0:grid%M+1):: &    
          input,        &  ! Place holder for incoming data for different variables
-         
          depth,         &  ! Depth profile from ctd data file 
-         depth_index,   &  ! Depth profile from ctd data file
          T_interp,      &  ! Temperature interpolted at every .5m
-         depth_interp,  &  ! Depth at every .5m
          S_interp,      &  ! Interpolated Salinity profile
          Pmicro_interp, &  ! Interpolated Micro phyto profile
          dummyNO,       &  ! Dummy Nitrate valu
@@ -83,15 +82,7 @@ contains
          D_PON_interp,  &  ! Interpolated PON profile
          D_DON_interp,  &  ! Interpolated DON profile
          D_BSi_interp,  &  ! Interpolated biogenic silicon profile
-         D_Refr_interp   ! Interpolated refractory nitrogen profile
-
-
-
-    real(kind=dp), intent(in) :: hml ! Mixing layer depth
-    type(grid_), intent(in) :: d
-    character*4  cruise_id           ! cruise_id
-
-    ! Local variables:
+         D_Refr_interp     ! Interpolated refractory nitrogen profile
     integer :: i, j      ! loop index
     integer :: position(7), position_bot(7) !variable placeholders
     integer :: index, index1        ! data index
@@ -109,8 +100,8 @@ contains
     U_new(1) = Uo
     V_new(1) = Vo
 
-    DO i = 2, d%M+1   
-       IF (d%d_g(i) <= hml) THEN               
+    DO i = 2, grid%M+1   
+       IF (grid%d_g(i) <= hml) THEN               
           NH(i) = 0.   ! essentially zero in mixed layer except in winter
        ELSE
           NH(i) = NHo   ! deep value
@@ -119,7 +110,7 @@ contains
        V_new(i) = Vo
     END DO
 
-    NH(d%M+1) = NHo
+    NH(grid%M+1) = NHo
 
 
     ! read in nutrients data
@@ -130,7 +121,7 @@ contains
     write (fn,'("../sog-initial/Nuts_",a4,".txt")') cruise_id
     open(unit=66, file=fn, status="OLD", action="READ")
     
-    do i = 0, d%M
+    do i = 0, grid%M
        read(66, *) depth1, dummyNO(i), Si(i)
        if (depth1.ne.i*0.5) then
           write (*,*) 'Expecting nutrients, NO3 and Silicon at 0.5 m intervals'
@@ -139,10 +130,10 @@ contains
     enddo
     close (66)
    
-    Si(d%M+1) = Si(d%M)
+    Si(grid%M+1) = Si(grid%M)
    if(Nitrate)then 
       NO = dummyNO
-      NO(d%M+1) = NO(d%M)
+      NO(grid%M+1) = NO(grid%M)
    endif
 
   
@@ -405,48 +396,22 @@ contains
        D_Refr(i) = 0. 
     enddo
     close(45)
-    
-
-!Defining depth_interp array: assuming dz = 0.5m 
-    
-    count=0
-    do i=0,81,1
-       depth_interp(i)=count/2
-       count = count +1
-    enddo
-
-!Define depth index to keep track of original depths
-
-    depth_index = depth
 
     !Linear interpolation to obtain variables at every .5m depth
-
-
-    call interp_array(depth,T_New,depth_interp,T_interp)
-    depth = depth_index
-    call interp_array(depth,S_New,depth_interp,S_interp)
-    depth = depth_index
-    call interp_array(depth,Pmicro,depth_interp,Pmicro_interp)
-    depth = depth_index    
+    call interp_array(depth, T_New, grid%d_g, T_interp)
+    call interp_array(depth, S_New, grid%d_g, S_interp)
+    call interp_array(depth, Pmicro, grid%d_g, Pmicro_interp)
     if(.not.Nitrate) then
-       call interp_array(depth,NO,depth_interp,NO_interp)
-       depth = depth_index
+       call interp_array(depth, NO, grid%d_g, NO_interp)
        NO = NO_interp
     endif
-    call interp_array(depth,Pnano,depth_interp,Pnano_interp)
-    depth = depth_index
-    call interp_array(depth,Ppico,depth_interp,Ppico_interp)
-    depth = depth_index
-    call interp_array(depth,Z,depth_interp,Z_interp)
-    depth = depth_index
-    call interp_array(depth,D_PON,depth_interp,D_PON_interp)
-    depth = depth_index
-    call interp_array(depth,D_DON,depth_interp,D_DON_interp)
-    depth = depth_index
-    call interp_array(depth,D_Bsi,depth_interp,D_Bsi_interp)
-    depth = depth_index
-    call interp_array(depth,D_Refr,depth_interp,D_Refr_interp)
-    depth = depth_index
+    call interp_array(depth, Pnano, grid%d_g, Pnano_interp)
+    call interp_array(depth, Ppico, grid%d_g, Ppico_interp)
+    call interp_array(depth, Z, grid%d_g, Z_interp)
+    call interp_array(depth, D_PON, grid%d_g, D_PON_interp)
+    call interp_array(depth, D_DON, grid%d_g, D_DON_interp)
+    call interp_array(depth, D_Bsi, grid%d_g, D_Bsi_interp)
+    call interp_array(depth, D_Refr, grid%d_g, D_Refr_interp)
 
     T_new  = T_interp  !Surface
     S_new = S_interp  !Boundary
