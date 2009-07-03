@@ -6,9 +6,9 @@ module user_output
   !
   ! Public Subroutines:
   !
-  !   write_user_phys_timeseries_header --
+  !   write_user_phys_timeseries_hdr --
   !
-  !   write_user_bio_timeseries_header -- 
+  !   write_user_bio_timeseries_hdr -- 
   !
   !   write_user_timeseries -- 
   !
@@ -19,12 +19,12 @@ module user_output
   private
   public :: &
        ! Subroutines:
-       write_user_phys_timeseries_header, write_user_bio_timeseries_header, &
+       write_user_phys_timeseries_hdr, write_user_bio_timeseries_hdr, &
        write_user_timeseries, write_user_profiles
 
 contains
 
-  subroutine write_user_phys_timeseries_header(codeId, str_run_Datetime, &
+  subroutine write_user_phys_timeseries_hdr(codeId, str_run_Datetime, &
        str_CTD_Datetime, str_start_Datetime)
     ! Write user physics model time series results file header.
     !
@@ -61,10 +61,10 @@ contains
          "*FieldNames: time"/, &
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
-  end subroutine write_user_phys_timeseries_header
+  end subroutine write_user_phys_timeseries_hdr
 
 
-  subroutine write_user_bio_timeseries_header(codeId, str_run_Datetime, &
+  subroutine write_user_bio_timeseries_hdr(codeId, str_run_Datetime, &
        str_CTD_Datetime, str_start_Datetime)
     ! User biology model time series results
     ! !!! This is the place to add exploratory, !!!
@@ -102,7 +102,7 @@ contains
          !SEA         "*FieldUnits: hr since ", a, " LST, uM N, uM N"/, &
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
-  end subroutine write_user_bio_timeseries_header
+  end subroutine write_user_bio_timeseries_hdr
   
 
   subroutine write_user_timeseries(time, grid)

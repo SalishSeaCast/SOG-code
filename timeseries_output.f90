@@ -33,8 +33,8 @@ contains
          user_phys_timeseries, user_bio_timeseries
     use input_processor, only: getpars
     use datetime, only: datetime_, datetime_str
-    use user_output, only: write_user_phys_timeseries_header, &
-         write_user_bio_timeseries_header
+    use user_output, only: write_user_phys_timeseries_hdr, &
+         write_user_bio_timeseries_hdr
     implicit none
     ! Arguments:
     character(len=70), intent(in) :: &
@@ -70,27 +70,27 @@ contains
     ! Standard physics model time series results
     fn = getpars("std_phys_ts_out")
     open(unit=std_phys_timeseries, file=fn, status="replace", action="write")
-    call write_std_phys_timeseries_header(codeId, str_run_Datetime, &
+    call write_std_phys_timeseries_hdr(codeId, str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! User physics model time series results
     fn = getpars("user_phys_ts_out")
     open(unit=user_phys_timeseries, file=fn, status="replace", action="write")
-    call write_user_phys_timeseries_header(codeId, str_run_Datetime, &
+    call write_user_phys_timeseries_hdr(codeId, str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! Standard biology model time series results
     fn = getpars("std_bio_ts_out")
     open(unit=std_bio_timeseries, file=fn, status="replace", action="write")
-    call write_std_bio_timeseries_header(codeId, str_run_Datetime, &
+    call write_std_bio_timeseries_hdr(codeId, str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! User biology model time series results
     fn = getpars("user_bio_ts_out")
     open(unit=user_bio_timeseries, file=fn, status="replace", action="write")
-    call write_user_bio_timeseries_header(codeId, str_run_Datetime, &
+    call write_user_bio_timeseries_hdr(codeId, str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
   end subroutine init_timeseries_output
 
 
-  subroutine write_std_phys_timeseries_header(codeId, str_run_Datetime, &
+  subroutine write_std_phys_timeseries_hdr(codeId, str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! Write standard physics model time series results file header.
     !
@@ -133,10 +133,10 @@ contains
          "*FieldUnits: hr since ", a, " LST, None, m, m/s, m/s, m/s, m/s, ", &
          "deg C, deg C, None, None, W/m2"/,                                  &
          "*EndOfHeader")
-  end subroutine write_std_phys_timeseries_header
+  end subroutine write_std_phys_timeseries_hdr
 
 
-  subroutine write_std_bio_timeseries_header(codeId, str_run_Datetime, &
+  subroutine write_std_bio_timeseries_hdr(codeId, str_run_Datetime, &
        str_CTD_Datetime, str_start_Datetime)
     ! Write standard biology model time series results file header.
     !
@@ -189,7 +189,7 @@ contains
          "uM, uM, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, ",   &
          "uM"/,                                                              &
          "*EndOfHeader")
-  end subroutine write_std_bio_timeseries_header
+  end subroutine write_std_bio_timeseries_hdr
   
 
   subroutine write_std_timeseries(time, grid, &
