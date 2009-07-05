@@ -21,10 +21,10 @@ SUBROUTINE surface_flux_sog(mm,ro, &
       DOUBLE PRECISION, INTENT(OUT)::Q_t
       
       ! Local Variables:
-      DOUBLE PRECISION:: UU, rho_atm, Sa
+      DOUBLE PRECISION:: UU, rho_atm
       double precision:: r, Ce, sigma, lw_in, lw_out, lw_net
       double precision:: Cs, h_sens, h_latent, h_flux, Cp
-      REAL:: epsilon_w,a,b,c,ea,es,cl,le
+      double precision :: epsilon_w,a,b,c,ea,es,cl,le
 
 !           U_ten, V_ten used to find UU for drag coefficient calculation
 !           U_ten, V_ten used to find wind stress (with drag coefficient)
