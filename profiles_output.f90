@@ -36,7 +36,7 @@ module profiles_output
   private
   public :: &
        ! Subroutines:
-  init_profiles_output, write_std_profiles, profiles_output_close
+       init_profiles_output, write_std_profiles, profiles_output_close
 
   ! Private parameter declarations:
   !
@@ -134,7 +134,7 @@ contains
        call getpariv("profday", noprof, profday)
        call getpardv("proftime", noprof, proftime)
        profileDatetime%yr_day = profday
-       profileDatetime%day_sec = proftime
+       profileDatetime%day_sec = int(proftime)
        ! Read the haloclines results file name, open it, and write its
        ! header
        haloclines_fn = getpars("haloclinefile")
@@ -292,10 +292,6 @@ contains
          delS, &  ! delta S between two depth points
          dep,  &  ! depth half way between them
          derS     ! -dS/dz
-    ! Temporary storage for formated datetime string.  Needed to work around
-    ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function
-    ! calls in write statements
-    character(len=19) :: str_pro_Datetime
 
     ! Check the day and the time
     if (iprof <= noprof .and. day == profday(iprof)) then
@@ -303,7 +299,7 @@ contains
           ! Calculate the month number and month day for profile headers
           profileDatetime(iprof)%yr = year
           profileDatetime(iprof)%yr_day = day
-          profileDatetime(iprof)%day_sec = day_time
+          profileDatetime(iprof)%day_sec = int(day_time)
           call calendar_date(profileDatetime(iprof))
           call clock_time(profileDatetime(iprof))
           ! Calculate the halocline depth and magnitude
