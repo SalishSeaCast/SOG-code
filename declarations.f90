@@ -10,9 +10,6 @@ module declarations
 
   implicit NONE
 
-  ! Run parameters read from file specified as 'inputfile' in infile
-  character*4 :: cruise_id  ! four number code that labels the start cruise
-
   type(UVST):: Gvector
   TYPE(plankton2)::micro, nano, pico
   TYPE(entrain)::euph
