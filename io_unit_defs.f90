@@ -15,9 +15,7 @@ module io_unit_defs
   integer, parameter :: stripped_infile = 10
   integer, parameter :: met_data = 12
   integer, parameter :: river_data = 12
-  integer, parameter :: ctd_data = 13
-  integer, parameter :: nuts_data = 14
-  integer, parameter :: botl_data = 15
+  integer, parameter :: field_data = 13
 
   ! Results output file units
   integer, parameter :: profiles = 200
