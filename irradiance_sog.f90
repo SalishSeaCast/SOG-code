@@ -18,7 +18,8 @@ module irradiance
   use precision_defs, only: dp, sp
   use grid_mod, only: grid_, interp_g
   use fundamental_constants, only: pi, latitude
-  use initial_sog, only: N2chl ! ratio of chl mg/m3 to N uMol for phytoplankton
+  use core_variables, only: N2chl ! ratio of chl mg/m3 to N uMol for
+                                  ! phytoplankton
   use mean_param, only: entrain
   use surface_forcing, only: albedo, Q_o
   use input_processor, only: getpard
