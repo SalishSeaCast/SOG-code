@@ -70,6 +70,7 @@ module mixing_layer
 contains
 
   subroutine init_mixing_layer(M)
+    use core_variables, only: ho
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
@@ -78,7 +79,7 @@ contains
     call alloc_mixing_layer_variables(M)
     ! Initialize the mixing layer depth, and the indices of the grid
     ! point & grid layer interface immediately below it
-    h%new = 2.0d0
+    h%new = ho
     call find_mixing_layer_indices()
   end subroutine init_mixing_layer
 
