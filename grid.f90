@@ -81,7 +81,7 @@ module grid_mod
        depth_average, full_depth_average, gradient_g, gradient_i, interp_i, &
        interp_g, &
        ! Subroutines:
-       dalloc_grid, init_grid, interp_value,interp_array
+       dalloc_grid, init_grid, interp_value
 
   ! Public type definition:
   !
@@ -389,83 +389,6 @@ contains
     qty_g = qty_i(0:size(qty_g)-1) * above_i%factor &
          + qty_i(1:) * below_i%factor
   end function interp_g
-
-
-  subroutine interp_array(x, y, x1, &  ! in
-       y1)                             ! out
-    ! Interpolates to find y1, the values of the function y at 
-    ! the points in x.
-    ! Example: depth is the depth array, y is the temperature array, 
-    ! x1 is the new depth array where you want to interpolate 
-    ! to find the temperatures at.
-    implicit none
-    !Arguments:
-    real(kind=dp), dimension(0:grid%M+1), intent(in) :: &
-         x,        &
-         x1,       &
-         y        
-    real(kind=dp), dimension(0:grid%M+1), intent(out) :: &
-         y1
-    !Local Variables
-    integer :: i, j, m, index, k_index
-    real(kind=dp), dimension(0:grid%M) :: dx, dy
-    real(kind=dp), dimension(0:grid%M+1) :: x_clean, y_clean
-    integer, dimension(0:grid%M+1) :: k
-
-    k_index = 0
-    ! Examine array for any missing values.  Data set may have -99.0 values 
-    ! or -99999 or some variation of this.  Will search for values less 
-    ! than 0 and remove them from the array.  Call this the "clean" array
-    index = 0
-    m=0
-    j=0
-    do while (index < size(y))
-       if(y(index) < 0 ) then
-          j = j + 1
-       else
-          x_clean(m) = x(j)
-          y_clean(m) = y(j)
-          m = m + 1
-          j = j + 1
-       endif
-       index = index +1
-    enddo
-    if(size(x_clean) == size(y_clean))then
-    else   
-       write(*,*) 'x and y arrays are not the same length'
-       stop
-    endif
-    y_clean(0) = y_clean(1)
-    x_clean(0) = 0 
-   
-    ! Set y1 to zeros (in our case we want same name for original
-    ! array and interpolated array)
-    do i = 0, size(x_clean) - 2
-       do j = 0, size(x1) - 1
-          if(x1(j) < x_clean(i+1) .AND. x1(j) >= x_clean(i)) then
-             k_index = k_index + 1
-             k(k_index-1) = i
-          endif
-       enddo
-    enddo
-    !Diff 
-    do i=0,size(x_clean)-2
-       dx(i) = x_clean(i+1) - x_clean(i)
-       dy(i) = y_clean(i+1) - y_clean(i)
-    enddo
-    !Interpolation 
-    do i=0,size(x1)-1
-       if (i<size(x1)) then
-          y1(i) = y_clean(k(i)) + (x1(i) - x_clean(k(i))) * (dy(k(i))/dx(k(i)))
-       else
-          if (k(i) < size(x_clean)) then
-             y1(i) = y_clean(k(i)) + (x1(i) - x_clean(k(i))) * (dy(k(i))/dx(k(i)))
-          else
-             y1(i) = y_clean(k(i)) + (x1(i) - x_clean(k(i))) * (dy(k(i-1))/dx(k(i-1)))
-          endif
-       endif
-    enddo
-  end subroutine interp_array
 
 
   subroutine interp_value(value, lb, search_array, interp_array, &  ! in
