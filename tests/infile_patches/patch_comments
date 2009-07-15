@@ -4,7 +4,7 @@
 
 # It was created with:
 #    $ cd SOG
-#    $ cat tests/infile_patches/patch_comments >> path_to/patch_file
+#    $ cat tests/infile_patches/patch_comments > path_to/patch_file
 #    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
 
 #  To apply this patch manually, do:
