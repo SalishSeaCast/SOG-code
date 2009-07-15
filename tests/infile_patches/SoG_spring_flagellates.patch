@@ -17,10 +17,12 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2009-07-14 21:28:55.000000000 -0700
-+++ SoG_spring_flagellates	2009-07-14 21:53:12.000000000 -0700
-@@ -2,11 +2,8 @@
- ! $Id$
+--- infile	2009-07-14 21:57:38.000000000 -0700
++++ SoG_spring_flagellates	2009-07-14 22:05:45.000000000 -0700
+@@ -1,12 +1,9 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
+-! $Id$
++! $Id$
  ! $Source$
  
 -! SOG code infile template
@@ -110,7 +112,7 @@
 + 		"time of day for profiles (s)"
 +"haloclinefile" "profiles/halo-myear_wflmz_R1.dat" 	"file for halocline results"
 +"profile_base"	"profiles/myear_wflmz_R1"	"profiles file base (datetime will be adnded)"
-+"Hoffmueller file" "hoff/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
++"Hoffmueller file" "profiles/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
 +"Hoffmueller start yr"	2001			"yr to start Hoff output"
 +"Hoffmueller start day" 263			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
