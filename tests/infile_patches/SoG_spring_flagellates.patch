@@ -4,7 +4,7 @@
 
 # It was created with:
 #    $ cd SOG
-#    $ cat tests/infile_patches/patch_comments >> path_to/patch_file
+#    $ cat tests/infile_patches/patch_comments > path_to/patch_file
 #    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
 
 #  To apply this patch manually, do:
@@ -17,26 +17,23 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	Thu Jun 25 16:22:53 2009
-+++ SoG_spring_flagellates	Thu Jun 25 17:05:27 2009
-@@ -1,13 +1,10 @@
- ! -*- mode: f90 -*-  ! This line must be at the top of the file!
--! $Id$
-+! $Id$
+--- infile	2009-07-14 21:28:55.000000000 -0700
++++ SoG_spring_flagellates	2009-07-14 21:29:20.000000000 -0700
+@@ -2,11 +2,8 @@
+ ! $Id$
  ! $Source$
  
 -! SOG code infile template
-+! SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
-+! modelling the spring flagellate bloom.
- 
+-
 -! SOG code infile for 300 hr run starting at cruise 04-14 station S3
 -! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
 -! quick tests during code development and refactoring.
--
++!*** SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
++!*** modelling the spring flagellate bloom.
+ 
  ! Grid parameters:
  "maxdepth"	40.d0	"depth of modelled domain [m]"
- "gridsize"	80	"number of grid points"
-@@ -15,43 +12,40 @@
+@@ -15,9 +12,10 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -48,9 +45,27 @@
 +"end datetime"	"2002-05-01 00:49:00"	"end of run date/time"
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
- "max_iter"		30	"implicit solver max iterations"
+ "max_iter"	30	"implicit solver max iterations"
+@@ -30,48 +28,45 @@
  
--
+ ! Initial conditions
+ "ctd_in"
+-  "../sog-initial/ctd/SG-S3-2004-10-19.sog"
++  "../sog-initial/ctd/SG-S3-2001-09-19.sog"
+   "initialization CTD file"
+ ! Give a path/filename for either nuts_in or botl_in; set the other to "N/A"
+ "nuts_in"
+-  "../sog-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
++  "../sog-initial/stratogem_nuts/Nuts-S3-2001-09-19.sog"
+   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
+ "botl_in"
+   "N/A"
+   "IOS bottle data file"
+ "initial chl split"
+-  0.33d0 0.33d0 0.33d0
++  0.50d0 0.00d0 0.50d0
+   "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"
+ 
  ! Time series output files
 -"std_phys_ts_out"  
 -	"timeseries/std_phys_sog-test1.out"  
@@ -95,7 +110,7 @@
 + 		"time of day for profiles (s)"
 +"haloclinefile" "profiles/halo-myear_wflmz_R1.dat" 	"file for halocline results"
 +"profile_base"	"profiles/myear_wflmz_R1"	"profiles file base (datetime will be adnded)"
-+"Hoffmueller file" "profiles/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
++"Hoffmueller file" "hoff/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
 +"Hoffmueller start yr"	2001			"yr to start Hoff output"
 +"Hoffmueller start day" 263			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
@@ -104,33 +119,7 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -82,20 +76,19 @@
- "F_SOG"         0.12d0              "exponential for SOG component of Ft"
- "F_RI"          0.0d0              "exponential for RI component of Ft"
- "Fm"            450.0d0              "fresh water scale factor for RI river flow"
--"Fw_scale"	8.48d-10	"fresh water scale factor for river flows"
-+"Fw_scale"	8.30d-10	"fresh water scale factor for river flows"
- "Fw_surface"	.false.		"add all of the fresh water on the surface?"
- "Fw_depth"      3.5d0             "interface thickness"
--"use_Fw_nutrients" .true.       "include influence of Fw nutrients"
--"northern_return_flow_on" .false. "include a return freshwater flow from the north?"
--
-+"use_Fw_nutrients" .false.       "include influence of Fw nutrients"
-+"northern_return_flow_on" .false.  "include freshwater return flow from the north?"
- ! Salinity Fit 
- "cbottom"  30.0d0          "bottom salinity"
- "calpha"   2440.0d0             "alpha"
- "calpha2"  1.0d0              "alpha2"
--!- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
-+! doesn't really have an alpha2 value but we don't want to
-+! divide by zero - beta = 0 to get rid of term
- "cgamma"   0.0633d0             "gamma"
- "cbeta"    0.0d0            "beta"
--
- ! Kpar Fit  - Collins et al 2008 equation 8
- "ialpha"   0.0910d0             "alpha"
- "ibeta"   0.0433d0              "beta - relates to chl"
-@@ -104,137 +97,137 @@
+@@ -134,137 +129,137 @@
  "itheta"   0.445d0             "theta"
  "idl"    2.56d0            "dl"
  
@@ -331,7 +320,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -243,7 +236,6 @@
+@@ -273,7 +268,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -339,7 +328,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -252,7 +244,7 @@
+@@ -282,7 +276,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -348,7 +337,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -345,7 +337,6 @@
+@@ -375,7 +369,6 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
@@ -356,73 +345,12 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -360,39 +351,50 @@
+@@ -390,7 +383,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
 -"startyear"     2004    "initialization of runtime for model"
 +"startyear"     2001    "initialization of runtime for model"
  
- ! File names for input data (wind,met,rivers)
--
--"Wind"          "../sog-forcing/wind/SH_total.dat"             "file for wind data"
--"Air temp"      "../sog-forcing/met/YVRhistAT"                 "file for AT data"
--"Cloud"         "../sog-forcing/met/YVRhistCF"                 "file for Cloud data"
--"Humidity"      "../sog-forcing/met/YVRhistHum"                "file for Humidity data"
--"Major_River"  "../sog-forcing/rivers/Fraser_historic.dat"     "file for Maj Riv data"
-+"Wind"
-+	"../sog-forcing/wind/SH_total.dat"
-+	"file for wind data"
-+"Air temp"
-+	"../sog-forcing/met/YVRhistAT"
-+	"file for AT data"
-+"Cloud"
-+	"../sog-forcing/met/YVRhistCF"
-+	"file for Cloud data"
-+"Humidity"
-+	"../sog-forcing/met/YVRhistHum"
-+	"file for Humidity data"
-+"Major_River"
-+	"../sog-forcing/rivers/Fraser_historic.dat"
-+	"file for Maj Riv data"
- "isMinRiv"     .true.               "Is there data for a minor river?"
--"Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data"
-+"Minor_River"
-+	"../sog-forcing/rivers/Englishman_historic.dat"
-+	"file for Min Riv data"
- 
--
--! Vary parameters
-+! Vary parameters:
- "vary%wind%enabled"    .false.       "Variation of wind data?"
- "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
- "vary%rivers%enabled"  .false.       "Variation of river flow?"
- "vary%temperature%enabled" .false.   "Variation of temperature?"
- 
--
--
- ! Initial conditions
- ! *** Perhaps these should be moved higher in the file?
--"cruise_id"	"0414"		"Cruise id number"
-+"cruise_id"	"0208"				"cruise id number"
- 
- ! Nitrate data
- "Nitrate"    .true.       "Is nitrate data every .5m from CTD?"
- 
--"ctd_in"	"input/ctd_in/ctd_test2004"	"initialization CTD file"
--"bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
--
--"initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
--
--
-+"ctd_in"
-+	"input/ctd_in/SG0101004_sog.txt"
-+	"initialization CTD file"
-+"bot_in"
-+	"../sog_initial/Nuts_0208"
-+	"bottle fluorscense initialization file"
-+"initial chl split"
-+	0.5d0 0.d0 0.5d0
-+	"Split of chl data into 3 classes of plankton"
- 
- ! end of file
+ ! File names for forcing data (wind, met, rivers)
+ "Wind"
