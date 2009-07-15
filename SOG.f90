@@ -24,7 +24,7 @@ program SOG
        S,  &  ! Salinity profile arrays
        P,  &  ! Micro & nano & pico phytoplankton profile arrays
        Z,  &  ! Microzooplankton profile array
-       N,  &  ! Nitrate & ammonium concentation profile arrays
+       N,  &  ! Nitrate & ammonium concentration profile arrays
        Si, &  ! Silicon concentration profile arrays
        D      ! Detritus concentration profile arrays
   use water_properties, only: &
@@ -75,7 +75,7 @@ program SOG
   use grid_mod, only: init_grid, dalloc_grid, gradient_g, gradient_i, &
        interp_i
   use numerics, only: init_numerics, dalloc_numerics_variables
-  use core_variables, only: alloc_core_variables, dalloc_core_variables
+  use core_variables, only: init_core_variables, dalloc_core_variables
   use physics_model, only: init_physics, &
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
@@ -112,13 +112,17 @@ program SOG
   ! *** Goal is to make these go away
   use declarations
   use surface_forcing, only: precision, step_guess, step_min
-  use initial_sog, only: initial_mean
 
   implicit none
 
+  ! Local variables:
+  !
   ! Code identification string (maintained by CVS), for output file headers
   character*70 :: &
        codeId = "$Source$"
+  ! Date/time structures for output file headers
+  type(datetime_) :: runDatetime     ! Date/time of code run
+
 
   real(kind=dp) :: &
        sumS=0, sumSriv=0
@@ -131,12 +135,6 @@ program SOG
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
   real(kind=dp) unow, vnow
-
-
-
-  ! Date/time structures for output file headers
-  type(datetime_) :: runDatetime     ! Date/time of code run
-
   
 
   ! ---------- Beginning of Initialization Section ----------
@@ -163,6 +161,16 @@ program SOG
   ! Initialize the numerics
   call init_numerics(grid%M)
 
+  ! Read initial conditions and forcing variation parameters from
+  ! infile
+  ! *** TODO: Decouple initial conditions variation from core
+  ! *** variables initialization
+  call read_variation
+
+  ! Initialize the profile arrays of the core variables that we are
+  ! calculating, i.e. U, V, T, S, etc.
+  call init_core_variables()
+
   ! Initialize time series writing code
   call init_timeseries_output(codeId, datetime_str(runDatetime), &
        initDatetime)
@@ -173,10 +181,6 @@ program SOG
 
   ! Initialize fitbottom
   call init_fitbottom()
-
-  ! Allocate memory for the profiles arrays of the core variables that
-  ! we are calculating, i.e. U, V, T, S, etc.
-  call alloc_core_variables(grid%M)
 
   ! Initialize the physics model
   call init_physics(grid%M)
@@ -201,17 +205,8 @@ program SOG
      END IF
   END DO
 
-  ! Length of forcing data files (move to be read in)
-
-  call read_forcing 
-  call read_variation
-
-  ! Read the cruise id from stdin to use to build the file name for
-  ! nutrient initial conditions data file
-  cruise_id = getpars("cruise_id")
-  call initial_mean(U%new, V%new, T%new, S%new, P%micro, P%nano, &
-       P%pico, Z, N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, &
-       h%new, cruise_id)
+  ! Read forcing data files
+  call read_forcing
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
@@ -219,7 +214,6 @@ program SOG
   ! This calculates the values of the grid point depth arrays (*%g) of
   ! the 4 water properties.
   call calc_rho_alpha_beta_Cp_profiles(T%new, S%new)
-
   ! Interpolate the values of density and specific heat capacity at
   ! the grid layer interface depths
   rho%i = interp_i(rho%g)
@@ -298,7 +292,7 @@ program SOG
         !
         ! This sets the value of the diagnostic buoyancy profile (B),
         ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
-        ! and the surface buoyancy flux (Bf).  .
+        ! and the surface buoyancy flux (Bf).
         call calc_buoyancy(T%new, S%new, h%new, I, rho%g, alpha%g, &
              beta%g, Cp%g)
 
@@ -401,7 +395,7 @@ S_RHS%diff_adv%new = Gvector%s
         alpha%i = interp_i(alpha%g)
         beta%i = interp_i(beta%g)
         Cp%i = interp_i(Cp%g)
-        ! Calculate the gradients of denisity, thermal expansion, and
+        ! Calculate the gradients of density, thermal expansion, and
         ! saline contraction coefficients at the grid layer interface
         ! depths.
         rho%grad_i = gradient_i(rho%g)
@@ -532,7 +526,7 @@ S_RHS%diff_adv%new = Gvector%s
      !--------bottom boundaries--------------------------
      ! Update boundary conditions at bottom of grid
      !
-     ! For those variables that we have data, use the annual fit
+     ! For those variables that we have data for, use the annual fit
      ! calculated from the data
      call bot_bound_time(year, day, day_time, &                             ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
@@ -577,8 +571,6 @@ S_RHS%diff_adv%new = Gvector%s
      call write_user_profiles(codeId, datetime_str(runDatetime),      &
           datetime_str(initDatetime), year, day, day_time, dt, grid)
 
-     
-
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt)
      scount = scount + 1
@@ -610,7 +602,5 @@ S_RHS%diff_adv%new = Gvector%s
 
   ! Return a successful exit status to the operating system
   call exit(0)
-
-
   
 end program SOG
