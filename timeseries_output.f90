@@ -128,7 +128,7 @@ contains
          "surface u velocity, 3 m avg u velocity, ",                         &
          "surface v velocity, 3 m avg v velocity, ",                         &
          "surface temperature, 3 m avg temperature, ",                       &
-         "surface salinity, 3 m avg salinity",                               &
+         "surface salinity, 3 m avg salinity, ",                             &
          "surface PAR"/,                                                     &
          "*FieldUnits: hr since ", a, " LST, None, m, m/s, m/s, m/s, m/s, ", &
          "deg C, deg C, None, None, W/m2"/,                                  &
