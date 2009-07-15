@@ -36,7 +36,11 @@ module core_variables
   !
   ! Public Subroutines:
   !
-  !   alloc_core_variables -- Allocate memory for core variables arrays.
+  !   init_core_variables -- Allocate memory for core variable arrays,
+  !                          and set their initial values to assumed
+  !                          values, and values interpolated from
+  !                          field data (CTD, STRATOGEM bottles, IOS
+  !                          bottles).
   !
   !   dalloc_core_variables -- De-allocate memory for core variables arrays.
 
@@ -45,9 +49,12 @@ module core_variables
 
   private
   public :: &
+       ! Parameter values:
+       N2chl, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
+       ho,    &  ! Initial mixing layer depth [m]
        ! Variables:
-       U,  &  ! Cross-strait (35 deg) velocity component arrays
-       V,  &  ! Along-strait (305 deg) velocity component arrays
+       U,  &  ! Cross-strait (35 deg) velocity component profile arrays
+       V,  &  ! Along-strait (305 deg) velocity component profile arrays
        T,  &  ! Temperature profile arrays
        S,  &  ! Salinity profile arrays
        P,  &  ! Micro, nano & pico phytoplankton profile arrays
@@ -62,9 +69,15 @@ module core_variables
        detritus, & ! type for D
                    ! Z and Si are just dp real
        ! Subroutines:
-       alloc_core_variables, dalloc_core_variables
+       init_core_variables, dalloc_core_variables
 
-  ! Private module type definitions:
+
+  ! Public parameter declaration:
+  real(kind=dp), parameter :: &
+       N2chl = 1.5d0, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
+       ho = 2.0d0      ! Initial mixing layer depth [m]
+  !
+  ! Public type definitions:
   !
   ! Velocities, temperature, and salinity
   type :: profiles
@@ -97,8 +110,7 @@ module core_variables
           refr, &  ! Refractory nitrogen [uM N]
           bSi      ! Biogenic silicon [uM Si]
   end type detritus
-
-
+  !
   ! Public variable declarations:
   type(profiles) :: &
        U, &  ! Cross-strait (35 deg) velocity component arrays
@@ -116,7 +128,374 @@ module core_variables
   type(detritus) :: &
        D  ! Detritus concentration profile arrays
 
+
+  ! Private parameter declarations:
+  real(kind=dp), parameter :: &
+       Uo = 0.0d0,  &  ! Initial cross-strait velocity component [m/s]
+       Vo = 0.0d0,  &  ! Initial along-strait velocity component [m/s]
+       NHo = 1.0d0     ! Estimate of deep ammonium from
+                       ! nitrate/salinity fits gives deep nitrate as
+                       ! 31.5 uM but we measure 30.5 --- difference
+                       ! must be remineralized NH
+  !
+  ! Private type definitions:
+  type :: col_indices
+     integer :: &
+          depth,   &  ! Depth column number in CTD, Nuts or bottle data file
+          T,       &  ! Temperature column number in CTD, Nuts or
+                      ! bottle data file
+          S,       &  ! Salinity column number in CTD, Nuts or
+                      ! bottle data file
+          Chloro,  &  ! Chlorophyl column number in CTD, Nuts or
+                      ! bottle data file
+          Fluores, &  ! Fluorescence column number in CTD, Nuts or
+                      ! bottle data file
+          NO,      &  ! Nitrate column number in CTD, Nuts or bottle
+                      ! or Nuts data file
+          Phyto,   &  ! Phytoplankton ?? column number in CTD, Nuts
+                      ! or bottle data file
+          Si          ! Silicon column number in Nuts data file
+  end type col_indices
+ 
+
 contains
+
+  subroutine init_core_variables()
+    ! Allocate memory for core variable arrays, and set their initial
+    ! values to assumed values, and values interpolated from field data
+    ! (CTD, STRATOGEM bottles, IOS bottles).
+    use grid_mod, only: grid
+    implicit none
+    
+    ! Allocate memory for core variable arrays
+    call alloc_core_variables(grid%M)
+    ! Initialize the values of the core variable profiles
+    call init_state()
+  end subroutine init_core_variables
+
+
+  subroutine init_state()
+    ! Initialize the values of the core variable profiles from assumed
+    ! values and interpolated field data (CTD, STRATOGEM bottles, IOS
+    ! bottles).
+    use io_unit_defs, only: stdout
+    use grid_mod, only: grid
+    use input_processor, only: getpars, getpardv
+    use unit_conversions, only: CtoK
+    use forcing, only: vary
+    implicit none
+    ! Local variables:
+    character*80 :: fn  ! name of data file to read
+    integer :: &
+         i,            &  ! loop index
+         ctd_records,  &  ! CTD data record counter
+         nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
+         botl_records     ! IOS bottle data record counter
+    logical :: got_Fluores, got_NO, got_Si
+    real(kind=dp), dimension(0:int(grid%M+1), 24) :: &
+         data  ! Data records read
+    real(kind=dp), dimension(3) :: &
+         Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
+    type(col_indices) :: col  ! Column numbers of quantities in data records
+
+    ! Initialize velocity profiles to assumed values
+    U%new = Uo
+    V%new = Vo
+
+    ! Initialize the ammonium profile to the assumed deep water value
+    ! except in the mixed layer where it is assumed to be zero.
+    ! **Note: that assumption is not valid for runs starting in the
+    ! winter.**
+    do i = 0, grid%M + 1
+       if(grid%d_g(i) <= ho) then
+          N%H(i) = 0.0d0
+       else
+          N%H(i) = NHo
+       endif
+    enddo
+
+    ! Read the CTD data file to get data to initialize the
+    ! temperature, and salinity profiles, and also the
+    ! microphytoplankton biomass and nitrate profiles if fluorescence
+    ! and nitrate data are included in the file
+    got_Fluores = .false.
+    got_NO = .false.
+    call read_init_data(getpars("ctd_in"), ctd_records, col, data)
+    ! Interpolate CTD data to grid point depths
+    if(col%T /= -1) then
+       T%new = interp_to_grid(data(:ctd_records, col%depth), &
+                              data(:ctd_records, col%T))
+       ! Convert temperature to Kelvin, and apply variation, if
+       ! enabled.
+       ! *** TODO: Refactor initial temperature profile variation out
+       ! *** of this module.
+       if (vary%temperature%enabled .and. .not. vary%temperature%fixed) then
+          T%new = CtoK(T%new + vary%temperature%addition)
+       else
+          T%new = CtoK(T%new)
+       endif
+    else
+       ! Run can't proceed without temperature data
+       write(stdout, *) "init_state: No temperature data found. Run aborted."
+       call exit(1)
+    endif
+    ! Salinity
+    if(col%S /= -1) then
+       S%new = interp_to_grid(data(:ctd_records, col%depth), &
+                              data(:ctd_records, col%S))
+    else
+       ! Run can't proceed without salinity data
+       write(stdout, *) "init_state: No salinity data found. Run aborted."
+       call exit(1)
+    endif
+    if(col%Fluores /= -1) then
+       ! Microphytoplankton biomass comes from fluorescence if that
+       ! data are in the CTD data file, otherwise it comes from the
+       ! IOS bottle data file (typically only for historical runs)
+       P%micro = interp_to_grid(data(:ctd_records, col%depth), &
+                               data(:ctd_records, col%Fluores))
+       got_Fluores = .true.
+    endif
+    if(col%NO /= -1) then
+       ! Nitrate profile comes from CTD profile if the data are
+       ! available, otherwise it comes from the STRATOGEM or IOS
+       ! bottle data file
+       N%O = interp_to_grid(data(:ctd_records, col%depth), &
+                            data(:ctd_records, col%NO))
+       got_NO = .true.
+    endif
+
+    ! If a STRATOGEM bottle data file is specified, read it to get
+    ! data to initialize the silicon profile, and the nitrate profile
+    ! if those data weren't in the CTD data file
+    got_Si = .false.
+    fn = getpars("nuts_in")
+    if(fn /= "N/A") then
+       call read_init_data(fn, nuts_records, col, data)
+       ! Nitrate
+       if(.not. got_NO) then
+          N%O = interp_to_grid(data(:nuts_records, col%depth), &
+                               data(:nuts_records, col%NO))
+          got_NO = .true.
+       endif
+       ! Silicon
+       if(.not. got_Si) then
+          Si = interp_to_grid(data(:nuts_records, col%depth), &
+                              data(:nuts_records, col%Si))
+          got_Si = .true.
+       endif
+    endif
+
+    ! If an IOS bottle data file is specfied, read it to get data to
+    ! initialize the nitrate, microphytoplankton, and silicon
+    ! profiles, if those data weren't in the CTD data file.
+    fn = getpars("botl_in")
+    if(fn /= "N/A") then
+       call read_init_data(fn, botl_records, col, data)
+       ! Nitrate
+       if(.not. got_NO) then
+          N%O = interp_to_grid(data(:nuts_records, col%depth), &
+                               data(:nuts_records, col%NO))
+          got_NO = .true.
+       endif
+       ! Silicon
+       if(.not. got_Si) then
+          Si = interp_to_grid(data(:nuts_records, col%depth), &
+                              data(:nuts_records, col%Si))
+          got_Si = .true.
+       endif
+       ! Phytoplankton
+       if(.not. got_Fluores) then
+          ! First choice is fluorescence data
+          if(col%Fluores /= -1) then
+             P%micro = interp_to_grid(data(:ctd_records, col%depth), &
+                                      data(:ctd_records, col%Fluores))
+             got_Fluores = .true.
+          elseif(col%Chloro /= -1) then
+             ! Second choice is chlorophyl data
+             P%micro = interp_to_grid(data(:ctd_records, col%depth), &
+                                      data(:ctd_records, col%Chloro))
+             got_Fluores = .true.
+          elseif(col%Phyto /= -1) then
+             ! Third choice is phytoplankton data
+             P%micro = interp_to_grid(data(:ctd_records, col%depth), &
+                                      data(:ctd_records, col%Phyto))
+             got_Fluores = .true.
+          endif
+       endif
+    endif
+
+    ! Run can't proceed without nitrate data
+    if(.not. got_NO) then
+       write(stdout, *) "init_state: No nitrate data found. Run aborted."
+       call exit(1)
+    endif
+
+    ! No phytoplankton data is a degenerate case that someone might
+    ! use to test just the physics
+    if(.not. got_Fluores) then
+       write(stdout, *) "init_state: Phytoplankton initialized to zero. ", &
+                        "Testing just the physics?"
+       P%micro = 0.0d0
+    endif
+
+    ! No silicon data is okay, just initialize it to zero
+    if(.not. got_Si) then
+       Si = 0.0d0
+    endif
+
+    ! Convert fluorescence to phytoplankton biomass expressed in uMol N
+    P%micro = P%micro / N2chl
+    ! Read the initial ratios of phytoplankton classes from infile,
+    ! and apply them to get initial phytoplankton biomass profiles
+    call getpardv("initial chl split", 3, Psplit)
+    P%pico = P%micro * Psplit(3)
+    P%nano = P%micro * Psplit(2)
+    P%micro = P%micro * Psplit(1)
+    ! Initial zooplankton biomass and detritus profiles
+    Z = P%nano  ! *** hard value to estimate
+    D%PON = P%micro / 5.0d0  ! estimate
+    D%DON = D%PON / 10.0d0 ! estimate
+    D%bSi = D%PON
+    D%refr = 0.0d0
+  end subroutine init_state
+
+
+  subroutine read_init_data(filename, n_records, col, data)
+    ! Read records from the specified field data file to the model
+    ! depth.  Return the number of records read, a column_indices data
+    ! structure containing the column numbers of the various data
+    ! quantities, and the array of data records themselves.
+    !
+    ! If the data file does not contain surface data, the data values
+    ! at the surface are set to be the same as those at the shallowest
+    ! depth for which data is read.  If the data file does not contain
+    ! data at the model depth, the last record read will be that for
+    ! the next deepest depth available.  If data doesn't reach model
+    ! depth, create a record at model depth with the same data values
+    ! as the deepest measurements.
+    use io_unit_defs, only: stdout, field_data
+    use grid_mod, only: grid
+    implicit none
+    ! Arguments:
+    character*80, intent(in) :: filename  ! Name of data file to read
+    integer, intent(out) :: n_records     ! Number of records read
+    type(col_indices), intent(out):: col  ! Column number of various
+                                          ! data quantities
+    real(kind=dp), dimension(0:, :), intent(out) :: data  ! Data records read
+    ! Local variables:
+    integer :: &
+         i,     &  ! Loop index
+         n_cols    ! Number of data column to read per record
+    logical :: data_to_model_depth
+
+    open(field_data, file=filename)
+    ! Read past header (11 lines)
+    do i = 1, 11
+       read(field_data, *)
+    enddo
+    ! Read data quantity column numbers, and set the number of column
+    ! to read from each data record
+    read(field_data, *) col%depth, col%T, col%S, col%Chloro, col%Fluores, &
+                      col%NO, col%Phyto, col%Si
+    n_cols = max(col%depth, col%T, col%S, col%Chloro, col%Fluores, &
+                 col%NO, col%Phyto, col%Si)
+    ! Read data to model depth, or next deeper record.  If data ends
+    ! before model depth, read the whole file
+    data_to_model_depth = .false.
+    n_records = 1
+    do while(.not. data_to_model_depth)
+       read(field_data, *, end=100) (data(n_records, i), i = 1, n_cols)
+       if(data(n_records, col%depth) >= grid%D) then
+          data_to_model_depth = .true.
+       endif
+       if(n_records <= size(data, 1)) then
+          n_records = n_records + 1
+       else
+          write(stdout, *) "read_init_data: "
+          call exit(1)
+       endif
+    enddo
+100 continue
+    close(field_data)
+    ! Surface value
+    if(data(1, col%depth) == 0.0d0) then
+       ! If the data contains a record at the surface, shift the array
+       ! to put the surface values in record 0
+       data = cshift(data, 1)
+    else
+       ! Otherwise, create a record at the surface that is a copy of
+       ! the shallowest data record.  This will result in the profiles
+       ! having constant values from the surface to the depth of the
+       ! shallowest data.
+       data(0, :) = data(1, :)
+       data(0, col%depth) = 0.0d0
+    endif
+    ! If data doesn't reach model depth, create a record at model
+    ! depth with the same data values as the deepest measurements.
+    ! This will result in the profiles having constant values from the
+    ! deepest measurement depth to the model depth.
+    if(.not. data_to_model_depth) then
+       data(n_records, :) = data(n_records - 1, :)
+       data(n_records, col%depth) = grid%D
+    else
+       ! Undo loop-ending increment to get number of data records
+       ! read
+       n_records = n_records - 1
+    endif
+  end subroutine read_init_data
+  
+
+  function interp_to_grid(depth, data_qty) result(qty)
+    ! Return an array of quantity values at the grid point depths
+    ! calculated by linear interpolation from a data profile (CTD,
+    ! STRATOGEM bottles, or IOS bottles data).
+    use grid_mod, only: grid
+    implicit none
+    ! Arguments:
+    real(kind=dp), dimension(0:), intent(in) :: &
+         depth,   &  ! Depths from data file
+         data_qty    ! Quantity values from data file
+    ! Result:
+    real(kind=dp), dimension(0:grid%M+1) :: &
+         qty  ! Quantity values interpolated to grid point depths
+    ! Local variables:
+    logical, dimension(0:size(data_qty)-1) :: &
+         mask  ! Mask array to filter out invalid data values
+    integer :: &
+         data_records, &  ! Number of valid data records
+         i_g,          &  ! Index of grid point depths
+         i_data           ! Index of data record
+    real(kind=dp), dimension(0:size(data_qty)-1) :: &
+         depth_clean, &  ! Depths at which there is valid data
+         qty_clean,   &  ! Valid quantity values from data
+         del_depth,   &  ! Depth differences from data
+         del_qty         ! Quantity value differences from data
+
+    ! Remove records with negative data values (typically -99.0 or
+    ! -99999) because that indicates invalid data
+    mask(0:size(data_qty >= 0.0d0)-1) = data_qty >= 0.0d0
+    data_records = size(pack(data_qty, mask))
+    qty_clean(0:data_records-1) = pack(data_qty, mask)
+    depth_clean(0:data_records-1) = pack(depth, mask)
+    ! Calculate depth and quantity differences from field data for use
+    ! in interpolation
+    del_depth(0:data_records-2) = depth_clean(1:data_records-1) &
+                                  - depth_clean(0:data_records-2)
+    del_qty(0:data_records-2) = qty_clean(1:data_records-1) &
+                                - qty_clean(0:data_records-2)
+    ! Interpolate quantity values at grid point depths
+    i_data = 1
+    do i_g = 0, grid%M + 1
+       if(grid%d_g(i_g) > depth_clean(i_data)) then
+          i_data = i_data + 1
+       endif
+       qty(i_g) = qty_clean(i_data-1) + del_qty(i_data-1) &
+                  * ((grid%d_g(i_g) - depth_clean(i_data-1)) &
+                  / del_depth(i_data-1))
+    enddo
+  end function interp_to_grid
+
 
   subroutine alloc_core_variables(M)
     ! Allocate memory for core variables arrays.
