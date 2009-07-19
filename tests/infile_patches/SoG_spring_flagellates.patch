@@ -2,10 +2,13 @@
 
 # This patch is used by buildbot.
 
-# It was created with:
+# It was created by:
+#    Copying the $Id$ CVS keyword line from the up to date
+     repository infile to the sample_new_infile
+# then:
 #    $ cd SOG
 #    $ cat tests/infile_patches/patch_comments > path_to/patch_file
-#    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
+#    $ diff -u infile path_to/sample_new_infile >> path_to/patch_file
 
 #  To apply this patch manually, do:
 #    $ cd SOG
@@ -17,23 +20,22 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2009-07-14 21:57:38.000000000 -0700
-+++ SoG_spring_flagellates	2009-07-14 22:27:27.000000000 -0700
-@@ -2,11 +2,8 @@
+--- infile	2009-07-19 10:19:56.000000000 -0700
++++ infiles/SoG_spring_flagellates	2009-07-19 12:44:18.000000000 -0700
+@@ -2,10 +2,8 @@
  ! $Id$
  ! $Source$
  
 -! SOG code infile template
 -
--! SOG code infile for 300 hr run starting at cruise 04-14 station S3
--! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
--! quick tests during code development and refactoring.
-+!*** SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
-+!*** modelling the spring flagellate bloom.
+-! SOG code infile for 356.5 day run starting at cruise 04-14 station S3
+-! CTD cast (2004-10-19 12:22 LST).
++! SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
++! modelling the spring flagellate bloom.
  
  ! Grid parameters:
  "maxdepth"	40.d0	"depth of modelled domain [m]"
-@@ -15,9 +12,10 @@
+@@ -14,9 +12,10 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -46,7 +48,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -30,48 +28,45 @@
+@@ -29,48 +28,45 @@
  
  ! Initial conditions
  "ctd_in"
@@ -119,7 +121,7 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -134,137 +129,137 @@
+@@ -133,137 +129,137 @@
  "itheta"   0.445d0             "theta"
  "idl"    2.56d0            "dl"
  
@@ -320,7 +322,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -273,7 +268,6 @@
+@@ -272,7 +268,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -328,7 +330,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -282,7 +276,7 @@
+@@ -281,7 +276,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -337,7 +339,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -375,7 +369,6 @@
+@@ -374,7 +369,6 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
@@ -345,7 +347,7 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -390,7 +383,7 @@
+@@ -389,7 +383,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
