@@ -4,9 +4,8 @@
 
 ! SOG code infile template
 
-! SOG code infile for 300 hr run starting at cruise 04-14 station S3
-! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
-! quick tests during code development and refactoring.
+! SOG code infile for 356.5 day run starting at cruise 04-14 station S3
+! CTD cast (2004-10-19 12:22 LST).
 
 ! Grid parameters:
 "maxdepth"	40.d0	"depth of modelled domain [m]"
