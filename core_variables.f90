@@ -294,32 +294,32 @@ contains
        call read_init_data(fn, botl_records, col, data)
        ! Nitrate
        if(.not. got_NO) then
-          N%O = interp_to_grid(data(:nuts_records, col%depth), &
-                               data(:nuts_records, col%NO))
+          N%O = interp_to_grid(data(:botl_records, col%depth), &
+                               data(:botl_records, col%NO))
           got_NO = .true.
        endif
        ! Silicon
        if(.not. got_Si) then
-          Si = interp_to_grid(data(:nuts_records, col%depth), &
-                              data(:nuts_records, col%Si))
+          Si = interp_to_grid(data(:botl_records, col%depth), &
+                              data(:botl_records, col%Si))
           got_Si = .true.
        endif
        ! Phytoplankton
        if(.not. got_Fluores) then
           ! First choice is fluorescence data
           if(col%Fluores /= -1) then
-             P%micro = interp_to_grid(data(:ctd_records, col%depth), &
-                                      data(:ctd_records, col%Fluores))
+             P%micro = interp_to_grid(data(:botl_records, col%depth), &
+                                      data(:botl_records, col%Fluores))
              got_Fluores = .true.
           elseif(col%Chloro /= -1) then
              ! Second choice is chlorophyl data
-             P%micro = interp_to_grid(data(:ctd_records, col%depth), &
-                                      data(:ctd_records, col%Chloro))
+             P%micro = interp_to_grid(data(:botl_records, col%depth), &
+                                      data(:botl_records, col%Chloro))
              got_Fluores = .true.
           elseif(col%Phyto /= -1) then
              ! Third choice is phytoplankton data
-             P%micro = interp_to_grid(data(:ctd_records, col%depth), &
-                                      data(:ctd_records, col%Phyto))
+             P%micro = interp_to_grid(data(:botl_records, col%depth), &
+                                      data(:botl_records, col%Phyto))
              got_Fluores = .true.
           endif
        endif
