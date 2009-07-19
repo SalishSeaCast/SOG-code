@@ -4,7 +4,7 @@
 
 # It was created with:
 #    $ cd SOG
-#    $ cat tests/infile_patches/patch_comments >> path_to/patch_file
+#    $ cat tests/infile_patches/patch_comments > path_to/patch_file
 #    $ diff -u infile path_to/sample_new_file >> path_to/patch_file
 
 #  To apply this patch manually, do:
@@ -17,24 +17,23 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	Wed Mar 11 13:06:55 2009
-+++ R3base	Wed Mar 11 13:02:02 2009
-@@ -4,10 +4,11 @@
+--- infile	2009-07-19 10:19:56.000000000 -0700
++++ infiles/R3base	2009-07-19 10:25:33.000000000 -0700
+@@ -2,10 +2,9 @@
+ ! $Id$
+ ! $Source$
  
- ! SOG code infile template
- 
--! SOG code infile for 300 hr run starting at cruise 04-14 station S3
--! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
--! quick tests during code development and refactoring.
+-! SOG code infile template
+-
+-! SOG code infile for 356.5 day run starting at cruise 04-14 station S3
+-! CTD cast (2004-10-19 12:22 LST).
 +! SOG code infile for ~1 yr run starting at cruise 03-20 station S3
 +! CTD cast.  This is the R3 baseline regression test infile.  All
 +! biology model complexity is turned off.
  
-+
  ! Grid parameters:
  "maxdepth"	40.d0	"depth of modelled domain [m]"
- "gridsize"	80	"number of grid points"
-@@ -15,9 +16,9 @@
+@@ -14,9 +13,9 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -45,8 +44,22 @@
 +"end datetime"	"2004-11-01 12:00:00"	"end of run date/time"
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
- "max_iter"		30	"implicit solver max iterations"
-@@ -25,29 +26,29 @@
+ "max_iter"	30	"implicit solver max iterations"
+@@ -29,11 +28,11 @@
+ 
+ ! Initial conditions
+ "ctd_in"
+-  "../sog-initial/ctd/SG-S3-2004-10-19.sog"
++  "../sog-initial/ctd/SG-S3-2003-10-09.sog"
+   "initialization CTD file"
+ ! Give a path/filename for either nuts_in or botl_in; set the other to "N/A"
+ "nuts_in"
+-  "../sog-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
++  "../sog-initial/stratogem_nuts/Nuts-S3-2003-10-09.sog"
+   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
+ "botl_in"
+   "N/A"
+@@ -44,29 +43,29 @@
  
  ! Time series output files
  "std_phys_ts_out"  
@@ -76,16 +89,16 @@
 -"profile_base"	"profiles/sog-test1"	"profile file base (datetime will be added)"
 +"profday"	077		"yr-day for profile"
 +"proftime"	48480.		"day-sec for profile"
-+"haloclinefile"	"profiles/halo_R3base.out"	"file for halocline results"
-+"profile_base"	"profiles/prof_R3base"	"profile file base (datetime will be added)"
++"haloclinefile"	"profiles/halo-R3base.out"	"file for halocline results"
++"profile_base"	"profiles/R3base"	"profile file base (datetime will be added)"
  ! Hoffmueller diagram output (a collection of profiles at time intervals
  ! for contour or colourmap plotting)
 -"Hoffmueller file"	"profiles/hoff-sog-test1.dat"	"file for Hoffmueller results"
-+"Hoffmueller file"	"profiles/Hoffmueller_R3base.dat"	"file for Hoffmueller results"
++"Hoffmueller file"	"profiles/hoff-R3base.dat"	"file for Hoffmueller results"
  "Hoffmueller start yr"	2004			"yr to start Hoff output"
  "Hoffmueller start day"	294			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
-@@ -75,9 +76,9 @@
+@@ -136,9 +135,9 @@
  
  ! Biology model parameters:
  ! Model complexity flags:
@@ -97,27 +110,12 @@
  "single species light"  .false.  "high light limitation for single species case"
  ! Zooplankton values:
  ! tuned
-@@ -328,7 +329,7 @@
+@@ -389,7 +388,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
 -"startyear"     2004    "initialization of runtime for model"
 +"startyear"     2003    "initialization of runtime for model"
  
- ! File names for input data (wind,met,rivers)
- 
-@@ -352,12 +353,12 @@
- 
- ! Initial conditions
- ! *** Perhaps these should be moved higher in the file?
--"cruise_id"	"0414"		"Cruise id number"
-+"cruise_id"	"0320"		"Cruise id number"
- 
- ! Nitrate data
- "Nitrate"    .true.       "Is nitrate data every .5m from CTD?"
- 
--"ctd_in"	"input/ctd_in/ctd_test2004"	"initialization CTD file"
-+"ctd_in"	"input/ctd_in/ctd_test2003"	"initialization CTD file"
- "bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
- 
- "initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
+ ! File names for forcing data (wind, met, rivers)
+ "Wind"
