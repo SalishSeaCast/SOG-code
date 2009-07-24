@@ -323,9 +323,16 @@ contains
 
     implicit none
 
+    ! Local variable:
+    real(kind=dp) :: junk  ! Placeholder for the interp_val that comes
+                           ! back from interp_value() so that we don't
+                           ! get weirdness by putting h%new as both
+                           ! and input and and output of
+                           ! interp_value()
+
     ! Using interp_value() here is a convenient way of getting h%g
     ! without duplicating code that searches through the grid
-    call interp_value(h%new, 0, grid%d_g, grid%d_g, h%new, h%g)
+    call interp_value(h%new, 0, grid%d_g, grid%d_g, junk, h%g)
     if (grid%d_i(h%g - 1) > h%new) then
        ! Mixing layer depth is in the grid layer above the grid point
        h%i = h%g - 1
