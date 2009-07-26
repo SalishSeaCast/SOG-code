@@ -251,13 +251,12 @@ contains
        Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
        if (Northern_return) then
           FN = Northern_frac * 0.5d0 * Ft * &
-               (1.d0 - tanh((grid%d_i - 15.d0)/(7.5d0)))
+               (1.d0 - tanh((grid%d_i - 15.d0) / 7.5d0))
        else
-          FN = 0.
+          FN = 0.0d0
        endif
-       F_n = cbottom * (Fw + FN*0.d0)  ! remove salinity effect of return flow
+       F_n = cbottom * (Fw + FN * 0.d0)  ! remove salinity effect of return flow
     endif
-
   end subroutine freshwater_phys
 
 
