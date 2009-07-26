@@ -246,9 +246,6 @@ program SOG
      call get_forcing(year, day, day_time, &
           Qinter, Einter, cf_value, atemp_value, humid_value, &
           unow, vnow)
-     
-
-     
 
      CALL irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
           Qinter, P%micro, P%nano, P%pico, jmax_i, Q_sol, euph)

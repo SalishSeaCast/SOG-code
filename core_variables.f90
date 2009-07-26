@@ -75,7 +75,7 @@ module core_variables
   ! Public parameter declaration:
   real(kind=dp), parameter :: &
        N2chl = 1.5d0, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
-       ho = 2.0d0      ! Initial mixing layer depth [m]
+       ho = 2.0d0        ! Initial mixing layer depth [m]
   !
   ! Public type definitions:
   !
