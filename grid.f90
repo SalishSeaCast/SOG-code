@@ -127,7 +127,7 @@ module grid_mod
                    ! is below grid point j.
        below_i     ! Fraction of interface spacing that gridpoint  ***
   integer, dimension(:), allocatable :: &
-       indices  ! Array of index numbers used by the inter_value
+       indices  ! Array of index numbers used by the interp_value
                 ! function.
 
 contains
@@ -450,12 +450,6 @@ contains
             + (interp_array(j_below) - interp_array(j_below-1)) &
             * (value - search_array(j_below-1)) &
             / (search_array(j_below) - search_array(j_below-1))
-       if (search_array(j_below) == search_array(j_below-1)) then
-          write (*,*) "Problem in interp_value"
-          write (*,*) search_array(j_below), j_below
-          write (*,*) interp_array(j_below),interp_array(j_below-1)
-          stop
-       endif
     else
        write(stdout, *) "Warning: value = ", value, &
             " out of range in interp_value()"
