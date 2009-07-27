@@ -38,7 +38,9 @@
 "botl_in"
   "N/A"
   "IOS bottle data file"
-"initial chl split"  0.33d0 0.33d0 0.33d0  "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"
+"initial chl split"
+  0.33d0 0.33d0 0.33d0
+  "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"
 
 ! Time series output files
 "std_phys_ts_out"  
@@ -77,13 +79,27 @@
 ! Bottom boundary conditions
 "temp_constant"    .false.       "Is bottom temperature constant over time?"
 ! Fit parameters for core variables
-"salinity"  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0  "Salinity (constant, seasonal and biseasonal components)"
-"temperature"  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.00007993d0  "Temperature (constant, seasonal and biseasonal components)"
-"Phytoplankton"  0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0  "Phytoplankton from fluor (constant and seasonal)"
-"Nitrate"  30.5d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Nitrate (constant)"
-"Silicon"  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Silicon (constant)"
-"Ammonium"  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Ammonium (constant)"
-"Ratio"  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0  "Ratio of pico/micro plankton (constant and biseasonal)"
+"salinity"
+  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0
+  "Salinity (constant, seasonal and biseasonal components)"
+"temperature"
+  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.00007993d0
+  "Temperature (constant, seasonal and biseasonal components)"
+"Phytoplankton"
+  0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0
+  " Phytoplankton from fluor (constant and seasonal)"
+"Nitrate"
+  30.5d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Nitrate (constant)"
+"Silicon"
+  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Silicon (constant)"
+"Ammonium"
+  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Ammonium (constant)"
+"Ratio"
+  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0
+  "Ratio of pico/micro plankton (constant and biseasonal)"
 !Basin axis lengths (km)
 "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
 "Ly"            120.0d3         "Major axis (along-strait) of model domain [m]"
@@ -379,7 +395,9 @@
 "Wind"
  "../sog-forcing/wind/SH_total.dat"
   "file for wind data"
-"Air temp"  "../sog-forcing/met/YVRhistAT"  "file for AT data"
+"Air temp"
+  "../sog-forcing/met/YVRhistAT"
+  "file for AT data"
 "Cloud"
   "../sog-forcing/met/YVRhistCF"
   "file for Cloud data"
