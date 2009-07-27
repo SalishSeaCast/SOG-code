@@ -19,7 +19,7 @@ ifeq "$(FCOMPILER)" "pgf90"
   LD = pgf90
   LDFLAGS = -o
 else
-  # Use g95 compile (intended for iBooks, but might work on other platforms)
+  # Use g95 compiler; this is the default
   F90 = g95
   # Don't compile with optimization until the code runs properly without it
   # and always revert to -O0 and all checks when adding new features
