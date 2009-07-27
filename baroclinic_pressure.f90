@@ -97,8 +97,10 @@ contains
     ! Allocate memory for baroclinic pressure gradient calculation
     ! quantities
     call alloc_baro_press_variables(M)
-    ! Initialize velocity component integrals for baroclinic pressure
-    ! gradient calculations
+    ! Initialize the baroclinic pressure gradient components, and the
+    ! velocity component integrals used in their calculation
+    dPdx_b = 0.0d0
+    dPdy_b = 0.0d0
     ut%new = 0.0d0
     vt%new = 0.0d0
   end subroutine init_baroclinic_pressure
