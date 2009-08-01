@@ -2,16 +2,40 @@ import numpy
 
 
 class Relation(object):
-    """
+    """A Relation object has a pair of NumPy arrays containing the
+    independent and dependent data values of a data set.  It also has
+    attributes that contain the filespec from which the data is read,
+    and the units of the data arrays.
+
+    This is a base class for implementing specific types of relations
+    such as timeseries, or profiles.  This class provides a
+    read_data() method, but expects classes that inherit from it to
+    implement a _read_header() method that returns lists of field
+    names and field units read from the SOG data file header.
     """
     def __init__(self, datafile):
-        """
+        """Create a Relation instance with its datafile attribute initialied.
         """
         self.datafile = datafile
 
+
+    def _read_header(self):
+        """This method is expected to be implemented by classes based
+        on Relation.
+
+        It must return lists of field names and field units from the
+        SOG data file header.
+        """
+        raise NotImplementedError
+
     
     def read_data(self, indep_field, dep_field):
-        """
+        """Read the data for the specified independent and dependent
+        fields from the data file.
+
+        Sets the indep_data and dep_data attributes to NumPy arrays,
+        and the indep_units and dep_units attributes to units strings
+        for the data fields.
         """
         try:
             f = open(self.datafile, 'r')

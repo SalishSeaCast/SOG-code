@@ -18,10 +18,10 @@ class TestRelation(unittest.TestCase):
     """
     def setUp(self):
         # Create a test data file
-        indep_data = [0.0, 0.5]
-        dep_data = [12.1, 12.05]
+        self.indep_data = [0.0, 0.5]
+        self.dep_data = [12.1, 12.05]
         self.test_file = tempfile.NamedTemporaryFile()
-        for pair in zip(indep_data, dep_data):
+        for pair in zip(self.indep_data, self.dep_data):
             self.test_file.write("%f %f\n" % pair)
         self.test_file.flush()
         # Mock the _read_header method
@@ -37,6 +37,15 @@ class TestRelation(unittest.TestCase):
         """
         rel = Relation('test_datafile')
         self.assertEqual(rel.datafile, 'test_datafile')
+
+
+    def test_read_header(self):
+        """_read_header raises NotImplementedError
+        """
+        # Delete the _read_header mock set by self.setUp
+        del self._read_header
+        rel = Relation('test_datafile')
+        self.assertRaises(NotImplementedError, rel._read_header)
 
 
     def test_read_data_bad_file(self):
@@ -73,8 +82,8 @@ class TestRelation(unittest.TestCase):
         rel.read_data('depth', 'surface temperature')
         self.assertEqual(rel.indep_units, 'm')
         self.assertEqual(rel.dep_units, 'deg C')
-        self.assertEqual(rel.indep_data, numpy.array(rel.indep_data))
-        self.assertEqual(rel.dep_data, numpy.array(rel.dep_data))
+        numpy.testing.assert_equal(rel.indep_data, numpy.array(self.indep_data))
+        numpy.testing.assert_equal(rel.dep_data, numpy.array(self.dep_data))
 
 
 if __name__ == '__main__':
