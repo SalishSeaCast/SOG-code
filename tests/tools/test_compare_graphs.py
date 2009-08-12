@@ -10,7 +10,8 @@ import StringIO
 import sys
 import tempfile
 import unittest
-from compare_graphs import Relation
+from datetime import datetime
+from compare_graphs import Relation, SOG_Timeseries
 
 
 class TestRelation(unittest.TestCase):
@@ -45,7 +46,7 @@ class TestRelation(unittest.TestCase):
         # Delete the _read_header mock set by self.setUp
         del self._read_header
         rel = Relation('test_datafile')
-        self.assertRaises(NotImplementedError, rel._read_header)
+        self.assertRaises(NotImplementedError, rel._read_header, file)
 
 
     def test_read_data_bad_file(self):
@@ -84,6 +85,70 @@ class TestRelation(unittest.TestCase):
         self.assertEqual(rel.dep_units, 'deg C')
         numpy.testing.assert_equal(rel.indep_data, numpy.array(self.indep_data))
         numpy.testing.assert_equal(rel.dep_data, numpy.array(self.dep_data))
+
+
+class TestSOG_Timeseries(unittest.TestCase):
+    """Unit tests for SOG_Timeseries class.
+    """
+    def setUp(self):
+        # Create a test data file
+        self.test_file = tempfile.NamedTemporaryFile()
+        self.test_file.write('''/
+! SOG code standard time series output from physics model
+! Time series of iteration count for each time step; mixing layer depth;
+! velocity components, temperature, & salinity; at surface, and averaged over
+! top 3 m of water column and surface par
+*FromCode: $Source$
+*RunDateTime: 2009-07-27 07:14:24
+*InitialCTDDateTime: 2004-10-19 12:22:00
+*FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity, surface PAR
+*FieldUnits: hr since 2004-10-19 00:00:00 LST, None, m, m/s, m/s, m/s, m/s, deg C, deg C, None, None, W/m2
+*EndOfHeader
+   12.3667    4    1.2622    0.0046    0.0011   -0.0491   -0.0151   12.0920   12.1608   22.8330   23.2946  104.9434
+   12.6167    2    1.2915    0.0057    0.0017   -0.0645   -0.0266   12.1199   12.1743   22.8852   23.2923  103.4063/
+''')
+        self.test_file.flush()
+
+
+    def test_parent_class(self):
+        """SOG_Timeseries subclasses Relation
+        """
+        self.assertTrue(issubclass(SOG_Timeseries, Relation))
+
+
+    def test_read_header(self):
+        """_read_header returns expected lists & sets expected attributes
+        """
+        ts = SOG_Timeseries(self.test_file.name)
+        f = open(ts.datafile, 'r')
+        field_names, field_units = ts._read_header(f)
+        self.assertEqual(field_names,
+                         'time, iteration count, mixing layer depth, '
+                         'surface u velocity, 3 m avg u velocity, '
+                         'surface v velocity, 3 m avg v velocity, '
+                         'surface temperature, 3 m avg temperature, '
+                         'surface salinity, 3 m avg salinity, '
+                         'surface PAR'.split(', '))
+        self.assertEqual(field_units,
+                         'hr since 2004-10-19 00:00:00 LST, None, m, m/s, '
+                         'm/s, m/s, m/s, deg C, deg C, None, None, '
+                         'W/m2'.split(', '))
+        self.assertEqual(ts.run_datetime, datetime(2009, 7, 27, 7, 14, 24))
+        self.assertEqual(ts.initial_CTD_datetime,
+                         datetime(2004, 10, 19, 12, 22, 0))
+
+
+    def test_read_data(self):
+        """read_data method sets independent & dependent data arrays
+        """
+        ts = SOG_Timeseries(self.test_file.name)
+        ts.read_data('time', 'mixing layer depth')
+        self.assertEqual(ts.indep_units, 'hr since 2004-10-19 00:00:00 LST')
+        self.assertEqual(ts.dep_units, 'm')
+        numpy.testing.assert_equal(ts.indep_data,
+                                   numpy.array([12.3667, 12.6167]))
+        numpy.testing.assert_equal(ts.dep_data,
+                                   numpy.array([1.2622, 1.2915]))
 
 
 if __name__ == '__main__':

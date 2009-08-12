@@ -1,3 +1,12 @@
+"""SOG buildbot timeseries comparison graph generator.
+
+test_compare_graphs.py is the test suite for this module.
+
+:Author: Doug Latornell <dlatorne@eos.ubc.ca>
+:Created: 2009-07-28
+"""
+
+import dateutil.parser
 import numpy
 
 
@@ -19,7 +28,7 @@ class Relation(object):
         self.datafile = datafile
 
 
-    def _read_header(self):
+    def _read_header(self, fobj):
         """This method is expected to be implemented by classes based
         on Relation.
 
@@ -69,3 +78,32 @@ class Relation(object):
         # Transform data lists into NumPy arrays
         self.indep_data = numpy.array(self.indep_data)
         self.dep_data = numpy.array(self.dep_data)
+
+
+class SOG_Timeseries(Relation):
+    """
+    """
+    def _read_header(self, fobj):
+        """Read a SOG timeseries file header, return the field_names
+        and field_units lists, and set attributes with the
+        run_datetime and initial_CTD_datetime values.
+        """
+        for line in fobj:
+            line = line.strip()
+            if line.startswith('*FieldNames:'):
+                # Drop the *FieldNames: label and keep the
+                # comma-delimited list
+                field_names = line.split(': ', 1)[1].split(', ')
+            if line.startswith('*FieldUnits:'):
+                # Drop the *FieldUnits: label and keep the
+                # comma-delimited list
+                field_units = line.split(': ', 1)[1].split(', ')
+            if line.startswith('*RunDateTime:'):
+                datetime_str = ' '.join(line.split()[1:])
+                self.run_datetime = dateutil.parser.parse(datetime_str)
+            if line.startswith('*InitialCTDDateTime:'):
+                datetime_str = ' '.join(line.split()[1:])
+                self.initial_CTD_datetime = dateutil.parser.parse(datetime_str)
+            if line.startswith('*EndOfHeader'):
+                break
+        return field_names, field_units
