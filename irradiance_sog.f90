@@ -130,8 +130,16 @@ contains
     a = sin(declination) * sin(lat) 
     b = cos(declination) * cos(lat)
     cos_Z = a + b * cos(pi / 180.0 * hour)      !solar elevation
-    hour_angle = acos(-(tan(lat) * tan(declination)))  !radians
-    day_length = hour_angle / 15.0 * 2.0 * 180.0 / pi !hours
+    hour_angle = tan(lat)*tan(declination)  ! cos of -hour_angle in radians
+    if (hour_angle > 1) then   ! so far North in summer that there is no night
+       day_length = 24.+0.0001
+    elseif (hour_angle < -1) then ! so far North in winter that there is no day
+       day_length = -0.0001
+    else
+       day_length = acos(-hour_angle) / 15.0 * 2.0 * 180.0 / pi ! hours: 15 = 360/24
+    endif
+    write (*,191) day, hour, hour_angle, day_length
+191 format (3x,i4,5(3x,e13.5))
     sunrise = 12.0 - 0.5 * day_length  !hours
     sunset = 12.0 + 0.5 * day_length   !hours
     cos_Z_max = cos(declination - lat)  !zenith angle
