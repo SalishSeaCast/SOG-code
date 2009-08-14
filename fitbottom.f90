@@ -78,16 +78,16 @@ contains
     ! Local variable:
     integer:: index
     
-    ! Apply constant temperature bottom boundary condition, if requested
-    if(temp_constant) then
-       c(2,6) = 0.d0
-    endif
     ! Set the coefficient matrix 2nd index for the quantity that we've
     ! calculating
     if (qty == quantity(1)) then
        index = 1
     elseif (qty == quantity(2)) then
        index = 2
+       ! Apply constant temperature bottom boundary condition, if requested
+       if(temp_constant) then
+          c(7,index) = 0.d0
+       endif
     elseif (qty == quantity(3)) then
        index = 3
     elseif (qty == quantity(4)) then
