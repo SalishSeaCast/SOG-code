@@ -138,8 +138,6 @@ contains
     else
        day_length = acos(-hour_angle) / 15.0 * 2.0 * 180.0 / pi ! hours: 15 = 360/24
     endif
-    write (*,191) day, hour, hour_angle, day_length
-191 format (3x,i4,5(3x,e13.5))
     sunrise = 12.0 - 0.5 * day_length  !hours
     sunset = 12.0 + 0.5 * day_length   !hours
     cos_Z_max = cos(declination - lat)  !zenith angle
