@@ -119,8 +119,7 @@ contains
          "mixing layer depth;"/,                                             &
          "! velocity components, temperature, & salinity; at surface, ",     &
          "and averaged over"/,                                               &
-         "! top 3 m of water column"/,                                       &
-         "and surface par"/,                                                 &
+         "! top 3 m of water column, and surface par"/,                      &
          "*FromCode: ", a/,                                                  &
          "*RunDateTime: ", a/,                                               &
          "*InitialCTDDateTime: ", a/,                                        &
@@ -163,11 +162,11 @@ contains
 200 format("! SOG code standard time series output from biology model"/,     &
          "! Time series of nitrate, ammonium, & silicon ",                   &
          "concentration; and "/,                                             &
-         "! phytoplankton (micro & nano & pico) & microzooplankton biomass, ",      &
-         "at surface, and "/,                                                &
-         "! averaged over top 3 m of water column; and detritus (DON, ",     &
-         "PON, refractory N, and "/,                                         &
-         "! biogenic Si) at 20 m depth."/,                                   &
+         "! phytoplankton (micro & nano & pico) & microzooplankton ",        &
+         "biomass, "/,                                                       &
+         "! at surface, and averaged over top 3 m of water column; "/,       &
+         "! and detritus (DON, PON, refractory N, and biogenic Si) ",        &
+         "at 20 m depth."/,                                                  &
          "*FromCode: ", a/,                                                  &
          "*RunDateTime: ", a/,                                               &
          "*InitialCTDDateTime: ", a/,                                        &

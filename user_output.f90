@@ -52,14 +52,15 @@ contains
 
     write(user_phys_timeseries, 100) trim(codeId), str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
-100 format("! User-defined time series output from physics model"/,    &
-         "! Time series of ...", &
-         "*FromCode: ", a/,                                            &
-         "*RunDateTime: ", a/,                                         &
-         "*InitialCTDDateTime: ", a/,                                  &
-         "*FieldNames: time, ut, vt"/, &
-         "*FieldNames: time"/, &
-         "*FieldUnits: hr since ", a, " LST"/, &
+100 format("! User-defined time series output from physics model."/,      &
+         "! Time series of eastern & northern components of layer "/,     &
+         "! expansion at surface, and x & y components of baroclinic "/,  &
+         "! pressure gradient at surface."/,                              &
+         "*FromCode: ", a/,                                               &
+         "*RunDateTime: ", a/,                                            &
+         "*InitialCTDDateTime: ", a/,                                     &
+         "*FieldNames: time, ut, vt, dPdx_b, dPdy_b"/,                    &
+         "*FieldUnits: hr since ", a, " LST, m, m, uPa/m, uPa/m"/,        &
          "*EndOfHeader")
   end subroutine write_user_phys_timeseries_hdr
 
@@ -92,7 +93,7 @@ contains
     write(user_bio_timeseries, 103) trim(codeId), str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
 103 format("! User-defined time series output from biology model"/,    &
-         "! Time series of ...", &
+         "! Time series of ..."/,                                      &
          "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a/,                                  &
@@ -145,7 +146,7 @@ contains
     ! !!! be kept in sync with the appropriate write statement in         !!!
     ! !!! above, or compareSOG plotting will fail.                        !!!
     write(user_phys_timeseries, 100) time, ut%new(1), vt%new(1), &
-         dPdx_b(1)*1e5, dPdy_b(1)*1e5
+         dPdx_b(1)*1e6, dPdy_b(1)*1e6
 100 format(f10.4, 80(2x, f8.4))
 
     ! Write user-specified biology model time series results
