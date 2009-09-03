@@ -36,7 +36,7 @@ module fitbottom
     ! fitted.m in
     ! sog-forcing/bottom for details of how these coefficient values
     ! were derived. - Need to read in values from infile
-    real(kind=dp), dimension(6, NQ) :: c 
+    real(kind=dp), dimension(7, NQ) :: c 
 
     ! Flag for constant bottom temperature
     logical :: temp_constant  !is the temperature coming up through the 
@@ -53,13 +53,13 @@ contains
     temp_constant = getparl('temp_constant')
     ! Read in values for sal, temp, chl, nit, sil, NH4, prt and set up
     ! c matrix
-    call getpardv("salinity", 6, c(:,1))
-    call getpardv("temperature", 6, c(:,2))
-    call getpardv("Phytoplankton", 6, c(:,3))
-    call getpardv("Nitrate", 6, c(:,4))
-    call getpardv("Silicon", 6, c(:,5))
-    call getpardv("Ammonium", 6, c(:,6))
-    call getpardv("Ratio", 6, c(:,7))
+    call getpardv("salinity", 7, c(:,1))
+    call getpardv("temperature", 7, c(:,2))
+    call getpardv("Phytoplankton", 7, c(:,3))
+    call getpardv("Nitrate", 7, c(:,4))
+    call getpardv("Silicon", 7, c(:,5))
+    call getpardv("Ammonium", 7, c(:,6))
+    call getpardv("Ratio", 7, c(:,7))
   end subroutine init_fitbottom
 
   function bottom_value (arg, qty) result(value)
@@ -91,6 +91,7 @@ contains
           c(4,index) = 0.d0
           c(5,index) = 0.d0
           c(6,index) = 0.d0
+          c(7,index) = 0.d0
        endif
     elseif (qty == quantity(3)) then
        index = 3
@@ -111,8 +112,8 @@ contains
     value = c(1,index) &
          + c(2,index) * cos(arg) + c(3,index) * sin(arg + c(4,index)) &
          + c(5,index) * cos(3.0d0 * arg) &
-         + c(6,index) * sin(3.0d0 * arg) 
- 
+         + c(6,index) * sin(3.0d0 * arg) &
+         + c(7,index)
   end function bottom_value
 
 
