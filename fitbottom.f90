@@ -113,7 +113,7 @@ contains
          + c(2,index) * cos(arg) + c(3,index) * sin(arg + c(4,index)) &
          + c(5,index) * cos(3.0d0 * arg) &
          + c(6,index) * sin(3.0d0 * arg) &
-         + c(7,index)
+         + c(7,index)*((arg*365.25) /( 2 * pi)
   end function bottom_value
 
 
