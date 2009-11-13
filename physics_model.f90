@@ -39,7 +39,7 @@ contains
     use mixing_layer, only: init_mixing_layer
     use freshwater, only: init_freshwater
     use irradiance, only: init_irradiance
-
+    use find_upwell, only: init_find_upwell
     implicit none
     
     ! Argument:
@@ -70,6 +70,9 @@ contains
     ! Allocate memory for Kpar variables, and read parameter values
     ! from infile
     call init_irradiance()
+    ! Read freshwater depth  parameter value
+    ! from infile
+    call init_find_upwell()
 
   end subroutine init_physics
 
