@@ -50,8 +50,8 @@ baroclinic_pressure.o physics_eqn_builder.o \
 fitbottom.o \
 allocate1.o	\
 irradiance_sog.o 	\
-physics_model.o \
 find_upwell.o \
+physics_model.o \
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
 \
