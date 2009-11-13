@@ -15,13 +15,37 @@ module find_upwell
   ! vertical_advection(grid, dt, property, wupwell, gvector)
   !   -Calculate the vertical advection of a quantity based on the
   !    vertical profile of the entrainment velocity.
-
+  use precision_defs, only: dp
   implicit none
 
   private
   public upwell_profile, vertical_advection
+    
+  ! Local variables:
+  real(kind=dp) :: d      ! depth in m, of 68% fwc
 
 contains
+  subroutine init_find_upwell()
+    ! Read parameter values from the infile.
+    
+    implicit none
+  
+    ! Read fresh water parameter values from the infile.
+    call read_upwell_params()
+
+     
+
+  end subroutine init_find_upwell
+
+  subroutine read_upwell_params()
+    ! Read the fresh water depth parameter value from the infile.
+    use input_processor, only: getpard
+    implicit none
+ 
+    ! Read values for d fit equation from infile
+    ! fix d because fit is poor and not enough surface NO3 in winter
+    d = getpard("d")
+  end subroutine read_upwell_params
 
   subroutine upwell_profile(Qriver, wupwell)
     ! Calculate the vertical profile of the entrainment velocity based
@@ -35,6 +59,7 @@ contains
     use precision_defs, only: dp
     use grid_mod, only: grid
     use freshwater, only: upwell
+    use input_processor, only: getpard
 
     implicit none
 
@@ -44,7 +69,6 @@ contains
     real(kind=dp), intent(out), dimension(0:) :: wupwell 
 
     ! Local variables:
-    real(kind=dp) :: d      ! depth in m, of 68% fwc
     real(kind=dp) :: d25    ! 2.5 d, depth of upwelling variation
     integer :: index        ! counter through depth
 
@@ -54,9 +78,8 @@ contains
     ! calculating d from the salinity, see code version 1.8
 !    d = 11.7 * (Qriver/2720.)**(-0.23)
 
-    ! fix d because fit is poor and not enough surface NO3 in winter
-    d = 11.7
-    ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
+ 
+   ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5*d
 
     ! Set vertical velocity profile (on interfaces!)
