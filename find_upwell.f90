@@ -8,6 +8,9 @@ module find_upwell
   !
   ! Public Subroutines:
   !
+  ! init_find_upwell()
+  !   -Read parameter values from the infile.
+  !
   ! upwell_profile(grid, Qriver, upwell, wupwell)
   !   -Calculate the vertical profile of the entrainment velocity based
   !    on the strength of the River, and the maximum upwelling velocity.
@@ -19,7 +22,7 @@ module find_upwell
   implicit none
 
   private
-  public upwell_profile, vertical_advection
+  public init_find_upwell, upwell_profile, vertical_advection
     
   ! Local variables:
   real(kind=dp) :: d      ! depth in m, of 68% fwc
