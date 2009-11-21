@@ -9,8 +9,8 @@
 
 ! Grid parameters:
 "maxdepth"	40.d0	"depth of modelled domain [m]"
-"gridsize"	160	"number of grid points"
-"lambda"	 0.d0	"grid spacing parameter"
+"gridsize"	80	"number of grid points"
+"lambda"	0.d0	"grid spacing parameter"
 
 ! Run timing parameters:
 ! Initial conditions date/time (must match a CTD profile date/time)
@@ -133,6 +133,8 @@
 "itheta"   0.445d0             "theta"
 "idl"    2.56d0            "dl"
 
+! Freshwater depth fit
+'d'  11.7d0         "Constant d for freshwater depth"
 
 ! Biology model parameters:
 ! Model complexity flags:
