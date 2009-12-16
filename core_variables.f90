@@ -192,7 +192,7 @@ contains
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records     ! IOS bottle data record counter
     logical :: got_Fluores, got_NO, got_Si
-    real(kind=dp), dimension(0:int(grid%M+1), 24) :: &
+    real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
          data  ! Data records read
     real(kind=dp), dimension(3) :: &
          Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
@@ -339,9 +339,9 @@ contains
        P%micro = 0.0d0
     endif
 
-    ! No silicon data is okay, just initialize it to zero
+    ! No silicon data is okay, just initialize it to lots
     if(.not. got_Si) then
-       Si = 0.0d0
+       Si = 50.0d0
     endif
 
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
