@@ -254,8 +254,10 @@ module turbulence
            !       %total      -- sum of above components
            !       %tot_h      -- value at mixing layer depth
            !       %tot_grad_h -- gradient at mixing layer depth
-  real(kind=dp) :: &
-       shear_diff_smooth  ! Shear diffusivity smoothing parameter
+  real(kind=dp), dimension(2) :: &
+       shear_diff_smooth  ! Shear diffusivity smoothing parameters,
+                          ! central value and value offset 1
+                          ! value offset 2 is calculated
   real(kind=dp) :: &
        u_star, &  ! Turbulent friction velocity
        w_star, &  ! Convective velocity scale
@@ -284,7 +286,7 @@ contains
     ! parameter values from infile.
 
     ! Functions from other modules:
-    use input_processor, only: getpard
+    use input_processor, only: getpard, getpardv
 
     implicit none
     ! Argument:
@@ -299,7 +301,7 @@ contains
     nu%T%int_wave = getpard('nu_w_s')
     nu%S%int_wave = nu%T%int_wave
     ! Shear diffusivity smoothing parameter
-    shear_diff_smooth = getpard('shear smooth')
+    call getpardv('shear smooth', 2, shear_diff_smooth)
   end subroutine init_turbulence
 
 
@@ -498,7 +500,7 @@ contains
                    ! depths
          smoothed  ! Smoothed values of shear diffusivity
     real(kind=dp) :: &
-         a1, a2, a3, a4  ! Smoothing algorithm parameters
+         a1, a2, a3, a4, a5  ! Smoothing algorithm parameters
     integer :: &
          i  ! Index over profile depth
 
@@ -525,15 +527,34 @@ contains
     ! Smooth the shear diffusivity over adjacent grid layer interfaces
     ! because the estimation of shear diffusivity is noisy as it is
     ! the ratio of a pair of differences.
-    a1 = shear_diff_smooth
-    a2 = (1.0d0 - a1) / 2.0d0
-    a3 = a2 / (a1 + a2)
-    a4 = 1.0d0 - a3
-    smoothed(1) = a3 * nu%m%shear(1) + a4 * nu%m%shear(2)
-    smoothed(2:grid%M-1) = a2 * nu%m%shear(1:grid%M-2) &
-         + a1 * nu%m%shear(2:grid%M-1) &
-         + a2 * nu%m%shear(3:grid%M)
-    smoothed(grid%M) = a3 * nu%m%shear(grid%M-1) + a4 * nu%m%shear(grid%M)
+    ! 
+    ! Calculate the coefficients:
+    ! central points
+    a1 = shear_diff_smooth(1)
+    a2 = shear_diff_smooth(2)/ 2.0d0
+    a3 = (1.0d0 - a1 - a2*2) / 2.0d0
+    ! points one from boundary
+    a4 = (a1 + 2*a2 + a3)
+    ! boundary points
+    a5 = (a1 + a2 + a3)
+    !
+    ! Calculate the smoothed sher diffusivity profile
+    smoothed(1) = (a1 * nu%m%shear(1) + a2 * nu%m%shear(2) &
+                  + a3 * nu%m%shear(3))/a5
+    smoothed(2) = (a2 * nu%m%shear(1) + a1 * nu%m%shear(2)       &
+                  + a2 * nu%m%shear(3) + a3 * nu%m%shear(4))/a4
+    smoothed(3:grid%M-2) = a3 * nu%m%shear(1:grid%M-2)  &
+         + a2 * nu%m%shear(2:grid%M-1)                  &
+         + a1 * nu%m%shear(3:grid%M)                    &
+         + a2 * nu%m%shear(4:grid%M+1)                  &
+         + a3 * nu%m%shear(5:grid%M+2)
+    smoothed(grid%M-1) = (a3 * nu%m%shear(grid%M-3)   &
+                         + a2 * nu%m%shear(grid%M-2)  &
+                         + a1 * nu%m%shear(grid%M-1)  &
+                         + a2 * nu%m%shear(grid%M))/a4
+    smoothed(grid%M) = (a3 * nu%m%shear(grid%M-2)    &
+                        + a2 * nu%m%shear(grid%M-1)  &
+                        + a1 * nu%m%shear(grid%M))/a5
     nu%m%shear = smoothed
   end subroutine shear_diffusivity
   
