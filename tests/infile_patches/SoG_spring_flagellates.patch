@@ -2,10 +2,7 @@
 
 # This patch is used by buildbot.
 
-# It was created by:
-#    Copying the $Id$ CVS keyword line from the up to date
-     repository infile to the sample_new_infile
-# then:
+# It was created with:
 #    $ cd SOG
 #    $ cat tests/infile_patches/patch_comments > path_to/patch_file
 #    $ diff -u infile path_to/sample_new_infile >> path_to/patch_file
@@ -20,10 +17,12 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2009-07-19 10:19:56.000000000 -0700
-+++ infiles/SoG_spring_flagellates	2009-07-19 12:44:18.000000000 -0700
-@@ -2,10 +2,8 @@
- ! $Id$
+--- infile	2010-01-29 15:20:24.000000000 -0800
++++ infiles/SoG_spring_flagellates	2010-02-27 09:58:53.000000000 -0800
+@@ -1,11 +1,9 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
+-! $Id$
++! $Id$
  ! $Source$
  
 -! SOG code infile template
@@ -121,11 +120,7 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -133,137 +129,137 @@
- "itheta"   0.445d0             "theta"
- "idl"    2.56d0            "dl"
- 
--
+@@ -139,74 +135,76 @@
  ! Biology model parameters:
  ! Model complexity flags:
  "flagellates_on"	.true.	"include flagellates in model?"
@@ -147,8 +142,7 @@
 +"Mesozoo, summer peak pos"  112.d0 229.d0 316.d0 "Position (days) of summer peaks"
 +"Mesozoo, summer peak wid" 53.8d0 51.6d0 14.6d0 "Width of summer peaks"
  ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
--"Mesozoo, max ingestion"     1.39d-5 "Mesozoo, maximum intake rate"
-+"Mesozoo, max ingestion"      1.39d-5 "Mesozoo, maximum intact rate"
+ "Mesozoo, max ingestion"     1.39d-5 "Mesozoo, maximum intake rate"
  ! Alain 0.75
 -"Mesozoo, pred slope"        0.2d0 "Mesozoo, limit on predation"
 +"Mesozoo, pred slope"        0.1d0 "Mesozoo, limit on predation"
@@ -186,7 +180,6 @@
 -"Mesorub, nano half-sat"     0.4d0    "Mesorub, nano half-saturation"
 +"Mesorub, nano half-sat"     0.5d0    "Mesorub, nano half-saturation"
  "Mesorub, nano predslope"    0.2d0    "Mesorub, nano predation slope"
-+
  ! Micro zoo rates
  "Microzoo, max ingestion"    2.32d-5   "Microzoo, max ingestion"
  "Microzoo, assimil. eff"  0.6d0    "Microzoo, assimiliation efficiency"
@@ -239,8 +232,7 @@
  ! Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
  "Micro, I_opt" 		38.4d0         "Micro, optimum light (W/m2)"
  ! Yih plus Cloern 1977 Half-sat very similar
--"Nano, I_opt"		38.4d0         "Nano, optimum light"
-+"Nano, I_opt"		38.4d0         "Nano, sigma"
+@@ -214,58 +212,56 @@
  ! small
  "Pico, I_opt"           10.d0          "Pico, optimum light"
  ! Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
@@ -322,7 +314,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -272,7 +268,6 @@
+@@ -274,7 +270,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -330,7 +322,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -281,7 +276,7 @@
+@@ -283,7 +278,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -339,7 +331,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -374,7 +369,6 @@
+@@ -376,7 +371,6 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
@@ -347,7 +339,7 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -389,7 +383,7 @@
+@@ -391,7 +385,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
