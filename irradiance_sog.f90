@@ -144,9 +144,7 @@ contains
 
 
     Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
-    if (cf .ge. 9) then
-       of = int(cf) - 2
-    elseif (cf .ge. 3) then
+    if (cf .ge. 6) then
        of = int(cf) - 1
     else 
        of = int(cf)
