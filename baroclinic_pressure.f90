@@ -180,6 +180,14 @@ contains
     call iso_distortion(vt%new, dzn)
     call iso_distortion(-vt%new, dzs)
 
+! Make sure values are not below 40m
+
+    dze = min(dze,grid%D)
+    dzw = min(dzw,grid%D)
+    dzn = min(dzn,grid%D)
+    dzs = min(dzs,grid%D)
+
+
     ! Calculate the baroclinic pressure gradient
     call delta_p(dze, dzw, rho_g, dPdx_b)
     call delta_p(dzn, dzs, rho_g, dPdy_b)
