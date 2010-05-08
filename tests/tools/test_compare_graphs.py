@@ -6,12 +6,13 @@ Use `python test_compare_graphs.py` to run the test suite.
 :Created: 2009-07-28
 """
 import numpy
+import matplotlib.axes
 import StringIO
 import sys
 import tempfile
 import unittest
 from datetime import datetime
-from compare_graphs import Relation, SOG_Timeseries
+from compare_graphs import GraphPage, Relation, SOG_Timeseries
 
 
 class TestRelation(unittest.TestCase):
@@ -149,6 +150,106 @@ class TestSOG_Timeseries(unittest.TestCase):
                                    numpy.array([12.3667, 12.6167]))
         numpy.testing.assert_equal(ts.dep_data,
                                    numpy.array([1.2622, 1.2915]))
+
+
+class TestGraphPage(unittest.TestCase):
+    """Unit tests for GraphPage class.
+    """
+    def setUp(self):
+        # Create a run data test file
+        self.run_test_file = tempfile.NamedTemporaryFile()
+        self.run_test_file.write('''/
+! SOG code standard time series output from physics model
+! Time series of iteration count for each time step; mixing layer depth;
+! velocity components, temperature, & salinity; at surface, and averaged over
+! top 3 m of water column and surface par
+*FromCode: $Source$
+*RunDateTime: 2009-07-27 07:14:24
+*InitialCTDDateTime: 2004-10-19 12:22:00
+*FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity, surface PAR
+*FieldUnits: hr since 2004-10-19 00:00:00 LST, None, m, m/s, m/s, m/s, m/s, deg C, deg C, None, None, W/m2
+*EndOfHeader
+   12.3667    4    1.2622    0.0046    0.0011   -0.0491   -0.0151   12.0920   12.1608   22.8330   23.2946  104.9434
+   12.6167    2    1.2915    0.0057    0.0017   -0.0645   -0.0266   12.1199   12.1743   22.8852   23.2923  103.4063/
+''')
+        self.run_test_file.flush()
+        # Create a ref data test file
+        self.ref_test_file = tempfile.NamedTemporaryFile()
+        self.ref_test_file.write('''/
+! SOG code standard time series output from physics model
+! Time series of iteration count for each time step; mixing layer depth;
+! velocity components, temperature, & salinity; at surface, and averaged over
+! top 3 m of water column and surface par
+*FromCode: $Source$
+*RunDateTime: 2009-06-27 07:14:24
+*InitialCTDDateTime: 2004-10-19 12:22:00
+*FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity, surface PAR
+*FieldUnits: hr since 2004-10-19 00:00:00 LST, None, m, m/s, m/s, m/s, m/s, deg C, deg C, None, None, W/m2
+*EndOfHeader
+   12.3667    4    2.2622    0.0046    0.0011   -0.0491   -0.0151   13.0920   12.1608   21.8330   23.2946  104.9434
+   12.6167    2    2.2915    0.0057    0.0017   -0.0645   -0.0266   13.1199   12.1743   21.8852   23.2923  103.4063/
+''')
+        self.ref_test_file.flush()
+        # Create a GraphPage instance
+        self.pg = GraphPage()
+
+
+    def test_init(self):
+        """creation of GraphPage instance sets expected attributes
+        """
+        width, height = (8., 10.)
+        rows, cols = (3, 1)
+        self.assertEqual(self.pg.fig.get_figwidth(), width)
+        self.assertEqual(self.pg.fig.get_figheight(), height)
+        self.assertEqual(self.pg.subplot_rows, rows)
+        self.assertEqual(self.pg.subplot_cols, cols)
+
+
+    def test_add_subplot(self):
+        """_add_subplot method adds expected axes
+        """
+        num = 1
+        self.pg._add_subplot(num)
+        self.assertEqual(self.pg.fig.axes[0].rowNum, num - 1)
+
+
+    def test_one_axis_subplot(self):
+        """one_axis_subplot method creates subplot with left y-axis
+        """
+        num = 2
+        run_ts = SOG_Timeseries(self.run_test_file.name)
+        ref_ts = SOG_Timeseries(self.ref_test_file.name)
+        field = 'mixing layer depth'
+        self.pg.one_axis_subplot(num, field, run_ts, ref_ts)
+        self.assertEqual(len(self.pg.fig.axes), 1)
+        self.assertEqual(self.pg.fig.axes[0].rowNum, num - 1)
+
+
+    def test_two_axis_subplot(self):
+        """two_axis_subplot method creates subplot with left & right y-axis
+        """
+        num = 1
+        run_ts = SOG_Timeseries(self.run_test_file.name)
+        ref_ts = SOG_Timeseries(self.ref_test_file.name)
+        fields = ('surface temperature', 'surface salinity')
+        self.pg.two_axis_subplot(num, fields, run_ts, ref_ts)
+        self.assertEqual(len(self.pg.fig.axes), 2)
+        self.assertEqual(self.pg.fig.axes[0].rowNum, num - 1)
+
+
+    def test_whole_page(self):
+        """generate the whole graph page.
+        """
+        run_ts = SOG_Timeseries(self.run_test_file.name)
+        ref_ts = SOG_Timeseries(self.ref_test_file.name)
+        fields = ('surface temperature', 'surface salinity')
+        self.pg.two_axis_subplot(1, fields, run_ts, ref_ts, colours=('r', 'b'))
+        field = 'mixing layer depth'
+        self.pg.one_axis_subplot(2, field, run_ts, ref_ts, colour='m')
+        fields = ('surface temperature', 'surface salinity')
+        self.pg.two_axis_subplot(3, fields, run_ts, ref_ts, colours=('c', 'g'))
+        self.pg.legend()
+        self.pg.save_pdf('foo')
 
 
 if __name__ == '__main__':
