@@ -17,14 +17,11 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-10 20:36:12.000000000 -0700
-+++ infile_RI	2010-05-10 20:40:17.000000000 -0700
-@@ -1,22 +1,21 @@
- ! -*- mode: f90 -*-  ! This line must be at the top of the file!
--! $Id$
--! $Source$
-+! $Id$
-+! $Source$
+--- infile	2010-05-11 07:47:19.000000000 -0700
++++ infile_RI	2010-05-11 07:47:53.000000000 -0700
+@@ -2,21 +2,20 @@
+ ! $Id$
+ ! $Source$
  
 -! SOG code infile template
 -
