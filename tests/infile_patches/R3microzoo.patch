@@ -17,11 +17,10 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2009-07-19 10:19:56.000000000 -0700
-+++ infiles/R3microzoo	2009-07-22 21:32:48.000000000 -0700
-@@ -2,10 +2,10 @@
- ! $Id$
- ! $Source$
+--- infile	2010-05-11 18:34:40.000000000 -0700
++++ infiles/R3microzoo	2010-05-12 07:15:46.000000000 -0700
+@@ -1,20 +1,20 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
 -! SOG code infile template
 -
@@ -34,7 +33,9 @@
  
  ! Grid parameters:
  "maxdepth"	40.d0	"depth of modelled domain [m]"
-@@ -14,9 +14,9 @@
+ "gridsize"	80	"number of grid points"
+-"lambda"	0.d0	"grid spacing parameter"
++"lambda"	 0.d0	"grid spacing parameter"
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -46,7 +47,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -29,11 +29,11 @@
+@@ -27,11 +27,11 @@
  
  ! Initial conditions
  "ctd_in"
@@ -60,7 +61,7 @@
    "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
  "botl_in"
    "N/A"
-@@ -44,29 +44,29 @@
+@@ -42,29 +42,29 @@
  
  ! Time series output files
  "std_phys_ts_out"  
@@ -99,7 +100,47 @@
  "Hoffmueller start yr"	2004			"yr to start Hoff output"
  "Hoffmueller start day"	294			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
-@@ -136,7 +136,7 @@
+@@ -78,10 +78,10 @@
+ "temp_constant"    .false.       "Is bottom temperature constant over time?"
+ ! Fit parameters for core variables
+ "salinity"
+-  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0 
++  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0
+   "Salinity (constant, seasonal and biseasonal components)"
+ "temperature"
+-  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.0292d0
++  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.00007993d0
+   "Temperature (constant, seasonal and biseasonal components)"
+ "Phytoplankton"
+   0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0
+@@ -93,10 +93,10 @@
+   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+   "Silicon (constant)"
+ "Ammonium"
+-  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
++  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+   "Ammonium (constant)"
+ "Ratio"
+-  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0 
++  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0
+   "Ratio of pico/micro plankton (constant and biseasonal)"
+ !Basin axis lengths (km)
+ "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
+@@ -104,7 +104,7 @@
+ ! Turbulence:
+ "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
+ "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
+-"shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
++"shear smooth"	0.8d0		"shear diffusivity smoothing parameter"
+ ! Fresh water flux:
+ "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
+ "Qbar"          3624d0         "mean total freshwater"
+@@ -131,12 +131,10 @@
+ "itheta"   0.445d0             "theta"
+ "idl"    2.56d0            "dl"
+ 
+-! Freshwater depth fit
+-'d'  11.7d0         "Constant d for freshwater depth"
  
  ! Biology model parameters:
  ! Model complexity flags:
@@ -108,7 +149,7 @@
  "remineralization"	.true.	"include remineralization loop in model?"
  "use microzooplankton"  .true.  "include microzooplankton in model?"
  "single species light"  .false.  "high light limitation for single species case"
-@@ -389,7 +389,7 @@
+@@ -389,7 +387,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
