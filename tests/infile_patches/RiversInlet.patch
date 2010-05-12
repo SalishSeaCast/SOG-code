@@ -17,11 +17,10 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-11 07:47:19.000000000 -0700
-+++ infile_RI	2010-05-11 07:47:53.000000000 -0700
-@@ -2,21 +2,20 @@
- ! $Id$
- ! $Source$
+--- infile	2010-05-11 18:34:40.000000000 -0700
++++ infile_RI	2010-05-11 18:34:34.000000000 -0700
+@@ -1,20 +1,19 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
 -! SOG code infile template
 -
@@ -47,7 +46,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -29,11 +28,11 @@
+@@ -27,11 +26,11 @@
  
  ! Initial conditions
  "ctd_in"
@@ -61,7 +60,7 @@
    "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
  "botl_in"
    "N/A"
-@@ -41,140 +40,128 @@
+@@ -39,140 +38,128 @@
  "initial chl split"
    0.33d0 0.33d0 0.33d0
    "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"
@@ -283,7 +282,7 @@
  ! Micro zoo rates
  "Microzoo, max ingestion"    2.32d-5   "Microzoo, max ingestion"
  "Microzoo, assimil. eff"  0.6d0    "Microzoo, assimiliation efficiency"
-@@ -201,71 +188,71 @@
+@@ -199,71 +186,71 @@
  
  ! Phytoplankton values:
  ! Hitchcock 1980, 1.4 d-1 for T. nordenskelii at 10degrees
@@ -385,7 +384,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -274,7 +261,6 @@
+@@ -272,7 +259,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -393,7 +392,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -283,7 +269,7 @@
+@@ -281,7 +267,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -402,7 +401,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -376,42 +362,31 @@
+@@ -374,42 +360,31 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
