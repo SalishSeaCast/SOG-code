@@ -1,6 +1,4 @@
 ! -*- mode: f90 -*-  ! This line must be at the top of the file!
-! $Id$
-! $Source$
 
 !*** Rivers Inlet  infile for ~14 mo run at station DF02 using
 !*** CTD cast (2007-08-29 16:10:15 LST) 
@@ -18,7 +16,7 @@
 "end datetime"	"2008-11-01 00:18:00"	"end of run date/time"
 "dt"		900	 "time step [s]"
 ! Implicit solver iteration limit
-"max_iter"		30	"implicit solver max iterations"
+"max_iter"	30	"implicit solver max iterations"
 
 ! Forcing and initial conditions variation parameters
 "vary%wind%enabled"    .false.       "Variation of wind data?"
