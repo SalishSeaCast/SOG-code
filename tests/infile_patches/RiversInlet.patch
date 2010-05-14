@@ -17,7 +17,7 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-13 19:11:03.000000000 -0700
+--- infile	2010-05-13 21:00:00.000000000 -0700
 +++ infile_RI	2010-05-13 19:16:19.000000000 -0700
 @@ -1,20 +1,18 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
@@ -166,7 +166,8 @@
  "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
  "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
 -"shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
--<! Fresh water flux:
++"shear smooth"  0.375d0 0.5d0   "shear diffusivity smoothing parameter"
+ ! Fresh water flux:
 -"upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
 -"Qbar"          3624d0         "mean total freshwater"
 -"F_SOG"         0.12d0         "exponential for SOG component of Ft"
@@ -176,8 +177,6 @@
 -"Fw_surface"	.false.	       "add all of the fresh water on the surface?"
 -"Fw_depth"      3.5d0          "interface thickness"
 -"use_Fw_nutrients" .true.      "include influence of Fw nutrients"
-+"shear smooth"  0.375d0 0.5d0   "shear diffusivity smoothing parameter"
-+! Fresh water flux:
 +"upwell_const"  1.9d-4          "maximum upwelling velocity [m/s]"
 +"Qbar"          7.0d3           "mean totalfreshwater"
 +"F_SOG"         1.5d0           "exponential for SOG component of Ft"

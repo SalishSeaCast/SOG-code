@@ -4,19 +4,39 @@
 
 # It was created with:
 #    $ cd SOG
-#    $ diff -u infile path_to/sample_new_file > path_to/patch_file
+#    $ cat tests/infile_patches/patch_comments > path_to/patch_file
+#    $ diff -u infile path_to/sample_new_infile >> path_to/patch_file
 
-#  To apply this patch manually, do::
+#  To apply this patch manually, do:
 #    $ cd SOG
 #    $ patch -i path_to/patch_file -o path_to/new_infile
 
-# where path_to/patch_file is the path and name of this file, and
-# path_to/new_infile is the path and the name of the new infile to be
-# created.
+# where:
+#   - tests/infile_patches/patch_comments contains these comments
+#   - path_to/patch_file is the path and name of this file
+#   - path_to/new_infile is the path and the name of the new infile to be
+#     created.
 
---- infile	2009-02-24 12:56:37.000000000 -0800
-+++ tests/infiles/R3base	2009-03-01 06:46:51.000000000 -0800
-@@ -15,9 +15,9 @@
+--- infile	2010-05-13 21:00:00.000000000 -0700
++++ infiles/R3short	2010-05-14 08:49:24.000000000 -0700
+@@ -1,57 +1,40 @@
+ ! -*- mode: f90 -*-  ! This line must be at the top of the file!
++! $Id$
++! $Source$
+ 
+ ! SOG code infile template
+ 
+-! SOG code infile for 356.5 day run starting at cruise 04-14 station S3
+-! CTD cast (2004-10-19 12:22 LST).
++! SOG code infile for 300 hr run starting at cruise 04-14 station S3
++! CTD cast (2004-10-19 12:22 LST).  This file is primarily used for
++! quick tests during code development and refactoring.
+ 
+ ! Grid parameters:
+ "maxdepth"	40.d0	"depth of modelled domain [m]"
+ "gridsize"	80	"number of grid points"
+-"lambda"	0.d0	"grid spacing parameter"
++"lambda"	 0.d0	"grid spacing parameter"
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -27,8 +47,29 @@
 +"end datetime"	"2003-11-01 12:00:00"	"end of run date/time"
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
- "max_iter"		30	"implicit solver max iterations"
-@@ -25,29 +25,29 @@
+-"max_iter"	30	"implicit solver max iterations"
++"max_iter"		30	"implicit solver max iterations"
+ 
+-! Forcing and initial conditions variation parameters
+-"vary%wind%enabled"    .false.       "Variation of wind data?"
+-"vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
+-"vary%rivers%enabled"  .false.       "Variation of river flow?"
+-"vary%temperature%enabled" .false.   "Variation of temperature?"
+-
+-! Initial conditions
+-"ctd_in"
+-  "../sog-initial/ctd/SG-S3-2004-10-19.sog"
+-  "initialization CTD file"
+-! Give a path/filename for either nuts_in or botl_in; set the other to "N/A"
+-"nuts_in"
+-  "../sog-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
+-  "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
+-"botl_in"
+-  "N/A"
+-  "IOS bottle data file"
+-"initial chl split"
+-  0.33d0 0.33d0 0.33d0
+-  "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"
  
  ! Time series output files
  "std_phys_ts_out"  
@@ -49,15 +90,12 @@
  	"user-defined biology timeseries"
  
  ! Profiles output
- "noprof"	1		"no. of profiles to print"
- ! *** It would be nice to replace the yr-day and day-sec lists with a list
+@@ -60,11 +43,11 @@
  ! *** of dates/times for profiles output
--"profday"	303		"yr-day for profile"
--"proftime"	43200.		"day-sec for profile"
+ "profday"	303		"yr-day for profile"
+ "proftime"	43200.		"day-sec for profile"
 -"haloclinefile"	"profiles/halo-sog-test1.out"	"file for halocline results"
 -"profile_base"	"profiles/sog-test1"	"profile file base (datetime will be added)"
-+"profday"	303		"yr-day for profile"
-+"proftime"	43200.		"day-sec for profile"
 +"haloclinefile"	"profiles/halo_R3.out"	"file for halocline results"
 +"profile_base"	"profiles/prof_R3"	"profile file base (datetime will be added)"
  ! Hoffmueller diagram output (a collection of profiles at time intervals
@@ -67,27 +105,138 @@
  "Hoffmueller start yr"	2004			"yr to start Hoff output"
  "Hoffmueller start day"	294			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
-@@ -328,7 +328,7 @@
+@@ -73,31 +56,19 @@
+ "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
+ "Hoffmueller interval"	1.			"days between Hoff outputs"
+ 
+-! Physics model parameters
+-! Bottom boundary conditions
++! Bottom temperature parameters
+ "temp_constant"    .false.       "Is bottom temperature constant over time?"
+-! Fit parameters for core variables
+-"salinity"
+-  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0 
+-  "Salinity (constant, seasonal and biseasonal components)"
+-"temperature"
+-  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.0292d0
+-  "Temperature (constant, seasonal and biseasonal components)"
+-"Phytoplankton"
+-  0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0
+-  " Phytoplankton from fluor (constant and seasonal)"
+-"Nitrate"
+-  30.5d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+-  "Nitrate (constant)"
+-"Silicon"
+-  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+-  "Silicon (constant)"
+-"Ammonium"
+-  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
+-  "Ammonium (constant)"
+-"Ratio"
+-  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0 
+-  "Ratio of pico/micro plankton (constant and biseasonal)"
++
++"salinity"  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0  "Salinity (constant, seasonal and biseasonal components)"
++"temperature"  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.00007993d0     "Temperature (constant, seasonal and biseasonal components)"
++"Phytoplankton"0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0   " Phytoplankton from fluor (constant and seasonal)"
++"Nitrate"   30.5d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Nitrate (constant)"
++"Silicon"  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Silicon (constant)"
++"Ammonium"   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Ammonium (constant)"
++"Ratio"   1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0   "Ratio of pico/micro plankton (constant and biseasonal)"
++
++! Physics model parameters
++
+ !Basin axis lengths (km)
+ "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
+ "Ly"            120.0d3         "Major axis (along-strait) of model domain [m]"
+@@ -108,14 +79,15 @@
+ ! Fresh water flux:
+ "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
+ "Qbar"          3624d0         "mean total freshwater"
+-"F_SOG"         0.12d0         "exponential for SOG component of Ft"
+-"F_RI"          0.0d0          "exponential for RI component of Ft"
+-"Fm"            450.0d0        "fresh water scale factor for RI river flow"
+-"Fw_scale"	8.48d-10       "fresh water scale factor for river flows"
+-"Fw_surface"	.false.	       "add all of the fresh water on the surface?"
+-"Fw_depth"      3.5d0          "interface thickness"
+-"use_Fw_nutrients" .true.      "include influence of Fw nutrients"
++"F_SOG"         0.12d0              "exponential for SOG component of Ft"
++"F_RI"          0.0d0              "exponential for RI component of Ft"
++"Fm"            450.0d0              "fresh water scale factor for RI river flow"
++"Fw_scale"	8.48d-10	"fresh water scale factor for river flows"
++"Fw_surface"	.false.		"add all of the fresh water on the surface?"
++"Fw_depth"      3.5d0             "interface thickness"
++"use_Fw_nutrients" .true.       "include influence of Fw nutrients"
+ "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
++
+ ! Salinity Fit 
+ "cbottom"  30.0d0          "bottom salinity"
+ "calpha"   2440.0d0             "alpha"
+@@ -123,6 +95,7 @@
+ !- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
+ "cgamma"   0.0633d0             "gamma"
+ "cbeta"    0.0d0            "beta"
++
+ ! Kpar Fit  - Collins et al 2008 equation 8
+ "ialpha"   0.0910d0             "alpha"
+ "ibeta"   0.0433d0              "beta - relates to chl"
+@@ -389,27 +362,39 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
 -"startyear"     2004    "initialization of runtime for model"
 +"startyear"     2003    "initialization of runtime for model"
++
++! File names for input data (wind,met,rivers)
  
- ! File names for input data (wind,met,rivers)
- 
-@@ -352,12 +352,12 @@
- 
- ! Initial conditions
- ! *** Perhaps these should be moved higher in the file?
--"cruise_id"	"0414"		"Cruise id number"
+-! File names for forcing data (wind, met, rivers)
+-"Wind"
+- "../sog-forcing/wind/SH_total.dat"
+-  "file for wind data"
+-"Air temp"
+-  "../sog-forcing/met/YVRhistAT"
+-  "file for AT data"
+-"Cloud"
+-  "../sog-forcing/met/YVRhistCF"
+-  "file for Cloud data"
+-"Humidity"
+-  "../sog-forcing/met/YVRhistHum"
+-  "file for Humidity data"
+-"Major_River"
+-  "../sog-forcing/rivers/Fraser_historic.dat"
+-  "file for Maj Riv data"
++"Wind"          "../sog-forcing/wind/SH_total.dat"             "file for wind data"
++"Air temp"      "../sog-forcing/met/YVRhistAT"                 "file for AT data"
++"Cloud"         "../sog-forcing/met/YVRhistCF"                 "file for Cloud data"
++"Humidity"      "../sog-forcing/met/YVRhistHum"                "file for Humidity data"
++"Major_River"  "../sog-forcing/rivers/Fraser_historic.dat"     "file for Maj Riv data"
+ "isMinRiv"     .true.               "Is there data for a minor river?"
+-"Minor_River"
+-  "../sog-forcing/rivers/Englishman_historic.dat"
+-  "file for Min Riv data"
++"Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data"
++
++
++! Vary parameters
++"vary%wind%enabled"    .false.       "Variation of wind data?"
++"vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
++"vary%rivers%enabled"  .false.       "Variation of river flow?"
++"vary%temperature%enabled" .false.   "Variation of temperature?"
++
++
++
++! Initial conditions
++! *** Perhaps these should be moved higher in the file?
 +"cruise_id"	"0320"		"Cruise id number"
- 
- ! Nitrate data
- "Nitrate"    .true.       "Is nitrate data every .5m from CTD?"
- 
--"ctd_in"	"input/ctd_in/ctd_test2004"	"initialization CTD file"
++
++! Nitrate data
++"Nitrate"    .true.       "Is nitrate data every .5m from CTD?"
++
 +"ctd_in"	"input/ctd_in/ctd_test2003"	"initialization CTD file"
- "bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
++"bot_in"	"input/ctd_in/bot_hist/2004-26-0020.trim"	"initialization CTD file"
++
++"initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
++
++
  
- "initial chl split" 0.33d0 0.33d0 0.33d0 "Split of chl data into 3 classes of plankton"
+ ! end of file

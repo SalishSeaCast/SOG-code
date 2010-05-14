@@ -17,7 +17,7 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-13 19:11:03.000000000 -0700
+--- infile	2010-05-13 21:00:00.000000000 -0700
 +++ infiles/R3no_remineralization	2010-05-13 19:24:20.000000000 -0700
 @@ -1,20 +1,21 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
@@ -127,15 +127,6 @@
    "Ratio of pico/micro plankton (constant and biseasonal)"
  !Basin axis lengths (km)
  "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
-@@ -105,7 +106,7 @@
- "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
- "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
- "shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
--<! Fresh water flux:
-+! Fresh water flux:
- "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
- "Qbar"          3624d0         "mean total freshwater"
- "F_SOG"         0.12d0         "exponential for SOG component of Ft"
 @@ -136,10 +137,10 @@
  
  ! Biology model parameters:
