@@ -1,5 +1,4 @@
 ! -*- mode: f90 -*-  ! This line must be at the top of the file!
-
 !*** Rivers Inlet  infile for ~14 mo run at station DF02 using
 !*** CTD cast (2007-08-29 16:10:15 LST) 
 
@@ -119,7 +118,7 @@
 'idl'    1.433d0             "dl"
 
 ! Freshwater depth fit
-'d'  6.4d0         "Constant d for freshwater depth"
+"d"  6.4d0         "Constant d for freshwater depth"
 
 ! Biology model parameters:
 ! Model complexity flags:

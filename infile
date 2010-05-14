@@ -105,7 +105,7 @@
 "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
 "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
 "shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
-! Fresh water flux:
+<! Fresh water flux:
 "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
 "Qbar"          3624d0         "mean total freshwater"
 "F_SOG"         0.12d0         "exponential for SOG component of Ft"
@@ -132,7 +132,7 @@
 "idl"    2.56d0            "dl"
 
 ! Freshwater depth fit
-'d'  11.7d0         "Constant d for freshwater depth"
+"d"  11.7d0         "Constant d for freshwater depth"
 
 ! Biology model parameters:
 ! Model complexity flags:

@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-11 18:34:40.000000000 -0700
-+++ infiles/R3base	2010-05-12 07:15:06.000000000 -0700
+--- infile	2010-05-13 19:11:03.000000000 -0700
++++ infiles/R3base	2010-05-13 19:11:01.000000000 -0700
 @@ -1,20 +1,19 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
@@ -125,21 +125,16 @@
    "Ratio of pico/micro plankton (constant and biseasonal)"
  !Basin axis lengths (km)
  "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
-@@ -104,7 +103,7 @@
- ! Turbulence:
+@@ -105,7 +104,7 @@
  "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
  "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
--"shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
-+"shear smooth"	0.8d0		"shear diffusivity smoothing parameter"
- ! Fresh water flux:
+ "shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
+-<! Fresh water flux:
++! Fresh water flux:
  "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
  "Qbar"          3624d0         "mean total freshwater"
-@@ -131,14 +130,12 @@
- "itheta"   0.445d0             "theta"
- "idl"    2.56d0            "dl"
- 
--! Freshwater depth fit
--'d'  11.7d0         "Constant d for freshwater depth"
+ "F_SOG"         0.12d0         "exponential for SOG component of Ft"
+@@ -136,9 +135,9 @@
  
  ! Biology model parameters:
  ! Model complexity flags:
@@ -151,7 +146,7 @@
  "single species light"  .false.  "high light limitation for single species case"
  ! Zooplankton values:
  ! tuned
-@@ -389,7 +386,7 @@
+@@ -389,7 +388,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
