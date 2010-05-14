@@ -17,13 +17,10 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-01-29 15:20:24.000000000 -0800
-+++ infiles/SoG_spring_flagellates	2010-02-27 09:58:53.000000000 -0800
-@@ -1,11 +1,9 @@
+--- infile	2010-05-13 19:11:03.000000000 -0700
++++ infiles/SoG_spring_flagellates	2010-05-13 20:11:17.000000000 -0700
+@@ -1,9 +1,7 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
--! $Id$
-+! $Id$
- ! $Source$
  
 -! SOG code infile template
 -
@@ -34,7 +31,7 @@
  
  ! Grid parameters:
  "maxdepth"	40.d0	"depth of modelled domain [m]"
-@@ -14,9 +12,10 @@
+@@ -12,9 +10,10 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -47,7 +44,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -29,48 +28,45 @@
+@@ -27,48 +26,45 @@
  
  ! Initial conditions
  "ctd_in"
@@ -120,7 +117,22 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -139,74 +135,76 @@
+@@ -105,7 +101,7 @@
+ "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
+ "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
+ "shear smooth"	0.375d0 0.5d0	"shear diffusivity smoothing parameters"
+-<! Fresh water flux:
++! Fresh water flux:
+ "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
+ "Qbar"          3624d0         "mean total freshwater"
+ "F_SOG"         0.12d0         "exponential for SOG component of Ft"
+@@ -132,79 +128,81 @@
+ "idl"    2.56d0            "dl"
+ 
+ ! Freshwater depth fit
+-"d"  11.7d0         "Constant d for freshwater depth"
++'d'  11.7d0         "Constant d for freshwater depth"
+ 
  ! Biology model parameters:
  ! Model complexity flags:
  "flagellates_on"	.true.	"include flagellates in model?"
@@ -232,7 +244,7 @@
  ! Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
  "Micro, I_opt" 		38.4d0         "Micro, optimum light (W/m2)"
  ! Yih plus Cloern 1977 Half-sat very similar
-@@ -214,58 +212,56 @@
+@@ -212,58 +210,56 @@
  ! small
  "Pico, I_opt"           10.d0          "Pico, optimum light"
  ! Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
@@ -314,7 +326,7 @@
  ! is for deeply sinking and thus refractory stuff?)
  ! Debby and Alain 0.2d-1
  ! Denman 0.1d-1 at 10 degrees
-@@ -274,7 +270,6 @@
+@@ -272,7 +268,6 @@
  ! of same order as a number of papers including Brzezinski et al,; Bidle and 
  ! Azam 1998 without bacteria
  "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
@@ -322,7 +334,7 @@
  ! Waste and detritus
  ! Micro Natural Mortality
  "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -283,7 +278,7 @@
+@@ -281,7 +276,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -331,7 +343,7 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -376,7 +371,6 @@
+@@ -374,7 +369,6 @@
  "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
  "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
  "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
@@ -339,7 +351,7 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -391,7 +385,7 @@
+@@ -389,7 +383,7 @@
  "Englishman integ days"  20       "Days over which to integrate Englishman River"
  
  ! Start year to run model: used in forcing.f90
