@@ -136,13 +136,14 @@ contains
 
   subroutine read_forcing 
 
-    use input_processor, only: getpari,getpars,getparl
+    use input_processor, only: getpari, getpars, getparl
+    use io_unit_defs, only: met_data, river_data, stdout
     use unit_conversions, only: CtoK
 
     implicit none
 
     ! Local variables:
-    integer :: ic, jc,j,  para, stn, year, day, month
+    integer :: ic, jc, j,  para, stn, year, day, month
     real(kind=sp) :: hour
     integer :: integration ! number of days to integrate the Englishman river
     integer, parameter :: Ieriver = 10000
@@ -154,7 +155,7 @@ contains
     integer :: rivers_startday ! startday for rivers allowing part year shifts
 
     if (river_n > Ieriver) then
-       write (*,*) "in forcing.f90 need to increase size of EriverI array"
+       write (stdout ,*) "in forcing.f90 need to increase size of EriverI array"
        stop
     endif
     
@@ -165,7 +166,6 @@ contains
     startyear = getpari("startyear")
 
     ! read the file names for input data (Wind, Met, Rivers)
-    
     Wind = getpars("Wind")
     AT = getpars("Air temp")
     Cloud = getpars("Cloud")
@@ -173,7 +173,6 @@ contains
     MajorRiv = getpars("Major_River")
     isMinorRiv = getparl("isMinRiv")
     MinorRiv = getpars("Minor_River")
-    
 
     ! WIND
     ! shift the start year if requested
@@ -182,30 +181,25 @@ contains
     else
        wind_startyear = startyear
     endif
-
-    open(unit = 12, file = Wind, &
-         status = "OLD", action = "READ")
-    
+    open(unit=met_data, file=Wind, status="OLD", action="READ")
     found_data = .false.
     do while (.not. found_data)
-       read (12,*) day, month, year, hour, wind_en, wind_nw
-       hour = hour  ! this is just to use "hour" to stop an unused warning
-       month = month ! this is just to use "month" to stop an unused warning
-
+       read (met_data, *) day, month, year, hour, wind_en, wind_nw
+       ! Assign hour and month to themselves to prevent g95 from
+       ! throwing "set but never used" warnings
+       hour = hour
+       month = month
        if (year == wind_startyear) then
-          
           wind_eastnorth(1) = wind_en
           wind_northwest(1) = wind_nw
-
           do jc = 2, wind_n             
-             read(12,*) day, month, year, hour, wind_eastnorth(jc), &
+             read(met_data,*) day, month, year, hour, wind_eastnorth(jc), &
                   wind_northwest(jc)
           enddo          
           found_data = .true.
        endif
     enddo
-
-    close (12)
+    close (met_data)
 
     ! Cloud Fraction
     ! shift the start year if requested
@@ -214,43 +208,32 @@ contains
     else
        cf_startyear = startyear
     endif
-
-    open(12, file= Cloud, &
-         status = "OLD", action = "READ")
-        
+    open(unit=met_data, file=Cloud, status="OLD", action="READ")
     found_data = .false.
     do while (.not. found_data)
-       read (12,*) stn, year, month, day, para, (cf(1,j),j=1,24)
+       read (met_data, *) stn, year, month, day, para, (cf(1,j),j=1,24)
        ! Assign stn and para to themselves to prevent g95 from
        ! throwing "set but never used" warnings
        stn = stn
        para = para
-
-       if (year == cf_startyear)then
-
+       if (year == cf_startyear) then
           do jc = 2, met_n             
-             read(12,*)stn,year,month,day,para,(cf(jc,j),j=1,24)
+             read(met_data, *) stn, year, month, day, para, (cf(jc,j),j=1,24)
           enddo
           found_data = .true.
        endif
     enddo
-
-    close (12)
-
+    close (met_data)
 
     ! Air Temperature
-
-    open (12, file= AT, &
-         status = "OLD", action = "READ")
-    
+    open(unit=met_data, file=AT, status="OLD", action="READ")
     found_data = .false.
     do while (.not. found_data)
-       read (12,*) stn, year, month, day, para, (atemp(1,j),j=1,24)
-
-       if (year == startyear)then
-
+       read (met_data, *) stn, year, month, day, para, (atemp(1,j),j=1,24)
+       if (year == startyear) then
           do jc = 2, met_n
-             read (12,*) stn, year, month, day, para,(atemp(jc,j),j=1,24)
+             read (met_data, *) stn, year, month, day, para, &
+                  (atemp(jc,j),j=1,24)
              do j= 1, 24
                 atemp(jc,j) = CtoK(atemp(jc,j) / 10.)
              enddo
@@ -258,31 +241,20 @@ contains
           found_data = .true.
        endif
     enddo
-
-   
-
-    close (5)
-
-    close(12)
+    close(met_data)
 
     ! Humidity
-
-    open(12, file= Hum, &
-         status = "OLD", action = "READ")
-    
+    open(unit=met_data, file=Hum, status="OLD", action="READ")
     found_data = .false.
     do while (.not. found_data)
-       read (12,*) stn, year, month, day, para, (humid(1,j),j=1,24)
-
-       if (year == startyear)then
-
+       read (met_data, *) stn, year, month, day, para, (humid(1,j),j=1,24)
+       if (year == startyear) then
           do jc = 2, met_n             
              read(12,*)stn,year,month,day,para,(humid(jc,j),j=1,24)
           enddo          
           found_data = .true.
        endif
     enddo
-
     close(12)
 
     ! Major River
@@ -294,76 +266,56 @@ contains
        rivers_startday = 1
        rivers_startyear = startyear
     endif
-
-
-
-    open(12, file= MajorRiv, &
-         status = "OLD", action = "READ")  
-
+    open(river_data, file=MajorRiv,status="OLD", action="READ")  
     found_data = .false.
     do while(.not. found_data)
-       read(12,*) year, month, day, MajRiv
-
+       read(river_data, *) year, month, day, MajRiv
        if(year == rivers_startyear .and. day == rivers_startday) then
-          
           Qriver(1) = MajRiv
-          
           do jc = 2, river_n             
              read(12,*) year, month, day, Qriver(jc)
           enddo          
           found_data = .true.
-          
-
        endif
     enddo
-
-    close(12)
+    close(river_data)
 
     if(isMinorRiv) then
-
-
        ! Minor  River
        ! uses same shift as Major
-       open(12, file=MinorRiv, &
-            status = "OLD", action = "READ")
-
+       open(river_data, file=MinorRiv,status="OLD", action="READ")  
        found_data = .false.
        do while (.not. found_data)
-          read (12,*,END=175) year, month, day, MinRiv
-       
+          read (river_data, *, END=175) year, month, day, MinRiv
           if (year == rivers_startyear .and. day == rivers_startday) then
-          
              Eriver(1) = MinRiv
-
              do jc = 2, river_n             
                 read (12,*) year, month, day, Eriver(jc)
              enddo
              found_data = .true.
           endif
        enddo
-
-
-   !    FOR SOG, if there is not enough data in the englishman river, than use nanimo data.
+       ! For SoG, if there is not enough data in the englishman river,
+       ! than use nanimo data.
 175    if(.not. found_data) then
-          open(12, file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
-               status = "OLD", action = "READ")
-       
+          close(river_data)
+          open(river_data, &
+               file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
+               status="OLD", action="READ")
           do while (.not. found_data)
-             read (12,*,END=175) year, month, day,MinRiv
-
+             read (river_data, *) year, month, day, MinRiv
              if (year == rivers_startyear .and. day == rivers_startday) then
-          
                 Eriver(1) = MinRiv
-
                 do jc = 2, river_n             
                    read (12,*) year, month, day, Eriver(jc)
                 enddo
                 found_data = .true.
              endif
           enddo
+          close(river_data)
        endif
 
-       ! Want integrated Englishman River data over "integration" days
+       ! Integrate Englishman River data over "integration" days
        do ic=1, integration
           EriverI(ic) = sum(Eriver(1:ic))/float(ic)
        enddo
@@ -373,15 +325,14 @@ contains
        Eriver(1:river_n) = EriverI(1:river_n)
        close(12)  
     else 
-       
        do jc = 1, river_n             
           Eriver(jc)=0
        enddo
-  
     endif
 
   end subroutine read_forcing
        
+
   subroutine get_forcing (year, day, day_time, &
        Qinter, Einter, cf_value, atemp_value, humid_value, unow, vnow)
 
