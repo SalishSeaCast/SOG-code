@@ -12,14 +12,12 @@ module declarations
 
   type(UVST):: Gvector
   TYPE(plankton2)::micro, nano, pico
-  TYPE(entrain)::euph
 
   ! Heat fluxes
   real(kind=dp) :: Q_t  ! Turbulent surface heat flux
   real(kind=dp), dimension(:), allocatable :: Q_n  ! Nonturb heat flux profile
 
   !surface heat flux
-  DOUBLE PRECISION::Q_sol  !See irradiance.f90
   DOUBLE PRECISION::Br
   CHARACTER::ignored_input
   INTEGER, DIMENSION(20)::alloc_stat  !***
