@@ -31,8 +31,6 @@ SUBROUTINE surface_flux_sog(mm,ro, &
 
 !           fresh water flux is F_tot
 
-!           Q_t depends on Q_tot and Q_sol
-
 !           wbar%t is Q_t/(ro*cp)
 !           wbar%s is Ft*sal/rf
 !           wbar%b is g,alp,bet* wbar%t and wbar%s 
