@@ -34,11 +34,6 @@ module mean_param
      real(kind=dp), dimension(:), pointer:: Nlimit
   end type plankton2
 
-  TYPE :: entrain           !Entrainment or mixed layer depth
-     DOUBLE PRECISION :: depth
-     INTEGER :: i,g
-  END TYPE entrain
-
   INTEGER::is_leap_year, was_leap_year
 
 END MODULE mean_param
