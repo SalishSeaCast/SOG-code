@@ -20,7 +20,6 @@ module irradiance
   use fundamental_constants, only: pi, latitude
   use core_variables, only: N2chl ! ratio of chl mg/m3 to N uMol for
                                   ! phytoplankton
-  use mean_param, only: entrain
   use surface_forcing, only: albedo, Q_o
   use input_processor, only: getpard
   implicit none
@@ -61,7 +60,7 @@ contains
 
 
   subroutine irradiance_sog(cf, day_time, day, In, Ipar, d, Qriver, &
-       Pmicro, Pnano, Ppico, I_k, Qs, euphotic)
+       Pmicro, Pnano, Ppico, I_k)
 
     implicit none
 
@@ -77,17 +76,13 @@ contains
          Ppico      ! Pico phytoplankton
     real(kind=dp), dimension(0:d%M), intent(out) :: In, Ipar  
     integer, intent(out) :: I_k
-    real(kind=dp), intent(out) :: Qs   ! Integrated daily solar
-                                       ! contribution to the heat flux
-    type(entrain), intent(out) :: euphotic !euphotic%depth, euphotic%i
     
     ! Local variables:
     real(kind=dp) :: lat  ! Latitude of centre of model domain [rad]
-    integer :: k, check, of                          
+    integer :: k, check, of                         
     real(kind=dp) :: declination, hour, cos_Z, day_length, hour_angle, &
          sunrise, sunset, Qso, a, b,KK
-    real(kind=dp):: II, cos_Z_max, IImax      
-    real(kind=dp), dimension(0:d%M)::Iparmax
+    real(kind=dp):: II    
     real(kind=dp), dimension(0:d%M) :: Ipar_i ! Ipar values on interfaces
     real(kind=dp) :: Ired, Iblue ! light in red and blue part of spectrum
     
@@ -97,26 +92,27 @@ contains
     ! based on Dobson and Smith, table 5
 
     type :: cloudy
-       real(kind=dp) :: A, B, fraction   !Regression coefficients
+       real(kind=dp) :: A, B    !Regression coefficients
     end type cloudy
 
-    type :: okta
-       type(cloudy), dimension(0:9) :: type
-    end type okta
+    type :: tenths
+       type(cloudy), dimension(0:10) :: type
+    end type tenths
 
 
-!!!KC-- new coefficients addded august, 2004. Check on the standard deviation values, but I don't think these are used anywhere, anyway
-    type(okta)::cloud
-    cloud%type(0) = cloudy(0.4641,0.3304,0.0945) 
-    cloud%type(1) = cloudy(0.4062,0.3799,0.0186)  
-    cloud%type(2) = cloudy(0.4129,0.3420,0.0501)
-    cloud%type(3) = cloudy(0.4263,0.3212,0.0743)
-    cloud%type(4) = cloudy(0.4083,0.3060,0.0723)
-    cloud%type(5) = cloudy(0.3360,0.3775,0.0294)
-    cloud%type(6) = cloudy(0.3448,0.3128,0.0226)
-    cloud%type(7) = cloudy(0.3232,0.3259,0.0019)
-    cloud%type(8) = cloudy(0.2835,0.2949,0.0081)
-    cloud%type(9) = cloudy(0.1482,0.3384,0.1345)
+!!!SEA -- May 2010 : redid the cloud parameterization based on UBC Solar data (/ocean/shared/SoG/met/solar/) fitting Q to cos_Z (not Q/cos_Z as Kate did).  Page 61 in Lab Book.  (0) no clouds, (1) 1/10 cloud fraction (10) 100% clouds.  Four sig figs are what comes out of matlab but standard deviations are 40W/m2 for low cloud fraction to 120 W/m2 for 6-9 cloud fraction to 85 W/m2 for completely cloudy
+    type(tenths)::cloud
+    cloud%type(0) = cloudy(0.6337,0.1959) 
+    cloud%type(1) = cloudy(0.6149,0.2119)  
+    cloud%type(2) = cloudy(0.5861,0.2400)
+    cloud%type(3) = cloudy(0.5512,0.2859)
+    cloud%type(4) = cloudy(0.5002,0.3912)
+    cloud%type(5) = cloudy(0.4649,0.3356)
+    cloud%type(6) = cloudy(0.4225,0.3339)
+    cloud%type(7) = cloudy(0.3669,0.3490)
+    cloud%type(8) = cloudy(0.2468,0.4427)
+    cloud%type(9) = cloudy(0.1981,0.3116)
+    cloud%type(10) = cloudy(0.0841, 0.2283)
 
 
 
@@ -140,34 +136,17 @@ contains
     endif
     sunrise = 12.0 - 0.5 * day_length  !hours
     sunset = 12.0 + 0.5 * day_length   !hours
-    cos_Z_max = cos(declination - lat)  !zenith angle
-
 
     Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
-    if (cf .ge. 6) then
-       of = int(cf) - 1
-    else 
-       of = int(cf)
-    endif
 
-    IImax = Qso*(cloud%type(of)%A + cloud%type(of)%B*cos_Z_max)*cos_Z_max  
-    !!Jeffrey thesis page 124
+    of = floor(cf+0.2)  ! "of" is integer type
 
     IF (day_time/3600.0 > sunrise .AND. day_time/3600.0 < sunset) THEN    
        II = Qso*(cloud%type(of)%A + cloud%type(of)%B*cos_Z)*cos_Z   
     ELSE
        II = 0.
     END IF
-
-    ! so II is the incoming radiation
-
-    Qs = Qso*(((cloud%type(of)%A+cloud%type(of)%B*a)*a+cloud%type(of)%B*b**2 /2.0)*&
-         day_length+&
-         (cloud%type(of)%A*b+2.0*cloud%type(of)%B*a*b)*&
-         180.0/PI/15.0*(SIN(PI/180.0*(sunset-12.0)*15.0)-SIN(PI/180.0*(sunrise-12.0)*15.0)) + &
-         cloud%type(of)%B*b**2 *&
-         180.0/PI/60.0*(SIN(PI/180.0*(sunset-12.0)*30.0)-SIN(PI/180.0*(sunrise-12.0)*30.0)))/24.0 
-
+    ! so II is the incoming 
 
     Ipar_i = 0.        !PAR on interfaces
     Ipar = 0.        !PAR on grid points
@@ -175,7 +154,6 @@ contains
 
     In(0) =  II        
     Ipar_i(0) = II*0.44  !44% of total light is PAR at surface (Jerlov)
-    Iparmax(0) = IImax*0.44
     Iblue = 0.70*In(0)
     Ired = 0.30*In(0)
 
@@ -203,7 +181,6 @@ contains
             + (igamma * Qriver ** isigma + itheta) * exp(-d%d_g(k) / idl)
        KK = min(2.5d0, KK)
        Ipar_i(k) = Ipar_i(k-1) * exp(-d%i_space(k) * KK)
-       Iparmax(k) = Iparmax(k-1) * exp(-d%i_space(k) * KK)
        
        if (Ipar_i(k) < 0.01d0 * Ipar_i(0) .and. check == 0) then            
           I_k = k                                          
@@ -220,33 +197,6 @@ contains
 
     Ipar(0) = Ipar_i(0)
     Ipar(1:d%M) = interp_g(Ipar_i)
-
-
-  
-
-
-
-!----------------------------------------------------------
- 
-
-    ! splitting up the incoming depending on the penetration
-    
-    euphotic%i = 0
-    euphotic%g = 0
-    euphotic%depth = 0.0d0
-    DO k = 1,d%M
-       !IF (Iparmax(k) <= Iparmax(0)*0.01) THEN
-       IF (Ipar(k) <= 1.40d0) THEN  ! saturation light intensity for Thalasosira
-          euphotic%i = k
-          euphotic%g = k
-          euphotic%depth = d%d_g(k)
-          ! Note that abs(x) < epsilon(x) is a real-number-robust
-          ! test for x == 0.
-          if (abs(Ipar(k)) < epsilon(Ipar(k))) euphotic%depth = 0.0d0
-          EXIT
-       END IF
-     END DO
-
 
    END SUBROUTINE irradiance_sog
 
