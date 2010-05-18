@@ -249,7 +249,7 @@ program SOG
           unow, vnow)
 
      call irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
-          Qinter, P%micro, P%nano, P%pico, jmax_i, Q_sol, euph)
+          Qinter, P%micro, P%nano, P%pico, jmax_i)
 
      !------ Beginning of the implicit solver loop ------
      do count = 1, max_iter
