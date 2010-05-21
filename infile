@@ -411,5 +411,6 @@
 "Minor_River"
   "../sog-forcing/rivers/Englishman_historic.dat"
   "file for Min Riv data"
+"UseRiverTemp"   .true.             "Include cooling/heating effect of Major River?
 
 ! end of file
