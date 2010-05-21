@@ -131,6 +131,8 @@ program SOG
   ! Interpolated river flows
   real(kind=dp) :: Qinter  ! Fraser River
   real(kind=dp) :: Einter  ! Englishman River
+  ! River Temperature (of major river)
+  real(kind=dp) :: RiverTemp
   ! Current time met data
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
@@ -245,7 +247,7 @@ program SOG
 
      ! Get forcing data
      call get_forcing(year, day, day_time, &
-          Qinter, Einter, cf_value, atemp_value, humid_value, &
+          Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
           unow, vnow)
 
      call irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
@@ -284,7 +286,9 @@ program SOG
         ! (S_riv), the surface turbulent kinematic salinity flux
         ! (wbar%s(0)), and the profile of fresh water contribution to
         ! the salinity (F_n)
-        call freshwater_phys(Qinter, Einter, S%old(1), h%new)
+        ! If UseRiverTemp is set, also adds that effect to wbar%t(0)
+        ! or Q_n
+        call freshwater_phys(Qinter, Einter, RiverTemp, S%old(1), T%old(1), T%old(grid%M+1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
         ! buoyancy flux, and the surface buoyancy forcing.
