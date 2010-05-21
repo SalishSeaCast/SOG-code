@@ -13,6 +13,8 @@ module forcing
   implicit none
   private
   public :: read_variation, read_forcing, get_forcing, &
+! to use or not use River Temperature effect
+       UseRiverTemp, &
 ! and for varying bottom and initial temperatures
        vary_forcing, vary, &
        ! Types (as required by new pg compiler)
@@ -65,6 +67,9 @@ module forcing
  
   ! Is there data for a minor river?
   logical :: isMinorRiv    
+
+  ! Do we add the cooling/warming effect of the Major River?
+  logical :: UseRiverTemp
 
 contains
 
@@ -173,6 +178,7 @@ contains
     MajorRiv = getpars("Major_River")
     isMinorRiv = getparl("isMinRiv")
     MinorRiv = getpars("Minor_River")
+    UseRiverTemp = getparl("UseRiverTemp")
 
     ! WIND
     ! shift the start year if requested
@@ -334,7 +340,9 @@ contains
        
 
   subroutine get_forcing (year, day, day_time, &
-       Qinter, Einter, cf_value, atemp_value, humid_value, unow, vnow)
+       Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, unow, vnow)
+
+    use unit_conversions, only: CtoK
 
     ! given the year, day and day_time find the physical forcing values
     ! taking into account any shifts or other changes set by vary
@@ -344,6 +352,7 @@ contains
     real(kind=dp), intent(in) :: day_time ! current time of day in seconds
     
     real(kind=dp), intent(out) :: Qinter, Einter ! values of river flows
+    real(kind=dp), intent(out) :: RiverTemp ! temperature of Major River
     real(kind=sp), intent(out) :: cf_value     ! cloud fraction
     real(kind=sp), intent(out) :: atemp_value  ! air temperature
     real(kind=sp), intent(out) :: humid_value  ! humidity
@@ -358,6 +367,7 @@ contains
     integer:: j ! index to hour, 1 am has j=2 
     integer:: index_day ! index into wind data for the end of the day before
     real(kind=dp) :: hr_frac ! fraction of the hour
+    real(kind=dp) :: dday ! decimal yearday
 
 
     accul_day = accum_day(year, day)
@@ -377,6 +387,23 @@ contains
           Einter = Einter * SNGL(vary%rivers%fraction)
        endif
     endif
+
+    ! RIVER temperature (hard coded values here are for the Fraser)
+    ! fit May 2010 by SEA, labbook page 65
+    ! /ocean/sallen/allen/research/sog/sog-forcing/rivers/fit_river_temp.m
+
+    dday = day+day_time/86400.
+
+    if (UseRiverTemp) then
+       if (dday < 52.8 .or. dday > 334.4) then
+          RiverTemp = CtoK(2.5)
+       elseif (dday < 232.9) then
+          RiverTemp = CtoK(2.5 + (dday - 52.8) * (19.3 - 2.5)/(232.9 - 52.8))
+       else
+          RiverTemp = CtoK(19.3 + (dday - 232.9) * (2.5 - 19.3)/(334.4 - 232.9))
+       endif
+    endif
+
 
     ! MET DATA (cloud fraction, air temperature and humidity)
 
