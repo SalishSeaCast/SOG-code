@@ -156,7 +156,7 @@ contains
   end subroutine read_freshwater_params
   
 
-  subroutine freshwater_phys(Qriver, Eriver, S_old, h)
+  subroutine freshwater_phys(Qriver, Eriver, RiverTemp, S_old, Ts_old, Td_old, h)
     ! Calculate the strength of upwelling/entrainment, the freshwater
     ! flux, the surface turbulent kinematic salinity flux, and the
     ! profile of fresh water contribution to the salinity flux.
@@ -170,15 +170,22 @@ contains
          grid  ! Grid parameters and depth & spacing arrays
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
+    use declarations, only: &
+         Q_n   ! distributed heat flux
+    use forcing, only: &
+         UseRiverTemp
    
     implicit none
 
     ! Arguments
     real(kind=dp), intent(in) :: &
          Qriver, &  ! Fraser River flow
-         Eriver     ! Englishman River flow
+         Eriver, &  ! Englishman River flow
+         RiverTemp  ! temperature of Major River
     real(kind=dp), intent(in) :: &
          S_old,        &  ! Surface salinity
+         Ts_old,       &  ! Surface temperature
+         Td_old,       &  ! Deep (bottom of grid) temperature        
          h                ! Mixing layer depth
 
     ! Local variables
@@ -239,6 +246,9 @@ contains
     ! Bf in calc_buoyancy().
     if (Fw_surface) then
        wbar%s(0) = Ft * S_old
+       if (UseRiverTemp) then
+          wbar%t(0) = wbar%t(0) + Ft * (RiverTemp - Ts_old)
+       endif
     else
        wbar%s(0) = 0.0d0
     endif
@@ -256,6 +266,9 @@ contains
           FN = 0.0d0
        endif
        F_n = cbottom * (Fw + FN * 0.d0)  ! remove salinity effect of return flow
+       if (UseRiverTemp) then
+          Q_n = Q_n + (RiverTemp - Td_old) * Fw  ! northern impact not included yet
+       endif
     endif
   end subroutine freshwater_phys
 
@@ -361,7 +374,6 @@ contains
     endif
 
   end subroutine freshwater_bio
-
 
   subroutine alloc_freshwater_variables(M)
     ! Allocate memory for fresh water variable arrays.
