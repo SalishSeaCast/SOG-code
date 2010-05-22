@@ -100,7 +100,13 @@ contains
     end type tenths
 
 
-!!!SEA -- May 2010 : redid the cloud parameterization based on UBC Solar data (/ocean/shared/SoG/met/solar/) fitting Q to cos_Z (not Q/cos_Z as Kate did).  Page 61 in Lab Book.  (0) no clouds, (1) 1/10 cloud fraction (10) 100% clouds.  Four sig figs are what comes out of matlab but standard deviations are 40W/m2 for low cloud fraction to 120 W/m2 for 6-9 cloud fraction to 85 W/m2 for completely cloudy
+    !!! SEA -- May 2010 : redid the cloud parameterization based on UBC
+    !!! Solar data (/ocean/shared/SoG/met/solar/) fitting Q to cos_Z
+    !!! (not Q/cos_Z as Kate did).  Page 61 in Lab Book.  (0) no
+    !!! clouds, (1) 1/10 cloud fraction (10) 100% clouds.  Four sig
+    !!! figs are what comes out of matlab but standard deviations are
+    !!! 40W/m2 for low cloud fraction to 120 W/m2 for 6-9 cloud
+    !!! fraction to 85 W/m2 for completely cloudy.
     type(tenths)::cloud
     cloud%type(0) = cloudy(0.6337,0.1959) 
     cloud%type(1) = cloudy(0.6149,0.2119)  
