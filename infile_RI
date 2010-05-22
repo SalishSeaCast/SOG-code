@@ -384,6 +384,6 @@
 "Major_River"  "../sog-forcing/rivers/Wannock_historic.txt"  "file for Maj Riv data"
 "isMinRiv"     .false.               " Is there data for a minor river?"
 "Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data" ! Doesnt not use in RI - no minor river
-
+"UseRiverTemp"  .false.  "Include cooling/heating effect of Major River?"
 
 ! end of file
