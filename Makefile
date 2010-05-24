@@ -41,7 +41,7 @@ CLFLAGS = -rt
 # List of objects (order matters)
 OBJS = precision_defs.o io_unit_defs.o fundamental_constants.o \
 malloc.o unit_conversions.o datetime.o \
-input_processor.o grid.o forcing.o core_variables.o water_properties.o numerics.o \
+input_processor.o grid.o numerics.o forcing.o core_variables.o water_properties.o \
 \
 mean_param.o declarations.o surface_forcing.o \
 \
