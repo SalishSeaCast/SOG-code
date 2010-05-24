@@ -1,27 +1,31 @@
 module forcing
-  ! package to return forcing values and allow them to be shifted in
-  ! time or multiply them up or set them constant
+  ! Calculate forcing values and allow them to be shifted in time, or
+  ! scale them, or set them constant.
 
-  ! Data is coming from historic data files. We have ctd data for some 70,80,90's.
-  ! Metar data goes back to 50's and river data goes back 10's.  
-  ! Read in 2 years of data at a time. Wind data is in a single array 
-  ! with 1 hour per line, cf, atemp and humid are in array
-  ! of day and time, and the river flows are one value per day.
+  ! Data is coming from historic data files. We have ctd data for some
+  ! 70s, 80s, 90s.  Metar data goes back to 50s and river data goes
+  ! back to 1910s.
+
+  ! Read in 2 years of data at a time. Wind data is in a single array
+  ! with 1 hour per line, cf, atemp and humid are in array of day and
+  ! time, and the river flows are one value per day.
 
   use precision_defs, only: dp, sp
 
   implicit none
   private
-  public :: read_variation, read_forcing, get_forcing, &
-! to use or not use River Temperature effect
-       UseRiverTemp, &
-! and for varying bottom and initial temperatures
-       vary_forcing, vary, &
-       ! Types (as required by new pg compiler)
-       vary_quantity ! sub-type of vary_forcing
+  public :: &
+       ! Types:
+       vary_quantity, vary_forcing, &
+       ! Variables:
+       UseRiverTemp, vary, &
+       ! Subroutines:
+       read_variation, read_forcing, get_forcing
 
-
-  ! control variable
+  ! Public type definitions:
+  !
+  ! Facilitate time shifting, scaling, and setting to constant value
+  ! the forcing quantities
   TYPE :: vary_quantity
      logical :: enabled ! is the parameter (wind, cf, rivers, T) to be varied
      real(kind=dp) :: shift ! use wind/rivers shifted in time (in years)
@@ -36,27 +40,28 @@ module forcing
      TYPE(vary_quantity) :: wind, cf, rivers, temperature
   END TYPE vary_forcing
 
-  TYPE (vary_forcing) :: vary
+  ! Public Variable Declarations:
+  TYPE (vary_forcing) :: vary 
+  ! Do we add the cooling/warming effect of the Major River?
+  logical :: UseRiverTemp
 
-
-  ! Number of years of data  (set to 2 years)
+  ! Private module variable declarations:
   !
-  integer, parameter :: wind_n=((366+366)*24), & ! number of days used for wind array
-       met_n=(366+366), &  !# days used for met arrays (CF,AT,HUM)
-       river_n=(366+366)   !# days used for river array
+  ! Number of years of data  (set to 2 years)
+  ! Array sizes for forcing data; based on 2 years of data
+  integer, parameter :: &
+       wind_n = (366 + 366) * 24, &  ! hourly data
+       met_n = 366 + 366, &  ! daily data
+       river_n = 366 + 366   ! daily data
   ! Data variables
-
   real(kind=dp) :: wind_eastnorth(wind_n), &
        wind_northwest(wind_n)
   real(kind=sp) :: cf(met_n,24), atemp(met_n,24), &
        humid(732,24)
   real(kind=dp) :: Qriver(river_n), Eriver(river_n)
-
-  !The starting year (startyear + 1 more year of data)
-
+  ! Starting year (startyear + 1 more year of data)
   integer :: startyear
-
-  !File names for Met, wind and river data
+  ! File names for Met, wind and river data
   character* 80 :: &
        Wind,   &   ! file name for wind data
        AT,     &   ! file name for Air temp  data
@@ -64,89 +69,83 @@ module forcing
        Hum,    &   ! file name for Humidity data
        MajorRiv, &     ! file name for Major River data
        MinorRiv         ! file name for Minor River data
- 
   ! Is there data for a minor river?
-  logical :: isMinorRiv    
-
-  ! Do we add the cooling/warming effect of the Major River?
-  logical :: UseRiverTemp
+  logical :: isMinorRiv   
 
 contains
 
   subroutine read_variation
+    ! Read variation parameters from the infile.  
+    use io_unit_defs, only: stderr
+    implicit none
 
-    ! subroutine to read variation parameters from the inputfile.  
-
-    IMPLICIT NONE
-
-    ! read in vary parameters
-
-    call read_vary ("vary%wind",vary%wind)
-
+    ! Read wind variation parameters
+    call read_vary ("vary%wind", vary%wind)
     if (vary%wind%enabled) then
        if  (vary%wind%fixed) then
-          write (*,*) 'Fixed wind magnitude has not been implemented'
+          write (stderr, *) 'Fixed wind magnitude has not been implemented'
           call exit(1)
        else
           if (vary%wind%shift /= dint(vary%wind%shift)) then
-             write (*,*) 'Non-full year shifts have not been implemented ',&
-                  'for the wind'
+             write (stderr, *) 'Non-full year shifts have not been ', &
+                  'implemented for the wind'
              call exit(1)
           endif
           if (vary%wind%addition /= 0) then
-             write (*,*) "addtion not implemented for wind"
+             write (stderr, *) "addtion not implemented for wind"
              call exit(1)
           endif
        endif
     endif
-
-    call read_vary ("vary%cf",vary%cf)
-    if (vary%cf%enabled .and. .not.vary%cf%fixed) then
+    ! Read cloud fraction variation parameters
+    call read_vary ("vary%cf", vary%cf)
+    if (vary%cf%enabled .and. .not. vary%cf%fixed) then
        if (vary%cf%shift /= int(vary%cf%shift)) then
-          write (*,*) "non-integer cf shifts not implemented"
+          write (stderr, *) "non-integer cf shifts not implemented"
           call exit(1)
        endif
        if (vary%cf%addition /= 0) then
-          write (*,*) "addition not impleemented for cf"
+          write (stderr, *) "addition not impleemented for cf"
           call exit(1)
        endif
     endif
-
+    ! Read river flow variation parameters
     call read_vary ("vary%rivers",vary%rivers)
     if (vary%rivers%enabled .and. .not.vary%rivers%fixed) then
        if (vary%rivers%addition /= 0 ) then
-          write (*,*) "addition not implemented for rivers"
+          write (stderr, *) "addition not implemented for rivers"
           call exit(1)
        endif
     endif
-
+    ! Read air temperature variation parameters
     call read_vary ("vary%temperature", vary%temperature)
     if (vary%temperature%enabled) then
        if (vary%temperature%fixed) then
-          write (*,*) "Fixed temperature not enabled"
+          write (stderr, *) "Fixed temperature not enabled"
           call exit (1)
        else
           if (vary%temperature%shift /= 0) then
-             write (*,*) "Fixed temperature not enabled"
+             write (stderr, *) "Fixed temperature not enabled"
              call exit (1)
           endif
           if (vary%temperature%fraction /= 1) then
-             write (*,*) "Multiplication of temperature not enabled, use addition"
+             write (stderr, *) "Multiplication of temperature not enabled, ", &
+                  "use addition"
              call exit(1)
           endif
        endif
     endif
+  end subroutine read_variation
 
-  END SUBROUTINE read_variation
 
   subroutine read_forcing 
-
+    ! Read forcing data and apply variations (time shift, scale,
+    ! etc.), if requested.
     use input_processor, only: getpari, getpars, getparl
-    use io_unit_defs, only: met_data, river_data, stdout
+    use io_unit_defs, only: met_data, river_data, stderr, stdout
     use unit_conversions, only: CtoK
 
     implicit none
-
     ! Local variables:
     integer :: ic, jc, j,  para, stn, year, day, month
     real(kind=sp) :: hour
@@ -160,11 +159,11 @@ contains
     integer :: rivers_startday ! startday for rivers allowing part year shifts
 
     if (river_n > Ieriver) then
-       write (stdout ,*) "in forcing.f90 need to increase size of EriverI array"
-       stop
+       write (stderr ,*) "in forcing.f90 need to increase size of EriverI array"
+       call exit(1)
     endif
     
-    ! read the number of days over which to integrate the Englishman river
+    ! Number of days over which to integrate the Englishman river
     integration = getpari("Englishman integ days")
     
     ! read the start year in for initialization of runtime for model
@@ -523,24 +522,24 @@ contains
     
   end subroutine shift_time
 
-  LOGICAL function leapyear(year)
+  logical function leapyear(year)
+    ! Determine if year is a leap-year 
+    use io_unit_defs, only: stderr
+    implicit none
+    ! Argument:
+    integer, intent(in) :: year
     
-    ! determines if year is a leap-year
-    
-    INTEGER, INTENT(IN) :: year
-    
-    if (year.gt.1953.and.year.lt.2013) then
-       if (year.eq.1956.or.year.eq.1960.or.year.eq.1964.or. &
-            year.eq.1968.or.year.eq.1972.or.year.eq.1976.or. &
-            year.eq.1980.or.year.eq.1984.or.year.eq.1988.or. &
-            year.eq.1992.or.year.eq.1996.or.year.eq.2000.or. &
-            year.eq.2004.or.year.eq.2008.or.year.eq.2012) then
+    leapyear = .FALSE.
+    if (year .gt. 1953 .and. year .lt. 2013) then
+       if (year .eq. 1956 .or. year .eq. 1960 .or. year .eq. 1964 .or.  &
+            year .eq. 1968 .or. year .eq. 1972 .or. year .eq. 1976 .or.  &
+            year .eq. 1980 .or. year .eq. 1984 .or. year .eq. 1988 .or.  &
+            year .eq. 1992 .or. year .eq. 1996 .or. year .eq. 2000 .or.  &
+            year .eq. 2004 .or. year .eq. 2008 .or. year .eq. 2012) then
           leapyear = .TRUE.
-       else
-          leapyear = .FALSE.
        endif
     else
-       write (*,*) 'Out of range for leap-year calculation. ', &
+       write (stderr, *) 'Out of range for leap-year calculation. ', &
             'Add more years to function leapyear'
        call exit(1)
     endif
