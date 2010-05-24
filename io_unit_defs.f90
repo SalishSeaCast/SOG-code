@@ -13,8 +13,7 @@ module io_unit_defs
 
   ! Input data file units
   integer, parameter :: stripped_infile = 10
-  integer, parameter :: met_data = 12
-  integer, parameter :: river_data = 12
+  integer, parameter :: forcing_data = 12
   integer, parameter :: field_data = 13
 
   ! Results output file units

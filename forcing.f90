@@ -61,16 +61,6 @@ module forcing
   real(kind=dp) :: Qriver(river_n), Eriver(river_n)
   ! Starting year (startyear + 1 more year of data)
   integer :: startyear
-  ! File names for Met, wind and river data
-  character* 80 :: &
-       Wind,   &   ! file name for wind data
-       AT,     &   ! file name for Air temp  data
-       Cloud,  &   ! file name for Cloud data
-       Hum,    &   ! file name for Humidity data
-       MajorRiv, &     ! file name for Major River data
-       MinorRiv         ! file name for Minor River data
-  ! Is there data for a minor river?
-  logical :: isMinorRiv   
 
 contains
 
@@ -142,19 +132,25 @@ contains
     ! Read forcing data and apply variations (time shift, scale,
     ! etc.), if requested.
     use input_processor, only: getpari, getpars, getparl
-    use io_unit_defs, only: met_data, river_data, stderr, stdout
+    use io_unit_defs, only: forcing_data, stdout, stderr
     use unit_conversions, only: CtoK
     use numerics, only: &
          initDatetime   ! Date/time of initial conditions
     implicit none
     ! Local variables:
+    ! File name for forcing data files
+    character* 80 :: &
+       MinorRiv         ! file name for Minor River data
+    ! Is there data for a minor river?
+    logical :: isMinorRiv   
     integer :: ic, jc, j,  para, stn, year, day, month
     real(kind=sp) :: hour
     integer :: integration ! number of days to integrate the Englishman river
     integer, parameter :: Ieriver = 10000
     real(kind=dp) :: EriverI(Ieriver)
     logical ::  found_data
-    real(kind=dp) :: wind_en, wind_nw, MajRiv, MinRiv ! temporary variables    
+    real(kind=dp) :: &
+         MinRiv ! temporary variables    
     ! startyears for the various variables that can be shifted
     integer :: wind_startyear, cf_startyear, rivers_startyear 
     integer :: rivers_startday ! startday for rivers allowing part year shifts
@@ -169,75 +165,40 @@ contains
     ! Start year for forcing data from initialization date/time for run
     startyear = initDatetime%yr
 
-    ! read the file names for input data (Wind, Met, Rivers)
-    Wind = getpars("Wind")
-    AT = getpars("Air temp")
-    Cloud = getpars("Cloud")
-    Hum = getpars("Humidity")
-    MajorRiv = getpars("Major_River")
-    isMinorRiv = getparl("isMinRiv")
-    MinorRiv = getpars("Minor_River")
-    UseRiverTemp = getparl("UseRiverTemp")
-
-    ! WIND
+    ! Wind
     ! shift the start year if requested
     if (vary%wind%enabled) then
        wind_startyear = startyear + int(vary%wind%shift)
     else
        wind_startyear = startyear
     endif
-    open(unit=met_data, file=Wind, status="OLD", action="READ")
+    open(unit=forcing_data, file=getpars("Wind"))
     found_data = .false.
     do while (.not. found_data)
-       read (met_data, *) day, month, year, hour, wind_en, wind_nw
+       read(forcing_data, *) day, month, year, hour, &
+            wind_eastnorth(1), wind_northwest(1)
        ! Assign hour and month to themselves to prevent g95 from
        ! throwing "set but never used" warnings
        hour = hour
        month = month
        if (year == wind_startyear) then
-          wind_eastnorth(1) = wind_en
-          wind_northwest(1) = wind_nw
           do jc = 2, wind_n             
-             read(met_data,*) day, month, year, hour, wind_eastnorth(jc), &
-                  wind_northwest(jc)
+             read(forcing_data,*) day, month, year, hour, &
+                  wind_eastnorth(jc), wind_northwest(jc)
           enddo          
           found_data = .true.
        endif
     enddo
-    close (met_data)
-
-    ! Cloud Fraction
-    ! shift the start year if requested
-    if (vary%cf%enabled .and. .not.(vary%cf%fixed) ) then
-       cf_startyear = startyear + int(vary%cf%shift)
-    else
-       cf_startyear = startyear
-    endif
-    open(unit=met_data, file=Cloud, status="OLD", action="READ")
-    found_data = .false.
-    do while (.not. found_data)
-       read (met_data, *) stn, year, month, day, para, (cf(1,j),j=1,24)
-       ! Assign stn and para to themselves to prevent g95 from
-       ! throwing "set but never used" warnings
-       stn = stn
-       para = para
-       if (year == cf_startyear) then
-          do jc = 2, met_n             
-             read(met_data, *) stn, year, month, day, para, (cf(jc,j),j=1,24)
-          enddo
-          found_data = .true.
-       endif
-    enddo
-    close (met_data)
+    close(forcing_data)
 
     ! Air Temperature
-    open(unit=met_data, file=AT, status="OLD", action="READ")
+    open(unit=forcing_data, file=getpars("Air temp"))
     found_data = .false.
     do while (.not. found_data)
-       read (met_data, *) stn, year, month, day, para, (atemp(1,j),j=1,24)
+       read(forcing_data, *) stn, year, month, day, para, (atemp(1,j), j=1,24)
        if (year == startyear) then
           do jc = 2, met_n
-             read (met_data, *) stn, year, month, day, para, &
+             read (forcing_data, *) stn, year, month, day, para, &
                   (atemp(jc,j),j=1,24)
              do j= 1, 24
                 atemp(jc,j) = CtoK(atemp(jc,j) / 10.)
@@ -246,23 +207,47 @@ contains
           found_data = .true.
        endif
     enddo
-    close(met_data)
+    close(forcing_data)
 
-    ! Humidity
-    open(unit=met_data, file=Hum, status="OLD", action="READ")
+    ! Cloud Fraction
+    ! shift the start year if requested
+    if (vary%cf%enabled .and. .not.(vary%cf%fixed) ) then
+       cf_startyear = startyear + int(vary%cf%shift)
+    else
+       cf_startyear = startyear
+    endif
+    open(unit=forcing_data, file=getpars("Cloud"))
     found_data = .false.
     do while (.not. found_data)
-       read (met_data, *) stn, year, month, day, para, (humid(1,j),j=1,24)
+       read (forcing_data, *) stn, year, month, day, para, (cf(1,j), j=1,24)
+       ! Assign stn and para to themselves to prevent g95 from
+       ! throwing "set but never used" warnings
+       stn = stn
+       para = para
+       if (year == cf_startyear) then
+          do jc = 2, met_n             
+             read(forcing_data, *) stn, year, month, day, para, (cf(jc,j), j=1,24)
+          enddo
+          found_data = .true.
+       endif
+    enddo
+    close (forcing_data)
+
+    ! Humidity
+    open(unit=forcing_data, file=getpars("Humidity"))
+    found_data = .false.
+    do while (.not. found_data)
+       read (forcing_data, *) stn, year, month, day, para, (humid(1,j), j=1,24)
        if (year == startyear) then
           do jc = 2, met_n             
-             read(12,*)stn,year,month,day,para,(humid(jc,j),j=1,24)
+             read(forcing_data, *)stn, year, month, day, para, (humid(jc,j), j=1,24)
           enddo          
           found_data = .true.
        endif
     enddo
-    close(12)
+    close(forcing_data)
 
-    ! Major River
+    ! Major river
     ! shift the start year if requested
     if (vary%rivers%enabled .and. .not. vary%rivers%fixed) then
        call shift_time (1, startyear, vary%rivers%shift, &
@@ -271,27 +256,32 @@ contains
        rivers_startday = 1
        rivers_startyear = startyear
     endif
-    open(river_data, file=MajorRiv,status="OLD", action="READ")  
+    open(forcing_data, file=getpars("Major_River"))  
     found_data = .false.
     do while(.not. found_data)
-       read(river_data, *) year, month, day, MajRiv
+       read(forcing_data, *) year, month, day, Qriver(1)
        if(year == rivers_startyear .and. day == rivers_startday) then
-          Qriver(1) = MajRiv
           do jc = 2, river_n             
-             read(12,*) year, month, day, Qriver(jc)
+             read(forcing_data,*) year, month, day, Qriver(jc)
           enddo          
           found_data = .true.
        endif
     enddo
-    close(river_data)
+    close(forcing_data)
+    ! Include cooling/heating effect of major river?
+    UseRiverTemp = getparl("UseRiverTemp")
+
+    ! read the file names for input data (Wind, Met, Rivers)
+    isMinorRiv = getparl("isMinRiv")
+    MinorRiv = getpars("Minor_River")
 
     if(isMinorRiv) then
        ! Minor  River
        ! uses same shift as Major
-       open(river_data, file=MinorRiv,status="OLD", action="READ")  
+       open(forcing_data, file=MinorRiv,status="OLD", action="READ")  
        found_data = .false.
        do while (.not. found_data)
-          read (river_data, *, END=175) year, month, day, MinRiv
+          read (forcing_data, *, END=175) year, month, day, MinRiv
           if (year == rivers_startyear .and. day == rivers_startday) then
              Eriver(1) = MinRiv
              do jc = 2, river_n             
@@ -303,12 +293,12 @@ contains
        ! For SoG, if there is not enough data in the englishman river,
        ! than use nanimo data.
 175    if(.not. found_data) then
-          close(river_data)
-          open(river_data, &
+          close(forcing_data)
+          open(forcing_data, &
                file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
                status="OLD", action="READ")
           do while (.not. found_data)
-             read (river_data, *) year, month, day, MinRiv
+             read (forcing_data, *) year, month, day, MinRiv
              if (year == rivers_startyear .and. day == rivers_startday) then
                 Eriver(1) = MinRiv
                 do jc = 2, river_n             
@@ -317,7 +307,7 @@ contains
                 found_data = .true.
              endif
           enddo
-          close(river_data)
+          close(forcing_data)
        endif
 
        ! Integrate Englishman River data over "integration" days
@@ -334,9 +324,8 @@ contains
           Eriver(jc)=0
        enddo
     endif
-
   end subroutine read_forcing
-       
+
 
   subroutine get_forcing (year, day, day_time, &
        Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, unow, vnow)
@@ -450,18 +439,17 @@ contains
        vnow = vnow * vary%wind%fraction
        unow = unow * vary%wind%fraction
     endif
-
   end subroutine get_forcing
 
-  SUBROUTINE read_vary (quantity_string,quantity)
-    
-    use input_processor, only: getparl, getpard
 
-    IMPLICIT NONE
-    
+  subroutine read_vary (quantity_string, quantity)
+    ! Read forcing data variation parameter values.
+    use input_processor, only: getparl, getpard
+    implicit none
+    ! Arguments:
     ! the leading part of the variable quantity to be read in (eg vary%wind)
-    CHARACTER, INTENT(IN) :: quantity_string*(*) 
-    TYPE (vary_quantity), INTENT(OUT) :: quantity
+    character, intent(in) :: quantity_string*(*) 
+    type(vary_quantity), intent(out) :: quantity
 
     quantity%enabled = getparl(quantity_string//"%enabled")
     if (quantity%enabled) then
@@ -474,14 +462,15 @@ contains
           quantity%addition = getpard(quantity_string//"%addition")
        endif
     endif
+  end subroutine read_vary
 
-  END SUBROUTINE read_vary
 
   integer function accum_day (year, day) result(day_met)
-
-    ! calculates the accumulated day from Jan 1,startyear.Based on the fact that 2 years of data is read in.
-
-    INTEGER,INTENT(IN) :: day, year ! year day and year
+    ! Calculate the accumulated day from Jan 1 of startyear. Based on
+    ! the fact that 2 years of data is read in.
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: day, year ! year day and year
     
     if (year == startyear) then
        day_met = day
@@ -492,8 +481,8 @@ contains
           day_met = day + 365
        endif
     endif
-    
   end function accum_day
+
 
   subroutine shift_time (day, year, shift, &
        shift_day, shift_year)
@@ -519,8 +508,8 @@ contains
           shift_year = shift_year + 1
        endif
     enddo
-    
   end subroutine shift_time
+    
 
   logical function leapyear(year)
     ! Determine if year is a leap-year 
@@ -543,7 +532,6 @@ contains
             'Add more years to function leapyear'
        call exit(1)
     endif
-    
   end function leapyear
       
 end module forcing
