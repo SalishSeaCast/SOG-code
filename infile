@@ -388,9 +388,6 @@
 ! Englishman River Integration
 "Englishman integ days"  20       "Days over which to integrate Englishman River"
 
-! Start year to run model: used in forcing.f90
-"startyear"     2004    "initialization of runtime for model"
-
 ! File names for forcing data (wind, met, rivers)
 "Wind"
  "../sog-forcing/wind/SH_total.dat"

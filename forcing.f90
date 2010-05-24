@@ -144,7 +144,8 @@ contains
     use input_processor, only: getpari, getpars, getparl
     use io_unit_defs, only: met_data, river_data, stderr, stdout
     use unit_conversions, only: CtoK
-
+    use numerics, only: &
+         initDatetime   ! Date/time of initial conditions
     implicit none
     ! Local variables:
     integer :: ic, jc, j,  para, stn, year, day, month
@@ -165,9 +166,8 @@ contains
     
     ! Number of days over which to integrate the Englishman river
     integration = getpari("Englishman integ days")
-    
-    ! read the start year in for initialization of runtime for model
-    startyear = getpari("startyear")
+    ! Start year for forcing data from initialization date/time for run
+    startyear = initDatetime%yr
 
     ! read the file names for input data (Wind, Met, Rivers)
     Wind = getpars("Wind")

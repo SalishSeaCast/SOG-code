@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-13 21:00:00.000000000 -0700
-+++ infiles/SoG_spring_flagellates	2010-05-13 20:11:17.000000000 -0700
+--- infile	2010-05-24 12:16:00.000000000 -0700
++++ infiles/SoG_spring_flagellates	2010-05-24 12:57:08.000000000 -0700
 @@ -1,9 +1,7 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
@@ -342,12 +342,3 @@
  ! Sinking rates
  ! Alain
  "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
-@@ -389,7 +383,7 @@
- "Englishman integ days"  20       "Days over which to integrate Englishman River"
- 
- ! Start year to run model: used in forcing.f90
--"startyear"     2004    "initialization of runtime for model"
-+"startyear"     2001    "initialization of runtime for model"
- 
- ! File names for forcing data (wind, met, rivers)
- "Wind"
