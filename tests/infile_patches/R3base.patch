@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-24 14:30:49.000000000 -0700
-+++ infiles/R3base	2010-05-24 14:30:52.000000000 -0700
+--- infile	2010-05-24 17:21:37.000000000 -0700
++++ infiles/R3base	2010-05-24 17:28:45.000000000 -0700
 @@ -1,20 +1,19 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  

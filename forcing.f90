@@ -41,7 +41,7 @@ module forcing
   END TYPE vary_forcing
 
   ! Public Variable Declarations:
-  TYPE (vary_forcing) :: vary 
+  type(vary_forcing) :: vary 
   ! Do we add the cooling/warming effect of the Major River?
   logical :: UseRiverTemp
 
@@ -138,30 +138,21 @@ contains
          initDatetime   ! Date/time of initial conditions
     implicit none
     ! Local variables:
-    ! File name for forcing data files
-    character* 80 :: &
-       MinorRiv         ! file name for Minor River data
-    ! Is there data for a minor river?
-    logical :: isMinorRiv   
-    integer :: ic, jc, j,  para, stn, year, day, month
+    !
+    ! File name for minor river data files
+    character* 80 :: minor_river_file
+    ! Indices
+    integer :: ic, jc, j
+    ! Data file values
+    integer :: para, stn, year, day, month
     real(kind=sp) :: hour
-    integer :: integration ! number of days to integrate the Englishman river
-    integer, parameter :: Ieriver = 10000
-    real(kind=dp) :: EriverI(Ieriver)
+    ! Parameters for integration of minor river flow
+    integer :: integ_days                        ! number of days to integrate over
+    real(kind=dp) :: integ_minor_river(river_n)  ! integrated flow
+    ! Years and days for data shifting
+    integer :: wind_startyear, cf_startyear, rivers_startyear, rivers_startday
     logical ::  found_data
-    real(kind=dp) :: &
-         MinRiv ! temporary variables    
-    ! startyears for the various variables that can be shifted
-    integer :: wind_startyear, cf_startyear, rivers_startyear 
-    integer :: rivers_startday ! startday for rivers allowing part year shifts
-
-    if (river_n > Ieriver) then
-       write (stderr ,*) "in forcing.f90 need to increase size of EriverI array"
-       call exit(1)
-    endif
     
-    ! Number of days over which to integrate the Englishman river
-    integration = getpari("Englishman integ days")
     ! Start year for forcing data from initialization date/time for run
     startyear = initDatetime%yr
 
@@ -172,7 +163,7 @@ contains
     else
        wind_startyear = startyear
     endif
-    open(unit=forcing_data, file=getpars("Wind"))
+    open(unit=forcing_data, file=getpars("wind"))
     found_data = .false.
     do while (.not. found_data)
        read(forcing_data, *) day, month, year, hour, &
@@ -192,7 +183,7 @@ contains
     close(forcing_data)
 
     ! Air Temperature
-    open(unit=forcing_data, file=getpars("Air temp"))
+    open(unit=forcing_data, file=getpars("air temp"))
     found_data = .false.
     do while (.not. found_data)
        read(forcing_data, *) stn, year, month, day, para, (atemp(1,j), j=1,24)
@@ -216,7 +207,7 @@ contains
     else
        cf_startyear = startyear
     endif
-    open(unit=forcing_data, file=getpars("Cloud"))
+    open(unit=forcing_data, file=getpars("cloud"))
     found_data = .false.
     do while (.not. found_data)
        read (forcing_data, *) stn, year, month, day, para, (cf(1,j), j=1,24)
@@ -234,7 +225,7 @@ contains
     close (forcing_data)
 
     ! Humidity
-    open(unit=forcing_data, file=getpars("Humidity"))
+    open(unit=forcing_data, file=getpars("humidity"))
     found_data = .false.
     do while (.not. found_data)
        read (forcing_data, *) stn, year, month, day, para, (humid(1,j), j=1,24)
@@ -256,7 +247,7 @@ contains
        rivers_startday = 1
        rivers_startyear = startyear
     endif
-    open(forcing_data, file=getpars("Major_River"))  
+    open(forcing_data, file=getpars("major river"))  
     found_data = .false.
     do while(.not. found_data)
        read(forcing_data, *) year, month, day, Qriver(1)
@@ -269,38 +260,46 @@ contains
     enddo
     close(forcing_data)
     ! Include cooling/heating effect of major river?
-    UseRiverTemp = getparl("UseRiverTemp")
+    UseRiverTemp = getparl("use river temp")
 
-    ! read the file names for input data (Wind, Met, Rivers)
-    isMinorRiv = getparl("isMinRiv")
-    MinorRiv = getpars("Minor_River")
-
-    if(isMinorRiv) then
-       ! Minor  River
-       ! uses same shift as Major
-       open(forcing_data, file=MinorRiv,status="OLD", action="READ")  
+    ! Minor river
+    minor_river_file = getpars("minor river")
+    if(minor_river_file /= "N/A") then
+       ! Minor river
+       open(forcing_data, file=minor_river_file)
        found_data = .false.
        do while (.not. found_data)
-          read (forcing_data, *, END=175) year, month, day, MinRiv
+          read (forcing_data, *, end=175) year, month, day, Eriver(1)
+          ! Use same shift as major river
           if (year == rivers_startyear .and. day == rivers_startday) then
-             Eriver(1) = MinRiv
              do jc = 2, river_n             
                 read (12,*) year, month, day, Eriver(jc)
              enddo
              found_data = .true.
           endif
        enddo
-       ! For SoG, if there is not enough data in the englishman river,
-       ! than use nanimo data.
+       ! Number of days to integrate the minor river data over.  This is
+       ! used because the minor river can be a proxy for regional
+       ! rainfall events. In the case of the Strait of Georgia, the
+       ! Englishman River is used to represent all of the fresh water
+       ! inputs other than the Fraser. Some of those rivers flow into
+       ! lakes, or dammed reservoirs, so there is a lag between rainfall
+       ! events and their effect at the model location. Integration of
+       ! the minor river flow data accounts for these effects. The number
+       ! of days over which to integrate needs to be determined by data
+       ! fitting.
+       integ_days = getpari("minor river integ days")
+       ! Read minor river flow data from an alternative file. One
+       ! example use for this is historical Strait of Georgia runs for
+       ! which there is no Englishman River data available, so the
+       ! Nanaimo River is used instead.
 175    if(.not. found_data) then
           close(forcing_data)
-          open(forcing_data, &
-               file="../sog-forcing/rivers/NanimoNorm_historic.dat", &
-               status="OLD", action="READ")
+          minor_river_file = getpars("alt minor river")
+          open(forcing_data, file=minor_river_file)
           do while (.not. found_data)
-             read (forcing_data, *) year, month, day, MinRiv
+             read (forcing_data, *) year, month, day, Eriver(1)
              if (year == rivers_startyear .and. day == rivers_startday) then
-                Eriver(1) = MinRiv
                 do jc = 2, river_n             
                    read (12,*) year, month, day, Eriver(jc)
                 enddo
@@ -309,19 +308,19 @@ contains
           enddo
           close(forcing_data)
        endif
-
-       ! Integrate Englishman River data over "integration" days
-       do ic=1, integration
-          EriverI(ic) = sum(Eriver(1:ic))/float(ic)
+       ! Integrate minor river data over the specified number of
+       ! days.
+       do ic = 1, integ_days
+          integ_minor_river(ic) = sum(Eriver(1:ic)) / dble(ic)
        enddo
-       do ic=integration+1,river_n
-          EriverI(ic) = sum(Eriver(ic-integration:ic))/integration
+       do ic = integ_days + 1, river_n
+          integ_minor_river(ic) = sum(Eriver(ic - integ_days:ic)) / integ_days
        enddo
-       Eriver(1:river_n) = EriverI(1:river_n)
-       close(12)  
+       Eriver(1:river_n) = integ_minor_river(1:river_n)
+       close(forcing_data)  
     else 
        do jc = 1, river_n             
-          Eriver(jc)=0
+          Eriver(jc) = 0.0d0
        enddo
     endif
   end subroutine read_forcing

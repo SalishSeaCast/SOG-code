@@ -369,17 +369,13 @@
 ! match N03 particles
 "bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
-! Englishman River Integration
-"Englishman integ days"  20  "Days over which to integrate Englishman River"
-
-! File names for input data (wind,met,rivers)
-"Wind"          "../sog-forcing/wind/rI_Winds.txt"  "wind forcing data"
-"Air temp"      "../sog-forcing/met/RIhistAT"       "air temperature forcing data"
-"Cloud"         "../sog-forcing/met/RIhistCF"       "cloud fraction forcing data"
-"Humidity"      "../sog-forcing/met/RIhistHum"      "humidity forcing data"
-"Major_River"  "../sog-forcing/rivers/Wannock_historic.txt"  "major river flow data"
+! File names and control variables for forcing data (wind, meteorology, river flows)
+"wind"          "../sog-forcing/wind/rI_Winds.txt"  "wind forcing data"
+"air temp"      "../sog-forcing/met/RIhistAT"       "air temperature forcing data"
+"cloud"         "../sog-forcing/met/RIhistCF"       "cloud fraction forcing data"
+"humidity"      "../sog-forcing/met/RIhistHum"      "humidity forcing data"
+"major river"  "../sog-forcing/rivers/Wannock_historic.txt"  "major river flow data"
 ! Do not use in RI - no minor river
-"UseRiverTemp"  .false.  "Include cooling/heating effect of major river?"
-"isMinRiv"     .false.               " Is there data for a minor river?"
-"Minor_River"  "../sog-forcing/rivers/Englishman_historic.dat" "file for Min Riv data" 
+"use river temp"  .false.  "Include cooling/heating effect of major river?"
+"minor river"  "N/A" "minor river flow data" 
 ! end of file
