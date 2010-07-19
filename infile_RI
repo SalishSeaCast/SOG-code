@@ -94,9 +94,8 @@
 ! Fresh water flux:
 "upwell_const"  1.9d-4          "maximum upwelling velocity [m/s]"
 "Qbar"          7.0d3           "mean totalfreshwater"
-"F_SOG"         1.5d0           "exponential for SOG component of Ft"
-"F_RI"          0.d0            "exponential for RI component of Ft"
-"Fm"            450.0d0         "fresh water scale factor for RI river flow"
+"F_SOG"         1.5d0         "exponential for SoG/RI common component of Ft"
+"F_RI"          0.0d0          "exponential for extra SoG term component of Ft"
 "Fw_scale"	20.0d-7		"fresh water scale factor for river flows"
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
 "Fw_depth"      1.5d0           "interface thickness"
