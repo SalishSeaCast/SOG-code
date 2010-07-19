@@ -112,7 +112,7 @@ contains
     cloud%type(1) = cloudy(0.6149,0.2119)  
     cloud%type(2) = cloudy(0.5861,0.2400)
     cloud%type(3) = cloudy(0.5512,0.2859)
-    cloud%type(4) = cloudy(0.5002,0.3912)
+    cloud%type(4) = cloudy(0.5002,0.3192)
     cloud%type(5) = cloudy(0.4649,0.3356)
     cloud%type(6) = cloudy(0.4225,0.3339)
     cloud%type(7) = cloudy(0.3669,0.3490)
