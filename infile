@@ -108,12 +108,11 @@
 ! Fresh water flux:
 "upwell_const"  2.5d-5         "maximum upwelling velocity [m/s]"
 "Qbar"          3624d0         "mean total freshwater"
-"F_SOG"         0.12d0         "exponential for SOG component of Ft"
-"F_RI"          0.0d0          "exponential for RI component of Ft"
-"Fm"            450.0d0        "fresh water scale factor for RI river flow"
-"Fw_scale"	8.48d-10       "fresh water scale factor for river flows"
+"F_SOG"         0.2d0         "exponential for SoG/RI common component of Ft"
+"F_RI"          1.0d0          "exponential for extra SoG term component of Ft"
+"Fw_scale"	11.67d-10       "fresh water scale factor for river flows"
 "Fw_surface"	.false.	       "add all of the fresh water on the surface?"
-"Fw_depth"      3.5d0          "interface thickness"
+"Fw_depth"      3.0d0          "interface thickness"
 "use_Fw_nutrients" .true.      "include influence of Fw nutrients"
 "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
 ! Salinity Fit 
