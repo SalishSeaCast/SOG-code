@@ -89,9 +89,7 @@ module freshwater
        Qbar, &          ! mean total freshwater 
        F_SOG, &          ! exponential of SOG component of Ft     
        F_RI, &           ! exponential of RI component of Ft     
-       Fm, &             ! scale factor for RI river flow
        Northern_frac, & ! fraction of outgoing freshwater returned from the North
-       phyto_sum, &
        cbottom, &       ! bottom salinity   
        ! values for salinity fit
        calpha, &        
@@ -114,8 +112,6 @@ contains
     ! Read fresh water parameter values from the infile.
     call read_freshwater_params()
 
-    phyto_sum = 3.d0 
-
   end subroutine init_freshwater
 
 
@@ -131,7 +127,6 @@ contains
     Qbar = getpard("Qbar")
     F_SOG = getpard("F_SOG") 
     F_RI = getpard("F_RI")
-    Fm = getpard("Fm")
     Fw_scale = getpard('Fw_scale')     
     ! Add all fresh water on surface?
     Fw_surface = getparl('Fw_surface') 
@@ -238,9 +233,16 @@ contains
  
     ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.  
-    Ft = Fw_scale*totalfresh*S_old/cbottom * (1-exp(-totalfresh/Fm))**F_RI * &
-         ((totalfresh)/Qbar)**F_SOG
-    
+    Ft = Fw_scale * totalfresh * S_old/cbottom *  &
+    ((1-0.35*exp(-(totalfresh-1.2*Qbar)**2/(4.*Qbar**2)))**F_RI * & !for SoG only
+         (totalfresh/Qbar)**F_SOG) ! for both
+
+
+!    Ft = Fw_scale * totalfresh * S_old/cbottom *  &
+!    ((1-0.35*exp(-(totalfresh-1.2*Qbar)**2/(4.*Qbar**2)))*(totalfresh/Qbar)**0.2)**F_SOG * & ! for SoG
+!    (1-exp(-totalfresh/Fm))**F_RI  ! for F_RI
+
+
     ! Calculate the surface turbulent kinematic salinity flux (Large,
     ! et al (1994), eqn A2d).  Note that fresh water flux is added via
     ! Bf in calc_buoyancy().
@@ -277,7 +279,6 @@ contains
     ! Calculate the freshwater biological fluxes.
 
     use grid_mod, only: grid
-    use core_variables, only: S, P
     implicit none
     
     character (len=*), intent(in) :: qty
@@ -286,10 +287,6 @@ contains
     real (kind=dp), dimension(0:), intent(out) :: distrib_flux
 
     integer :: i
-    real (kind=dp) :: use_value
-
-    phyto_sum = phyto_sum*(1.d0-900./(30.*86400.)) + 900./(30*86400.) &
-         * sum(P%micro(1:10))/10.
 
     if (use_Fw_nutrients) then
        if (Fw_surface) then
@@ -318,36 +315,7 @@ contains
        else ! distributed fresh water and fluxes
           surf_flux = 0.
           if (qty.eq."nitrate") then
-             ! vector variation does not give the same results as the loop
-             if (current_value(1).gt.4.5) then
-                use_value = phyto_sum
-             elseif (current_value(1).lt.3.5) then
-                use_value = (30.5-1.0-current_value(1))
-             else
-                use_value = phyto_sum*(4.5-current_value(1)) +  &
-                (current_value(1)-3.5)*(30.5-1.0-current_value(1))
-             endif
-             do i=0,grid%M
-                ! if phyto are using the nitrate the grad is zero'd. 
-                ! 4.0 = 2 x (Michalis-Menton K)
-                distrib_flux(i) = Fw(i) * phys_circ_nitrate * &
-                     min(4.0,current_value(i))/4.0 + &
-                     FN(i) * 2 * use_value *30.d0/  &
-                     (30.d0-S%new(0)) * &
-                     min(4.0,current_value(i))/4.0 
-!                if (current_value(1).lt.10.) then
-!                   write (*,134) i, 0.5*i, Fw(i) * phys_circ_nitrate * &
-!                     min(4.0,current_value(i))/4.0, &
-!                     FN(i) * 2 * (30.0 - current_value(1)) *30.d0/  &
-!                     (30.d0-20.d0) * &
-!                     min(4.0,current_value(i))/4.0 
-!0134 format (1x,i3,1x,f5.2,1x,e13.5,1x,e13.5)
-!                endif
-             enddo
-             do i=grid%M,1,-1
-                if (distrib_flux(i).gt.distrib_flux(i-1)) &
-                     distrib_flux(i-1) = distrib_flux(i)
-             enddo
+             distrib_flux = Fw * (phys_circ_nitrate)
 !             if (current_value(1).lt.10.) stop
           elseif (qty.eq."Pmicro") then
              distrib_flux = Fw * (phys_circ_Pmicro)
