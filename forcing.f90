@@ -288,12 +288,12 @@ contains
        ! the minor river flow data accounts for these effects. The number
        ! of days over which to integrate needs to be determined by data
        ! fitting.
-       integ_days = getpari("minor river integ days")
+175       integ_days = getpari("minor river integ days")
        ! Read minor river flow data from an alternative file. One
        ! example use for this is historical Strait of Georgia runs for
        ! which there is no Englishman River data available, so the
        ! Nanaimo River is used instead.
-175    if(.not. found_data) then
+       if(.not. found_data) then
           close(forcing_data)
           minor_river_file = getpars("alt minor river")
           open(forcing_data, file=minor_river_file)
