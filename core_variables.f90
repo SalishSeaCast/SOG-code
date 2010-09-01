@@ -74,9 +74,10 @@ module core_variables
 
   ! Public parameter declaration:
   real(kind=dp), parameter :: &
-       N2chl = 1.5d0, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
        ho = 2.0d0        ! Initial mixing layer depth [m]
-  !
+   real(kind=dp) :: &
+       N2chl    ! ratio of chl mg/m3 to uMol N in phytoplankton
+  
   ! Public type definitions:
   !
   ! Velocities, temperature, and salinity
@@ -180,7 +181,7 @@ contains
     ! bottles).
     use io_unit_defs, only: stdout
     use grid_mod, only: grid
-    use input_processor, only: getpars, getpardv
+    use input_processor, only: getpars, getpardv, getpard
     use unit_conversions, only: CtoK
     use forcing, only: vary
     implicit none
@@ -197,6 +198,9 @@ contains
     real(kind=dp), dimension(3) :: &
          Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
     type(col_indices) :: col  ! Column numbers of quantities in data records
+
+    ! Initializes N2chl ratio
+     N2chl = getpard('N2chl')
 
     ! Initialize velocity profiles to assumed values
     U%new = Uo
