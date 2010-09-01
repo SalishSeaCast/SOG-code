@@ -75,9 +75,11 @@ module core_variables
   ! Public parameter declaration:
   real(kind=dp), parameter :: &
        ho = 2.0d0        ! Initial mixing layer depth [m]
-   real(kind=dp) :: &
+  
+  real(kind=dp) :: &
        N2chl    ! ratio of chl mg/m3 to uMol N in phytoplankton
   
+   
   ! Public type definitions:
   !
   ! Velocities, temperature, and salinity
@@ -168,6 +170,7 @@ contains
     use grid_mod, only: grid
     implicit none
     
+
     ! Allocate memory for core variable arrays
     call alloc_core_variables(grid%M)
     ! Initialize the values of the core variable profiles
@@ -194,6 +197,7 @@ contains
          botl_records     ! IOS bottle data record counter
     logical :: got_Fluores, got_NO, got_Si
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
+
          data  ! Data records read
     real(kind=dp), dimension(3) :: &
          Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
@@ -201,10 +205,11 @@ contains
 
     ! Initializes N2chl ratio
      N2chl = getpard('N2chl')
-
+    
     ! Initialize velocity profiles to assumed values
     U%new = Uo
     V%new = Vo
+    
 
     ! Initialize the ammonium profile to the assumed deep water value
     ! except in the mixed layer where it is assumed to be zero.
@@ -239,6 +244,8 @@ contains
           T%new = CtoK(T%new)
        endif
     else
+ 
+
        ! Run can't proceed without temperature data
        write(stdout, *) "init_state: No temperature data found. Run aborted."
        call exit(1)
@@ -251,7 +258,8 @@ contains
        ! Run can't proceed without salinity data
        write(stdout, *) "init_state: No salinity data found. Run aborted."
        call exit(1)
-    endif
+    endif 
+
     if(col%Fluores /= -1) then
        ! Microphytoplankton biomass comes from fluorescence if that
        ! data are in the CTD data file, otherwise it comes from the
@@ -260,6 +268,7 @@ contains
                                data(:ctd_records, col%Fluores))
        got_Fluores = .true.
     endif
+
     if(col%NO /= -1) then
        ! Nitrate profile comes from CTD profile if the data are
        ! available, otherwise it comes from the STRATOGEM or IOS
@@ -277,13 +286,13 @@ contains
     if(fn /= "N/A") then
        call read_init_data(fn, nuts_records, col, data)
        ! Nitrate
-       if(.not. got_NO) then
+       if(col%NO /= -1) then
           N%O = interp_to_grid(data(:nuts_records, col%depth), &
                                data(:nuts_records, col%NO))
           got_NO = .true.
        endif
        ! Silicon
-       if(.not. got_Si) then
+       if(col%Si /= -1) then
           Si = interp_to_grid(data(:nuts_records, col%depth), &
                               data(:nuts_records, col%Si))
           got_Si = .true.
@@ -297,13 +306,13 @@ contains
     if(fn /= "N/A") then
        call read_init_data(fn, botl_records, col, data)
        ! Nitrate
-       if(.not. got_NO) then
+       if(col%NO /= -1) then
           N%O = interp_to_grid(data(:botl_records, col%depth), &
                                data(:botl_records, col%NO))
           got_NO = .true.
        endif
        ! Silicon
-       if(.not. got_Si) then
+       if(col%Si /= -1) then
           Si = interp_to_grid(data(:botl_records, col%depth), &
                               data(:botl_records, col%Si))
           got_Si = .true.
@@ -347,7 +356,7 @@ contains
     if(.not. got_Si) then
        Si = 50.0d0
     endif
-
+write(*,*) N%O
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
     P%micro = P%micro / N2chl
     ! Read the initial ratios of phytoplankton classes from infile,
@@ -475,7 +484,8 @@ contains
          qty_clean,   &  ! Valid quantity values from data
          del_depth,   &  ! Depth differences from data
          del_qty         ! Quantity value differences from data
-
+    
+ 
     ! Remove records with negative data values (typically -99.0 or
     ! -99999) because that indicates invalid data
     mask(0:size(data_qty >= 0.0d0)-1) = data_qty >= 0.0d0
@@ -488,6 +498,9 @@ contains
                                   - depth_clean(0:data_records-2)
     del_qty(0:data_records-2) = qty_clean(1:data_records-1) &
                                 - qty_clean(0:data_records-2)
+
+    
+
     ! Interpolate quantity values at grid point depths
     i_data = 1
     do i_g = 0, grid%M + 1
