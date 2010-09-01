@@ -66,6 +66,7 @@ program SOG
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
   ! ** Temporary
   use freshwater, only: S_riv, upwell
+  use baroclinic_pressure, only: w_wind
 
   !
   ! Subroutines and functions:
@@ -137,7 +138,8 @@ program SOG
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
   real(kind=dp) unow, vnow
-  
+
+
 
   ! ---------- Beginning of Initialization Section ----------
   ! Get the current date/time from operating system to timestamp the
@@ -195,7 +197,7 @@ program SOG
   call init_IMEX_solver(grid%M)
 
   ! Allocate memory
-  ! *** It would be nice if everything in allocate1 could end up in 
+  ! *** It would be nice if everything in allocate[13] could end up in 
   ! *** alloc_* subroutines private to various modules, and called by 
   ! *** their init_* subroutines.
   CALL allocate1(grid%M, alloc_stat) 
@@ -233,8 +235,7 @@ program SOG
 
   ! ---------- End of Initialization Section ---------
 
-  !---------- Beginning of the time loop ----------
-  do time_step = 1, steps
+  do time_step = 1, steps  !---------- Beginning of the time loop ----------
      ! Store %new components of various variables from time step just
      ! completed in %old their components for use in the next time
      ! step.
@@ -245,6 +246,8 @@ program SOG
      call new_to_old_bio_RHS()
      call new_to_old_bio_Bmatrix()
 
+    
+
      ! Get forcing data
      call get_forcing(year, day, day_time, &
           Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
@@ -253,8 +256,7 @@ program SOG
      call irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
           Qinter, P%micro, P%nano, P%pico, jmax_i)
 
-     !------ Beginning of the implicit solver loop ------
-     do count = 1, max_iter
+     DO count = 1, max_iter !------ Beginning of the implicit solver loop ------
         ! Calculate gradient pofiles of the velocity field and water column
         ! temperature, and salinity at the grid layer interface depths
         U%grad_i = gradient_i(U%new)
@@ -264,7 +266,7 @@ program SOG
 
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
-        call surface_flux_sog(grid%M, rho%g, &
+        CALL surface_flux_sog(grid%M, rho%g, &
              T%new(0), I, Q_t,        &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value)
@@ -286,8 +288,6 @@ program SOG
         ! (S_riv), the surface turbulent kinematic salinity flux
         ! (wbar%s(0)), and the profile of fresh water contribution to
         ! the salinity (F_n)
-        ! If UseRiverTemp is set, also adds that effect to wbar%t(0)
-        ! or Q_n
         call freshwater_phys(Qinter, Einter, RiverTemp, S%old(1), T%old(1), T%old(grid%M+1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
@@ -306,12 +306,6 @@ program SOG
         ! variables that are declared in the turbulence module so that
         ! they can be used by other modules.
         call calc_KPP_diffusivity(Bf, h%new, h%i, h%g)
-
-        ! Calculate baroclinic pressure gradient components
-        !
-        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
-        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
-
 
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
@@ -332,16 +326,16 @@ Gvector%s = S_RHS%diff_adv%new
 
         ! Calculate profile of upwelling velocity
         call upwell_profile(Qinter, wupwell)
-
+       
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
-        call vertical_advection (grid, dt, S%new, wupwell, &
+        call vertical_advection (grid, dt, S%new, wupwell+ w_wind, &
              Gvector%s)
-        call vertical_advection (grid, dt, T%new, wupwell, &
+        call vertical_advection (grid, dt, T%new, wupwell+ w_wind, &
              Gvector%t)
-        call vertical_advection (grid, dt, U%new, wupwell, &
+        call vertical_advection (grid, dt, U%new, wupwell+ w_wind, &
              Gvector%u)
-        call vertical_advection (grid, dt, V%new, wupwell, &
+        call vertical_advection (grid, dt, V%new, wupwell+ w_wind, &
              Gvector%v)
 
 ! *** Physics equations refactoring bridge code
@@ -375,7 +369,7 @@ S_RHS%diff_adv%new = Gvector%s
            write (*,*) 'Salinity less than 0'
            stop
         endif
-
+    
         ! Update boundary conditions at surface, and bottom of grid
         U%new(0) = U%new(1)
         V%new(0) = V%new(1)
@@ -473,24 +467,26 @@ S_RHS%diff_adv%new = Gvector%s
         del%U = abs(U%new(1) - Uprev(1)) / vel_scale
         del%V = abs(V%new(1) - Vprev(1)) / vel_scale
 
+        ! Calculate baroclinic pressure gradient components
+        !
+        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
+        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
+
         ! Test for convergence of implicit solver
         if (count >= 2 .and. max(del%h, del%U, del%V) < 1.0d0) then
            exit
         endif
-     enddo
-     !---------- End of the implicit solver loop ----------
-
+     enddo  !---------- End of the implicit solver loop ----------
 
      !---------- Biology Model ----------
      !
      ! Solve the biology model ODEs to advance the biology quantity values
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
-     call calc_bio_rate( &
-          time, day, dt, grid%M, precision, step_guess, step_min,  &
-          T%new(0:grid%M), I_Par, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
+     call calc_bio_rate(time, day, dt, grid%M, precision, step_guess, step_min,  &
+          T%new(0:grid%M), I_Par, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,   &
           D%DON, D%PON, D%refr, D%bSi)
-
+!write (142,*) time, S%new(158),  '% calc_bio_rate'
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
      !
@@ -498,9 +494,9 @@ S_RHS%diff_adv%new = Gvector%s
      ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
-     call build_biology_equations( &
-          grid, dt, P%micro, P%nano, P%pico, Z, N%O, N%H, & ! in
-          Si, D%DON, D%PON, D%refr, D%bSi, wupwell)         ! in
+     call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, N%O, N%H, & ! in
+          Si, D%DON, D%PON, D%refr, D%bSi, wupwell + w_wind)                        ! in
+
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
      ! 1st time step because the values just calculated are a better
@@ -512,10 +508,10 @@ S_RHS%diff_adv%new = Gvector%s
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
-     call solve_bio_eqns( &
-          grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
+     call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi, day, time)
-     !
+
+   !
      !---------- End of Biology Model ----------
 
      ! Update boundary conditions at surface
@@ -536,13 +532,17 @@ S_RHS%diff_adv%new = Gvector%s
      !
      ! For those variables that we have data for, use the annual fit
      ! calculated from the data
-     call bot_bound_time(year, day, day_time, &                       ! in
+     call bot_bound_time(year, day, day_time, &                             ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
           Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
           P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
+
+
+
      call bot_bound_uniform(grid%M, D%DON, D%PON, D%refr, D%bSi)
+
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason. !!!
@@ -553,15 +553,16 @@ S_RHS%diff_adv%new = Gvector%s
        ! Variables for standard physics model output
        count, h%new, U%new, V%new, T%new, S%new, I_par(0),             &
        ! Variables for standard biology model output
-       N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, &
-       D%bSi)
+       N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, D%bSi)
+
 
      ! Write user-specified time series results
      ! !!! Please don't add arguments to this call.           !!!
      ! !!! Instead put use statements in your local copy of   !!!
      ! !!! write_user_timeseries() in the user_output module. !!!
      call write_user_timeseries(time / 3600., grid)
-     
+
+
      ! Write standard profiles results
      ! !!! Please don't change this argument list without good reason. !!!
      ! !!! If it is changed, the change should be committed to CVS.    !!!
@@ -569,9 +570,10 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! write_user_timeseries() below.                              !!!
      call write_std_profiles(codeId, datetime_str(runDatetime),       &
           datetime_str(initDatetime), year, day, day_time, dt, grid, &
-          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
+          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,      &
           D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                 &
           I_par, U%new, V%new)
+
 
      ! Write user-specified profiles results
      ! !!! Please don't add arguments to this call.           !!!
@@ -580,26 +582,27 @@ S_RHS%diff_adv%new = Gvector%s
      call write_user_profiles(codeId, datetime_str(runDatetime),      &
           datetime_str(initDatetime), year, day, day_time, dt, grid)
 
+
+
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt)
      scount = scount + 1
      !*** Fix this to be grid independent
-     sumS = sumS + 0.5 * (S%new(2) + S%new(3))
+     sumS = sumS + S%new(1)
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
-     
-       write (129,*) S_riv, 0.5 * (S%new(2) + S%new(3)), upwell
-  end do
-  !--------- End of time loop ----------
+ 
+   
+     write (129,*) S_riv,  S%new(1)
 
-  write (stdout,*) "For Ft tuning"
-  write (stdout,*) "Average SSS should be", sumSriv / float(scount)
-  write (stdout,*) "Average SSS was", sumS / float(scount)
+  end do  !--------- End of time loop ----------
+
 
   ! Close output files
   call timeseries_output_close
   call profiles_output_close
+
   close(129)
 
   ! Deallocate memory
