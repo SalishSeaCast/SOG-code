@@ -5,6 +5,10 @@
 ! SOG code infile for 356.5 day run starting at cruise 04-14 station S3
 ! CTD cast (2004-10-19 12:22 LST).
 
+! Latitude of basin location
+"latitude"  49.1253d0  "latitude [deg]"
+
+ 49.0d0 + 7.517d0 / 60.0d0
 ! Grid parameters:
 "maxdepth"	40.d0	"depth of modelled domain [m]"
 "gridsize"	80	"number of grid points"
@@ -24,6 +28,9 @@
 "vary%cf%enabled"      .false.       "Variation of cloud fraction data?"
 "vary%rivers%enabled"  .false.       "Variation of river flow?"
 "vary%temperature%enabled" .false.   "Variation of temperature?"
+
+!N2chl ratio
+"N2chl"  1.5d0  "ratio of chl mg/m3 to uMol N in phytoplankton"
 
 ! Initial conditions
 "ctd_in"
