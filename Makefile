@@ -39,9 +39,9 @@ CVS2CL = ../cvs2cl/cvs2cl.pl
 CLFLAGS = -rt
 
 # List of objects (order matters)
-OBJS = precision_defs.o io_unit_defs.o fundamental_constants.o \
-malloc.o unit_conversions.o datetime.o \
-input_processor.o grid.o numerics.o forcing.o core_variables.o water_properties.o \
+OBJS = precision_defs.o io_unit_defs.o datetime.o input_processor.o fundamental_constants.o \
+malloc.o unit_conversions.o \
+grid.o numerics.o forcing.o core_variables.o water_properties.o \
 \
 mean_param.o declarations.o surface_forcing.o \
 \
