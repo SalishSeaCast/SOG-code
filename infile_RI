@@ -2,6 +2,10 @@
 !*** Rivers Inlet  infile for ~14 mo run at station DF02 using
 !*** CTD cast (2007-08-29 16:10:15 LST) 
 
+
+! Latitude of basin location
+"latitude"  51.5215d0  "latitude [deg]"
+
 ! Grid parameters:
 "maxdepth"	40.d0	"depth of modelled domain [m]"
 "gridsize"	160	"number of grid points"
@@ -23,6 +27,9 @@
 "vary%rivers%enabled"  .false.       "Variation of river flow?"
 "vary%temperature%enabled" .false.   "Variation of temperature?"
 
+!N2chl ratio
+"N2chl"  1.7d0  "ratio of chl mg/m3 to uMol N in phytoplankton"
+
 ! Initial conditions
 "ctd_in"
   "../sog-initial/ctd/RI-DF02-2007-08-29.sog"
@@ -32,7 +39,7 @@
   "N/A"
   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
 "botl_in"
-  "N/A"
+  "../sog-initial/RI_nuts/Nuts-DF02-weightedMean.sog""
   "IOS bottle data file"
 "initial chl split"
   0.33d0 0.33d0 0.33d0
@@ -52,12 +59,12 @@
 	"user biology time series"
 
 ! Profiles output
-"noprof"        8       "number of profiles to be produced"
+"noprof"        7       "number of profiles to be produced"
 ! *** It would be nice to replace the yr-day and day-sec lists with a list
 ! *** of dates/times for profiles output
-"profday"       316 078 114 131 146 160 175 191   		
+"profday"        078 114 131 146 160 175 191   		
 		"year day for profiles"
-"proftime"      42900. 46920. 44700. 28800. 48300. 43380. 45480. 43200.
+"proftime"       46920. 44700. 28800. 48300. 43380. 45480. 43200.
  		"time of day for profiles (s)"
 "haloclinefile" "profiles/halo-RI-test1.dat" 	"file for halocline results"
 "profile_base"	"profiles/RI-test1"	"profiles file base (datetime will be adnded)"
@@ -78,8 +85,8 @@
 ! Fit parameters for core variables
 "salinity" 31.65574923d0 0.d0 0.45614624d0 4.51347426d0 0.d0 0.d0 0.d0   "Salinity (constant, seasonal and biseasonal components)"
 "temperature"  7.62726226d0 0.d0 0.6298559d0   3.04191439d0 0.d0 0.d0 0.d0      "Temperature (constant, seasonal and biseasonal components)"
-"Phytoplankton"0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0    " Phytoplankton from fluor (constant and seasonal)"
-"Nitrate"   30.5d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    "Nitrate (constant)"
+"Phytoplankton"  0.25d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    " Phytoplankton from fluor (constant and seasonal)"
+"Nitrate"   21.435d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    "Nitrate (constant)"
 "Silicon"  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    "Silicon (constant)"
 "Ammonium"   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Ammonium (constant)"
 "Ratio"   1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0    "Ratio of pico/micro plankton (constant and biseasonal)"
@@ -92,14 +99,14 @@
 "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
 "shear smooth"  0.375d0 0.5d0   "shear diffusivity smoothing parameter"
 ! Fresh water flux:
-"upwell_const"  1.9d-4          "maximum upwelling velocity [m/s]"
-"Qbar"          7.0d3           "mean totalfreshwater"
-"F_SOG"         1.5d0         "exponential for SoG/RI common component of Ft"
-"F_RI"          0.0d0          "exponential for extra SoG term component of Ft"
+"upwell_const"  1.08d-4         "maximum upwelling velocity [m/s]"
+"Qbar"          7.0d3             "mean totalfreshwater"
+"F_SOG"         1.38d0              "exponential for SOG component of Ft"
+"F_RI"          0d0              "exponential for RI component of Ft"
 "Fw_scale"	20.0d-7		"fresh water scale factor for river flows"
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
-"Fw_depth"      1.5d0           "interface thickness"
-"use_Fw_nutrients" .true.       "include influence of Fw nutrients"
+"Fw_depth"      3.5d0             "interface thickness"
+"use_Fw_nutrients" .false.       "include influence of Fw nutrients"
 "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
 ! Salinity Fit 
 'cbottom'  31.8d0          "bottom salinity"
@@ -108,13 +115,14 @@
 'cgamma'   0.04d0          "gamma"
 'cbeta'    0.01d0          "beta"
 
+
 ! Kpar Fit  - Collins et al 2008 equation 8
-'ialpha'   0.1388d0          "alpha"
-'ibeta'  0.04d0              "beta - relates to chl"
-'igamma'  4.734d-4           "gamma - relates to river flow"
+'ialpha'   0.1709d0             "alpha"
+'ibeta'  0.02d0              "beta - relates to chl"
+'igamma'  0d0             "gamma - relates to river flow"
 'isigma'  1.2d0              "sigma - exponent on river flow"
-'itheta'   1.5d0             "theta"
-'idl'    1.433d0             "dl"
+'itheta'   2.53d0             "theta"
+'idl'    0.525d0            "dl"
 
 ! Freshwater depth fit
 "d"  6.4d0         "Constant d for freshwater depth"
@@ -126,20 +134,21 @@
 "use microzooplankton"  .false. "include microzooplankton in model?"
 "single species light"  .true.  "high light limitation for single species case"! Zooplankton values:
 ! fit from Dower et al
-"Mesozoo, winter conc"   0.089d0 "Mesozoo background concentration uMol/m"
-"Mesozoo, summer conc"       1.0d0 "Mesozoo relative sumemr conc"
-"Mesozoo, summer peak mag"   0.54d0 0.24d0 0.12d0 "Height of summer peaks"
-"Mesozoo, summer peak pos"  120.d0 160.d0 220.d0 "Position (days) of summer peaks"
-"Mesozoo, summer peak wid" 20.0d0 25.0d0 30.0d0 "Width of summer peaks"
+"Mesozoo, winter conc"       0.0893d0 "Mesozoo background concentration"
+"Mesozoo, summer conc"       0.0d0 "Mesozoo relative sumemr conc"
+"Mesozoo, summer peak mag"   0.0d0 0.0d0 0.0d0 "Height of summer peaks"
+"Mesozoo, summer peak pos"  0.0d0 0.0d0 0.d0 "Position (days) of summer peaks"
+"Mesozoo, summer peak wid" 0.0d0 0.0d0 0.0d0 "Width of summer peaks"
+
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
-"Mesozoo, max ingestion"      1.39d-5 "Mesozoo, maximum intact rate"
+"Mesozoo, max ingestion"      1.39d-5  "Mesozoo, maximum intact rate"
 ! Alain 0.75
-"Mesozoo, pred slope"        0.0d0 "Mesozoo, limit on predation"
+"Mesozoo, pred slope"        0.05d0 "Mesozoo, limit on predation"
 ! Alain 2
 "Mesozoo, half-sat"          0.2d0 "Mesozoo, half sat const"
 ! easier to catch diatoms
 "Mesozoo, pref for diatoms"  1.0d0 "Mesozoo preference for diatoms"
-"Mesozoo, micro pred slope"  0.d0 "Mesozoo, micro limit of predation"
+"Mesozoo, micro pred slope"  0.05d0 "Mesozoo, micro limit of predation"
 "Mesozoo, micro half-sat"    1.00d0 "Mesozoo, micro half-saturation"
 "Mesozoo, pref for nano"      0.0d0 "Mesozoo, preference for nano"
 "Mesozoo, nano pred slope"    0.4d0 "Mesozoo, nano limit of predation"
@@ -240,7 +249,7 @@
 "Micro, K Si"           0.d0           "Micro, half-saturation Si"
 "Nano, K Si"            0.d0           "Nano, half-saturation Si"
 "Pico, K Si"            0.d0           "Pico, half-saturation Si"
-"Micro, nat mort"	1.39d-06      "Micro, natural mortality (s-1)"
+"Micro, nat mort"	1.74d-06      "Micro, natural mortality (s-1)"
 "Nano, nat mort" 	2.3d-06      "Nano, natural mortality (s-1)"
 "Pico, nat mort" 	2.3d-06      "Pico, natural mortality (s-1)"
 ! Nutrient values:
@@ -369,7 +378,7 @@
 "bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
 ! File names and control variables for forcing data (wind, meteorology, river flows)
-"wind"          "../sog-forcing/wind/rI_Winds.txt"  "wind forcing data"
+"wind"          "../sog-forcing/wind/RI_Winds.txt"  "wind forcing data"
 "air temp"      "../sog-forcing/met/RIhistAT"       "air temperature forcing data"
 "cloud"         "../sog-forcing/met/RIhistCF"       "cloud fraction forcing data"
 "humidity"      "../sog-forcing/met/RIhistHum"      "humidity forcing data"
