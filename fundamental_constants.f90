@@ -30,15 +30,21 @@ module fundamental_constants
 
   ! Public parameter declarations:
   real(kind=dp) :: &
+       latitude, &  ! latitude [deg]
        f  ! Coriolis factor (would be a parameter but for a pgf90 bug)
   real(kind=dp), parameter :: &
        g = 9.80665d0, &                  ! Acceleration due to gravity [m/s^2]
-       latitude = 49.0d0 + 7.517d0 / 60.0d0, & ! Station S3 latitude [deg]
        pi = 3.141592653589793d0
 
 contains
 
   subroutine init_constants()
+    use input_processor, only: getpard
+    implicit none
+
+    ! Initialize latitude
+    latitude = getpard('latitude')       ! Read latitude from infile 
+
     ! Coriolis factor
     ! *** This must be calculated because pgf90 will not accept an
     ! *** intrinsic in parameter statement
