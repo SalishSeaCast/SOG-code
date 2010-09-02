@@ -39,7 +39,7 @@
   "N/A"
   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
 "botl_in"
-  "../sog-initial/RI_nuts/Nuts-DF02-weightedMean.sog""
+  "../sog-initial/RI_nuts/Nuts-DF02-weightedMean.sog"
   "IOS bottle data file"
 "initial chl split"
   0.33d0 0.33d0 0.33d0
