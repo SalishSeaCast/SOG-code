@@ -319,7 +319,6 @@ contains
     extra = 0.d0
     if (resid_u > 0.d0) then  ! spread it over the bottom region
        extra = resid_u/(grid%M-gridbotsurf)
-       write (*,*) extra, 'ex'
        resid_u = 0.d0
     endif
 
