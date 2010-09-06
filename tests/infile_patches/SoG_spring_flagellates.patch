@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-24 17:21:37.000000000 -0700
-+++ infiles/SoG_spring_flagellates	2010-05-24 17:24:30.000000000 -0700
+--- infile	2010-09-06 10:39:39.000000000 -0700
++++ infiles/SoG_spring_flagellates	2010-09-06 11:41:19.000000000 -0700
 @@ -1,9 +1,7 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
@@ -29,9 +29,9 @@
 +! SOG code infile for ~7.5 mo station S3 run starting in Sep-2001
 +! modelling the spring flagellate bloom.
  
- ! Grid parameters:
- "maxdepth"	40.d0	"depth of modelled domain [m]"
-@@ -12,9 +10,10 @@
+ ! Latitude of basin location
+ "latitude"  49.1253d0  "latitude [deg] 49.0d0 + 7.517d0 / 60.0d0"
+@@ -15,9 +13,10 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -44,7 +44,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -27,48 +26,45 @@
+@@ -33,48 +32,45 @@
  
  ! Initial conditions
  "ctd_in"
@@ -117,13 +117,7 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -132,79 +128,81 @@
- "idl"    2.56d0            "dl"
- 
- ! Freshwater depth fit
--"d"  11.7d0         "Constant d for freshwater depth"
-+'d'  11.7d0         "Constant d for freshwater depth"
- 
+@@ -142,74 +138,76 @@
  ! Biology model parameters:
  ! Model complexity flags:
  "flagellates_on"	.true.	"include flagellates in model?"
@@ -235,7 +229,7 @@
  ! Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
  "Micro, I_opt" 		38.4d0         "Micro, optimum light (W/m2)"
  ! Yih plus Cloern 1977 Half-sat very similar
-@@ -212,58 +210,56 @@
+@@ -217,56 +215,54 @@
  ! small
  "Pico, I_opt"           10.d0          "Pico, optimum light"
  ! Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
@@ -312,20 +306,9 @@
 -! Debby: should be longer than PON but she did not include very labile portion
 +! Debby? and Alain and Jeffery
  "DON remin rate"        2.3d-6       "DON detritus remineralization rate [1/s]"
--! Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes but this
-+! Jeffery 0.035 day-1 at 10 degrees ( 1month agrees with 370 notes but this
+ ! Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes but this
  ! is for deeply sinking and thus refractory stuff?)
- ! Debby and Alain 0.2d-1
- ! Denman 0.1d-1 at 10 degrees
-@@ -272,7 +268,6 @@
- ! of same order as a number of papers including Brzezinski et al,; Bidle and 
- ! Azam 1998 without bacteria
- "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
--
- ! Waste and detritus
- ! Micro Natural Mortality
- "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"
-@@ -281,7 +276,7 @@
+@@ -286,7 +282,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
@@ -334,11 +317,3 @@
  ! Nano Natural Mortality
  "Waste, nnm, NH"        0.d0      "fraction of waste from nano nat mort to NH"
  ! Denman and Pena about 1/2 to dissolved
-@@ -374,7 +369,6 @@
- "Waste, fen, PON" 0.5d0 "fraction of waste from mesorub eat picophyto to PON"
- "Waste, fen, Ref" 0.0d0 "fraction of waste mesorub eat picophyto to Ref"
- "Waste, fen, Bsi" 1.d0  "fraction of waste from mesorub eat picophyto to BSi"
--
- ! Sinking rates
- ! Alain
- "Micro min sink rate"   0.5d0          "Micro phyto min sinking rate [m/d]"
