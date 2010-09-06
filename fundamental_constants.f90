@@ -11,7 +11,7 @@ module fundamental_constants
   !
   !   g -- Acceleration due to gravity [m/s^2]
   !
-  !   latitude -- Station S3 latitude [deg]
+  !   latitude -- Latitude of location being modeled [deg]
   !
   !   pi -- Ratio of circumference to diameter of a circle [-]
 
@@ -23,15 +23,15 @@ module fundamental_constants
        ! Parameter values:
        f,        &  !  Coriolis factor
        g,        &  ! Acceleration due to gravity [m/s^2]
-       latitude, &  ! Station S3 latitude [deg]
+       latitude, &  ! Latitude of location being modeled [deg]
        pi,       &  ! Ratio of circumference to diameter of a circle [-]
        ! Subroutine:
        init_constants
 
   ! Public parameter declarations:
   real(kind=dp) :: &
-       latitude, &  ! latitude [deg]
-       f  ! Coriolis factor (would be a parameter but for a pgf90 bug)
+       f, &      ! Coriolis factor
+       latitude  ! latitude [deg]
   real(kind=dp), parameter :: &
        g = 9.80665d0, &                  ! Acceleration due to gravity [m/s^2]
        pi = 3.141592653589793d0
@@ -42,12 +42,9 @@ contains
     use input_processor, only: getpard
     implicit none
 
-    ! Initialize latitude
-    latitude = getpard('latitude')       ! Read latitude from infile 
-
+    ! Latitude of location being modeled from infile
+    latitude = getpard('latitude')
     ! Coriolis factor
-    ! *** This must be calculated because pgf90 will not accept an
-    ! *** intrinsic in parameter statement
     f = 2.0d0 * (2.0d0 * pi / 86400.0d0) * sin(pi * latitude / 180.0d0)
   end subroutine init_constants
   
