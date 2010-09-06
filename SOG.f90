@@ -155,8 +155,6 @@ program SOG
   open (unit=129, file="salinity_check")
 
   ! Initialize fundamental constants
-  ! *** This is here because of the pgf90 bug that prevents f from
-  ! *** being a parameter
   call init_constants()
 
   ! Initialize the grid
