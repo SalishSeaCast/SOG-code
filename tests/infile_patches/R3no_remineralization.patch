@@ -17,9 +17,9 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-05-24 17:21:37.000000000 -0700
-+++ infiles/R3no_remineralization	2010-05-24 17:26:03.000000000 -0700
-@@ -1,20 +1,21 @@
+--- infile	2010-09-06 10:39:39.000000000 -0700
++++ infiles/R3no_remineralization	2010-09-06 11:32:19.000000000 -0700
+@@ -1,9 +1,10 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
 -! SOG code infile template
@@ -32,11 +32,9 @@
 +! disabled in the biology model, and single species light limitation
 +! is enabled.
  
- ! Grid parameters:
- "maxdepth"	40.d0	"depth of modelled domain [m]"
- "gridsize"	80	"number of grid points"
--"lambda"	0.d0	"grid spacing parameter"
-+"lambda"	 0.d0	"grid spacing parameter"
+ ! Latitude of basin location
+ "latitude"  49.1253d0  "latitude [deg] 49.0d0 + 7.517d0 / 60.0d0"
+@@ -15,9 +16,9 @@
  
  ! Run timing parameters:
  ! Initial conditions date/time (must match a CTD profile date/time)
@@ -48,7 +46,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -27,11 +28,11 @@
+@@ -33,11 +34,11 @@
  
  ! Initial conditions
  "ctd_in"
@@ -62,7 +60,7 @@
    "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
  "botl_in"
    "N/A"
-@@ -42,29 +43,29 @@
+@@ -48,29 +49,29 @@
  
  ! Time series output files
  "std_phys_ts_out"  
@@ -101,7 +99,7 @@
  "Hoffmueller start yr"	2004			"yr to start Hoff output"
  "Hoffmueller start day"	294			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
-@@ -78,10 +79,10 @@
+@@ -84,7 +85,7 @@
  "temp_constant"    .false.       "Is bottom temperature constant over time?"
  ! Fit parameters for core variables
  "salinity"
@@ -109,12 +107,8 @@
 +  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0
    "Salinity (constant, seasonal and biseasonal components)"
  "temperature"
--  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.0292d0
-+  9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.00007993d0
-   "Temperature (constant, seasonal and biseasonal components)"
- "Phytoplankton"
-   0.58316137d0 -0.11206845d0 0.26241523d0 0.d0 0.d0 0.d0 0.d0
-@@ -93,10 +94,10 @@
+   9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.0292d0
+@@ -99,10 +100,10 @@
    54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
    "Silicon (constant)"
  "Ammonium"
@@ -127,7 +121,7 @@
    "Ratio of pico/micro plankton (constant and biseasonal)"
  !Basin axis lengths (km)
  "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
-@@ -136,10 +137,10 @@
+@@ -141,10 +142,10 @@
  
  ! Biology model parameters:
  ! Model complexity flags:
