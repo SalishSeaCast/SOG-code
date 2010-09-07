@@ -94,6 +94,7 @@
 !Basin axis lengths (km)
 "Lx"            3.0d3          "Minor axis (cross-strait) of model domain [m]"
 "Ly"            40.0d3         "Major axis (along-strait) of model domain [m]"
+"openEnd"       .true.         "Use an open basin system (true) or closed system basin (false)"
 ! Turbulence
 "nu_w_m"        1.5d-4          "internal wave breaking momentum mixing"
 "nu_w_s"        1.5d-5          "internal wave breaking scalar mixing"
