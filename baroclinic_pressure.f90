@@ -64,6 +64,7 @@ module baroclinic_pressure
   real(kind=dp) :: &
        Lx, &  ! Minor axis (cross-strait) of model domain [m]
        Ly     ! Major axis (along-strait) of model domain [m]
+  logical :: openEnd ! Is this a fjord system? If so, we use an open ended basin system.
 
   ! Variable Declarations:
   !
@@ -87,7 +88,7 @@ contains
 
   subroutine init_baroclinic_pressure(M)
     ! Initialize baroclinic pressure gradient calculation quantities.
-    use input_processor, only: getpard
+    use input_processor, only: getpard,getparl
     implicit none
     ! Argument:
     integer :: M  ! Number of grid points
@@ -95,7 +96,7 @@ contains
     ! Initializes x and y model domain axes
     Lx = getpard('Lx')
     Ly = getpard('Ly')
-
+    openEnd =getparl('openEnd')
     ! Allocate memory for baroclinic pressure gradient calculation
     ! quantities
     call alloc_baro_press_variables(M)
@@ -216,19 +217,21 @@ contains
     kink(0) = 0.d0
     w_wind(0) = 0.d0
 
-    do yy=1,gridbotsurf
-       kink(yy) = - dzn(yy) - dzs(yy) + 2*grid%d_i(yy)
-       kink(yy) = max(min(kink(yy),1.d0),0.d0)
-       if (V_new(yy) < 0) then  ! velocity above the kinked isopycnal
-          w_wind(yy) = w_wind(yy-1) - 2*grid%i_space(yy)*V_new(yy)/Ly*kink(yy)
-       else 
+    if (openEnd) then 
+       do yy=1,gridbotsurf
+          kink(yy) = - dzn(yy) - dzs(yy) + 2*grid%d_i(yy)
+          kink(yy) = max(min(kink(yy),1.d0),0.d0)
+          if (V_new(yy) < 0) then  ! velocity above the kinked isopycnal
+             w_wind(yy) = w_wind(yy-1) - 2*grid%i_space(yy)*V_new(yy)/Ly*kink(yy)
+          else 
+             w_wind(yy) = w_wind(yy-1)
+          endif
+          vt%new(yy) = vt%new(yy) + (w_wind(yy)-w_wind(yy-1))*dt
+       enddo
+       do yy=gridbotsurf+1,grid%M
           w_wind(yy) = w_wind(yy-1)
-       endif
-       vt%new(yy) = vt%new(yy) + (w_wind(yy)-w_wind(yy-1))*dt
-    enddo
-    do yy=gridbotsurf+1,grid%M
-       w_wind(yy) = w_wind(yy-1)
-    enddo
+       enddo
+    endif
 
 !  Remove barotropic mode
     vt%new = vt%new - depth_average(vt%new, 0.d0, grid%D)
