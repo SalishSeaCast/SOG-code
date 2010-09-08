@@ -64,9 +64,6 @@ program SOG
 
   ! *** Temporary until physics equations refactoring is completed
   use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
-  ! ** Temporary
-  use freshwater, only: S_riv, upwell
-  use baroclinic_pressure, only: w_wind
 
   !
   ! Subroutines and functions:
@@ -81,10 +78,10 @@ program SOG
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use air_sea_fluxes, only: wind_stress
-  use freshwater, only: freshwater_phys
+  use freshwater, only: freshwater_phys, S_riv
   use buoyancy, only: calc_buoyancy
   use baroclinic_pressure, only: new_to_old_vel_integrals, &
-       baroclinic_P_gradient
+       baroclinic_P_gradient, w_wind
   use turbulence, only: calc_KPP_diffusivity
   use physics_eqn_builder, only: build_physics_equations, &
        new_to_old_phys_RHS, new_to_old_phys_Bmatrix
