@@ -33,11 +33,11 @@
 
 ! Initial conditions
 "ctd_in"
-  "../sog-initial/ctd/SG-S3-2004-10-19.sog"
+  "../SOG-initial/ctd/SG-S3-2004-10-19.sog"
   "initialization CTD file"
 ! Give a path/filename for either nuts_in or botl_in; set the other to "N/A"
 "nuts_in"
-  "../sog-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
+  "../SOG-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
 "botl_in"
   "N/A"
@@ -48,16 +48,16 @@
 
 ! Time series output files
 "std_phys_ts_out"  
-	"timeseries/std_phys_sog-test1.out"  
+	"timeseries/std_phys_sog-test.out"  
 	"standard physics timeseries"
 "user_phys_ts_out" 
-	"timeseries/user_phys_sog-test1.out" 
+	"timeseries/user_phys_sog-test.out" 
 	"user-defined physics timeseries"
 "std_bio_ts_out"   
-	"timeseries/std_bio_sog-test1.out"   
+	"timeseries/std_bio_sog-test.out"   
 	"standard biology timeseries"
 "user_bio_ts_out"
-	"timeseries/user_bio_sog-test1.out"  
+	"timeseries/user_bio_sog-test.out"  
 	"user-defined biology timeseries"
 
 ! Profiles output
@@ -66,11 +66,11 @@
 ! *** of dates/times for profiles output
 "profday"	303		"yr-day for profile"
 "proftime"	43200.		"day-sec for profile"
-"haloclinefile"	"profiles/halo-sog-test1.out"	"file for halocline results"
-"profile_base"	"profiles/sog-test1"	"profile file base (datetime will be added)"
+"haloclinefile"	"profiles/halo-sog-test.out"	"file for halocline results"
+"profile_base"	"profiles/sog-test"	"profile file base (datetime will be added)"
 ! Hoffmueller diagram output (a collection of profiles at time intervals
 ! for contour or colourmap plotting)
-"Hoffmueller file"	"profiles/hoff-sog-test1.dat"	"file for Hoffmueller results"
+"Hoffmueller file"	"profiles/hoff-sog-test.dat"	"file for Hoffmueller results"
 "Hoffmueller start yr"	2004			"yr to start Hoff output"
 "Hoffmueller start day"	294			"yr-day to start Hoff output"
 "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
@@ -392,14 +392,14 @@
 "bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
 ! File names and control variables for forcing data (wind, meteorology, river flows)
-"wind"         "../sog-forcing/wind/SH_total.dat"  "wind forcing data"
-"air temp"     "../sog-forcing/met/YVRhistAT"      "air temperature forcing data"
-"cloud"        "../sog-forcing/met/YVRhistCF"      "cloud fraction forcing data"
-"humidity"     "../sog-forcing/met/YVRhistHum"     "humidity forcing data"
-"major river"  "../sog-forcing/rivers/Fraser_historic.dat"  "major river flow data"
+"wind"         "../SOG-forcing/wind/SH_total.dat"  "wind forcing data"
+"air temp"     "../SOG-forcing/met/YVRhistAT"      "air temperature forcing data"
+"cloud"        "../SOG-forcing/met/YVRhistCF"      "cloud fraction forcing data"
+"humidity"     "../SOG-forcing/met/YVRhistHum"     "humidity forcing data"
+"major river"  "../SOG-forcing/rivers/Fraser_historic.dat"  "major river flow data"
 "use river temp"  .true.  "Include cooling/heating effect of major river?"
-"minor river"  "../sog-forcing/rivers/Englishman_historic.dat"  "minor river flow data"
+"minor river"  "../SOG-forcing/rivers/Englishman_historic.dat"  "minor river flow data"
 "minor river integ days"  20  "Days over which to integrate minor river flow"
-"alt minor river" "../sog-forcing/rivers/NanimoNorm_historic.dat"  "alternative minor river flow data"
+"alt minor river" "../SOG-forcing/rivers/NanimoNorm_historic.dat"  "alternative minor river flow data"
 
 ! end of file
