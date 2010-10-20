@@ -99,7 +99,6 @@ class TestSOG_Timeseries(unittest.TestCase):
 ! Time series of iteration count for each time step; mixing layer depth;
 ! velocity components, temperature, & salinity; at surface, and averaged over
 ! top 3 m of water column and surface par
-*FromCode: $Source$
 *RunDateTime: 2009-07-27 07:14:24
 *InitialCTDDateTime: 2004-10-19 12:22:00
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity, surface PAR
@@ -163,7 +162,6 @@ class TestGraphPage(unittest.TestCase):
 ! Time series of iteration count for each time step; mixing layer depth;
 ! velocity components, temperature, & salinity; at surface, and averaged over
 ! top 3 m of water column and surface par
-*FromCode: $Source$
 *RunDateTime: 2009-07-27 07:14:24
 *InitialCTDDateTime: 2004-10-19 12:22:00
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity, surface PAR
@@ -180,7 +178,6 @@ class TestGraphPage(unittest.TestCase):
 ! Time series of iteration count for each time step; mixing layer depth;
 ! velocity components, temperature, & salinity; at surface, and averaged over
 ! top 3 m of water column and surface par
-*FromCode: $Source$
 *RunDateTime: 2009-06-27 07:14:24
 *InitialCTDDateTime: 2004-10-19 12:22:00
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity, surface PAR

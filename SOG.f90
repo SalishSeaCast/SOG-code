@@ -115,9 +115,6 @@ program SOG
 
   ! Local variables:
   !
-  ! Code identification string (maintained by CVS), for output file headers
-  character*70 :: &
-       codeId = "$Source$"
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
 
@@ -171,12 +168,10 @@ program SOG
   call init_core_variables()
 
   ! Initialize time series writing code
-  call init_timeseries_output(codeId, datetime_str(runDatetime), &
-       initDatetime)
+  call init_timeseries_output(datetime_str(runDatetime), initDatetime)
 
   ! Initialize profiles writing code
-  call init_profiles_output(codeId, datetime_str(runDatetime), &
-       initDatetime)
+  call init_profiles_output(datetime_str(runDatetime), initDatetime)
 
   ! Initialize fitbottom
   call init_fitbottom()
@@ -563,10 +558,10 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! If it is changed, the change should be committed to CVS.    !!!
      ! !!! For exploratory, debugging, etc. output use                 !!!
      ! !!! write_user_timeseries() below.                              !!!
-     call write_std_profiles(codeId, datetime_str(runDatetime),       &
-          datetime_str(initDatetime), year, day, day_time, dt, grid, &
-          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,      &
-          D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                 &
+     call write_std_profiles(datetime_str(runDatetime),                  &
+          datetime_str(initDatetime), year, day, day_time, dt, grid,     &
+          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
+          D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                    &
           I_par, U%new, V%new)
 
 
@@ -574,7 +569,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! Please don't add arguments to this call.           !!!
      ! !!! Instead put use statements in your local copy of   !!!
      ! !!! write_user_profiles() in the user_output module.   !!!
-     call write_user_profiles(codeId, datetime_str(runDatetime),      &
+     call write_user_profiles(datetime_str(runDatetime), &
           datetime_str(initDatetime), year, day, day_time, dt, grid)
 
 

@@ -26,7 +26,7 @@ module timeseries_output
 
 contains
   
-  subroutine init_timeseries_output(codeId, str_run_Datetime, CTD_Datetime)
+  subroutine init_timeseries_output(str_run_Datetime, CTD_Datetime)
     ! Get the names of the time series output files from stdin using
     ! getpar(), open them, and write their headers.
     use io_unit_defs, only: std_phys_timeseries, std_bio_timeseries, &
@@ -37,8 +37,6 @@ contains
          write_user_bio_timeseries_hdr
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId  ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime  ! Date/time of code run
     type(datetime_), intent(in) :: &
@@ -70,27 +68,27 @@ contains
     ! Standard physics model time series results
     fn = getpars("std_phys_ts_out")
     open(unit=std_phys_timeseries, file=fn, status="replace", action="write")
-    call write_std_phys_timeseries_hdr(codeId, str_run_Datetime, &
+    call write_std_phys_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! User physics model time series results
     fn = getpars("user_phys_ts_out")
     open(unit=user_phys_timeseries, file=fn, status="replace", action="write")
-    call write_user_phys_timeseries_hdr(codeId, str_run_Datetime, &
+    call write_user_phys_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! Standard biology model time series results
     fn = getpars("std_bio_ts_out")
     open(unit=std_bio_timeseries, file=fn, status="replace", action="write")
-    call write_std_bio_timeseries_hdr(codeId, str_run_Datetime, &
+    call write_std_bio_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! User biology model time series results
     fn = getpars("user_bio_ts_out")
     open(unit=user_bio_timeseries, file=fn, status="replace", action="write")
-    call write_user_bio_timeseries_hdr(codeId, str_run_Datetime, &
+    call write_user_bio_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
   end subroutine init_timeseries_output
 
 
-  subroutine write_std_phys_timeseries_hdr(codeId, str_run_Datetime, &
+  subroutine write_std_phys_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! Write standard physics model time series results file header.
     !
@@ -105,14 +103,12 @@ contains
     use io_unit_defs, only: std_phys_timeseries
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId  ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_start_Datetime, &  ! Midnight of start day as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
-    write(std_phys_timeseries, 100) trim(codeId), str_run_Datetime, &
+    write(std_phys_timeseries, 100) str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
 100 format("! SOG code standard time series output from physics model"/,     &
          "! Time series of iteration count for each time step; ",            &
@@ -120,7 +116,6 @@ contains
          "! velocity components, temperature, & salinity; at surface, ",     &
          "and averaged over"/,                                               &
          "! top 3 m of water column, and surface par"/,                      &
-         "*FromCode: ", a/,                                                  &
          "*RunDateTime: ", a/,                                               &
          "*InitialCTDDateTime: ", a/,                                        &
          "*FieldNames: time, iteration count, mixing layer depth, ",         &
@@ -135,7 +130,7 @@ contains
   end subroutine write_std_phys_timeseries_hdr
 
 
-  subroutine write_std_bio_timeseries_hdr(codeId, str_run_Datetime, &
+  subroutine write_std_bio_timeseries_hdr(str_run_Datetime, &
        str_CTD_Datetime, str_start_Datetime)
     ! Write standard biology model time series results file header.
     !
@@ -150,14 +145,12 @@ contains
     use io_unit_defs, only: std_bio_timeseries
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId  ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_start_Datetime, &  ! Midnight of start day as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
-    write(std_bio_timeseries, 200) trim(codeId), str_run_Datetime, &
+    write(std_bio_timeseries, 200) str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
 200 format("! SOG code standard time series output from biology model"/,     &
          "! Time series of nitrate, ammonium, & silicon ",                   &
@@ -167,7 +160,6 @@ contains
          "! at surface, and averaged over top 3 m of water column; "/,       &
          "! and detritus (DON, PON, refractory N, and biogenic Si) ",        &
          "at 20 m depth."/,                                                  &
-         "*FromCode: ", a/,                                                  &
          "*RunDateTime: ", a/,                                               &
          "*InitialCTDDateTime: ", a/,                                        &
          "*FieldNames: time, ",                                              &

@@ -82,7 +82,7 @@ module profiles_output
 
 contains
 
-  subroutine init_profiles_output(codeId, str_run_Datetime, CTD_Datetime)
+  subroutine init_profiles_output(str_run_Datetime, CTD_Datetime)
     ! Get the number of profiles output files (different times) to be
     ! written, the base file name, and the times at which they are to
     ! be written from stdin.  Also get the name of the haloclines
@@ -98,8 +98,6 @@ contains
     use input_processor, only: getpars, getpari, getpariv, getpardv, getpard
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId  ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime  ! Date/time of code run
     type(datetime_), intent(in)   :: &
@@ -140,8 +138,7 @@ contains
        haloclines_fn = getpars("haloclinefile")
        open(unit=haloclines, file=haloclines_fn, status="replace", &
             action="write")
-       call write_haloclines_header(trim(codeId), str_run_Datetime, &
-            str_CTD_Datetime)
+       call write_haloclines_header(str_run_Datetime, str_CTD_Datetime)
        ! Read the profiles results file base-name
        profilesBase_fn = getpars("profile_base")
     endif
@@ -163,27 +160,22 @@ contains
     ! Open the Hoffmueller output results file, and write its header
     open(unit=Hoffmueller, file=Hoffmueller_fn, status="replace", &
          action="write")
-    call write_Hoffmueller_header(trim(codeId), str_run_Datetime, &
-         str_CTD_datetime)
+    call write_Hoffmueller_header(str_run_Datetime, str_CTD_datetime)
   end subroutine init_profiles_output
 
 
-  subroutine write_haloclines_header(codeId, str_run_Datetime, &
-       str_CTD_Datetime)
+  subroutine write_haloclines_header(str_run_Datetime, str_CTD_Datetime)
     ! Write the haloclines results file header
     use io_unit_defs, only: haloclines
     implicit none
     ! Arguments:
-    character(len=*), intent(in) :: &
-         codeId  ! Code identity string
     character(len=*), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
     write(haloclines, 100)
 100 format("! Halocline depths and magnitudes")
-    call write_cmn_hdr_id(haloclines, codeId, str_run_Datetime, &
-         str_CTD_Datetime)
+    call write_cmn_hdr_id(haloclines, str_run_Datetime, str_CTD_Datetime)
     write(haloclines, 110)
 110 format("*FieldNames: year, month, day, year-day, hour, minute, ",   &
          "second, day-seconds, halocline depth, halocline magnitude, ", &
@@ -193,22 +185,18 @@ contains
   end subroutine write_haloclines_header
 
 
-  subroutine write_Hoffmueller_header(codeId, str_run_Datetime, &
-       str_CTD_datetime)
+  subroutine write_Hoffmueller_header(str_run_Datetime, str_CTD_datetime)
     ! Write the Hoffmueller results file header
     use io_unit_defs, only: Hoffmueller
     implicit none
     ! Arguments:
-    character(len=*), intent(in) :: &
-         codeId  ! Code identity string
     character(len=*), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
     write(Hoffmueller, 200)
 200 format("! Profiles for Hoffmueller diagram")
-    call write_cmn_hdr_id(Hoffmueller, codeId, str_run_Datetime, &
-         str_CTD_Datetime)
+    call write_cmn_hdr_id(Hoffmueller, str_run_Datetime, str_CTD_Datetime)
     call write_cmn_hdr_fields(Hoffmueller)
     write(Hoffmueller, 210) Hoff_startyr, Hoff_startday, Hoff_startsec, &
          Hoff_endyr, Hoff_endday, Hoff_endsec, Hoff_interval
@@ -223,8 +211,7 @@ contains
   end subroutine write_Hoffmueller_header
 
 
-  subroutine write_cmn_hdr_id(unit, codeId, str_run_Datetime, &
-       str_CTD_Datetime)
+  subroutine write_cmn_hdr_id(unit, str_run_Datetime, str_CTD_Datetime)
     ! Write the common code and run identification header lines.  This
     ! is broken out to reduce code duplication.
     implicit none
@@ -232,19 +219,16 @@ contains
     integer :: &
          unit  ! I/O unit to write to
     character(len=*), intent(in) :: &
-         codeId  ! Code identity string
-    character(len=*), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
-    write(unit, 300) codeId, str_run_Datetime, str_CTD_Datetime
-300 format("*FromCode: ", a/,                                          &
-         "*RunDateTime: ", a/,                                         &
+    write(unit, 300) str_run_Datetime, str_CTD_Datetime
+300 format("*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a)
   end subroutine write_cmn_hdr_id
 
 
-  subroutine write_std_profiles(codeId, str_run_Datetime, str_CTD_Datetime, &
+  subroutine write_std_profiles(str_run_Datetime, str_CTD_Datetime, &
        year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Ppico, Z,  &
        NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
     ! Check to see if the time is right to write a profiles output
@@ -258,7 +242,6 @@ contains
     use grid_mod, only: grid_
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId            ! Code identity string
     character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
     character(len=19), intent(in) :: str_CTD_Datetime  ! Date/time of CTD init
     integer, intent(in) :: year, day
@@ -326,8 +309,8 @@ contains
                time_sep='q'), &
                status='replace', action='write')
           ! Write the profile results file header
-          call write_profiles_header(codeId, str_run_Datetime, &
-               str_CTD_Datetime, profileDatetime(iprof), derS, dep)
+          call write_profiles_header(str_run_Datetime, str_CTD_Datetime, &
+               profileDatetime(iprof), derS, dep)
           ! Write the profiles numbers, and close the profiles file
           call write_profiles_numbers(profiles, grid, T, S, rho,   &
                Pmicro, Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, &
@@ -374,16 +357,14 @@ contains
   end subroutine write_std_profiles
 
 
-  subroutine write_profiles_header(codeId, str_run_Datetime, &
-       str_CTD_Datetime, pro_Datetime, derS, dep)
+  subroutine write_profiles_header(str_run_Datetime, str_CTD_Datetime, &
+       pro_Datetime, derS, dep)
     ! Write the profile results file header.
     use precision_defs, only: dp
     use io_unit_defs, only: profiles
     use datetime, only: datetime_, datetime_str
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId            ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime, &  ! Date/time of code run
          str_CTD_Datetime     ! Date/time of CTD init
@@ -409,8 +390,7 @@ contains
          "! temperature & salinity), Photosynthetic Available ",       &
          "Radiation, and ",                                            &
          "! Mean Velocity Components (u & v)")
-    call write_cmn_hdr_id(profiles, trim(codeId), str_run_Datetime, &
-         str_CTD_Datetime)
+    call write_cmn_hdr_id(profiles, str_run_Datetime, str_CTD_Datetime)
     call write_cmn_hdr_fields(profiles)
     write(profiles, 410) str_pro_datetime, derS, dep
 410 format("*ProfileDateTime: ", a/,              &

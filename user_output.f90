@@ -24,7 +24,7 @@ module user_output
 
 contains
 
-  subroutine write_user_phys_timeseries_hdr(codeId, str_run_Datetime, &
+  subroutine write_user_phys_timeseries_hdr(str_run_Datetime, &
        str_CTD_Datetime, str_start_Datetime)
     ! Write user physics model time series results file header.
     !
@@ -43,20 +43,17 @@ contains
     use io_unit_defs, only: user_phys_timeseries
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId  ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_start_Datetime, &  ! Midnight of start day as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
-    write(user_phys_timeseries, 100) trim(codeId), str_run_Datetime, &
+    write(user_phys_timeseries, 100) str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
 100 format("! User-defined time series output from physics model."/,      &
          "! Time series of eastern & northern components of layer "/,     &
          "! expansion at surface, and x & y components of baroclinic "/,  &
          "! pressure gradient at surface."/,                              &
-         "*FromCode: ", a/,                                               &
          "*RunDateTime: ", a/,                                            &
          "*InitialCTDDateTime: ", a/,                                     &
          "*FieldNames: time, ut, vt, dPdx_b, dPdy_b"/,                    &
@@ -65,7 +62,7 @@ contains
   end subroutine write_user_phys_timeseries_hdr
 
 
-  subroutine write_user_bio_timeseries_hdr(codeId, str_run_Datetime, &
+  subroutine write_user_bio_timeseries_hdr(str_run_Datetime, &
        str_CTD_Datetime, str_start_Datetime)
     ! User biology model time series results
     ! !!! This is the place to add exploratory, !!!
@@ -83,18 +80,15 @@ contains
     use io_unit_defs, only: user_bio_timeseries
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: &
-         codeId  ! Code identity string
     character(len=19), intent(in) :: &
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_start_Datetime, &  ! Midnight of start day as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
-    write(user_bio_timeseries, 103) trim(codeId), str_run_Datetime, &
+    write(user_bio_timeseries, 103) str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
 103 format("! User-defined time series output from biology model"/,    &
          "! Time series of ..."/,                                      &
-         "*FromCode: ", a/,                                            &
          "*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a/,                                  &
          !SEA         "*FieldNames: time, Avg (0-3m) microplankton biomass, "       &
@@ -169,7 +163,7 @@ contains
   end subroutine write_user_timeseries
 
 
-  subroutine write_user_profiles(codeId, str_run_Datetime, &
+  subroutine write_user_profiles(str_run_Datetime, &
        str_CTD_Datetime, year, day, day_time, dt, grid)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
@@ -182,7 +176,6 @@ contains
     use grid_mod, only: grid_
     implicit none
     ! Arguments:
-    character(len=70), intent(in) :: codeId            ! Code identity string
     character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
     character(len=19), intent(in) :: str_CTD_Datetime  ! Date/time of CTD init
     integer, intent(in) :: year, day

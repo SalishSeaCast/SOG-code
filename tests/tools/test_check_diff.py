@@ -46,7 +46,6 @@ class Test_check_diff(unittest.TestCase):
 ! velocity components, temperature, & salinity; at surface, and averaged over
 ! top 3 m of water column
 and surface par
-*FromCode: $Source$
 *RunDateTime: 2009-03-01 08:29:42
 *InitialCTDDateTime: 2003-10-09 11:47:00
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity
@@ -114,7 +113,6 @@ surface PAR
 ! velocity components, temperature, & salinity; at surface, and averaged over
 ! top 3 m of water column
 and surface par
-*FromCode: $Source$
 *RunDateTime: 2009-03-01 12:29:42
 *InitialCTDDateTime: 2003-10-09 11:47:00
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity
@@ -126,11 +124,11 @@ spam
         exception = self.assertRaises(SystemExit, check_diff, argv)
         self.assertEqual(exception.code, 1)
         self.assertEqual(sys.stdout.getvalue(), """\
-7c7
+6c6
 < *RunDateTime: 2009-03-01 08:29:42
 ---
 > *RunDateTime: 2009-03-01 12:29:42
-10a11
+9a10
 > spam
 
 """)
@@ -150,7 +148,6 @@ spam
 ! velocity components, temperature, & salinity; at surface, and averaged over
 ! top 3 m of water column
 and surface par
-*FromCode: $Source$
 *RunDateTime: 2009-03-01 12:29:42
 *InitialCTDDateTime: 2003-10-09 11:47:00
 *FieldNames: time, iteration count, mixing layer depth, surface u velocity, 3 m avg u velocity, surface v velocity, 3 m avg v velocity, surface temperature, 3 m avg temperature, surface salinity, 3 m avg salinity
