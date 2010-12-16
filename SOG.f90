@@ -297,6 +297,11 @@ program SOG
         ! they can be used by other modules.
         call calc_KPP_diffusivity(Bf, h%new, h%i, h%g)
 
+        ! Calculate baroclinic pressure gradient components
+        !
+        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
+        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
+
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
         ! the physics quantities.
@@ -456,11 +461,6 @@ S_RHS%diff_adv%new = Gvector%s
         vel_scale = 0.02d0 * sqrt(Uprev(1) ** 2 + Vprev(1) ** 2) + 0.005d0
         del%U = abs(U%new(1) - Uprev(1)) / vel_scale
         del%V = abs(V%new(1) - Vprev(1)) / vel_scale
-
-        ! Calculate baroclinic pressure gradient components
-        !
-        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
-        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
 
         ! Test for convergence of implicit solver
         if (count >= 2 .and. max(del%h, del%U, del%V) < 1.0d0) then
