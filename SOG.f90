@@ -578,17 +578,12 @@ S_RHS%diff_adv%new = Gvector%s
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt)
      scount = scount + 1
-     !*** Fix this to be grid independent
-     sumS = sumS + 0.5 * (S%new(2) + S%new(3))
+     ! Calculate average 1m salinity to compare to empirical function
      call interp_value(1.0d0, 0, grid%d_g, S%new, Sone, junk)
-     if (0.5 * (S%new(2) + S%new(3))- Sone .ne. 0) then
-        write (*,*) 'Sdiff', 0.5 * (S%new(2) + S%new(3))- Sone
-     endif
+     sumS = sumS + Sone
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
- 
-   
      write (129,*) S_riv,  S%new(1)
 
   end do  !--------- End of time loop ----------
@@ -596,8 +591,6 @@ S_RHS%diff_adv%new = Gvector%s
   write (stdout,*) "For Ft tuning"
   write (stdout,*) "Average SSS should be", sumSriv / float(scount)
   write (stdout,*) "Average SSS was", sumS / float(scount)
-
-
 
   ! Close output files
   call timeseries_output_close
