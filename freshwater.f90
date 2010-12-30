@@ -122,7 +122,6 @@ contains
 
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
-    ! Fresh water scale factor for river flows
    ! Fresh water scale factor for river flows 
     Qbar = getpard("Qbar")
     F_SOG = getpard("F_SOG") 

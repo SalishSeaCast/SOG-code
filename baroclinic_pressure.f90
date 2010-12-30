@@ -189,7 +189,11 @@ contains
     call iso_distortion(ut%new, dze)
     call iso_distortion(-ut%new, dzw)
     call iso_distortion(vt%new, dzn)
-    call iso_distortion_openend(-vt%new, dzs, gridbotsurf)
+    if (openend) then
+       call iso_distortion_openend(-vt%new, dzs, gridbotsurf)
+    else
+       call iso_distortion(-vt%new,dzs)
+    endif
 
     ! Make sure values are not below 40m
 
@@ -211,13 +215,14 @@ contains
     dPdx_b = dPdx_b * g / (Lx * rho_g(1:grid%M)) - wbar%u(0) / grid%D
     dPdy_b = dPdy_b * g / (Ly * rho_g(1:grid%M)) - wbar%v(0) / grid%D
 
-    ! calculate the upwelling driven by the wind and its correction on ut
-    ! kink is the change in orientation of the isopycnals along the fjord
-
-    kink(0) = 0.d0
-    w_wind(0) = 0.d0
 
     if (openEnd) then 
+       ! calculate the upwelling driven by the wind and its correction on ut
+       ! kink is the change in orientation of the isopycnals along the fjord
+
+       kink(0) = 0.d0
+       w_wind(0) = 0.d0
+
        do yy=1,gridbotsurf
           kink(yy) = - dzn(yy) - dzs(yy) + 2*grid%d_i(yy)
           kink(yy) = max(min(kink(yy),1.d0),0.d0)

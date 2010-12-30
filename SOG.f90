@@ -16,7 +16,8 @@ program SOG
   !
   ! Variables:
   use grid_mod, only: &
-       grid  ! Grid parameters and depth and spacing arrays
+       grid, &  ! Grid parameters and depth and spacing arrays
+       interp_value  ! interpolate salinity grid to find 1 m value
   use core_variables, only: &
        U,  &  ! Cross-strait (35 deg) velocity component arrays
        V,  &  ! Along-strait (305 deg) velocity component arrays
@@ -120,8 +121,8 @@ program SOG
 
 
   real(kind=dp) :: &
-       sumS=0, sumSriv=0
-  integer :: scount=0
+       sumS=0, sumSriv=0, Sone
+  integer :: scount=0, junk
 
   ! Interpolated river flows
   real(kind=dp) :: Qinter  ! Fraser River
@@ -297,6 +298,11 @@ program SOG
         ! they can be used by other modules.
         call calc_KPP_diffusivity(Bf, h%new, h%i, h%g)
 
+        ! Calculate baroclinic pressure gradient components
+        !
+        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
+        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
+
         ! Build the terms of the semi-implicit diffusion/advection
         ! PDEs with Coriolis and baroclinic pressure gradient terms for
         ! the physics quantities.
@@ -457,11 +463,6 @@ S_RHS%diff_adv%new = Gvector%s
         del%U = abs(U%new(1) - Uprev(1)) / vel_scale
         del%V = abs(V%new(1) - Vprev(1)) / vel_scale
 
-        ! Calculate baroclinic pressure gradient components
-        !
-        ! This calculates the values of the dPdx_b, and dPdy_b arrays.
-        call baroclinic_P_gradient(dt, U%new, V%new, rho%g)
-
         ! Test for convergence of implicit solver
         if (count >= 2 .and. max(del%h, del%U, del%V) < 1.0d0) then
            exit
@@ -577,17 +578,19 @@ S_RHS%diff_adv%new = Gvector%s
      ! Increment time, calendar date and clock time
      call new_year(day_time, day, year, time, dt)
      scount = scount + 1
-     !*** Fix this to be grid independent
-     sumS = sumS + S%new(1)
+     ! Calculate average 1m salinity to compare to empirical function
+     call interp_value(1.0d0, 0, grid%d_g, S%new, Sone, junk)
+     sumS = sumS + Sone
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
- 
-   
      write (129,*) S_riv,  S%new(1)
 
   end do  !--------- End of time loop ----------
 
+  write (stdout,*) "For Ft tuning"
+  write (stdout,*) "Average SSS should be", sumSriv / float(scount)
+  write (stdout,*) "Average SSS was", sumS / float(scount)
 
   ! Close output files
   call timeseries_output_close

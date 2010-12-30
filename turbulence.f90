@@ -726,6 +726,59 @@ contains
     endif
   end function w_scale
 
+  function w_scale_special(h, d, c) result(w_value)
+    ! Calculate the vertical turbulent velocity scale value at the
+    ! specified depth for use in the bottom of (20) when no wind
+    ! note that abs(u_star) < epsilon(u_star) .and. Bf < 0.0d0 
+
+    ! Elements from other modules:
+    ! Type Definitions:
+    use precision_defs, only: dp
+    use water_properties, only: alpha
+
+    implicit none
+
+    ! Arguments:
+    real(kind=dp), intent(in) :: &
+         h,  &  ! Mixing layer extent [m]
+         d,  &  ! Depth [m]
+         c      ! Coefficient of non-dimensional turbulent flux profile
+                ! in 1/3 power law regime
+
+    ! Result:
+    real(kind=dp) :: &
+         w_value  ! Value of the turbulent vertical velocity scale at
+                  ! the specified depth.
+
+    ! Local variables:
+    real(kind=dp) :: &
+         d_surf, &  ! Surface layer extent [m]
+         wspecial, &! a special wstar based on heat flux only
+         sigma      ! Non-dimensional vertical coordinate in the
+                    ! mixing layer
+
+    ! Calculate extent of surface layer
+    d_surf = epsiln * h
+
+    ! Special case of the limit of convectively unstable mixing
+    ! layer in the absence of wind forcing (Large, et al (1994),
+    ! eqn 15)
+    if (d < d_surf) then
+       ! In the surface layer
+       sigma = d / h
+    elseif (d_surf <= d ) then
+       ! Between the surface layer and mixing layer depths
+       ! and below the mixing layer as scales in unstable circumstances
+       ! should continue (below Eqn 13)
+       sigma = epsiln
+    endif
+    ! Calculate a special "wstar" based on wbar%t(0) not Bf
+    wspecial = (alpha%g(0) * wbar%t(0) * h) ** (1.0d0 / 3.0d0)
+    ! Calculate the turbulent velocity scale value
+    w_value = kapa * (c * kapa * sigma) ** (1.0d0 / 3.0d0) * wspecial
+
+  end function w_scale_special
+
 
   function nondim_momentum_flux(d) result(phi_m)
     ! Return the value of the non-dimensional momentum flux profile at
@@ -1130,22 +1183,42 @@ contains
 
     ! Note that abs(x) > epsilon(x) is a real-number-robust test for
     ! x /= 0.
-    if ((abs(u_star) > epsilon(u_star) .or. abs(Bf) > epsilon(Bf)) &
-         .and. (Bf < 0.0d0) &
-         .and. d_i < h) then
-       ! There is wind or convective forcing, it is unstable, and
-       ! we're in the mixing layer.
-       ! Calculate Value of the scalar turbulent velocity scale at the
-       ! depth for which the non-local transport term is being
-       ! calculated.
-       w_S = w_scale(h, d_i, Bf, nondim_scalar_flux, c_s)
-       ! Calculate value of the non-local transport term for the
-       ! specified flux, and depth,
-       gamma_value = C_star * kapa                     &
-            * (c_s * kapa * epsiln) ** (1.0d0 / 3.0d0) &
-            * flux / (w_S * h + epsilon(h))
+
+!    if ((abs(u_star) > epsilon(u_star) .or. abs(Bf) > epsilon(Bf)) &
+!         .and. (Bf < 0.0d0) &
+!         .and. d_i < h) then
+    if ( Bf < 0.0d0  .and. d_i < h) then
+       ! it is unstable and we're in the mixed layer
+       if (abs(u_star) > epsilon(u_star)) then
+          ! there is wind forcing
+          ! Calculate Value of the scalar turbulent velocity scale at the
+          ! depth for which the non-local transport term is being
+          ! calculated.
+          w_S = w_scale(h, d_i, Bf, nondim_scalar_flux, c_s)
+          ! Calculate value of the non-local transport term for the
+          ! specified flux, and depth,
+          gamma_value = C_star * kapa                     &
+               * (c_s * kapa * epsiln) ** (1.0d0 / 3.0d0) &
+               * flux / (w_S * h + epsilon(h))
+       elseif (abs(Bf) > epsilon(Bf)) then
+          ! there is no wind forcing
+          ! because, typically the salinity is stabilizing and the temp
+          ! is destabilizing, if we use (20) from Large we can get 
+          ! enormous forcing if Bf is close to zero because w* is in the
+          ! denominator.  Instead make gamma propto wbar%t(0) to the 2/3
+          ! K remains propto Bf**1/3
+          w_S = w_scale_special(h, d_i, c_s)
+          ! Calculate value of the non-local transport term for the
+          ! specified flux, and depth,
+          gamma_value = C_star * kapa                     &
+               * (c_s * kapa * epsiln) ** (1.0d0 / 3.0d0) &
+               * flux / (w_S * h + epsilon(h))
+       else
+          ! No forcing
+          gamma_value = 0.0d0
+       endif
     else
-       ! No forcing, or it's stable, or we're below the mixing layer.
+       ! it's stable, or we're below the mixing layer.
        gamma_value = 0.0d0
     endif
   end function nonlocal_scalar_transport
