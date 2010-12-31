@@ -47,7 +47,7 @@ module datetime
   !                  in the yr, mo, day, hr, min & sec elements of the
   !                  datetime structure provided.
   !
-  !   new_year -- Increment a collection of date/time values by the
+  !   increment_date_time -- Increment a collection of date/time values by the
   !               specified dt.
 
   use precision_defs, only: dp
@@ -74,18 +74,18 @@ module datetime
        datetime_diff, &  ! Return the difference between the datetime
                          ! structures as a timedelta strcuture.
        ! Subroutines:
-       calendar_date, &  ! Set the month, and day elements of the
-                         ! datetime structure provided from its year
-                         ! and year-day elements.
-       clock_time,    &  ! Set the hour, minute, and second elements
-                         ! of the datetime structure provided from its
-                         ! day_sec element.
-       os_datetime,   &  ! Read the operating system date and time and
-                         ! fill in the yr, mo, day, hr, min & sec
-                         ! elements of the datetime structure
-                         ! provided.
-       new_year          ! Increment a collection of date/time values
-                         ! by the specified dt.
+       calendar_date, &     ! Set the month, and day elements of the
+                            ! datetime structure provided from its
+                            ! year and year-day elements.
+       clock_time,    &     ! Set the hour, minute, and second
+                            ! elements of the datetime structure
+                            ! provided from its day_sec element.
+       os_datetime,   &     ! Read the operating system date and time
+                            ! and fill in the yr, mo, day, hr, min &
+                            ! sec elements of the datetime structure
+                            ! provided.
+       increment_date_time  ! Increment a collection of date/time values
+                            ! by the specified dt.
 
   ! Public Type Definitions:
   !
@@ -428,7 +428,7 @@ contains
   end function datetime_diff
 
 
-  subroutine new_year(day_time, day, year, time, dt)
+  subroutine increment_date_time(day_time, day, year, time, dt)
     ! Increment a collection of date/time values by the specified dt.
     implicit none
     ! Arguments:
@@ -457,6 +457,6 @@ contains
           year = year + 1
        endif
     endif
-  end subroutine new_year
+  end subroutine increment_date_time
     
 end module datetime

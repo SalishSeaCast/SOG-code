@@ -101,7 +101,7 @@ program SOG
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
-       new_year
+       increment_date_time
   use irradiance, only: irradiance_sog
 
   ! Inherited modules
@@ -573,7 +573,7 @@ S_RHS%diff_adv%new = Gvector%s
 
 
      ! Increment time, calendar date and clock time
-     call new_year(day_time, day, year, time, dt)
+     call increment_date_time(day_time, day, year, time, dt)
      scount = scount + 1
      ! Calculate average 1m salinity to compare to empirical function
      call interp_value(1.0d0, 0, grid%d_g, S%new, Sone, junk)
