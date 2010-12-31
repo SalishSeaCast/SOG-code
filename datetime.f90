@@ -184,8 +184,8 @@ contains
 
 
   function leapday(year) result(leap_day)
-    ! Return and integer (0 or 1) for the number of leap days in the
-    ! year of the specified datetime structure.
+    ! Return an integer (0 or 1) for the number of leap days in the
+    ! specified year.
     implicit none
     ! Argument:
     integer :: year
@@ -432,44 +432,31 @@ contains
     ! Increment a collection of date/time values by the specified dt.
     implicit none
     ! Arguments:
-    real (kind=dp), INTENT(inout) :: day_time, time
-    real (kind=dp), INTENT(in) :: dt            
-    integer, INTENT(inout) :: day, year
+    real (kind=dp), intent(inout) :: &
+       day_time, &  ! Day-sec counter
+       time         ! Time counter through run; seconds since midnight
+                    ! of initDatetime
+    integer, intent(inout) :: &
+       day, &  ! Year-day counter
+       year    ! Year counter
+    real (kind=dp), intent(in) :: &
+       dt  ! Time step [s]
     ! Local Parameters:
-    real (kind=dp), parameter :: nosecondperday = 86400.
-    real (kind=dp), parameter :: nodayperyear = 365.
+    real (kind=dp), parameter :: secs_per_day = 86400.0d0
+    real (kind=dp), parameter :: days_per_year = 365.0d0
     
     day_time = day_time + dt
     time = time + dt
     ! have we crossed midnight?
-    if (day_time >= nosecondperday) then
-       day_time = day_time - nosecondperday
+    if (day_time >= secs_per_day) then
+       day_time = day_time - secs_per_day
        day = day + 1
        ! have we crossed year end?
-       if (day > nodayperyear) then 
-          if ( .not. leapyear(year) .or. day > nodayperyear+1) then
-             day = 1
-             year = year + 1
-          endif
+       if (day > days_per_year + leapday(year)) then 
+          day = 1
+          year = year + 1
        endif
     endif
   end subroutine new_year
-
-
-  logical function leapyear (year)
-    
-    integer, intent (in) :: year
-    integer, parameter :: &
-         leaps(15) = (/1952, 1956, 1960, 1964, 1966, 1972, 1976, 1980, &
-                       1984, 1988, 1992, 1996, 2000, 2004, 2008/)
-  
-    leapyear = .false.
-    if (year < 1950 .or. year > 2010) then
-       write (*,*) "Function leap-year out of bounds"
-       stop
-    endif
-  if (any(leaps == year)) leapyear = .true.
-  
-  end function leapyear
     
 end module datetime
