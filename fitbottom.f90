@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module fitbottom
   ! Constants, functions, and subroutines for calculation of boundary
   ! condition values at bottom of grid.

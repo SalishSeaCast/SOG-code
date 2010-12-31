@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module irradiance
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to light and heat influences in SOG code.

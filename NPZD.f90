@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module NPZD
   ! Type definitions, and subroutines for the biological model.
   !

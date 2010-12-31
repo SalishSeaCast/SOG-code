@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module baroclinic_pressure
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the baroclinic pressure gradient

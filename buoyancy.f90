@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module buoyancy
   ! Variable declarations, and subroutines related to the buoyancy
   ! profile and surface buoyancy flux calculation in the SOG code.

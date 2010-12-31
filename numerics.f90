@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module numerics
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the numerical simulation aspects of the

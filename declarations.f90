@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module declarations
 ! *** What's in here?
 

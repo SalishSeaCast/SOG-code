@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module IMEX_solver
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the IMEX semi-implicit PDE solver in the

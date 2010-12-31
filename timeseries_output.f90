@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module timeseries_output
   ! Subroutines to write time series results to files specified in run
   ! parameters file.  The output files contain headers so that they

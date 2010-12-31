@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module io_unit_defs
   ! Input/output unit definitions
 

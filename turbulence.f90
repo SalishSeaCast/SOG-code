@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module turbulence
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the KPP turbulence parameterization in the

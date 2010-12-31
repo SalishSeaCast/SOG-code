@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module find_upwell
   ! Subroutines that calculate the vertical profile of entrainment
   ! velocity (upwelling), and the vertical advection of quantities (T,

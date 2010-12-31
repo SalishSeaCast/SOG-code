@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module grid_mod
   ! Type definitions, variables, functions, and subroutines related to
   ! the grid.

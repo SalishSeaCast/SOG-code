@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module malloc
   ! Memory allocation module.  Supplied memory allocation and
   ! deallocation status check subroutines.

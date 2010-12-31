@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module biology_eqn_builder
   ! Type definitions, variable declarations, and subroutines related
   ! to building the semi-implicit diffusion/advection PDEs for the

@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module water_properties
   ! Type definition, variable declarations, and subroutine to
   ! calculate water properties: density (rho), thermal expansion

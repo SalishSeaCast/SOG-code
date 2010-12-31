@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module biology_model
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the biolgy model in the SOG code.

@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module mixing_layer
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the mixing layer depth calculation in the

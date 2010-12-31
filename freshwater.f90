@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module freshwater
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the fresh water flow influences SOG code.

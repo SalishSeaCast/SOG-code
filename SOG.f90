@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 program SOG      
   ! Coupled physical and biological model of the Strait of Georgia
 

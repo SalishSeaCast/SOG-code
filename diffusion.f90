@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module diffusion
   ! Type definitions & variable declarations, and subroutines related
   ! to the diffusion terms in the semi-implicit PDEs in the SOG code.

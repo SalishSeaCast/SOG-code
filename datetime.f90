@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module datetime
   ! A collection of type definitions, functions, and subroutines for
   ! manipulating dates and times.  Some are copied from the date_sub

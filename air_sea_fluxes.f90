@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module air_sea_fluxes
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to air-sea flux calculations in the SOG code.

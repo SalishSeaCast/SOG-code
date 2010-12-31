@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module user_output
   ! Subroutines for user-specified output in the SOG code.
   !

@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module fundamental_constants
   ! Parameter value declarations of fundamental constants widely used
   ! in other modules of the SOG code.

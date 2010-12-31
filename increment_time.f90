@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module increment_time
 
   use precision_defs, only: dp

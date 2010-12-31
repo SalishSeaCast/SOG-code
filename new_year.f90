@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 subroutine new_year(day_ti, o_day, o_year, ti, ddt, month)
 
   USE mean_param

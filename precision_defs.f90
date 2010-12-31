@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module precision_defs
   ! Define numerical precision parameters for intrinsic types.
   ! Parameters defined here are for use as kind arguments in 

@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module physics_model
   ! Wrapper subroutines for setting up and tearing down the physics
   ! model in the SOG code.

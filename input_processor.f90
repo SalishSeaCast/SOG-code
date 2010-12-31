@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module input_processor
   ! Subroutines and functions for processing the SOG infile (read from
   ! stdin).  This module provides the utility routines, but the actual

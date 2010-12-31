@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module core_variables
   ! Type definitions, variable declarationss, and subroutines related
   ! to the core variables that the SOG code calculates.

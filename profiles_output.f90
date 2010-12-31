@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module profiles_output
   ! Variables and subroutines to write profiles and halocline results
   ! to files specified in run parameters file.  The output files

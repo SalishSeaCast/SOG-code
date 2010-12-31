@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 SUBROUTINE surface_flux_sog(mm,ro, & 
                          temp_o, I, Q_t, alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid)

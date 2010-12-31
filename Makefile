@@ -1,6 +1,3 @@
-# $Id$
-# $Source$
-
 # Makefile for SoG code (bio-physical model of the Strait of Georgia)
 # Configured for g95 on Mac OS/X and for pgf90 on coho at UBC EOS
 

@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module surface_forcing
   ! *** This is a very poorly named module!
 

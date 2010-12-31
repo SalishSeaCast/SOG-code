@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 subroutine allocate1(M, stat)
 
       use mean_param

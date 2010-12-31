@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module rungekutta
 
 ! this module contains the subroutines that run the adaptive Runge-Kutta for

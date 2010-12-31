@@ -1,6 +1,3 @@
-! $Id$
-! $Source$
-
 module unit_conversions
   ! A collection of functions that do unit conversions:
   !  CtoK -- degrees Celcius to Kelvins
