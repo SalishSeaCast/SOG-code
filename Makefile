@@ -39,8 +39,6 @@ IMEX_solver.o \
 \
 user_output.o timeseries_output.o profiles_output.o \
 air_sea_fluxes.o surface_flux_sog.o \
-increment_time.o \
-\
 SOG.o
 
 # The executable is the default target that is built by "make"

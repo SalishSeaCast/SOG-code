@@ -100,8 +100,8 @@ program SOG
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
-  use datetime, only: os_datetime, calendar_date, clock_time, datetime_str
-  use increment_time, only: new_year
+  use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
+       new_year
   use irradiance, only: irradiance_sog
 
   ! Inherited modules
