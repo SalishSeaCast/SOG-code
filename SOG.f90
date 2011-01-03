@@ -231,17 +231,17 @@ program SOG
      call new_to_old_bio_RHS()
      call new_to_old_bio_Bmatrix()
 
-    
 
      ! Get forcing data
      call get_forcing(year, day, day_time, &
           Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
           unow, vnow)
 
+     ! Calculate sunlight effects
      call irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
           Qinter, P%micro, P%nano, P%pico, jmax_i)
 
-     DO count = 1, max_iter !------ Beginning of the implicit solver loop ------
+     do count = 1, max_iter !---- Beginning of the implicit solver loop ----
         ! Calculate gradient pofiles of the velocity field and water column
         ! temperature, and salinity at the grid layer interface depths
         U%grad_i = gradient_i(U%new)
