@@ -1,5 +1,5 @@
 program SOG      
-  ! Coupled physical and biological model of the Strait of Georgia
+  ! Coupled physical and biological model of the deep estuaries.
 
   ! Things that we will use from other modules
   !
