@@ -242,8 +242,9 @@ program SOG
           Qinter, P%micro, P%nano, P%pico, jmax_i)
 
      do count = 1, max_iter !---- Beginning of the implicit solver loop ----
-        ! Calculate gradient pofiles of the velocity field and water column
-        ! temperature, and salinity at the grid layer interface depths
+        ! Calculate gradient profiles of the velocity field and water
+        ! column temperature, and salinity at the grid layer interface
+        ! depths
         U%grad_i = gradient_i(U%new)
         V%grad_i = gradient_i(V%new)
         T%grad_i = gradient_i(T%new)
@@ -251,12 +252,12 @@ program SOG
 
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
-        CALL surface_flux_sog(grid%M, rho%g, &
-             T%new(0), I, Q_t,        &
+        call surface_flux_sog(grid%M, rho%g, &
+             T%new(0), I, Q_t,               &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value)
 
-        ! Calculate the wind stress, and the turbulent kinenatic flux
+        ! Calculate the wind stress, and the turbulent kinematic flux
         ! at the surface.
         !
         ! This calculates the values of the wbar%u(0), and wbar%v(0)
@@ -273,7 +274,8 @@ program SOG
         ! (S_riv), the surface turbulent kinematic salinity flux
         ! (wbar%s(0)), and the profile of fresh water contribution to
         ! the salinity (F_n)
-        call freshwater_phys(Qinter, Einter, RiverTemp, S%old(1), T%old(1), T%old(grid%M+1), h%new)
+        call freshwater_phys(Qinter, Einter, RiverTemp, S%old(1), &
+             T%old(1), T%old(grid%M+1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
         ! buoyancy flux, and the surface buoyancy forcing.
