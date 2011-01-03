@@ -130,7 +130,6 @@ program SOG
   real(kind=dp) unow, vnow
 
 
-
   ! ---------- Beginning of Initialization Section ----------
   ! Get the current date/time from operating system to timestamp the
   ! run with
@@ -183,9 +182,9 @@ program SOG
   call init_IMEX_solver(grid%M)
 
   ! Allocate memory
-  ! *** It would be nice if everything in allocate[13] could end up in 
-  ! *** alloc_* subroutines private to various modules, and called by 
-  ! *** their init_* subroutines.
+  ! *** It would be nice if the rest of the code in allocate1 could
+  ! *** end up in alloc_* subroutines private to various modules,
+  ! *** that are called by their init_* subroutines.
   CALL allocate1(grid%M, alloc_stat) 
   DO xx = 1,12
      IF (alloc_stat(xx) /= 0) THEN
