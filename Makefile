@@ -12,6 +12,12 @@ FFLAGS-PROD = -O3 -fimplicit-none -Wall
 LD = g95
 LDFLAGS = -o
 
+# Archiver to build objects library for unit tests
+AR = ar
+ARFLAGS = cr
+OBJLIB = libSOG.a
+UNITTESTS = tests/unit_tests
+
 # File deleter and flags for cleanup
 RM = rm
 RMFLAGS = -rf
@@ -49,6 +55,15 @@ SOG.o
 $(EXEC): FFLAGS = $(FFLAGS-DEV)
 $(EXEC): $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $@
+
+# "make tests" creates or updates the library of object files, then
+# builds and runs the unit test suite
+tests: $(OBJLIB) $(UNITTESTS)/*.o
+	(cd $(UNITTESTS); make)
+
+$(OBJLIB): FFLAGS = $(FFLAGS-DEV)
+$(OBJLIB): $(OBJS)
+	$(AR) $(ARFLAGS) $(OBJLIB) $(OBJS)
 
 # "make tags" builds a list of tags for subroutines, modules, etc. to
 # make source file navigation in Emacs easier.  By convention the tags
