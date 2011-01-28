@@ -58,7 +58,7 @@ $(EXEC): $(OBJS)
 
 # "make tests" creates or updates the library of object files, then
 # builds and runs the unit test suite
-tests: $(OBJLIB) $(UNITTESTS)/*.o
+tests: $(OBJLIB) $(UNITTESTS)/*.f90
 	(cd $(UNITTESTS); make)
 
 $(OBJLIB): FFLAGS = $(FFLAGS-DEV)
