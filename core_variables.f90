@@ -363,7 +363,6 @@ contains
     if(.not. got_Si) then
        Si = 50.0d0
     endif
-write(*,*) N%O
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
     P%micro = P%micro / N2chl
     ! Read the initial ratios of phytoplankton classes from infile,
