@@ -70,8 +70,8 @@ contains
 !!$  end subroutine read_biology_params
 
 
-  subroutine calc_bio_rate(time, day, dt, M, precision, step_guess, step_min,    &
-       T_new, I_par, Pmicro, Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
+  subroutine calc_bio_rate(time, day, dt, M, T_new, I_par, Pmicro, Pnano, &
+       Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the biology model ODEs to advance the biology quantity values
     ! to the next time step, and calculate the growth - mortality terms
     ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
@@ -87,8 +87,6 @@ contains
     integer, intent(in) :: day         ! Current model year-day
     real(kind=dp), intent(in) :: dt    ! Time step
     integer, intent(in) :: M           ! Number of grid points
-    ! Passed through to ODE solver:
-    real(kind=dp), intent(in) :: precision, step_guess, step_min
     real(kind=dp), dimension(0:), intent(in) :: T_new   ! Temperature
     real(kind=dp), dimension(0:), intent(in) :: I_par  ! Photosynth avail rad
     real(kind=dp), dimension(0:), intent(in) :: &
@@ -106,6 +104,12 @@ contains
     ! Local variables:
     integer :: N_ok, N_bad    ! counts bad and good steps in odeint
     real(kind=dp) :: next_time
+    ! Biology model ODE solver control parameters
+    real(kind=dp), parameter :: &
+         precision = 1.0d-4,  &
+         step_guess = 100.0d0,  &
+         step_min = 3.0d0
+
 
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on

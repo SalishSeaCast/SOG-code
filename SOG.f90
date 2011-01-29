@@ -104,8 +104,8 @@ program SOG
        increment_date_time
   use irradiance, only: irradiance_sog
 
-  ! Inherited modules
-  ! *** Goal is to make these go away
+  ! Inherited module
+  ! *** Goal is to make this go away
   use declarations
 
   implicit none
@@ -127,13 +127,6 @@ program SOG
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
   real(kind=dp) :: unow, vnow
-  ! Biology model ODE solver control parameters
-  ! *** TODO: These should either be read from the infile, or moved into
-  ! ***       the biology_model module.
-  real(kind=dp), parameter :: &
-       precision = 1.0d-4,  &
-       step_guess = 100.0d0,  &
-       step_min = 3.0d0
 
 
   ! ---------- Beginning of Initialization Section ----------
@@ -476,10 +469,9 @@ S_RHS%diff_adv%new = Gvector%s
      ! Solve the biology model ODEs to advance the biology quantity values
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
-     call calc_bio_rate(time, day, dt, grid%M, precision, step_guess, step_min,  &
-          T%new(0:grid%M), I_Par, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,   &
+     call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M), I_Par, &
+          P%micro, P%nano, P%pico, Z, N%O, N%H, Si,                    &
           D%DON, D%PON, D%refr, D%bSi)
-!write (142,*) time, S%new(158),  '% calc_bio_rate'
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
      !
@@ -487,8 +479,8 @@ S_RHS%diff_adv%new = Gvector%s
      ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
-     call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, N%O, N%H, & ! in
-          Si, D%DON, D%PON, D%refr, D%bSi, wupwell + w_wind)                        ! in
+     call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
+          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, wupwell + w_wind)
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
