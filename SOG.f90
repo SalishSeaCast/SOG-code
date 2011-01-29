@@ -358,9 +358,9 @@ S_RHS%diff_adv%new = Gvector%s
         call solve_phys_eqns(grid%M, day, time, &  ! in
              U%old, V%old, T%old, S%old,        &  ! in
              U%new, V%new, T%new, S%new)           ! out
-        if (minval(S%new) < 0) then
-           write (*,*) 'Salinity less than 0'
-           stop
+        if (minval(S%new) < epsilon(S%new(0))) then
+           write (stdout, *) 'Salinity less than 0'
+           call exit(1)
         endif
     
         ! Update boundary conditions at surface, and bottom of grid
@@ -497,8 +497,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! biology quantities.
      call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi, day, time)
-
-   !
+     !
      !---------- End of Biology Model ----------
 
      ! Update boundary conditions at surface
@@ -519,17 +518,13 @@ S_RHS%diff_adv%new = Gvector%s
      !
      ! For those variables that we have data for, use the annual fit
      ! calculated from the data
-     call bot_bound_time(year, day, day_time, &                             ! in
+     call bot_bound_time(year, day, day_time, &                       ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
           Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
           P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
-
-
-
      call bot_bound_uniform(grid%M, D%DON, D%PON, D%refr, D%bSi)
-
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason.    !!!
