@@ -59,6 +59,9 @@
 "user_bio_ts_out"
 	"timeseries/user_bio_SOG.out"  
 	"user-defined biology timeseries"
+"std_chem_ts_out"   
+	"timeseries/std_chem_SOG.out"   
+	"standard chemistry timeseries"
 
 ! Profiles output
 "noprof"	1		"no. of profiles to print"

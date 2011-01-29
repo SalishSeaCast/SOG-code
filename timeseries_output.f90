@@ -26,12 +26,13 @@ contains
   subroutine init_timeseries_output(str_run_Datetime, CTD_Datetime)
     ! Get the names of the time series output files from stdin using
     ! getpar(), open them, and write their headers.
-    use io_unit_defs, only: std_phys_timeseries, std_bio_timeseries, &
-         user_phys_timeseries, user_bio_timeseries
+    use io_unit_defs, only: &
+         std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
+         user_phys_timeseries, user_bio_timeseries, user_chem_timeseries
     use input_processor, only: getpars
     use datetime, only: datetime_, datetime_str
-    use user_output, only: write_user_phys_timeseries_hdr, &
-         write_user_bio_timeseries_hdr
+    use user_output, only: &
+         write_user_phys_timeseries_hdr, write_user_bio_timeseries_hdr
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: &
@@ -81,6 +82,11 @@ contains
     fn = getpars("user_bio_ts_out")
     open(unit=user_bio_timeseries, file=fn, status="replace", action="write")
     call write_user_bio_timeseries_hdr(str_run_Datetime, &
+         str_CTD_Datetime, str_start_Datetime)
+    ! Standard chemistry model time series results
+    fn = getpars("std_chem_ts_out")
+    open(unit=std_chem_timeseries, file=fn, status="replace", action="write")
+    call write_std_chem_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
   end subroutine init_timeseries_output
 
@@ -147,9 +153,9 @@ contains
          str_start_Datetime, &  ! Midnight of start day as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
-    write(std_bio_timeseries, 200) str_run_Datetime, &
+    write(std_bio_timeseries, 100) str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime
-200 format("! SOG code standard time series output from biology model"/,     &
+100 format("! SOG code standard time series output from biology model"/,     &
          "! Time series of nitrate, ammonium, & silicon ",                   &
          "concentration; and "/,                                             &
          "! phytoplankton (micro & nano & pico) & microzooplankton ",        &
@@ -178,16 +184,61 @@ contains
          "uM"/,                                                              &
          "*EndOfHeader")
   end subroutine write_std_bio_timeseries_hdr
+
+
+  subroutine write_std_chem_timeseries_hdr(str_run_Datetime, &
+         str_CTD_Datetime, str_start_Datetime)
+    ! Write standard chemistry model time series results file header.
+    !
+    ! !!! Please don't change this unless you have a good reason to !!!
+    ! !!! Use the write_user_chem_timeseries() subroutine in the    !!!
+    ! !!! user_output module for exploratory, special, debugging,   !!!
+    ! !!! etc. output !!!
+    !
+    ! !!! The *FieldNames, and *FieldUnits parts of the header must !!!
+    ! !!! be kept in sync with the appropriate write statement in   !!!
+    ! !!! write_std_timeseries(), or compareSOG plotting will fail. !!!
+    use io_unit_defs, only: std_chem_timeseries
+    implicit none
+    ! Arguments:
+    character(len=19), intent(in) :: &
+         str_run_Datetime,   &  ! Date/time of code run as a string
+         str_start_Datetime, &  ! Midnight of start day as a string
+         str_CTD_Datetime       ! CTD profile date/time as a string
+
+    write(std_chem_timeseries, 100) str_run_Datetime, &
+         str_CTD_Datetime, str_start_Datetime
+100 format("! SOG code standard time series output from chemistry model"/,   &
+         "! Time series of dissolved oxygen, & inorganic carbon ",           &
+         "concentration; and "/,                                             &
+         "! at surface, and averaged over top 3 m of water column;"/,        &
+         "! and carbon detritus (dissolved organic, particulate organic, ",  &
+         "and refractory)"/,                                                 &
+         "! at 20 m depth."/,                                                &
+         "*RunDateTime: ", a/,                                               &
+         "*InitialCTDDateTime: ", a/,                                        &
+         "*FieldNames: time, ",                                              &
+         "surface oxygen concentration, 3 m avg oxygen concentration, ",     &
+         "surface DIC concentration, 3 m avg DIC concentration, ",           &
+         "DOC detritus at 20 m, POC detritus at 20 m, ",                     &
+         "refractory C detritus at 20 m"/,                                   &
+         "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM C, uM C, ",      &
+         "uM C, uM C, uM C"/,                                                &
+         "*EndOfHeader")
+  end subroutine write_std_chem_timeseries_hdr
   
 
   subroutine write_std_timeseries(time, grid, &
        ! Variables for standard physics model output
        iter_cnt, h, U, V, T, S, Ipar, &
        ! Variables for standard biology model output
-       NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi)
+       NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi, &
+       ! Variables for standard chemistry model output
+       Oxy, DIC, D_DOC, D_POC, D_reC)
     ! Write results of the current time step to the time series files.
     use precision_defs, only: dp
-    use io_unit_defs, only: std_phys_timeseries, std_bio_timeseries
+    use io_unit_defs, only: &
+         std_phys_timeseries, std_bio_timeseries, std_chem_timeseries
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_, depth_average, interp_value
     implicit none
@@ -216,24 +267,34 @@ contains
          D_DON,  &  ! Dissolved organic nitrogen detritus profile [uM N]
          D_PON,  &  ! Particulate organic nitrogen detritus profile [uM N]
          D_refr, &  ! Refractory nitrogen detritus profile [uM N]
-         D_bSi      ! Biogenic silicondetritus profile [uM]
+         D_bSi,  &  ! Biogenic silicon detritus profile [uM]
+         Oxy,    &  ! Dissolved oxygen conc profile [uM O]
+         DIC,    &  ! Dissolved inorganic carbon conc profile [uM C]
+         D_DOC,  &  ! Dissolved iorganic carbon detritus profile [uM C]
+         D_POC,  &  ! Dissolved particulate carbon detritus profile [uM C]
+         D_reC      ! Dissolved refractory carbon detritus profile [uM C]
     ! Local variables:
     real(kind=dp) :: &
          U_avg_3m,       &   ! U velocity averaged over top 3 m [m/s]
          V_avg_3m,       &   ! Vvelocity averaged over top 3 m [m/s]
          T_avg_3m,       &   ! Temperature averaged over top 3 m [deg C]
          S_avg_3m,       &   ! Salinity averaged over top 3 m [-]
-         NO_avg_3m,      &   ! Nitrate averaged over top 3 m [-]
-         NH_avg_3m,      &   ! Ammonium averaged over top 3 m [-]
-         Si_avg_3m,      &   ! Silicon averaged over top 3 m [-]
-         Pmicro_avg_3m,  &   ! Micro phytoplankton averaged over top 3 m [-]
-         Pnano_avg_3m,   &   ! Nano phytoplankton averaged over top 3 m [-]
-         Ppico_avg_3m,   &   ! Pico phytoplankton averaged over top 3 m [-]
-         Z_avg_3m,       &   ! Micro zooplankton averaged over top 3 m [-]
+         NO_avg_3m,      &   ! Nitrate averaged over top 3 m [uM N]
+         NH_avg_3m,      &   ! Ammonium averaged over top 3 m [uM N]
+         Si_avg_3m,      &   ! Silicon averaged over top 3 m [uM]
+         Pmicro_avg_3m,  &   ! Micro phytoplankton avg over top 3 m [uM N]
+         Pnano_avg_3m,   &   ! Nano phytoplankton averaged over top 3 m [uM N]
+         Ppico_avg_3m,   &   ! Pico phytoplankton averaged over top 3 m [uM N]
+         Z_avg_3m,       &   ! Micro zooplankton averaged over top 3 m [uM N]
+         Oxy_avg_3m,     &   ! Dissolved oxygen averaged over top 3 m [uM O]
+         DIC_avg_3m,     &   ! Dissolved inorganic carbon avg top 3 m [uM C]
          D_DON_20m,      &   ! DON detritus at 20 m [uM N]
          D_PON_20m,      &   ! PON detritus at 20 m [uM N]
          D_refr_20m,     &   ! Refractory N detritus at 20 m [uM N]
-         D_bSi_20m           ! Biogenic silicon detritus at 20 m [uM N]
+         D_bSi_20m,      &   ! Biogenic silicon detritus at 20 m [uM N]
+         D_DOC_20m,      &   ! DOC detritus at 20 m [uM C]
+         D_POC_20m,      &   ! POC detritus at 20 m [uM C]
+         D_reC_20m           ! Refractory C detritus at 20 m [uM C]
     integer :: j_below   ! Index of result found by interp_value()
 
     ! Write standard physics model time series results.
@@ -282,18 +343,41 @@ contains
          Ppico(0), Ppico_avg_3m, &
          Z(0), Z_avg_3m, D_DON_20m, D_PON_20m, D_refr_20m, D_bSi_20m
 200 format(f10.4, 80(2x, f8.4))
+
+    ! Write standard chemistry model time series results.
+    !
+    ! !!! Please don't change this unless you have a good reason to !!!
+    ! !!! Use the write_user_chem_timeseries() subroutine in the    !!!
+    ! !!! user_output module for exploratory, special, debugging,   !!!
+    ! !!! etc. output !!!
+    !
+    ! !!! This write statement must be kept in sync with the *FieldNames, !!!
+    ! !!! and *FieldUnits parts of the header in timeseries_output_open() !!!
+    ! !!! be kept in sync with the appropriate write statement in  !!!
+    ! !!! above, or compareSOG plotting will fail. !!!
+    Oxy_avg_3m = depth_average(Oxy, 0.0d0, 3.0d0)
+    DIC_avg_3m = depth_average(DIC, 0.0d0, 3.0d0)
+    call interp_value(20.0d0, 0, grid%d_g, D_DOC, D_DOC_20m, j_below)
+    call interp_value(20.0d0, 0, grid%d_g, D_POC, D_POC_20m, j_below)
+    call interp_value(20.0d0, 0, grid%d_g, D_reC, D_reC_20m, j_below)
+    write(std_chem_timeseries, 300) time, Oxy(0), Oxy_avg_3m, &
+         DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, D_reC_20m
+300 format(f10.4, 80(2x, f8.4))
   end subroutine write_std_timeseries
 
 
   subroutine timeseries_output_close
     ! Close the time series output files.
-    use io_unit_defs, only: std_phys_timeseries, user_phys_timeseries, &
-         std_bio_timeseries, user_bio_timeseries
+    use io_unit_defs, only: &
+         std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
+         user_phys_timeseries, user_bio_timeseries, user_chem_timeseries
     implicit none
     close(std_phys_timeseries)
     close(user_phys_timeseries)
     close(std_bio_timeseries)
     close(user_bio_timeseries)
+    close(std_chem_timeseries)
+    close(user_chem_timeseries)
   end subroutine timeseries_output_close
 
 end module timeseries_output

@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-09-06 10:39:39.000000000 -0700
-+++ infiles/R3microzoo	2010-09-06 11:28:57.000000000 -0700
+--- infile	2011-01-29 10:18:51.000000000 -0800
++++ R3microzoo	2011-01-29 10:19:15.000000000 -0800
 @@ -1,9 +1,9 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
@@ -64,7 +64,7 @@
    "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
  "botl_in"
    "N/A"
-@@ -48,29 +48,29 @@
+@@ -48,32 +48,32 @@
  
  ! Time series output files
  "std_phys_ts_out"  
@@ -83,6 +83,10 @@
 -	"timeseries/user_bio_SOG.out"  
 +	"timeseries/user_bio_R3microzoo.out"  
  	"user-defined biology timeseries"
+ "std_chem_ts_out"   
+-	"timeseries/std_chem_SOG.out"   
++	"timeseries/std_chem_R3microzoo.out"   
+ 	"standard chemistry timeseries"
  
  ! Profiles output
  "noprof"	1		"no. of profiles to print"
@@ -103,7 +107,7 @@
  "Hoffmueller start yr"	2004			"yr to start Hoff output"
  "Hoffmueller start day"	294			"yr-day to start Hoff output"
  "Hoffmueller start sec"	43200			"day-sec to start (midnight=0)"
-@@ -84,7 +84,7 @@
+@@ -87,7 +87,7 @@
  "temp_constant"    .false.       "Is bottom temperature constant over time?"
  ! Fit parameters for core variables
  "salinity"
@@ -112,7 +116,7 @@
    "Salinity (constant, seasonal and biseasonal components)"
  "temperature"
    9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.0292d0
-@@ -99,10 +99,10 @@
+@@ -102,10 +102,10 @@
    54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
    "Silicon (constant)"
  "Ammonium"
@@ -125,7 +129,7 @@
    "Ratio of pico/micro plankton (constant and biseasonal)"
  !Basin axis lengths (km)
  "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
-@@ -141,7 +141,7 @@
+@@ -145,7 +145,7 @@
  
  ! Biology model parameters:
  ! Model complexity flags:

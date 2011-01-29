@@ -16,15 +16,17 @@ program SOG
        grid, &  ! Grid parameters and depth and spacing arrays
        interp_value  ! interpolate salinity grid to find 1 m value
   use core_variables, only: &
-       U,  &  ! Cross-strait (35 deg) velocity component arrays
-       V,  &  ! Along-strait (305 deg) velocity component arrays
-       T,  &  ! Temperature profile arrays
-       S,  &  ! Salinity profile arrays
-       P,  &  ! Micro & nano & pico phytoplankton profile arrays
-       Z,  &  ! Microzooplankton profile array
-       N,  &  ! Nitrate & ammonium concentration profile arrays
-       Si, &  ! Silicon concentration profile arrays
-       D      ! Detritus concentration profile arrays
+       U,   &  ! Cross-strait (35 deg) velocity component arrays
+       V,   &  ! Along-strait (305 deg) velocity component arrays
+       T,   &  ! Temperature profile arrays
+       S,   &  ! Salinity profile arrays
+       P,   &  ! Micro & nano & pico phytoplankton profile arrays
+       Z,   &  ! Microzooplankton profile array
+       N,   &  ! Nitrate & ammonium concentration profile arrays
+       Si,  &  ! Silicon concentration profile arrays
+       DIC, &  ! Dissolved inorganic carbon concentration profile arrays
+       Oxy, &  ! Dissolved oxygen concentration profile arrays
+       D       ! Detritus concentration profile arrays
   use water_properties, only: &
        rho,   &  ! Density [kg/m^3]
        alpha, &  ! Thermal expansion coefficient [K^-1]
@@ -530,16 +532,18 @@ S_RHS%diff_adv%new = Gvector%s
 
 
      ! Write standard time series results
-     ! !!! Please don't change this argument list without good reason. !!!
-     ! !!! If it is changed, the change should be committed to CVS.    !!!
-     ! !!! For exploratory, debugging, etc. output use                 !!!
-     ! !!! write_user_timeseries() below.                              !!!
-     call write_std_timeseries(time / 3600., grid,                    &
+     ! !!! Please don't change this argument list without good reason.    !!!
+     ! !!! If it is changed, the change should be committed to Mercurial. !!!
+     ! !!! For exploratory, debugging, etc. output use                    !!!
+     ! !!! write_user_timeseries() below.                                 !!!
+     call write_std_timeseries(time / 3600., grid,                      &
        ! Variables for standard physics model output
-       count, h%new, U%new, V%new, T%new, S%new, I_par(0),             &
+       count, h%new, U%new, V%new, T%new, S%new, I_par(0),              &
        ! Variables for standard biology model output
-       N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, D%bSi)
-
+       N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, &
+       D%bSi,                                                           &
+       ! Variables for standard chemistry model output
+       Oxy, DIC, D%DOC, D%POC, D%reC)
 
      ! Write user-specified time series results
      ! !!! Please don't add arguments to this call.           !!!
@@ -547,18 +551,16 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! write_user_timeseries() in the user_output module. !!!
      call write_user_timeseries(time / 3600., grid)
 
-
      ! Write standard profiles results
-     ! !!! Please don't change this argument list without good reason. !!!
-     ! !!! If it is changed, the change should be committed to CVS.    !!!
-     ! !!! For exploratory, debugging, etc. output use                 !!!
-     ! !!! write_user_timeseries() below.                              !!!
+     ! !!! Please don't change this argument list without good reason.    !!!
+     ! !!! If it is changed, the change should be committed to Mercurial. !!!
+     ! !!! For exploratory, debugging, etc. output use                    !!!
+     ! !!! write_user_profiles() below.                                   !!!
      call write_std_profiles(datetime_str(runDatetime),                  &
           datetime_str(initDatetime), year, day, day_time, dt, grid,     &
           T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                    &
           I_par, U%new, V%new)
-
 
      ! Write user-specified profiles results
      ! !!! Please don't add arguments to this call.           !!!
@@ -566,8 +568,6 @@ S_RHS%diff_adv%new = Gvector%s
      ! !!! write_user_profiles() in the user_output module.   !!!
      call write_user_profiles(datetime_str(runDatetime), &
           datetime_str(initDatetime), year, day, day_time, dt, grid)
-
-
 
      ! Increment time, calendar date and clock time
      call increment_date_time(day_time, day, year, time, dt)
@@ -578,13 +578,13 @@ S_RHS%diff_adv%new = Gvector%s
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
-     write (129,*) S_riv,  S%new(1)
+     write (129, *) S_riv,  S%new(1)
 
   end do  !--------- End of time loop ----------
 
-  write (stdout,*) "For Ft tuning"
-  write (stdout,*) "Average SSS should be", sumSriv / float(scount)
-  write (stdout,*) "Average SSS was", sumS / float(scount)
+  write (stdout, *) "For Ft tuning"
+  write (stdout, *) "Average SSS should be", sumSriv / float(scount)
+  write (stdout, *) "Average SSS was", sumS / float(scount)
 
   ! Close output files
   call timeseries_output_close

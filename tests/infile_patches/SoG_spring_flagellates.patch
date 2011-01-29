@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2010-09-06 10:39:39.000000000 -0700
-+++ infiles/SoG_spring_flagellates	2010-09-06 11:41:19.000000000 -0700
+--- infile	2011-01-29 10:28:26.000000000 -0800
++++ SoG_spring_flagellates	2011-01-29 10:29:09.000000000 -0800
 @@ -1,9 +1,7 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
@@ -44,7 +44,7 @@
  "dt"		900	 "time step [s]"
  ! Implicit solver iteration limit
  "max_iter"	30	"implicit solver max iterations"
-@@ -33,48 +32,45 @@
+@@ -33,51 +32,48 @@
  
  ! Initial conditions
  "ctd_in"
@@ -86,8 +86,14 @@
  "user_bio_ts_out"
 -	"timeseries/user_bio_SOG.out"  
 -	"user-defined biology timeseries"
+-"std_chem_ts_out"   
+-	"timeseries/std_chem_SOG.out"   
+-	"standard chemistry timeseries"
 +	"timeseries/user_bio_myear_wflmz_R1.out"
 +	"user biology time series"
++"std_chem_ts_out"
++	"timeseries/std_chem_myear_wflmz_R1.out"
++	"chemistry model time series"
  
  ! Profiles output
 -"noprof"	1		"no. of profiles to print"
@@ -117,7 +123,7 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -142,74 +138,76 @@
+@@ -146,74 +142,76 @@
  ! Biology model parameters:
  ! Model complexity flags:
  "flagellates_on"	.true.	"include flagellates in model?"
@@ -229,7 +235,7 @@
  ! Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
  "Micro, I_opt" 		38.4d0         "Micro, optimum light (W/m2)"
  ! Yih plus Cloern 1977 Half-sat very similar
-@@ -217,56 +215,54 @@
+@@ -221,56 +219,54 @@
  ! small
  "Pico, I_opt"           10.d0          "Pico, optimum light"
  ! Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
@@ -308,7 +314,7 @@
  "DON remin rate"        2.3d-6       "DON detritus remineralization rate [1/s]"
  ! Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes but this
  ! is for deeply sinking and thus refractory stuff?)
-@@ -286,7 +282,7 @@
+@@ -290,7 +286,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"

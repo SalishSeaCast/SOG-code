@@ -57,6 +57,9 @@
 "user_bio_ts_out"
 	"timeseries/user_bio_RI-test.out"
 	"user biology time series"
+"std_chem_ts_out"
+	"timeseries/std_chem_RI-test.out"
+	"chemistry model time series"
 
 ! Profiles output
 "noprof"        7       "number of profiles to be produced"
