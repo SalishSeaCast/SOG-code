@@ -550,7 +550,7 @@ contains
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
     use mean_param, only: plankton2
-    use surface_forcing, only: small
+!     use surface_forcing, only: small
     implicit none
     ! Arguments:
     integer, intent(in) :: M
@@ -631,7 +631,7 @@ contains
     DO j = 1,M
 
        NH_effect = exp(-rate%gamma_o * NH(j))
-       IF (NO(j) > small) THEN
+       IF (NO(j) > epsilon(NO(j))) THEN
           Oup_cell(j) = NO(j) * rate%kapa * NH_effect / &
                (rate%k + NO(j) * rate%kapa * NH_effect + NH(j)) * &
                (NO(j) + NH(j))**rate%N_x / &
@@ -639,7 +639,7 @@ contains
        ELSE
           Oup_cell(j) = 0.
        END IF
-       IF (NH(j) > small) THEN
+       IF (NH(j) > epsilon(NH(j))) THEN
           Hup_cell(j) = NH(j) / &
                (rate%k + NO(j) * rate%kapa * NH_effect + NH(j))* &
                (NO(j) + NH(j))**rate%N_x / &

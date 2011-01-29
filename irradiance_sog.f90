@@ -17,8 +17,8 @@ module irradiance
   use fundamental_constants, only: pi, latitude
   use core_variables, only: N2chl ! ratio of chl mg/m3 to N uMol for
                                   ! phytoplankton
-  use surface_forcing, only: albedo, Q_o
   use input_processor, only: getpard
+
   implicit none
 
   private
@@ -29,6 +29,9 @@ module irradiance
   ! Private module variable declarations:
   real(kind=dp) :: &     ! Values for the Kpar fit
        ialpha, ibeta, igamma, isigma, itheta, idl
+  real(kind=dp), parameter :: &
+       Q_o = 1368.0, & !1367.0? W/m^2  Solar constant
+       albedo = 0.18   !KC 17% OCT.22 2004
 
 contains
 
