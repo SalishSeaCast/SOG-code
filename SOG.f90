@@ -107,7 +107,6 @@ program SOG
   ! Inherited modules
   ! *** Goal is to make these go away
   use declarations
-  use surface_forcing, only: precision, step_guess, step_min
 
   implicit none
 
@@ -127,7 +126,14 @@ program SOG
   ! Current time met data
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
-  real(kind=dp) unow, vnow
+  real(kind=dp) :: unow, vnow
+  ! Biology model ODE solver control parameters
+  ! *** TODO: These should either be read from the infile, or moved into
+  ! ***       the biology_model module.
+  real(kind=dp), parameter :: &
+       precision = 1.0d-4,  &
+       step_guess = 100.0d0,  &
+       step_min = 3.0d0
 
 
   ! ---------- Beginning of Initialization Section ----------
