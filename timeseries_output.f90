@@ -28,7 +28,7 @@ contains
     ! getpar(), open them, and write their headers.
     use io_unit_defs, only: &
          std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
-         user_phys_timeseries, user_bio_timeseries, user_chem_timeseries
+         user_phys_timeseries, user_bio_timeseries
     use input_processor, only: getpars
     use datetime, only: datetime_, datetime_str
     use user_output, only: &
@@ -370,14 +370,13 @@ contains
     ! Close the time series output files.
     use io_unit_defs, only: &
          std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
-         user_phys_timeseries, user_bio_timeseries, user_chem_timeseries
+         user_phys_timeseries, user_bio_timeseries
     implicit none
     close(std_phys_timeseries)
     close(user_phys_timeseries)
     close(std_bio_timeseries)
     close(user_bio_timeseries)
     close(std_chem_timeseries)
-    close(user_chem_timeseries)
   end subroutine timeseries_output_close
 
 end module timeseries_output
