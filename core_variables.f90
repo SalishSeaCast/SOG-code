@@ -27,6 +27,8 @@ module core_variables
   !
   !   DIC -- Dissolved inorganic carbon concentration [uM C]
   !
+  !   Oxy -- Dissolved oxygen concentration [uM O]
+  !
   !   D -- Detritus concentrations:
   !          D%DON -- Dissolved organic nitrogen [uM N]
   !          D%PON -- Particulate organic nitrogen [uM N]
@@ -64,13 +66,8 @@ module core_variables
        N,   &  ! Nitrate & ammonium concentation profile arrays
        Si,  &  ! Silicon concentration profile arrays
        DIC, &  ! Dissolved inorganic carbon concentration profile arrays
+       Oxy, &  ! Dissolved oxygen concentration profile arrays
        D,   &  ! Detritus concentration profile arrays
-       ! Types (as required by new pg compiler)
-       profiles, & ! type for U, V, T, S
-       nitrogen, & ! type for N
-       plankton, & ! type for P
-       detritus, & ! type for D
-                   ! Z, Si and DIC are just dp real
        ! Subroutines:
        init_core_variables, dalloc_core_variables
 
@@ -133,8 +130,9 @@ module core_variables
   type(nitrogen) :: &
        N  ! Nitrate & ammonium concentration profile arrays
   real(kind=dp), dimension(:), allocatable :: &
-       Si, & ! Silicon concentration profile array
-       DIC   ! Dissolved inorganic carbon concentration profile array
+       Si,  & ! Silicon concentration profile array
+       DIC, & ! Dissolved inorganic carbon concentration profile array
+       Oxy    ! Dissolved oxygen concentration profile array
   type(detritus) :: &
        D  ! Detritus concentration profile arrays
 
@@ -416,7 +414,7 @@ contains
     ! Read data quantity column numbers, and set the number of column
     ! to read from each data record
     read(field_data, *) col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                      col%NO, col%Phyto, col%Si
+                        col%NO, col%Phyto, col%Si
     n_cols = max(col%depth, col%T, col%S, col%Chloro, col%Fluores, &
                  col%NO, col%Phyto, col%Si)
     ! Read data to model depth, or next deeper record.  If data ends
@@ -566,6 +564,9 @@ contains
     msg = "Dissolved inorganic carbon concentration profile array"
     allocate(DIC(0:M+1), stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Dissolved oxygen concentration profile array"
+    allocate(Oxy(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
     msg = "Dissolved organic nitrogen detritus concentration profile array"
     allocate(D%DON(0:M+1), stat=allocstat)
     call alloc_check(allocstat, msg)
@@ -633,6 +634,9 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved inorganic carbon concentration profile array"
     deallocate(DIC, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Dissolved oxygen concentration profile array"
+    deallocate(Oxy, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved organic nitrogen detritus concentration profile array"
     deallocate(D%DON, stat=dallocstat)
