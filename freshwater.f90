@@ -78,7 +78,7 @@ module freshwater
        Northern_return ! include return flow from North?
   real(kind=dp), dimension(:), allocatable :: &
        Fw, &  ! Fresh water flux profile
-       FN ! northern return flow profile
+       FN     ! northern return flow profile
   real(kind=dp) :: &
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
@@ -98,11 +98,9 @@ contains
   subroutine init_freshwater(M)
     ! Allocate memory for fresh water quantity arrays, and read
     ! parameter values from the infile.
-    
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
-    
 
     ! Allocate memory for fresh water quantity arrays
     call alloc_freshwater_variables(M)
