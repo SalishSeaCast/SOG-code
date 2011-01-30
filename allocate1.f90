@@ -21,7 +21,6 @@ subroutine allocate1(M, stat)
            nano%growth%light(M), nano%growth%new(M), &
            pico%growth%light(M), pico%growth%new(M), &
            micro%Nlimit(M), nano%Nlimit(M), pico%Nlimit(M), &
-           wupwell(0:M), &
            STAT = stat(10))
 
 END SUBROUTINE allocate1

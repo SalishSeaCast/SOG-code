@@ -34,11 +34,10 @@ grid.o numerics.o forcing.o core_variables.o water_properties.o \
 mean_param.o declarations.o \
 \
 turbulence.o freshwater.o buoyancy.o mixing_layer.o diffusion.o \
-baroclinic_pressure.o physics_eqn_builder.o \
+baroclinic_pressure.o find_upwell.o physics_eqn_builder.o \
 fitbottom.o \
 allocate1.o	\
 irradiance_sog.o 	\
-find_upwell.o \
 physics_model.o \
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \

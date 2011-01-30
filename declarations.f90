@@ -44,7 +44,5 @@ module declarations
 
   DOUBLE PRECISION::vapour_pressure, prain ! (atmosphere at 17m) and current value for &
 
-  ! Vertical profile of the entrainment velocity
-  real(kind=dp), dimension(:), allocatable :: wupwell
 
 end module declarations

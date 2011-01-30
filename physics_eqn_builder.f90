@@ -120,7 +120,7 @@ module physics_eqn_builder
 
 contains
 
-  subroutine build_physics_equations(dt, U, V, T, S)
+  subroutine build_physics_equations(dt, U, V, T, S, Qriver)
     ! Build the terms for the diffusion/advection/Coriolis/baroclinic
     ! pressure gradient equations for the physics quantities.
     !
@@ -146,7 +146,8 @@ contains
          U, &  ! U velocity component(cross-strait) profile
          V, &  ! V velocity component(along-strait) profile
          T, &  ! Temperature profile
-         S
+         S     ! Salinity profile
+    real(kind=dp), intent(in) :: Qriver  ! River flow
 
     ! Calculate the precursor diffusion coefficients matrices for the
     ! physics model quantities.
@@ -156,9 +157,9 @@ contains
     ! fluxes at the bottom and top of the grid
     call init_phys_RHS_fluxes(dt, U, V, T, S)  ! in
 
-!!$    ! Add vertical advection due to upwelling to velocity components,
-!!$    ! temperature, and salinity RHS arrays
-!!$    call calc_phys_upwell_advection(dt, U, V, T, S)
+    ! Add vertical advection due to upwelling to velocity components,
+    ! temperature, and salinity RHS arrays
+    call calc_phys_upwell_advection(dt, U, V, T, S, Qriver)
 
     ! Calculate the Coriolis and baroclinic pressure gradient
     ! components of the RHS arrays for the velocity components
@@ -243,24 +244,30 @@ contains
   end subroutine init_phys_RHS_fluxes
 
 
-!!$  subroutine calc_phys_upwell_advection(dt, U, V, T, S)
-!!$    ! Add vertical advection due to upwelling to velocity components,
-!!$    ! temperature, and salinity RHS arrays
-!!$    use upwelling, only: upwell_profile, upwelling_advection
+  subroutine calc_phys_upwell_advection(dt, U, V, T, S, Qriver)
+    ! Add vertical advection due to upwelling to velocity components,
+    ! temperature, and salinity RHS arrays
+!!$    use upwelling, only: &
+!!$         upwelling_profile, &
+!!$         upwelling_advection
+    use find_upwell, only: &
+         upwelling_profile
+!!$         upwelling_advection
 !!$    use grid_mod, only: &
 !!$         grid  ! Grid parameters and depth & spacing arrays
-!!$    implicit none
-!!$    ! Arguments:
-!!$    real(kind=dp), intent(in) :: &
-!!$         dt  ! Time step [s]
-!!$    real(kind=dp), dimension(0:), intent(in) :: &
-!!$         U, &  ! U velocity component(cross-strait) profile
-!!$         V, &  ! V velocity component(along-strait) profile
-!!$         T, &  ! Temperature profile
-!!$         S
-!!$
-!!$    ! Calculate profile of upwelling velocity
-!!$    call upwell_profile(grid)
+    implicit none
+    ! Arguments:
+    real(kind=dp), intent(in) :: &
+         dt  ! Time step [s]
+    real(kind=dp), dimension(0:), intent(in) :: &
+         U, &  ! U velocity component(cross-strait) profile
+         V, &  ! V velocity component(along-strait) profile
+         T, &  ! Temperature profile
+         S     ! Salinity profile
+    real(kind=dp), intent(in) :: Qriver  ! River flow
+
+    ! Calculate profile of upwelling velocity
+    call upwelling_profile(Qriver)
 !!$    ! Apply upwelling advection
 !!$    !
 !!$    ! Velocity components
@@ -274,7 +281,7 @@ contains
 !!$    ! Salinity
 !!$    call upwelling_advection(dt, T, &  ! in
 !!$         S_RHS%diff_adv%new)                  ! out
-!!$  end subroutine calc_phys_upwell_advection
+  end subroutine calc_phys_upwell_advection
 
 
   subroutine Coriolis_and_pg(dt, vel, P_grad, RHS)

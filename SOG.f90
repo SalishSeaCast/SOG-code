@@ -98,7 +98,7 @@ program SOG
   use user_output, only: write_user_timeseries, write_user_profiles
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
-  use find_upwell, only: upwell_profile, vertical_advection
+  use find_upwell, only: upwelling_profile, vertical_advection, w_upwell
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
@@ -309,26 +309,23 @@ program SOG
         ! Bmatrix%S%*), the RHS diffusion/advection term vectors
         ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
         ! pressure gradient term vectors (*_RHS%C_pg).
-        call build_physics_equations(dt, U%new, V%new, T%new, S%new)
+        call build_physics_equations(dt, U%new, V%new, T%new, S%new, Qinter)
 
 ! *** Physics equations refactoring bridge code
 Gvector%u = U_RHS%diff_adv%new
 Gvector%v = V_RHS%diff_adv%new
 Gvector%t = T_RHS%diff_adv%new
 Gvector%s = S_RHS%diff_adv%new
-
-        ! Calculate profile of upwelling velocity
-        call upwell_profile(Qinter, wupwell)
        
         ! Upwell salinity, temperature, and u & v velocity components
         ! similarly to nitrates
-        call vertical_advection (grid, dt, S%new, wupwell+ w_wind, &
+        call vertical_advection (grid, dt, S%new, w_upwell + w_wind, &
              Gvector%s)
-        call vertical_advection (grid, dt, T%new, wupwell+ w_wind, &
+        call vertical_advection (grid, dt, T%new, w_upwell + w_wind, &
              Gvector%t)
-        call vertical_advection (grid, dt, U%new, wupwell+ w_wind, &
+        call vertical_advection (grid, dt, U%new, w_upwell + w_wind, &
              Gvector%u)
-        call vertical_advection (grid, dt, V%new, wupwell+ w_wind, &
+        call vertical_advection (grid, dt, V%new, w_upwell + w_wind, &
              Gvector%v)
 
 ! *** Physics equations refactoring bridge code
@@ -482,7 +479,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
-          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, wupwell + w_wind)
+          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, w_upwell + w_wind)
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the

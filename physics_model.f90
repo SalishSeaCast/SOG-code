@@ -36,13 +36,11 @@ contains
     use mixing_layer, only: init_mixing_layer
     use freshwater, only: init_freshwater
     use irradiance, only: init_irradiance
-    use find_upwell, only: init_find_upwell
+    use find_upwell, only: init_upwelling
     implicit none
     
     ! Argument:
     integer :: M  ! Number of grid points
-
-   
 
     ! Allocate memory for water property arrays
     call alloc_water_props(M)
@@ -67,9 +65,9 @@ contains
     ! Allocate memory for Kpar variables, and read parameter values
     ! from infile
     call init_irradiance()
-    ! Read freshwater depth  parameter value
-    ! from infile
-    call init_find_upwell()
+    ! Allocate memory for upwelling quantity arrays, and read
+    ! parameter values from the infile
+    call init_upwelling(M)
 
   end subroutine init_physics
 

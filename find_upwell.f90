@@ -19,25 +19,36 @@ module find_upwell
   implicit none
 
   private
-  public init_find_upwell, upwell_profile, vertical_advection
-    
-  ! Local variables:
-  real(kind=dp) :: d      ! depth in m, of 68% fwc
+  public :: &
+       ! subroutines:
+       init_upwelling, w_upwell, &
+       upwelling_profile, vertical_advection
+
+  ! Variable Declarations:
+  !
+  ! Private:
+  real(kind=dp) :: &
+       d  ! depth in m, of 68% fresh water content
+  real(kind=dp), dimension(:), allocatable :: &
+       w_upwell  ! Vertical profile of the entrainment velocity
 
 contains
-  subroutine init_find_upwell()
-    ! Read parameter values from the infile.
-    
+
+  subroutine init_upwelling(M)
+    ! Allocate memory for upwelling quantity arrays, and read
+    ! parameter values from the infile.
     implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
   
-    ! Read fresh water parameter values from the infile.
-    call read_upwell_params()
+    ! Allocate memory for upwelling quantity arrays
+    call alloc_upwelling_variables(M)
+    ! Read upwelling parameter values from the infile.
+    call read_upwelling_params()
+  end subroutine init_upwelling
 
-     
 
-  end subroutine init_find_upwell
-
-  subroutine read_upwell_params()
+  subroutine read_upwelling_params
     ! Read the fresh water depth parameter value from the infile.
     use input_processor, only: getpard
     implicit none
@@ -45,52 +56,49 @@ contains
     ! Read values for d fit equation from infile
     ! fix d because fit is poor and not enough surface NO3 in winter
     d = getpard("d")
-  end subroutine read_upwell_params
+  end subroutine read_upwelling_params
 
-  subroutine upwell_profile(Qriver, wupwell)
+
+  subroutine upwelling_profile(Qriver)
     ! Calculate the vertical profile of the entrainment velocity based
-    ! on the Fraser River flow, and the maximum upwelling velocity.
-    ! The latter is a function of the Fraser River flow, and is
+    ! on the river flow, and the maximum freshwater upwelling
+    ! velocity.  The latter is a function of the river flow, and is
     ! calculated in the surface_flux subroutine.  The details of the
-    ! model to do this are in the the document entrainment.pdf written
+    ! model to do that are in the the document entrainment.pdf written
     ! in late June 2006.
-
-    ! type definitions
     use precision_defs, only: dp
     use grid_mod, only: grid
-    use freshwater, only: upwell
-    use input_processor, only: getpard
+    use freshwater, only: upwell  ! Maximum freshwater upwelling velocity
 
     implicit none
 
-    ! Arguments:
-    real(kind=dp), intent(in) :: Qriver            ! River flow
-    ! Vertical upwelling velocity profile
-    real(kind=dp), intent(out), dimension(0:) :: wupwell 
-
+    ! Argument:
+    real(kind=dp), intent(in) :: Qriver  ! River flow
     ! Local variables:
-    real(kind=dp) :: d25    ! 2.5 d, depth of upwelling variation
-    integer :: index        ! counter through depth
+    real(kind=dp) :: d25  ! Depth of upwelling variation
+    integer :: index      ! Grid step index
 
-    ! Set the depth of 68% fresh water content to the fit found
-    ! in entrainment.pdf. Using a value based on the current salinity
-    ! profile was less stable. For 
-    ! calculating d from the salinity, see code version 1.8
-!    d = 11.7 * (Qriver/2720.)**(-0.23)
-
+    ! Three models for the upwelling variation depth have been used:
+    !   1. Use a value based on the current salinity profile. Found to
+    !      be not sufficiently stable. See code version 1.8 for
+    !      calculation of d from the salinity profile.
+    !   2. Set the depth of 68% fresh water content to the fit found
+    !      in entrainment.pdf.
+!!$    d = 11.7 * (Qriver/2720.)**(-0.23)
+    !   3. A value of d calculated according to entrainment.pdf for
+    !      the specific estuary being modeled is read from the infile.
  
    ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
-    d25 = 2.5*d
-
-    ! Set vertical velocity profile (on interfaces!)
+    d25 = 2.5 * d
+    ! Set upwelling velocity profile (on interfaces!)
     do index = 0, grid%M
        if (grid%d_g(index) < d25) then
-          wupwell(index)= upwell * (1. - ( (1.- grid%d_i(index) / d25)**2) )
+          w_upwell(index) = upwell * (1. - ( (1.- grid%d_i(index) / d25)**2) )
        else
-          wupwell(index) = upwell
+          w_upwell(index) = upwell
        endif
     enddo
-  end subroutine upwell_profile
+  end subroutine upwelling_profile
 
 
   subroutine vertical_advection (grid, dt, qty, wupwell, gvector)
@@ -132,5 +140,37 @@ contains
        outtop = inbottom    ! of previous cell
     enddo
   end subroutine vertical_advection
+
+
+  subroutine alloc_upwelling_variables(M)
+    ! Allocate memory for upwelling variable arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Vertical profile of entrainment velocity array"
+    allocate(w_upwell(0:M), &
+         stat=allocstat) 
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_upwelling_variables
+
+
+  subroutine dalloc_upwelling_variables()
+    ! Deallocate memory for upwelling variable array.
+    use malloc, only: dalloc_check
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Deallocation return status
+    character(len=80) :: msg         ! Deallocation failure message prefix
+
+    msg = "Vertical profile of entrainment velocity array"
+    deallocate(w_upwell, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+  end subroutine dalloc_upwelling_variables
 
 end module find_upwell
