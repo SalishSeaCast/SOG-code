@@ -75,7 +75,7 @@ tags:
 # any core dump file, and the executable
 .PHONY: clean
 clean:
-	$(RM) $(RMFLAGS) *.o *.mod core $(EXEC)
+	$(RM) $(RMFLAGS) *.o *.mod core $(EXEC) $(OBJLIB)
 
 # "make changelog" builds or updates a GNU-style ChangeLog file
 # from the CVS log messages
