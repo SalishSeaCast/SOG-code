@@ -89,11 +89,12 @@ contains
     !      the specific estuary being modeled is read from the infile.
  
    ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
-    d25 = 2.5 * d
+    d25 = 2.5d0 * d
     ! Set upwelling velocity profile (on interfaces!)
     do index = 0, grid%M
        if (grid%d_g(index) < d25) then
-          w_upwell(index) = upwell * (1. - ( (1.- grid%d_i(index) / d25)**2) )
+          w_upwell(index) = upwell &
+               * (1.0d0 - ( (1.0d0 - grid%d_i(index) / d25)**2) )
        else
           w_upwell(index) = upwell
        endif
