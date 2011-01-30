@@ -61,10 +61,6 @@ program SOG
                               ! convergence metrics for the implicit
                               ! solver loop.
        del  ! Convergence metrics for implicit solver loop.
-
-  ! *** Temporary until physics equations refactoring is completed
-  use physics_eqn_builder, only: U_RHS, V_RHS, T_RHS, S_RHS
-
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -80,14 +76,14 @@ program SOG
   use air_sea_fluxes, only: wind_stress
   use freshwater, only: freshwater_phys, S_riv
   use buoyancy, only: calc_buoyancy
-  use baroclinic_pressure, only: new_to_old_vel_integrals, &
-       baroclinic_P_gradient, w_wind
+  use baroclinic_pressure, only: baroclinic_P_gradient, &
+       new_to_old_vel_integrals
   use turbulence, only: calc_KPP_diffusivity
   use physics_eqn_builder, only: build_physics_equations, &
        new_to_old_phys_RHS, new_to_old_phys_Bmatrix
   use biology_model, only: init_biology, calc_bio_rate
-  use biology_eqn_builder, only: build_biology_equations, new_to_old_bio_RHS, &
-       new_to_old_bio_Bmatrix
+  use biology_eqn_builder, only: build_biology_equations, &
+       new_to_old_bio_RHS, new_to_old_bio_Bmatrix
   use NPZD, only: dalloc_biology_variables
   use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
@@ -98,7 +94,6 @@ program SOG
   use user_output, only: write_user_timeseries, write_user_profiles
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
-  use find_upwell, only: upwelling_profile, vertical_advection, w_upwell
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
@@ -311,29 +306,6 @@ program SOG
         ! pressure gradient term vectors (*_RHS%C_pg).
         call build_physics_equations(dt, U%new, V%new, T%new, S%new, Qinter)
 
-! *** Physics equations refactoring bridge code
-Gvector%u = U_RHS%diff_adv%new
-Gvector%v = V_RHS%diff_adv%new
-Gvector%t = T_RHS%diff_adv%new
-Gvector%s = S_RHS%diff_adv%new
-       
-        ! Upwell salinity, temperature, and u & v velocity components
-        ! similarly to nitrates
-        call vertical_advection (grid, dt, S%new, w_upwell + w_wind, &
-             Gvector%s)
-        call vertical_advection (grid, dt, T%new, w_upwell + w_wind, &
-             Gvector%t)
-        call vertical_advection (grid, dt, U%new, w_upwell + w_wind, &
-             Gvector%u)
-        call vertical_advection (grid, dt, V%new, w_upwell + w_wind, &
-             Gvector%v)
-
-! *** Physics equations refactoring bridge code
-U_RHS%diff_adv%new = Gvector%u
-V_RHS%diff_adv%new = Gvector%v
-T_RHS%diff_adv%new = Gvector%t
-S_RHS%diff_adv%new = Gvector%s
-
         ! Store %new components of RHS and Bmatrix variables in %old
         ! their components for use by the IMEX solver.  Necessary for the
         ! 1st time step because the values just calculated are a better
@@ -355,7 +327,7 @@ S_RHS%diff_adv%new = Gvector%s
         call solve_phys_eqns(grid%M, day, time, &  ! in
              U%old, V%old, T%old, S%old,        &  ! in
              U%new, V%new, T%new, S%new)           ! out
-        if (minval(S%new) < epsilon(S%new(0))) then
+        if (minval(S%new) < 0.0d0) then
            write (stdout, *) 'Salinity less than 0'
            call exit(1)
         endif
@@ -479,7 +451,7 @@ S_RHS%diff_adv%new = Gvector%s
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
-          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi, w_upwell + w_wind)
+          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi)
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the

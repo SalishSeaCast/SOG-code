@@ -36,7 +36,7 @@ contains
     use mixing_layer, only: init_mixing_layer
     use freshwater, only: init_freshwater
     use irradiance, only: init_irradiance
-    use find_upwell, only: init_upwelling
+    use upwelling, only: init_upwelling
     implicit none
     
     ! Argument:
@@ -68,7 +68,6 @@ contains
     ! Allocate memory for upwelling quantity arrays, and read
     ! parameter values from the infile
     call init_upwelling(M)
-
   end subroutine init_physics
 
 
@@ -105,6 +104,7 @@ contains
     use buoyancy, only: dalloc_buoyancy_variables
     use mixing_layer, only: dalloc_mixing_layer_variables
     use freshwater, only: dalloc_freshwater_variables
+    use upwelling, only: dalloc_upwelling_variables
     
     implicit none
     
@@ -125,6 +125,8 @@ contains
     call dalloc_mixing_layer_variables()
     ! Deallocate memory for fresh water variables.
     call dalloc_freshwater_variables()
+    ! Deallocate memory for fresh water variables.
+    call dalloc_upwelling_variables()
   end subroutine dalloc_physics_variables
 
 end module physics_model

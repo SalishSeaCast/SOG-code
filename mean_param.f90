@@ -8,16 +8,6 @@ module mean_param
 
   implicit none
 
-  ! Phytoplankton component of UVST type
-  type :: phyto                     
-     real(kind=dp), dimension(:), pointer :: micro, nano, pico
-  end type phyto
-
-  ! Type for Gvectors and Hvector used in implicit solver
-  type :: UVST              
-     real(kind=dp), dimension(:), pointer :: u, v, s, t
-  end type UVST
-
   ! Grow component of plankton2 type
   type :: grow               
      real(kind=dp), dimension(:), pointer :: light, new

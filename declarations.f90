@@ -7,7 +7,6 @@ module declarations
 
   implicit NONE
 
-  type(UVST):: Gvector
   TYPE(plankton2)::micro, nano, pico
 
   ! Heat fluxes

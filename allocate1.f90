@@ -12,10 +12,7 @@ subroutine allocate1(M, stat)
       ALLOCATE(&
            Q_n(0:M), &
            I(0:M), I_par(0:M), &
-           STAT = stat(6)) 
-                     
-      ALLOCATE(Gvector%s(M),Gvector%t(M),Gvector%u(M),Gvector%v(M),&
-               STAT = stat(8))
+           STAT = stat(6))
                
       ALLOCATE(micro%growth%light(M), micro%growth%new(M), &
            nano%growth%light(M), nano%growth%new(M), &

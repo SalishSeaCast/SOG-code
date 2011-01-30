@@ -34,7 +34,7 @@ grid.o numerics.o forcing.o core_variables.o water_properties.o \
 mean_param.o declarations.o \
 \
 turbulence.o freshwater.o buoyancy.o mixing_layer.o diffusion.o \
-baroclinic_pressure.o find_upwell.o physics_eqn_builder.o \
+baroclinic_pressure.o upwelling.o physics_eqn_builder.o \
 fitbottom.o \
 allocate1.o	\
 irradiance_sog.o 	\

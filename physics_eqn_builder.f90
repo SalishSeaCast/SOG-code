@@ -247,14 +247,9 @@ contains
   subroutine calc_phys_upwell_advection(dt, U, V, T, S, Qriver)
     ! Add vertical advection due to upwelling to velocity components,
     ! temperature, and salinity RHS arrays
-!!$    use upwelling, only: &
-!!$         upwelling_profile, &
-!!$         upwelling_advection
-    use find_upwell, only: &
-         upwelling_profile
-!!$         upwelling_advection
-!!$    use grid_mod, only: &
-!!$         grid  ! Grid parameters and depth & spacing arrays
+    use upwelling, only: &
+         upwelling_profile, &
+         upwelling_advection
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: &
@@ -268,19 +263,15 @@ contains
 
     ! Calculate profile of upwelling velocity
     call upwelling_profile(Qriver)
-!!$    ! Apply upwelling advection
-!!$    !
-!!$    ! Velocity components
-!!$    call upwelling_advection(dt, U, &  ! in
-!!$         U_RHS%diff_adv%new)                  ! out
-!!$    call upwelling_advection(dt, V, &  ! in
-!!$         V_RHS%diff_adv%new)                  ! out
-!!$    ! Temperature
-!!$    call upwelling_advection(dt, S, &  ! in
-!!$         T_RHS%diff_adv%new)                  ! out
-!!$    ! Salinity
-!!$    call upwelling_advection(dt, T, &  ! in
-!!$         S_RHS%diff_adv%new)                  ! out
+    ! Apply upwelling advection
+    !
+    ! Velocity components
+    call upwelling_advection(dt, U, U_RHS%diff_adv%new)
+    call upwelling_advection(dt, V, V_RHS%diff_adv%new)
+    ! Temperature
+    call upwelling_advection(dt, T, T_RHS%diff_adv%new)
+    ! Salinity
+    call upwelling_advection(dt, S, S_RHS%diff_adv%new)
   end subroutine calc_phys_upwell_advection
 
 

@@ -179,7 +179,7 @@ contains
   
 
   subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Ppico, Z, NO, NH, & ! in
-       Si, D_DON, D_PON, D_refr, D_bSi, wupwell)
+       Si, D_DON, D_PON, D_refr, D_bSi)
     ! Build the terms for the diffusion/advection equations for the
     ! biology quantities.
     !
@@ -193,7 +193,7 @@ contains
     use turbulence, only: K
     use diffusion, only: diffusion_coeff, diffusion_bot_surf_flux, &
          diffusion_nonlocal_fluxes
-    use find_upwell, only: vertical_advection
+    use upwelling, only: upwelling_advection
     use freshwater, only: freshwater_bio
     use buoyancy, only: &
          Bf  ! Surface buoyancy forcing
@@ -217,12 +217,11 @@ contains
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
          D_bSi      ! Biogenic silicon detritus profile
-    real(kind=dp), dimension(0:), intent(in) :: &
-         wupwell  ! Profile of vertical upwelling velocity [m/s]
     ! Local variables:
     real(kind=dp) :: &
          surf_flux ! surface nutrient flux when all the river water on surface
-    real(kind=dp), dimension(0:grid%M):: distrib_flux!distributed nutrient flux
+    real(kind=dp), dimension(0:grid%M):: &
+         distrib_flux  ! distributed nutrient flux
     real(kind=dp), dimension(1:grid%M):: unit ! unit vector
     ! sinking defined by nutrient status
     real(kind=dp), dimension(1:grid%M):: Pmicro_w_sink 
@@ -281,26 +280,16 @@ contains
          D_bSi_RHS%diff_adv%new)                            ! out
 
     ! Add vertical advection due to upwelling
-    call vertical_advection(grid, dt, Pmicro, wupwell, &
-         Pmicro_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, Pnano, wupwell, &
-         Pnano_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, Ppico, wupwell, &
-         Ppico_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, Z, wupwell, &
-         Z_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, NO, wupwell, &
-         NO_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, NH, wupwell, &
-         NH_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, Si, wupwell, &
-         Si_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, D_DON, wupwell, &
-         D_DON_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, D_PON, wupwell, &
-         D_PON_RHS%diff_adv%new)
-    call vertical_advection(grid, dt, D_bSi, wupwell, &
-         D_bSi_RHS%diff_adv%new)
+    call upwelling_advection(dt, Pmicro, Pmicro_RHS%diff_adv%new)
+    call upwelling_advection(dt, Pnano, Pnano_RHS%diff_adv%new)
+    call upwelling_advection(dt, Ppico, Ppico_RHS%diff_adv%new)
+    call upwelling_advection(dt, Z, Z_RHS%diff_adv%new)
+    call upwelling_advection(dt, NO, NO_RHS%diff_adv%new)
+    call upwelling_advection(dt, NH, NH_RHS%diff_adv%new)
+    call upwelling_advection(dt, Si, Si_RHS%diff_adv%new)
+    call upwelling_advection(dt, D_DON, D_DON_RHS%diff_adv%new)
+    call upwelling_advection(dt, D_PON, D_PON_RHS%diff_adv%new)
+    call upwelling_advection(dt, D_bSi, D_bSi_RHS%diff_adv%new)
 
     ! Calculate the sinking term for the quantities that sink
     ! to  calculate sinking at the interfaces used the values above
