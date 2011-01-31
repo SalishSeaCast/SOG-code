@@ -213,7 +213,8 @@ contains
          Bf  ! Surface buoyancy forcing
     use freshwater, only: &
          F_n  ! Profile of fresh water contribution to salinity flux
-    use declarations, only: Q_n  ! *** Should come from somewhere else
+    use irradiance, only: &
+         Q_n  ! Non-turbulent heat flux profile array
     
     implicit none
     

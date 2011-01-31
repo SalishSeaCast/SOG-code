@@ -64,7 +64,7 @@ contains
     call init_freshwater(M)
     ! Allocate memory for Kpar variables, and read parameter values
     ! from infile
-    call init_irradiance()
+    call init_irradiance(M)
     ! Allocate memory for upwelling quantity arrays, and read
     ! parameter values from the infile
     call init_upwelling(M)
@@ -104,6 +104,7 @@ contains
     use buoyancy, only: dalloc_buoyancy_variables
     use mixing_layer, only: dalloc_mixing_layer_variables
     use freshwater, only: dalloc_freshwater_variables
+    use irradiance, only: dalloc_irradiance_variables
     use upwelling, only: dalloc_upwelling_variables
     
     implicit none
@@ -113,20 +114,22 @@ contains
     ! Deallocate memory from arrays for right-hand sides of
     ! diffusion/advection/Coriolis/baroclinic pressure gradient
     ! equations for the physics model.
-    call dalloc_phys_RHS_variables()
+    call dalloc_phys_RHS_variables
     ! Deallocate memory for baroclinic pressure gradient calculation
     ! arrays.
-    call dalloc_baro_press_variables()
+    call dalloc_baro_press_variables
     ! Deallocate memory for turbulence variables.
-    call dalloc_turbulence_variables()
+    call dalloc_turbulence_variables
     ! Deallocate memory for buoyancy variables.
-    call dalloc_buoyancy_variables()
+    call dalloc_buoyancy_variables
     ! Deallocate memory for mixing layer variables.
-    call dalloc_mixing_layer_variables()
+    call dalloc_mixing_layer_variables
     ! Deallocate memory for fresh water variables.
-    call dalloc_freshwater_variables()
-    ! Deallocate memory for fresh water variables.
-    call dalloc_upwelling_variables()
+    call dalloc_freshwater_variables
+    ! Deallocate memory for irradiance variables.
+    call dalloc_irradiance_variables
+    ! Deallocate memory for upwelling variables.
+    call dalloc_upwelling_variables
   end subroutine dalloc_physics_variables
 
 end module physics_model

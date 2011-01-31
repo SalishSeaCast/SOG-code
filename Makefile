@@ -31,14 +31,11 @@ OBJS = precision_defs.o io_unit_defs.o datetime.o input_processor.o \
 fundamental_constants.o malloc.o unit_conversions.o \
 grid.o numerics.o forcing.o core_variables.o water_properties.o \
 \
-mean_param.o declarations.o \
+mean_param.o declarations.o allocate1.o	\
 \
-turbulence.o freshwater.o buoyancy.o mixing_layer.o diffusion.o \
-baroclinic_pressure.o upwelling.o physics_eqn_builder.o \
-fitbottom.o \
-allocate1.o	\
-irradiance_sog.o 	\
-physics_model.o \
+irradiance.o turbulence.o freshwater.o buoyancy.o mixing_layer.o \
+diffusion.o baroclinic_pressure.o upwelling.o fitbottom.o \
+physics_eqn_builder.o physics_model.o \
 biology_eqn_builder.o NPZD.o rungekutta.o biology_model.o \
 IMEX_solver.o \
 \

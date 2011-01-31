@@ -230,7 +230,7 @@ contains
 
   subroutine write_std_timeseries(time, grid, &
        ! Variables for standard physics model output
-       iter_cnt, h, U, V, T, S, Ipar, &
+       iter_cnt, h, U, V, T, S, &
        ! Variables for standard biology model output
        NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi, &
        ! Variables for standard chemistry model output
@@ -241,6 +241,8 @@ contains
          std_phys_timeseries, std_bio_timeseries, std_chem_timeseries
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_, depth_average, interp_value
+    use irradiance, only: &
+         I_par  ! Photosynthetic available radiation profile
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: &
@@ -250,8 +252,7 @@ contains
     integer, intent(in) :: &
          iter_cnt  ! Timestep iteration count
     real(kind=dp), intent(in) :: &
-         h, &  ! Mixing layer depth [m]
-         Ipar  ! Surface PAR
+         h  ! Mixing layer depth [m]
     real(kind=dp), dimension(0:), intent(in) :: &
          U,      &  ! Cross-strait velocity component profile [m/s]
          V,      &  ! Along-strait velocity component profile [m/s]
@@ -313,7 +314,7 @@ contains
     T_avg_3m = depth_average(KtoC(T), 0.0d0, 3.0d0)
     S_avg_3m = depth_average(S, 0.0d0, 3.0d0)
     write(std_phys_timeseries, 100) time, iter_cnt, h, U(0), U_avg_3m, &
-         V(0), V_avg_3m, KtoC(T(0)), T_avg_3m, S(0), S_avg_3m, Ipar
+         V(0), V_avg_3m, KtoC(T(0)), T_avg_3m, S(0), S_avg_3m, I_par(0)
 100 format(f10.4, 2x, i3, 80(2x, f8.4))
 
     ! Write standard biology model time series results file header.

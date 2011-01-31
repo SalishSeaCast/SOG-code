@@ -227,7 +227,7 @@ contains
 
   subroutine write_std_profiles(str_run_Datetime, str_CTD_Datetime, &
        year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Ppico, Z,  &
-       NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
+       NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, U, V)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
     ! close it.  Also write a line of data to the haloclines output
@@ -237,6 +237,8 @@ contains
     use datetime, only: calendar_date, clock_time, datetime_str
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_
+    use irradiance, only: &
+         I_par  ! Photosynthetic available radiation profile
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
@@ -262,7 +264,6 @@ contains
          Ku(1:),      &  ! Total momentum eddy diffusivity [m^2/s]
          Kt(1:),      &  ! Total temperature eddy diffusivity [m^2/s]
          Ks(1:),      &  ! Total salinity eddy diffusivity [m^2/s]
-         I_par(0:),   &  ! Photosynthetic available radiation [W/m^2]
          U(0:),       &  ! U velocity component [m/s]
          V(0:)           ! U velocity component [m/s]
     ! Local variables:

@@ -60,7 +60,10 @@ program SOG
                               ! depth values to calculate the
                               ! convergence metrics for the implicit
                               ! solver loop.
-       del  ! Convergence metrics for implicit solver loop.
+       del  ! Convergence metrics for implicit solver loop
+  use irradiance, only: &
+       I_total, &  ! Total light available for water column heating
+       Q_n         ! Non-turbulent hear flux profile
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -99,7 +102,7 @@ program SOG
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
        increment_date_time
-  use irradiance, only: irradiance_sog
+  use irradiance, only: calc_irradiance
 
   ! Inherited module
   ! *** Goal is to make this go away
@@ -234,8 +237,8 @@ program SOG
           unow, vnow)
 
      ! Calculate sunlight effects
-     call irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
-          Qinter, P%micro, P%nano, P%pico, jmax_i)
+     call calc_irradiance(cf_value, day_time, day, Qinter, &
+          P%micro, P%nano, P%pico)
 
      do count = 1, max_iter !---- Beginning of the implicit solver loop ----
         ! Calculate gradient profiles of the velocity field and water
@@ -249,7 +252,7 @@ program SOG
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
         call surface_flux_sog(grid%M, rho%g, &
-             T%new(0), I, Q_t,               &
+             T%new(0), I_total, Q_t,         &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value)
 
@@ -260,10 +263,10 @@ program SOG
         ! variables that are declared in the turbulence module.
         call wind_stress (unow, vnow, rho%g(1))
 
-        ! Calculate nonturbulent heat flux profile
-        Q_n = I / (Cp%i * rho%i)
+        ! Calculate non-turbulent heat flux profile
+        Q_n = I_total / (Cp%i * rho%i)
 
-        ! Calculate the nonturbulent fresh water flux profile, and its
+        ! Calculate the non-turbulent fresh water flux profile, and its
         ! contribution to the salinity profile.
         !
         ! This sets the values of the river salinity diagnostic
@@ -279,7 +282,7 @@ program SOG
         ! This sets the value of the diagnostic buoyancy profile (B),
         ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
         ! and the surface buoyancy flux (Bf).
-        call calc_buoyancy(T%new, S%new, h%new, I, rho%g, alpha%g, &
+        call calc_buoyancy(T%new, S%new, h%new, I_total, rho%g, alpha%g, &
              beta%g, Cp%g)
 
         ! Calculate the turbulent diffusivity profile arrays using the
@@ -375,7 +378,7 @@ program SOG
         ! This sets the value of the diagnostic buoyancy profile (B),
         ! the surface turbulent kinematic buoyancy flux (wbar%b(0)),
         ! and the surface buoyancy flux (Bf).  .
-        call calc_buoyancy(T%new, S%new, h%new, I, rho%g, alpha%g, &
+        call calc_buoyancy(T%new, S%new, h%new, I_total, rho%g, alpha%g, &
              beta%g, Cp%g)
 
         ! Preserve the value of the mixing layer depth from the
@@ -440,8 +443,8 @@ program SOG
      ! Solve the biology model ODEs to advance the biology quantity values
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
-     call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M), I_Par, &
-          P%micro, P%nano, P%pico, Z, N%O, N%H, Si,                    &
+     call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M), &
+          P%micro, P%nano, P%pico, Z, N%O, N%H, Si,             &
           D%DON, D%PON, D%refr, D%bSi)
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
@@ -502,7 +505,7 @@ program SOG
      ! !!! write_user_timeseries() below.                                 !!!
      call write_std_timeseries(time / 3600., grid,                      &
        ! Variables for standard physics model output
-       count, h%new, U%new, V%new, T%new, S%new, I_par(0),              &
+       count, h%new, U%new, V%new, T%new, S%new,                        &
        ! Variables for standard biology model output
        N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, &
        D%bSi,                                                           &
@@ -524,7 +527,7 @@ program SOG
           datetime_str(initDatetime), year, day, day_time, dt, grid,     &
           T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
           D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                    &
-          I_par, U%new, V%new)
+          U%new, V%new)
 
      ! Write user-specified profiles results
      ! !!! Please don't add arguments to this call.           !!!

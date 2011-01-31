@@ -70,7 +70,7 @@ contains
 !!$  end subroutine read_biology_params
 
 
-  subroutine calc_bio_rate(time, day, dt, M, T_new, I_par, Pmicro, Pnano, &
+  subroutine calc_bio_rate(time, day, dt, M, T_new, Pmicro, Pnano, &
        Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the biology model ODEs to advance the biology quantity values
     ! to the next time step, and calculate the growth - mortality terms
@@ -80,6 +80,8 @@ contains
     use rungekutta, only: odeint
     use NPZD, only: PZ
     use numerics, only: check_negative
+    use irradiance, only: &
+         I_par  ! Photosynthetic available radiation profile
     implicit none
 
     ! Arguments:
@@ -88,7 +90,6 @@ contains
     real(kind=dp), intent(in) :: dt    ! Time step
     integer, intent(in) :: M           ! Number of grid points
     real(kind=dp), dimension(0:), intent(in) :: T_new   ! Temperature
-    real(kind=dp), dimension(0:), intent(in) :: I_par  ! Photosynth avail rad
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano, &   ! Nano phytoplankton

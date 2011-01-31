@@ -159,8 +159,8 @@ contains
          grid  ! Grid parameters and depth & spacing arrays
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
-    use declarations, only: &
-         Q_n   ! distributed heat flux
+    use irradiance, only: &
+         Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
          UseRiverTemp
    
