@@ -48,10 +48,11 @@ module NPZD
   ! Private type definitions:
   !
   ! Indices for quantities in PZ vector
-  TYPE :: bins
-     INTEGER :: &
-          Quant, micro, nano, pico, zoo, NO, NH, Si, det, D_DON, D_PON, D_refr, D_bSi
-  END TYPE bins
+  type :: bins
+     integer :: &
+          Quant, micro, nano, pico, zoo, NO, NH, Si, det, &
+          D_DON, D_PON, D_refr, D_bSi
+  end type bins
   !
   ! Rate parameters for phytoplankton
   type :: rate_para_phyto
@@ -71,6 +72,7 @@ module NPZD
           K_Si, & ! half-saturation for Si
           Rm      ! natural mortality rate
   end type rate_para_phyto
+  !
   ! Rate parameters for Zooplankton
   type :: rate_para_zoo
      real(kind=dp) :: & 
@@ -103,7 +105,7 @@ module NPZD
           Z_PredSlope, &   ! limit from predation
           Z_HalfSat        ! half-saturation for Z
   end type rate_para_zoo  
-
+  !
   ! New parameters for waste
   type :: nloss_param
      real(kind=dp) :: NH, DON, PON, Ref, Bsi
@@ -124,7 +126,6 @@ module NPZD
           NO, &  ! Nitrate uptake profile
           NH     ! Ammonium uptake profile
   end type uptake_
-
 
   ! Public variable declarations:
   !
@@ -549,21 +550,21 @@ contains
     ! are functions of temperature
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
-    use declarations, only: plankton2
+    use declarations, only: plankton_growth
     implicit none
     ! Arguments:
     integer, intent(in) :: M
     ! Nitrate, ammonium & silicon concentrations
-    real(kind=dp), dimension(1:M), intent(in) :: NO, NH, Si 
-    ! plankton concentraton (either Pmicro or Pnano)
-    real(kind=dp), dimension(1:M), intent(in) :: P
-    real(kind=dp), dimension(0:M), intent(in) :: I_par  ! light
-    real(kind=dp), dimension(1:M), intent(in) :: temp_Q10  ! Q10 temp effect
+    real(kind=dp), dimension(1:), intent(in) :: NO, NH, Si 
+    ! Plankton concentraton (either Pmicro or Pnano)
+    real(kind=dp), dimension(1:), intent(in) :: P
+    real(kind=dp), dimension(0:), intent(in) :: I_par  ! light
+    real(kind=dp), dimension(1:), intent(in) :: temp_Q10  ! Q10 temp effect
     real(kind=dp), dimension(0:), intent(in) :: temp ! temperature
-    ! parameters of the growth equations
+    ! Parameters of the growth equations
     type(rate_para_phyto), intent(in) :: rate
-    ! out are the growth values
-    type(plankton2), intent(out) :: plank ! either micro or nano 
+    ! Output is the growth values
+    type(plankton_growth), intent(out) :: plank ! either micro or nano 
 
     ! Local variables:
     integer :: j ! counter through depth
@@ -728,7 +729,7 @@ contains
          M  ! Number of grid points
     real(kind=dp), dimension(1:), intent(in) :: &
          PZ  ! Consolidated array of biology quantities values
-    real(kind=dp), dimension(0:M), intent(in) :: &
+    real(kind=dp), dimension(0:), intent(in) :: &
          ! *** Should be able to eliminate upper bound here
          Temp,  &  ! Temperature profile [K]
          I_par     ! Photosynthetic available radiation profile [W/m^2]

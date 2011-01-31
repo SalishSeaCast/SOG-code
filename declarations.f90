@@ -5,19 +5,15 @@ module declarations
 
   implicit NONE
 
-  ! Grow component of plankton2 type
+  ! Plankton growth
   type :: grow               
      real(kind=dp), dimension(:), pointer :: light, new
   end type grow
-
-  ! *** Plankton "behaviours" ??? type
-  ! *** This will probably be refactored when Susan implements sinking
-  type :: plankton2
+  type :: plankton_growth
      type(grow) :: growth
-     real(kind=dp), dimension(:), pointer:: Nlimit
-  end type plankton2
-
-  TYPE(plankton2)::micro, nano, pico
+     real(kind=dp), dimension(:), pointer :: Nlimit
+  end type plankton_growth
+  type(plankton_growth) :: micro, nano, pico
 
   ! Heat fluxes
   real(kind=dp) :: Q_t  ! Turbulent surface heat flux
