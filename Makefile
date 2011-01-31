@@ -31,7 +31,7 @@ OBJS = precision_defs.o io_unit_defs.o datetime.o input_processor.o \
 fundamental_constants.o malloc.o unit_conversions.o \
 grid.o numerics.o forcing.o core_variables.o water_properties.o \
 \
-mean_param.o declarations.o allocate1.o	\
+declarations.o allocate1.o	\
 \
 irradiance.o turbulence.o freshwater.o buoyancy.o mixing_layer.o \
 diffusion.o baroclinic_pressure.o upwelling.o fitbottom.o \

@@ -549,8 +549,7 @@ contains
     ! are functions of temperature
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
-    use mean_param, only: plankton2
-!     use surface_forcing, only: small
+    use declarations, only: plankton2
     implicit none
     ! Arguments:
     integer, intent(in) :: M

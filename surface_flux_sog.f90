@@ -4,7 +4,6 @@ SUBROUTINE surface_flux_sog(mm,ro, &
   
   use fundamental_constants, only: g
   use turbulence, only: wbar
-      USE mean_param
   implicit none
   ! Arguments:
       INTEGER, INTENT(IN)::mm
