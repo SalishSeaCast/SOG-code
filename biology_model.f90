@@ -25,7 +25,7 @@ module biology_model
        ! Parameter values:
 !!$       spam, &
        ! Subroutines:
-       init_biology, calc_bio_rate
+       init_biology, calc_bio_rate, dalloc_biology_variables
 
   ! Type Definitions:
   !
@@ -38,6 +38,9 @@ module biology_model
   ! Public:
   !
   ! Private to module:
+  integer, parameter :: &
+       D_bins = 4  ! Number of detritus bins: dissolved, slow sink,
+                   ! fast sink, and silicon
   !
   ! Variable Declarations:
   !
@@ -49,15 +52,24 @@ contains
 
   subroutine init_biology(M)
     ! Initialize the biology model.
-    use NPZD, only: init_NPZD
-    use biology_eqn_builder, only: read_sink_params
+
+    ! Subroutines from other modules:
+    use NPZD, only: alloc_NPZD_variables, init_NPZD
+    use biology_eqn_builder, only: alloc_bio_RHS_variables, read_sink_params
     implicit none
-    ! Arguments:
+
+    ! Argument:
     integer, intent(in) :: &
          M  ! Number of grid points
 
+    ! Allocate memory for NPZD model variables
+    call alloc_NPZD_variables(M, D_bins)
+    ! Allocate memory for arrays for right-hand sides of
+    ! diffusion/advection equations for the biology model.
+    call alloc_bio_RHS_variables(M)
+
 !!$    call read_biology_params()
-    call init_NPZD(M)
+    call init_NPZD(M, D_bins)
     call read_sink_params()
   end subroutine init_biology
   
@@ -320,5 +332,23 @@ contains
     ePz = PZ_bins%D_bSi * M
     D_bSi_RHS%bio = PZ(bPz:ePz) - D_bSi(1:M)
   end subroutine unload_PZ
+
+
+  subroutine dalloc_biology_variables
+    ! Deallocate memory from physics model variables arrays.
+
+    ! Subroutines from other modules:
+    use malloc, only: dalloc_check
+    use NPZD, only: dalloc_NPZD_variables
+    use biology_eqn_builder, only: dalloc_bio_RHS_variables
+    
+    implicit none
+
+    ! Deallocate memory from NPZD model arrays
+    call dalloc_NPZD_variables
+    ! Deallocate memory from arrays for right-hand sides of
+    ! diffusion/advection equations for the biology model.
+    call dalloc_bio_RHS_variables
+  end subroutine dalloc_biology_variables
 
 end module biology_model

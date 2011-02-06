@@ -38,12 +38,13 @@ module NPZD
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton, &  ! Active or not
        strong_limitation, & ! single species light limitation
+!!$       micro, &
        ! diagnostics
        Mesozoo, &
        f_ratio, &  ! Ratio of new to total production profile
        ! Subroutines:
        init_NPZD, derivs, &
-       dalloc_biology_variables
+       alloc_NPZD_variables, dalloc_NPZD_variables
 
   ! Private type definitions:
   !
@@ -126,6 +127,16 @@ module NPZD
           NO, &  ! Nitrate uptake profile
           NH     ! Ammonium uptake profile
   end type uptake_
+  !
+!!$  ! Plankton growth
+!!$  type :: grow               
+!!$     real(kind=dp), dimension(:), pointer :: light, new
+!!$  end type grow
+!!$  type :: plankton_growth
+!!$     type(grow) :: growth
+!!$     real(kind=dp), dimension(:), pointer :: Nlimit
+!!$  end type plankton_growth
+!!$  type(plankton_growth) :: micro, nano, pico
 
   ! Public variable declarations:
   !
@@ -189,30 +200,22 @@ module NPZD
        NH_oxid      ! Bacterial oxidation of NH4 to NO3
   real(kind=dp), dimension(:), allocatable :: &
        f_ratio  ! Ratio of new to total production profile
-  integer :: D_bins
 
 contains
 
-  subroutine init_NPZD(M)
+  subroutine init_NPZD(M, D_bins)
     ! Initialize biological model.
     ! *** Incomplete...
     use input_processor, only: getpard, getparl, getpari, getpardv
-    use biology_eqn_builder, only: alloc_bio_RHS_variables
+    implicit none
 
     ! Arguments:
-    integer, intent(in) :: M  ! Number of grid points
-    ! Local variables
-
-    ! Number of detritus bins, dissolved, slow sink and fast sink
-    D_bins = 4
+    integer, intent(in) :: &
+         M, &  ! Number of grid points
+         D_bins  ! Number of detritus bins
 
     ! Size of the PZ vector for biological model
     M2 = (PZ_bins%Quant + D_bins) * M   !size of PZ in biology: 
-    ! Allocate memory for biology model variables
-    call alloc_biology_variables(M)
-    ! Allocate memory for arrays for right-hand sides of
-    ! diffusion/advection equations for the biology model.
-    call alloc_bio_RHS_variables(M)
 
     ! Read the values of the flagellates and remineralization loop
     ! selector flags
@@ -220,7 +223,6 @@ contains
     remineralization = getparl('remineralization')
     microzooplankton = getparl('use microzooplankton')
     strong_limitation = getparl('single species light')
-
 
     ! Biological rate parameters
     ! zooplankton rates
@@ -470,17 +472,18 @@ contains
     frac_waste_FEN%PON = getpard('Waste, fen, PON')
     frac_waste_FEN%Ref = getpard('Waste, fen, Ref')
     frac_waste_FEN%Bsi = getpard('Waste, fen, Bsi')
-
-
   end subroutine init_NPZD
 
 
-  subroutine alloc_biology_variables(M)
+  subroutine alloc_NPZD_variables(M, D_bins)
     ! Allocate memory for biological model arrays.
     use malloc, only: alloc_check
     implicit none
+
     ! Argument:
-    integer :: M  ! Number of grid points
+    integer :: &
+         M, &  ! Number of grid points
+         D_bins
     ! Local variables:
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
@@ -505,13 +508,24 @@ contains
     allocate(f_ratio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-  end subroutine alloc_biology_variables
+!!$    msg = "Plankton growth arrays"
+!!$    allocate(micro%growth%light(M), &
+!!$         micro%growth%new(M), &
+!!$         nano%growth%light(M), &
+!!$         nano%growth%new(M), &
+!!$         pico%growth%light(M), &
+!!$         pico%growth%new(M), &
+!!$         micro%Nlimit(M), &
+!!$         nano%Nlimit(M), &
+!!$         pico%Nlimit(M), &
+!!$         stat=allocstat)
+!!$    call alloc_check(allocstat, msg)
+  end subroutine alloc_NPZD_variables
 
 
-  subroutine dalloc_biology_variables
-    ! Deallocate memory for biological model arrays.
+  subroutine dalloc_NPZD_variables
+    ! Deallocate memory for NPZD model arrays.
     use malloc, only: dalloc_check
-    use biology_eqn_builder, only: dalloc_bio_RHS_variables
     implicit none
     ! Local variables:
     integer           :: dallocstat  ! Deallocation return status
@@ -537,10 +551,19 @@ contains
     deallocate(f_ratio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    ! Deallocate memory from arrays for right-hand sides of
-    ! diffusion/advection equations for the biology model.
-    call dalloc_bio_RHS_variables()
-  end subroutine dalloc_biology_variables
+!!$    msg = "Plankton growth arrays"
+!!$    deallocate(micro%growth%light, &
+!!$         micro%growth%new, &
+!!$         nano%growth%light, &
+!!$         nano%growth%new, &
+!!$         pico%growth%light, &
+!!$         pico%growth%new, &
+!!$         micro%Nlimit, &
+!!$         nano%Nlimit, &
+!!$         pico%Nlimit, &
+!!$         stat=dallocstat)
+!!$    call dalloc_check(dallocstat, msg)
+  end subroutine dalloc_NPZD_variables
 
 
   subroutine p_growth(M, NO, NH, Si, P, I_par, temp_Q10, Temp, rate, plank) 

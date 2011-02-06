@@ -84,10 +84,10 @@ program SOG
   use turbulence, only: calc_KPP_diffusivity
   use physics_eqn_builder, only: build_physics_equations, &
        new_to_old_phys_RHS, new_to_old_phys_Bmatrix
-  use biology_model, only: init_biology, calc_bio_rate
+  use biology_model, only: init_biology, calc_bio_rate, &
+       dalloc_biology_variables
   use biology_eqn_builder, only: build_biology_equations, &
        new_to_old_bio_RHS, new_to_old_bio_Bmatrix
-  use NPZD, only: dalloc_biology_variables
   use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
   use timeseries_output, only: init_timeseries_output, write_std_timeseries, &
