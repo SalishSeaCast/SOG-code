@@ -34,11 +34,11 @@ module NPZD
        ! Variables:
        PZ, &
        PZ_bins, &
-       flagellates, &       ! Can flagellates can influence other biology?
-       remineralization, &  ! Is there a remineralization loop?
-       microzooplankton, &  ! Active or not
-       strong_limitation, & ! single species light limitation
-!!$       micro, &
+       flagellates, &        ! Can flagellates can influence other biology?
+       remineralization, &   ! Is there a remineralization loop?
+       microzooplankton, &   ! Active or not
+       strong_limitation, &  ! single species light limitation
+       micro, &              ! micro-plankton growth profile arrays
        ! diagnostics
        Mesozoo, &
        f_ratio, &  ! Ratio of new to total production profile
@@ -128,15 +128,14 @@ module NPZD
           NH     ! Ammonium uptake profile
   end type uptake_
   !
-!!$  ! Plankton growth
-!!$  type :: grow               
-!!$     real(kind=dp), dimension(:), pointer :: light, new
-!!$  end type grow
-!!$  type :: plankton_growth
-!!$     type(grow) :: growth
-!!$     real(kind=dp), dimension(:), pointer :: Nlimit
-!!$  end type plankton_growth
-!!$  type(plankton_growth) :: micro, nano, pico
+  ! Plankton growth
+  type :: grow               
+     real(kind=dp), dimension(:), pointer :: light, new
+  end type grow
+  type :: plankton_growth
+     type(grow) :: growth
+     real(kind=dp), dimension(:), pointer :: Nlimit
+  end type plankton_growth
 
   ! Public variable declarations:
   !
@@ -147,6 +146,7 @@ module NPZD
        microzooplankton, & ! use a microzooplantkon pool?
        strong_limitation ! impose single species strong light limitation
   real(kind=dp), dimension(:), allocatable :: Mesozoo
+  type(plankton_growth) :: micro  ! Micro-plankton growth profile arrays
 
   ! Private variable declarations:
   !
@@ -200,6 +200,9 @@ module NPZD
        NH_oxid      ! Bacterial oxidation of NH4 to NO3
   real(kind=dp), dimension(:), allocatable :: &
        f_ratio  ! Ratio of new to total production profile
+  !
+  ! Nano & pico plankton growth profile arrays
+  type(plankton_growth) :: nano, pico
 
 contains
 
@@ -508,18 +511,13 @@ contains
     allocate(f_ratio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-!!$    msg = "Plankton growth arrays"
-!!$    allocate(micro%growth%light(M), &
-!!$         micro%growth%new(M), &
-!!$         nano%growth%light(M), &
-!!$         nano%growth%new(M), &
-!!$         pico%growth%light(M), &
-!!$         pico%growth%new(M), &
-!!$         micro%Nlimit(M), &
-!!$         nano%Nlimit(M), &
-!!$         pico%Nlimit(M), &
-!!$         stat=allocstat)
-!!$    call alloc_check(allocstat, msg)
+    msg = "Plankton growth arrays"
+    allocate(micro%growth%light(M), micro%growth%new(M), &
+         nano%growth%light(M), nano%growth%new(M), &
+         pico%growth%light(M), pico%growth%new(M), &
+         micro%Nlimit(M), nano%Nlimit(M), pico%Nlimit(M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
   end subroutine alloc_NPZD_variables
 
 
@@ -551,18 +549,13 @@ contains
     deallocate(f_ratio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-!!$    msg = "Plankton growth arrays"
-!!$    deallocate(micro%growth%light, &
-!!$         micro%growth%new, &
-!!$         nano%growth%light, &
-!!$         nano%growth%new, &
-!!$         pico%growth%light, &
-!!$         pico%growth%new, &
-!!$         micro%Nlimit, &
-!!$         nano%Nlimit, &
-!!$         pico%Nlimit, &
-!!$         stat=dallocstat)
-!!$    call dalloc_check(dallocstat, msg)
+    msg = "Plankton growth arrays"
+    deallocate(micro%growth%light, micro%growth%new, &
+         nano%growth%light, nano%growth%new, &
+         pico%growth%light, pico%growth%new, &
+         micro%Nlimit, nano%Nlimit, pico%Nlimit, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
   end subroutine dalloc_NPZD_variables
 
 
@@ -573,7 +566,6 @@ contains
     ! are functions of temperature
     use precision_defs, only: dp
     use unit_conversions, only: KtoC
-    use declarations, only: plankton_growth
     implicit none
     ! Arguments:
     integer, intent(in) :: M
@@ -743,7 +735,6 @@ contains
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
     use fundamental_constants, only: pi
-    use declarations, only: micro, nano, pico
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
     implicit none

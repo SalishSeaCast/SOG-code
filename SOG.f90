@@ -180,19 +180,6 @@ program SOG
   ! *** This should eventually go into init_numerics()
   call init_IMEX_solver(grid%M)
 
-  ! Allocate memory
-  ! *** It would be nice if the rest of the code in allocate1 could
-  ! *** end up in alloc_* subroutines private to various modules,
-  ! *** that are called by their init_* subroutines.
-  CALL allocate1(grid%M, alloc_stat) 
-  DO xx = 1,12
-     IF (alloc_stat(xx) /= 0) THEN
-        PRINT "(A)","ALLOCATION failed.  KPP.f  xx:"
-        PRINT *,xx,alloc_stat(xx)
-        CALL EXIT(1)
-     END IF
-  END DO
-
   ! Read forcing data files
   call read_forcing
 

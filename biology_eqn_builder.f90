@@ -189,7 +189,7 @@ contains
     ! vectors (*_RHS%sink).
     use precision_defs, only: dp
     use grid_mod, only: grid_
-    use declarations, only: micro  ! *** This definitely needs to go away
+    use NPZD, only: micro
     use turbulence, only: K
     use diffusion, only: diffusion_coeff, diffusion_bot_surf_flux, &
          diffusion_nonlocal_fluxes
