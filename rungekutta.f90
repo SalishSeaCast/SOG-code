@@ -13,7 +13,7 @@ public :: odeint
 
 contains
 
-  subroutine odeint (PZstart, M, M2, start_time, end_time, precision, &
+  subroutine odeint (PZstart, M, PZ_length, start_time, end_time, precision, &
        step_guess, &
        step_min, N_ok, N_bad, Temp, I_par, day)
 
@@ -25,7 +25,7 @@ contains
     real(kind=dp), dimension(:), intent(in out) :: &
          PZstart ! starting and finishing value of PZ
     integer, intent(in) :: M, &    ! size of the grid
-                           M2    ! total size of PZ
+                           PZ_length    ! total size of PZ
     real(kind=dp), intent(in) :: start_time, & ! start time of integration
                                  end_time, & ! end time of integration
                                  precision, & ! required precision
@@ -45,10 +45,11 @@ contains
 
     ! internal variables (alphabetical)
 
-    real(kind=dp), dimension(1:M2) :: dPZdt ! biological derivatives vector
     integer :: istp ! step counter
-    real(kind=dp), dimension(1:M2) :: PZ ! biological conc. vector
-    real(kind=dp), dimension(1:M2) :: PZscal ! scale for size of changes
+    real(kind=dp), dimension(1:PZ_length) :: &
+         dPZdt, &  ! biological derivatives vector
+         PZ,    &  ! biological conc. vector
+         PZscal    ! scale for size of changes
     real(kind=dp) :: step  ! current step size
     real(kind=dp) :: step_done  ! completed step size
     real(kind=dp) :: step_next ! suggested next step size
@@ -70,7 +71,7 @@ contains
        if ((time+step-end_time)*(time+step-start_time) > 0) &
             step = end_time - time
 
-       call rkqs (PZ, dPZdt, M, M2, time, step, precision, PZscal, &
+       call rkqs (PZ, dPZdt, M, PZ_length, time, step, precision, PZscal, &
             step_done, step_next, Temp, I_par, day)
 
        if (step_done == step) then
@@ -94,7 +95,7 @@ contains
     return
   end subroutine odeint
 
-subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
+subroutine rkqs (PZ, dPZdt, M, PZ_length, time, step_try, precision, PZscal, &
      step_done, step_next, Temp, I_par, day)
 
     use precision_defs, only: dp
@@ -105,7 +106,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
     real(kind=dp), dimension(:), intent(in) :: &
                                           dPZdt ! biological derivatives vector
     integer, intent(in) :: M, &    ! size of the grid
-                           M2    ! total size of PZ
+                           PZ_length    ! total size of PZ
     real(kind=dp), intent(in out) :: time ! time
     real(kind=dp), intent(in) :: step_try, & ! suggested step size
                                  precision ! required precision
@@ -130,18 +131,19 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
     real(kind=dp) :: errmax ! current maximum error PZ values
     integer:: i ! counter through PZ
-    real(kind=dp), dimension(1:M2) :: PZerr ! error (delta) in PZ
-    real(kind=dp), dimension(1:M2) :: PZtemp ! last value of PZ calculated  
+    real(kind=dp), dimension(1:PZ_length) :: &
+         PZerr, &  ! error (delta) in PZ
+         PZtemp    ! last value of PZ calculated  
     real(kind=dp) :: step  ! current step size
     real(kind=dp) :: time_new ! time after an unsuccessful step
 
     step = step_try
 
-0001 call rkck (PZ, dPZdt, M, M2, step, PZtemp, PZerr, Temp, I_par, day)
+0001 call rkck (PZ, dPZdt, M, PZ_length, step, PZtemp, PZerr, Temp, I_par, day)
 
     errmax = 0.
 
-    do i = 1, M2
+    do i = 1, PZ_length
        errmax = max(errmax,abs(PZerr(i)/PZscal(i)))
     enddo
 
@@ -169,7 +171,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
 
   end subroutine rkqs
 
-  subroutine rkck (PZ, dPZdt, M, M2, step, PZout, PZerr, Temp, I_par, day)
+  subroutine rkck (PZ, dPZdt, M, PZ_length, step, PZout, PZerr, Temp, I_par, day)
 
     use precision_defs, only: dp
     use NPZD, only: derivs
@@ -180,7 +182,7 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
     real(kind=dp), dimension(:), intent(in) :: &
                                    dPZdt ! biological derivatives vector
     integer, intent(in) :: M, &    ! size of the grid
-                           M2    ! total size of PZ
+                           PZ_length    ! total size of PZ
     real(kind=dp), intent(in) :: step ! suggested step size
     real(kind=dp), dimension(:), intent(out) :: PZout ! calculated PZ value   
     real(kind=dp), dimension(:), intent(out) :: PZerr ! error (delta) in PZ
@@ -200,9 +202,9 @@ subroutine rkqs (PZ, dPZdt, M, M2, time, step_try, precision, PZscal, &
      DC6=C6-.25)
  
     ! other internal variables
-    real(kind=dp), dimension(1:M2) :: AK2, AK3, AK4, AK5, &
-                                      AK6  ! intermediate values of dPZdt
-    real(kind=dp), dimension(1:M2) :: PZtemp ! intermediate values of PZ  
+    real(kind=dp), dimension(1:PZ_length) :: &
+         AK2, AK3, AK4, AK5, AK6, &  ! intermediate values of dPZdt
+         PZtemp                      ! intermediate values of PZ  
 
     PZtemp(:) = PZ(:) + B21 * step * dPZdt(:)
 

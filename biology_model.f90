@@ -39,14 +39,17 @@ module biology_model
   !
   ! Private to module:
   integer, parameter :: &
-       D_bins = 4  ! Number of detritus bins: dissolved, slow sink,
-                   ! fast sink, and silicon
+       NPZD_bins = 7 + 4  ! Number of bins in biology model:
+                          ! nutrients, phytoplankton, zooplankton, and
+                          ! detritus (dissolved, slow sink, fast sink,
+                          ! and silicon)
   !
   ! Variable Declarations:
   !
   ! Public:
   !
   ! Private to module:
+  integer :: PZ_length
 
 contains
 
@@ -62,15 +65,17 @@ contains
     integer, intent(in) :: &
          M  ! Number of grid points
 
+    ! Length of PZ array
+    PZ_length = NPZD_bins * M
     ! Allocate memory for NPZD model variables
-    call alloc_NPZD_variables(M, D_bins)
+    call alloc_NPZD_variables(M, PZ_length)
     ! Allocate memory for arrays for right-hand sides of
     ! diffusion/advection equations for the biology model.
     call alloc_bio_RHS_variables(M)
 
 !!$    call read_biology_params()
-    call init_NPZD(M, D_bins)
-    call read_sink_params()
+    call init_NPZD
+    call read_sink_params
   end subroutine init_biology
   
 
@@ -88,7 +93,6 @@ contains
     ! to the next time step, and calculate the growth - mortality terms
     ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
     use precision_defs, only: dp
-    use declarations, only: M2   ! need to get rid of these
     use rungekutta, only: odeint
     use NPZD, only: PZ
     use numerics, only: check_negative
@@ -133,7 +137,7 @@ contains
 
     ! Solve the biological model for values at the next time step
     next_time = time + dt
-    call odeint(PZ, M, M2, time, next_time, precision, step_guess, &
+    call odeint(PZ, M, PZ_length, time, next_time, precision, step_guess, &
          step_min, &
          N_ok, N_bad, T_new, I_par, day)
     call check_negative(1, PZ, "PZ after odeint()", day, time)

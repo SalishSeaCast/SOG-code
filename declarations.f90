@@ -8,6 +8,4 @@ module declarations
   ! Heat fluxes
   real(kind=dp) :: Q_t  ! Turbulent surface heat flux
 
-  INTEGER::M2
-
 end module declarations

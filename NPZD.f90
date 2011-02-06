@@ -23,7 +23,6 @@ module NPZD
   !                               variables.
 
   use precision_defs, only: dp
-  use declarations, only: M2 ! hopefully can get these out of everything else
 
   implicit none
 
@@ -206,19 +205,11 @@ module NPZD
 
 contains
 
-  subroutine init_NPZD(M, D_bins)
+  subroutine init_NPZD
     ! Initialize biological model.
     ! *** Incomplete...
     use input_processor, only: getpard, getparl, getpari, getpardv
     implicit none
-
-    ! Arguments:
-    integer, intent(in) :: &
-         M, &  ! Number of grid points
-         D_bins  ! Number of detritus bins
-
-    ! Size of the PZ vector for biological model
-    M2 = (PZ_bins%Quant + D_bins) * M   !size of PZ in biology: 
 
     ! Read the values of the flagellates and remineralization loop
     ! selector flags
@@ -478,7 +469,7 @@ contains
   end subroutine init_NPZD
 
 
-  subroutine alloc_NPZD_variables(M, D_bins)
+  subroutine alloc_NPZD_variables(M, PZ_length)
     ! Allocate memory for biological model arrays.
     use malloc, only: alloc_check
     implicit none
@@ -486,13 +477,13 @@ contains
     ! Argument:
     integer :: &
          M, &  ! Number of grid points
-         D_bins
+         PZ_length
     ! Local variables:
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "PZ vector (biology model timestep initial conditions) array"
-    allocate(PZ(1:(PZ_bins%Quant + D_bins) * M), &
+    allocate(PZ(1:PZ_length), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Nitrogen compounds uptake diagnostic arrays"
