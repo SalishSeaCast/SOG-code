@@ -114,6 +114,8 @@ program SOG
   !
   ! Date/time structures for output file headers
   type(datetime_) :: runDatetime     ! Date/time of code run
+  ! Time step, and implicit solver iteration counters
+  integer :: time_step, count
   ! Salinity monitoring and tuning variables
   real(kind=dp) :: &
        sumS=0, sumSriv=0, Sone
