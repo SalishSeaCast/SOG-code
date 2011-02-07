@@ -12,7 +12,7 @@ module air_sea_fluxes
   private
   public :: &
        ! Subroutine:
-       wind_stress
+       wind_stress, longwave_latent_sensible_heat
   
   ! Parameter Value Declarations:
   !
@@ -76,8 +76,7 @@ contains
   end subroutine wind_stress
 
   
-  subroutine longwave_latent_sensible_heat(cf, atemp, humid, T_o, &  ! in
-       rho_o, Cp_o)                                                  ! in
+  subroutine longwave_latent_sensible_heat(cf, atemp, humid, T_o, rho_o, Cp_o)
     ! Calculate the surface turbulent heat flux.
     !
     ! This calculates the values of the wbar%t(0) variable that is
@@ -99,7 +98,8 @@ contains
     real(kind=sp),intent(in) :: &
          cf,    & ! Cloud fraction [0 to 1]
          atemp, & ! Air temperature [K]
-         humid, & ! humidity [%]
+         humid    ! humidity [%]
+    real(kind=dp),intent(in) :: &
          T_o,   & ! Sea surface water temperature [K]
          rho_o, & ! Sea surface water density  [kg/m^3]
          Cp_o     ! Sea surface water specific heat [kJ/kg-K]
@@ -107,11 +107,11 @@ contains
     !
     ! Longwave radiation
     real(kind=dp), parameter :: &
-         r = 0.03d0,         &
-         Ce = 9.37d-06,      &
-         sigma = 5.6697d-08, &  ! Stefan Boltzmann constant
-         epsilon_w = 0.96d0     ! surface emissivity in IR portion of
-                                ! the spectrum Local variables:
+         r = 0.03,         &
+         Ce = 9.37e-6,      &
+         sigma = 5.6697e-8, &  ! Stefan Boltzmann constant
+         epsilon_w = 0.96     ! surface emissivity in IR portion of
+                                ! the spectrum
     real(kind=dp) :: &
          lw_in,  &  ! Downward long wave radiation
          lw_out, &  ! Upward emission of long wave radiation 
@@ -119,7 +119,7 @@ contains
     !
     ! Sensible heat flux
     real(kind=dp), parameter :: &
-         Cs = 1.3d-3, &  ! Sensible heat transfer coefficient
+         Cs = 1.3e-3, &  ! Sensible heat transfer coefficient
          Cp = 1003.0d0   ! Specific heat of air
     real(kind=dp) :: &
          h_sens  ! Sensible heat flux
@@ -129,7 +129,7 @@ contains
          a = 7.5d0,      &  ! Vapour pressure consts
          b = 237.3d0,    &
          c = 0.7858d0,   &
-         CL = 1.3e-3,    &  ! Latent heat consts
+         CL = 1.3d-3,    &  ! Latent heat consts
          LE = 2.453d6
     real(kind=dp) :: &
          ea,       &  ! Vapour pressure [mb]
@@ -139,7 +139,7 @@ contains
 
     ! Downward radiation from atmosphere
     ! *** There are several different ways to calculate this
-    lw_in = (1.0d0 - r) * (1.0d0 +0.17d0 * cf**2) * Ce * atemp**2 &
+    lw_in = (1.0d0 - r) * (1.0d0 + 0.170 * cf**2) * Ce * atemp**2 &
          * sigma * atemp**4  
     ! Upward emission of radiation from earth's surface, stull page 48
     lw_out = -epsilon_w * sigma * T_o**4                      

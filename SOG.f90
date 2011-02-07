@@ -235,21 +235,20 @@ program SOG
         S%grad_i = gradient_i(S%new)
 
         ! Calculate surface forcing components
-        ! *** Confirm that all of these arguments are necessary
-        call surface_flux_sog(grid%M, rho%g, &
-             T%new(0), I_total,         &
-             alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
-             atemp_value, humid_value)
-
-!!$        call longwave_latent_sensible_heat(cf_value/10.0, atemp_value, &
-!!$             humid_value, T%new(0), rho%g(0), Cp%i(0))
-
-        ! Calculate the wind stress, and the turbulent kinematic flux
-        ! at the surface.
+        !
+        ! Wind stress, and the turbulent kinematic flux at the
+        ! surface.
         !
         ! This calculates the values of the wbar%u(0), and wbar%v(0)
         ! variables that are declared in the turbulence module.
         call wind_stress (unow, vnow, rho%g(1))
+        !
+        ! Turbulent heat flux at the surface.
+        !
+        ! This calculates the value of the wbar%t(0) variable that is
+        ! declared in the turbulence module.
+        call longwave_latent_sensible_heat(cf_value/10.0, atemp_value, &
+             humid_value, T%new(0), rho%g(0), Cp%i(0))
 
         ! Calculate non-turbulent heat flux profile
         Q_n = I_total / (Cp%i * rho%i)
