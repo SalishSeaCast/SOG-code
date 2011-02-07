@@ -1,5 +1,5 @@
 SUBROUTINE surface_flux_sog(mm,ro, & 
-                         temp_o, I, Q_t, alp, Cp_o, &
+                         temp_o, I, alp, Cp_o, &
                          bet, U_ten, V_ten, cf, atemp, humid)
   
   use fundamental_constants, only: g
@@ -14,7 +14,7 @@ SUBROUTINE surface_flux_sog(mm,ro, &
            U_ten, V_ten
       REAL, INTENT(IN):: cf,atemp,humid
       DOUBLE PRECISION,DIMENSION(0:mm),INTENT(IN)::I
-      DOUBLE PRECISION, INTENT(OUT)::Q_t
+      DOUBLE PRECISION :: Q_t
       
       ! Local Variables:
       DOUBLE PRECISION:: UU, rho_atm

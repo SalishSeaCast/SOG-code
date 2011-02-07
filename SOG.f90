@@ -76,7 +76,7 @@ program SOG
   use physics_model, only: init_physics, &
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
-  use air_sea_fluxes, only: wind_stress
+  use air_sea_fluxes, only: wind_stress, longwave_latent_sensible_heat
   use freshwater, only: freshwater_phys, S_riv
   use buoyancy, only: calc_buoyancy
   use baroclinic_pressure, only: baroclinic_P_gradient, &
@@ -103,10 +103,6 @@ program SOG
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
        increment_date_time
   use irradiance, only: calc_irradiance
-
-  ! Inherited module
-  ! *** Goal is to make this go away
-  use declarations
 
   implicit none
 
@@ -241,9 +237,12 @@ program SOG
         ! Calculate surface forcing components
         ! *** Confirm that all of these arguments are necessary
         call surface_flux_sog(grid%M, rho%g, &
-             T%new(0), I_total, Q_t,         &
+             T%new(0), I_total,         &
              alpha%i(0), Cp%i(0), beta%i(0), unow, vnow, cf_value/10.,    &
              atemp_value, humid_value)
+
+!!$        call longwave_latent_sensible_heat(cf_value/10.0, atemp_value, &
+!!$             humid_value, T%new(0), rho%g(0), Cp%i(0))
 
         ! Calculate the wind stress, and the turbulent kinematic flux
         ! at the surface.
