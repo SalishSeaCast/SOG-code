@@ -243,6 +243,10 @@ program SOG
      call get_forcing(year, day, day_time, &
           Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
           unow, vnow)
+     if (day == 2) then
+        write (*,*) Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
+             unow, vnow
+     endif
 
      call irradiance_sog(cf_value, day_time, day, I, I_par, grid, &
           Qinter, P%micro, P%nano, P%pico, jmax_i)
