@@ -431,7 +431,7 @@ program SOG
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
      call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M), &
-          P%micro, P%nano, P%pico, Z, N%O, N%H, Si,             &
+          P%micro, P%nano, P%pico, Z, N%O, N%H, DIC, Si,        &
           D%DON, D%PON, D%refr, D%bSi)
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
@@ -441,7 +441,7 @@ program SOG
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
-          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi)
+          N%O, N%H, DIC, Si, D%DON, D%PON, D%refr, D%bSi)
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
@@ -454,8 +454,8 @@ program SOG
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
-     call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
-          D%DON, D%PON, D%refr, D%bSi, day, time)
+     call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, DIC, &
+          Si, D%DON, D%PON, D%refr, D%bSi, day, time)
      !
      !---------- End of Biology Model ----------
 
@@ -466,6 +466,9 @@ program SOG
      Z(0) = Z(1)
      N%O(0) = N%O(1)
      N%H(0) = N%H(1)
+!--- BEGIN UPDATING CARBON BOUNDARY CONDITIONS
+     DIC(0) = DIC(1)
+!--- END UPDATING CARBON BOUNDARY CONDITIONS
      Si(0) = Si(1)
      D%DON(0) = D%DON(1)
      D%PON(0) = D%PON(1)
@@ -479,7 +482,7 @@ program SOG
      ! calculated from the data
      call bot_bound_time(year, day, day_time, &                       ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
-          Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
+          Si(grid%M+1), DIC(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
           P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
@@ -510,10 +513,10 @@ program SOG
      ! !!! If it is changed, the change should be committed to Mercurial. !!!
      ! !!! For exploratory, debugging, etc. output use                    !!!
      ! !!! write_user_profiles() below.                                   !!!
-     call write_std_profiles(datetime_str(runDatetime),                  &
-          datetime_str(initDatetime), year, day, day_time, dt, grid,     &
-          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
-          D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                    &
+     call write_std_profiles(datetime_str(runDatetime),                   &
+          datetime_str(initDatetime), year, day, day_time, dt, grid,      &
+          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, DIC, &
+          Si, D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                 &
           U%new, V%new)
 
      ! Write user-specified profiles results

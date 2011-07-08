@@ -39,7 +39,7 @@ module biology_model
   !
   ! Private to module:
   integer, parameter :: &
-       NPZD_bins = 7 + 4  ! Number of bins in biology model:
+       NPZD_bins = 8 + 4  ! Number of bins in biology model:
                           ! nutrients, phytoplankton, zooplankton, and
                           ! detritus (dissolved, slow sink, fast sink,
                           ! and silicon)
@@ -88,7 +88,7 @@ contains
 
 
   subroutine calc_bio_rate(time, day, dt, M, T_new, Pmicro, Pnano, &
-       Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi)
+       Ppico, Z, NO, NH, DIC, Si, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the biology model ODEs to advance the biology quantity values
     ! to the next time step, and calculate the growth - mortality terms
     ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
@@ -108,12 +108,15 @@ contains
     real(kind=dp), dimension(0:), intent(in) :: T_new   ! Temperature
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
-         Pnano, &   ! Nano phytoplankton
-         Ppico, &   ! Pico phytoplankton
-         Z, &  ! Micro zooplankton
-         NO, &      ! Nitrate
-         NH, &      ! Ammonium
-         Si, &      ! Silicon
+         Pnano,  &  ! Nano phytoplankton
+         Ppico,  &  ! Pico phytoplankton
+         Z,      &  ! Micro zooplankton
+         NO,     &  ! Nitrate
+         NH,     &  ! Ammonium
+!--- CARBON VARIABLES
+         DIC,    &  ! Dissolved inorganic carbon
+!--- END CARBON VARIABLES
+         Si,     &  ! Silicon
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
@@ -130,7 +133,7 @@ contains
 
     ! Load all of the biological quantities into the PZ vector for the
     ! ODE solver to operate on
-    call load_PZ(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
+    call load_PZ(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
          D_DON, D_PON, D_refr, D_bSi, &
          PZ)                                               ! out
     call check_negative(1, PZ, "PZ after load_PZ()", day, time)
@@ -144,12 +147,12 @@ contains
 
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate components of Gvector
-    call unload_PZ(M, PZ, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
+    call unload_PZ(M, PZ, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
          D_DON, D_PON, D_refr, D_bSi)
   end subroutine calc_bio_rate
 
 
-  subroutine load_PZ(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
+  subroutine load_PZ(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
        D_DON, D_PON, D_refr, D_bSi, &
        PZ)
     ! Load all of the separate biology variables (microplankton,
@@ -164,9 +167,12 @@ contains
          Pmicro, &  ! Micro phytoplankton biomass profile array
          Pnano,  &  ! Nano phytoplankton biomass profile array
          Ppico,  &  ! Pico phytoplankton biomass profile array
-         Z, &  ! Micro zooplankton
+         Z,      &  ! Micro zooplankton
          NO,     &  ! Nitrate concentration profile array
          NH,     &  ! Ammonium concentration profile array
+!--- CARBON VARIABLES
+         DIC,    &  ! Dissolved inorganic carbon profile array
+!--- END CARBON VARIABLES
          Si,     &  ! Silicon concentration profile array
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -221,6 +227,14 @@ contains
     else
        PZ(bPZ:ePZ) = 0
     endif
+
+!--- BEGIN CARBON EQUATIONS
+    ! Load dissolved inorganic carbon
+    bPz = (PZ_bins%DIC - 1) * M + 1
+    ePZ = PZ_bins%DIC * M
+    PZ(bPZ:ePZ) = DIC(1:M)
+!--- END CARBON EQUATIONS
+
     ! Load silicon
     bPz = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M
@@ -260,14 +274,14 @@ contains
   end subroutine load_PZ
 
 
-  subroutine unload_PZ(M, PZ, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
+  subroutine unload_PZ(M, PZ, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
        D_DON, D_PON, D_refr, D_bSi)
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate *_RHS%bio arrays.
     use precision_defs, only: dp
     use NPZD, only: PZ_bins
     use biology_eqn_builder, only: Pmicro_RHS, Pnano_RHS, Ppico_RHS, Z_RHS, &
-         NO_RHS, NH_RHS, &
+         NO_RHS, NH_RHS, DIC_RHS, &
          Si_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
     implicit none
     ! Arguments:
@@ -281,6 +295,9 @@ contains
          Z, &  ! Micro zooplankton biomass profile array
          NO,     &  ! Nitrate concentration profile array
          NH,     &  ! Ammonium concentration profile array
+!--- BEGIN CARBON DECLARATIONS
+         DIC,    &  ! Dissolved inorganic carbon profile array
+!--- END CARBON DECLARATIONS
          Si,     &  ! Silicon concentration profile array
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -315,6 +332,12 @@ contains
     bPZ = (PZ_bins%NH - 1) * M + 1
     ePZ = PZ_bins%NH * M
     NH_RHS%bio = PZ(bPZ:ePZ) - NH(1:M)
+!--- BEGIN CARBON EQUATIONS
+    ! Unload dissolved inorganic carbon
+    bPZ = (PZ_bins%DIC - 1) * M + 1
+    ePZ = PZ_bins%DIC * M
+    DIC_RHS%bio = PZ(bPZ:ePZ) - DIC(1:M)
+!--- END CARBON EQUATIONS
     ! Unload silicon
     bPZ = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M

@@ -94,7 +94,7 @@ module core_variables
   type :: nitrogen
      real(kind=dp), dimension(:), allocatable :: &
           O, &  ! N%O is nitrate (NO3) concentration profile
-          H     ! H%H is ammonium (NH4) concentration profile
+          H     ! N%H is ammonium (NH4) concentration profile
   end type nitrogen
   !
   ! Plankton
@@ -162,7 +162,11 @@ module core_variables
                       ! or Nuts data file
           Phyto,   &  ! Phytoplankton ?? column number in CTD, Nuts
                       ! or bottle data file
-          Si          ! Silicon column number in Nuts data file
+          Si,      &  ! Silicon column number in Nuts data file
+!--- BEGIN ADDING DIC TO COLUMN INDICES
+          DIC         ! Dissolved inorganic carbon column number in
+                      ! bottle data file
+!--- END ADDING DIC TO COLUMN INDICES
   end type col_indices
  
 
@@ -200,7 +204,9 @@ contains
          ctd_records,  &  ! CTD data record counter
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records     ! IOS bottle data record counter
-    logical :: got_Fluores, got_NO, got_Si
+!--- BEGIN ADDING got_DIC LOGICAL ARGUMENT
+    logical :: got_Fluores, got_NO, got_Si, got_DIC
+!--- END ADDING got_DIC LOGICAL ARGUMENT
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
          data  ! Data records read
@@ -305,8 +311,11 @@ contains
     endif
 
     ! If an IOS bottle data file is specfied, read it to get data to
-    ! initialize the nitrate, microphytoplankton, and silicon
-    ! profiles, if those data weren't in the CTD data file.
+    ! initialize the nitrate, microphytoplankton, silicon, and dissolved
+    ! inorganic carbon profiles, if those data weren't in the CTD data file.
+!--- BEGIN DIC LOGICAL ARGUMENT
+    got_DIC = .false.
+!--- END DIC LOGICAL ARGUMENT
     fn = getpars("botl_in")
     if(fn /= "N/A") then
        call read_init_data(fn, botl_records, col, data)
@@ -322,6 +331,14 @@ contains
                               data(:botl_records, col%Si))
           got_Si = .true.
        endif
+!--- BEGIN DIC INITIALIZATION FROM BOTTLE DATA
+       ! Dissolved inorganic carbon
+       if(col%DIC /= -1) then
+          DIC = interp_to_grid(data(:botl_records, col%depth), &
+                              data(:botl_records, col%DIC))
+          got_DIC = .true.
+       endif
+!--- END DIC INITIALIZATION
        ! Phytoplankton
        if(.not. got_Fluores) then
           ! First choice is fluorescence data
@@ -361,6 +378,12 @@ contains
     if(.not. got_Si) then
        Si = 50.0d0
     endif
+!--- BEGIN DIC ALTERNATIVE CASE
+    ! No dissolved inorganic carbon data? Initialize it to zero.
+    if(.not. got_DIC) then
+       DIC = 0.0d0
+    endif
+!--- END DIC ALTERNATIVE CASE
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
     P%micro = P%micro / N2chl
     ! Read the initial ratios of phytoplankton classes from infile,
@@ -414,9 +437,9 @@ contains
     ! Read data quantity column numbers, and set the number of column
     ! to read from each data record
     read(field_data, *) col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                        col%NO, col%Phyto, col%Si
+                        col%NO, col%Phyto, col%Si, col%DIC
     n_cols = max(col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                 col%NO, col%Phyto, col%Si)
+                 col%NO, col%Phyto, col%Si, col%DIC)
     ! Read data to model depth, or next deeper record.  If data ends
     ! before model depth, read the whole file
     data_to_model_depth = .false.

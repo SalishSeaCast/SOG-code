@@ -101,6 +101,11 @@
 "Silicon"
   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Silicon (constant)"
+!--- BEGIN BOTTOM BOUNDARY CONDITIONS FOR DIC
+"Dissolved Inorganic Carbon"
+  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Dissolved Inorganic Carbon (constant)"
+!--- END BOTTOM BOUNDARY CONDITIONS FOR DIC
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
   "Ammonium (constant)"
@@ -281,6 +286,10 @@
 ! of same order as a number of papers including Brzezinski et al,; Bidle and 
 ! Azam 1998 without bacteria
 "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
+
+!--- NEW CARBON PARAMETERS
+"Redfield ratio"        6.625d0       "Redfield ratio"
+"Chlr reduction factor" 0.2d0         "Chlr reduction factor"
 
 ! Waste and detritus
 ! Micro Natural Mortality
