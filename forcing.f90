@@ -210,7 +210,7 @@ contains
        endif
        close(forcing_data)
     endif
-       
+
     ! Air Temperature
     ! Average data
     if (use_average_forcing_data .eq. "yes" .or. use_average_forcing_data .eq. "fill") then
@@ -307,7 +307,7 @@ contains
           read(forcing_data,*) stn, year, month, day, para, (humid(jc,j), j=1,24)
        enddo
        do jc = met_n/2+1, met_n
-          atemp(jc,:) = atemp(jc-met_n/2,:)
+          humid(jc,:) = humid(jc-met_n/2,:)
        enddo
        close(forcing_data)
     endif
@@ -418,13 +418,14 @@ contains
              integ_minor_river(ic) = sum(Eriver(ic - integ_days:ic)) / integ_days
           enddo
           Eriver(1:river_n) = integ_minor_river(1:river_n)
-       else 
+       else ! no average minor river
           do jc = 1, river_n             
              Eriver(jc) = 0.0d0
           enddo
        endif
     endif
 
+    ! standard data
     if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "no") then
        minor_river_file = getpars("minor river")
        if(minor_river_file /= "N/A") then
