@@ -57,7 +57,7 @@ contains
     call getpardv("Nitrate", 7, c(:,4))
     call getpardv("Silicon", 7, c(:,5))
 !--- BEGIN GETTING DIC BOTTOM CONDITIONS FROM INFILE
-    call getpardv("Dissolved Inorganic Carbon", 7, c(:,6))
+    call getpardv("DIC", 7, c(:,6))
 !--- END GETTING DIC BOTTOM CONDITIONS FROM INFILE
     call getpardv("Ammonium", 7, c(:,7))
     call getpardv("Ratio", 7, c(:,8))
@@ -104,6 +104,8 @@ contains
        index = 6
     elseif (qty == quantity(7)) then
        index = 7
+    elseif (qty == quantity(8)) then
+       index = 8
     else
        write (stdout,*) 'bottom_value in fitbottom.f90:', &
             'Unexpected quantity: ', qty

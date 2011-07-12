@@ -56,7 +56,8 @@ module freshwater
 
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 !--- BEGIN CARBON PARAMETERS
-  real(kind=dp), parameter :: phys_circ_DIC = 0.0d0   ! This is WRONG
+  ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
+  real(kind=dp), parameter :: phys_circ_DIC = 2124.2d0 - 1354.7d0
 !--- END CARBON PARAMETERS
 
   ! Variable Declarations:

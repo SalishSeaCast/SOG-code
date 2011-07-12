@@ -128,7 +128,7 @@ module NPZD
   type :: uptake_
      real(kind=dp), dimension(:), pointer :: &
           NO, &  ! Nitrate uptake profile
-          NH     ! Ammonium uptake profile
+          NH, &  ! Ammonium uptake profile
 
 !--- BEGIN CARBON UPTAKE TERM DEFS
           PC     ! Differential DIC uptake profile
@@ -144,12 +144,6 @@ module NPZD
      type(grow) :: growth
      real(kind=dp), dimension(:), pointer :: Nlimit
   end type plankton_growth
-
-!--- INSERT CARBON VARIABLES
-     real(kind=dp) :: &
-          Redfield, &  ! Redfield ratio
-          Chlr         ! Chlorophyll reduction factor
-!--- END CARBON VARIABLES
 
   ! Public variable declarations:
   !
@@ -363,12 +357,6 @@ contains
     rate_nano%Rm = getpard('Nano, nat mort')
     rate_pico%Rm = getpard('Pico, nat mort')
 
-!--- BEGIN NEW CARBON PARAMETERS
-    ! Carbon parameters
-    Redfield = getpard('Redfield ratio')
-    Chlr = getpard('Chlr reduction factor')
-!--- END NEW CARBON PARAMETERS
-
     ! Remineralization rates:
     ! Ammonium
     remin%NH = getpard('NH remin rate')
@@ -515,6 +503,12 @@ contains
     allocate(uptake%NO(1:M), uptake%NH(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+!--- BEGIN CARBON UPTAKE ARRAY ALLOCATION
+    msg = "Carbon compounds uptake diagnostic arrays"
+    allocate(uptake%PC(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+!--- END CARBON UPTAKE ARRAY ALLOCATION
     msg = "Nitrogen remineralization diagnostic arrays"
     allocate(remin_NH(1:M), NH_oxid(1:M), &
          stat=allocstat)
@@ -553,6 +547,12 @@ contains
     deallocate(uptake%NO, uptake%NH, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+!--- BEGIN CARBON UPTAKE ARRAY DEALLOCATION
+    msg = "Carbon compounds uptake diagnostic arrays"
+    deallocate(uptake%PC, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+!--- END CARBON UPTAKE ARRAY DEALLOCATION
     msg = "Nitrogen remineralization diagnostic arrays"
     deallocate(remin_NH, NH_oxid, &
          stat=dallocstat)
@@ -742,7 +742,8 @@ contains
           END IF
 
        ! Excess DIC uptake, PC
-       uptake%PC(j) = (Rmax(j) * Uc(j) - plank%growth%new(j)) * Chlr * P(j)
+       ! Chlr Redux Factor = 0.2 (Ianson and Allen 2002)
+       uptake%PC(j) = (Rmax(j) * Uc(j) - plank%growth%new(j)) * 0.2d0 * P(j)
 
        endif
     END DO
@@ -753,7 +754,7 @@ contains
     ! Calculate the derivatives of the biology quantities for odeint()
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
-    use fundamental_constants, only: pi
+    use fundamental_constants, only: pi, Redfield
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
     implicit none

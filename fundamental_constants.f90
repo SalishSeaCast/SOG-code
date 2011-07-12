@@ -22,6 +22,7 @@ module fundamental_constants
        g,        &  ! Acceleration due to gravity [m/s^2]
        latitude, &  ! Latitude of location being modeled [deg]
        pi,       &  ! Ratio of circumference to diameter of a circle [-]
+       Redfield, &  ! Biological uptake ratio Carbon to Nitrogen
        ! Subroutine:
        init_constants
 
@@ -31,7 +32,8 @@ module fundamental_constants
        latitude  ! latitude [deg]
   real(kind=dp), parameter :: &
        g = 9.80665d0, &                  ! Acceleration due to gravity [m/s^2]
-       pi = 3.141592653589793d0
+       pi = 3.141592653589793d0, &
+       Redfield = 6.625d0                ! 106:16:1 (C:N:P)
 
 contains
 
