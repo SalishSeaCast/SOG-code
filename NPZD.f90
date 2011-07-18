@@ -52,9 +52,9 @@ module NPZD
      integer :: &
           Quant, micro, nano, pico, zoo, NO, NH, Si, det, &
           D_DON, D_PON, D_refr, D_bSi, &
-!--- BEGIN CARBON BIN INDICES
-          DIC
-!--- END CARBON BIN INDICES
+!--- BEGIN CHEMISTRY BIN INDICES
+          DIC, Oxy
+!--- END CHEMISTRY BIN INDICES
 
   end type bins
   !
@@ -163,7 +163,7 @@ module NPZD
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
   type(bins):: PZ_bins
-  data PZ_bins%Quant /8/    ! Size of the biology (Quantities vs Detritus)
+  data PZ_bins%Quant /9/    ! Size of the biology (Quantities vs Detritus)
   data PZ_bins%micro /1/    ! Position of Diatoms (micro plankton)
   data PZ_bins%nano  /2/    ! Position of Meso rub (nano plankton)
   data PZ_bins%pico  /3/    ! Position of Flagellates (pico plankton)
@@ -173,12 +173,13 @@ module NPZD
   data PZ_bins%Si    /7/    ! Position of Silicon
 !--- BEGIN CARBON BINS
   data PZ_bins%DIC   /8/    ! Position of Dissolved Inorganic Carbon
+  data PZ_bins%Oxy   /9/    ! Position of Dissolved Inorganic Carbon
 !--- END CARBON BINS
-  data PZ_bins%det   /9/    ! Start of detritus
-  data PZ_bins%D_DON   /9/  ! Position of dissolved organic nitrogen detritus
-  data PZ_bins%D_PON   /10/  ! Position of particulate organic nitrogen detritus
-  data PZ_bins%D_refr  /12/  ! Position of refractory nitrogen detritus
-  data PZ_bins%D_bSi   /11/  ! Position of dissolved biogenic silcon detritus
+  data PZ_bins%det   /10/    ! Start of detritus
+  data PZ_bins%D_DON   /10/  ! Position of dissolved organic nitrogen detritus
+  data PZ_bins%D_PON   /11/  ! Position of particulate organic nitrogen detritus
+  data PZ_bins%D_refr  /13/  ! Position of refractory nitrogen detritus
+  data PZ_bins%D_bSi   /12/  ! Position of dissolved biogenic silcon detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
@@ -754,7 +755,7 @@ contains
     ! Calculate the derivatives of the biology quantities for odeint()
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
-    use fundamental_constants, only: pi, Redfield
+    use fundamental_constants, only: pi, Redfield_C, Redfield_O
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
     implicit none
@@ -779,9 +780,10 @@ contains
           Z,              &  ! Micro zooplankton profile
           NO,             &  ! Nitrate concentrationy
           NH,             &  ! Ammonium concentration profile
-!--- BEGIN CARBON VARIABLES
+!--- BEGIN CHEMISTRY VARIABLES
           DIC,            &  ! Dissolved Inorganic Carbon
-!--- END CARBON VARIABLES
+          Oxy,            &  ! Dissolved Oxygen
+!--- END CHEMISTRY VARIABLES
           Si,             &  ! Silicon concentration profile
           D_DON,          &  ! Dissolved organic nitrogen detritus profile
           D_PON,          &  ! Particulate organic nitrogen detritus profile
@@ -868,13 +870,19 @@ contains
        NH = 0.
     endif
 
-!---BEGIN CARBON EQUATIONS
+!---BEGIN CHEMISTRY EQUATIONS
     ! Dissolved Inorganic Carbon
     bPZ = (PZ_bins%DIC - 1) * M + 1
     ePZ = PZ_bins%DIC * M
     DIC = PZ(bPZ:ePZ)
     where (DIC > 0.) DIC = 0.
-!---END CARBON EQUATIONS
+
+    ! Dissolved Oxygen
+    bPZ = (PZ_bins%Oxy - 1) * M + 1
+    ePZ = PZ_bins%Oxy * M
+    DIC = PZ(bPZ:ePZ)
+    where (Oxy > 0.) Oxy = 0.
+!---END CHEMISTRY EQUATIONS
 
     ! Silicon
     bPZ = (PZ_bins%Si - 1) * M + 1
@@ -1294,14 +1302,21 @@ contains
                + remin_NH - NH_oxid
     endwhere
 
-!---BEGIN CARBON EQUATIONS
+!---BEGIN CHEMISTRY EQUATIONS
     ! Dissolved Inorganic Carbon
     bPZ = (PZ_bins%DIC - 1) * M + 1
     ePZ = PZ_bins%DIC * M
     where (DIC > 0.) 
-       dPZdt(bPZ:ePZ) = (remin_NH - uptake%NO - uptake%NH - uptake%PC) * Redfield
+       dPZdt(bPZ:ePZ) = (remin_NH - uptake%NO - uptake%NH - uptake%PC) * Redfield_C
     endwhere
-!---END CARBON EQUATIONS
+
+    ! Dissolved Oxygen
+    bPZ = (PZ_bins%Oxy - 1) * M + 1
+    ePZ = PZ_bins%Oxy * M
+    where (Oxy > 0.) 
+       dPZdt(bPZ:ePZ) = (uptake%NO + uptake%NH - remin_NH - NH_oxid) * Redfield_O
+    endwhere
+!---END CHEMISTRY EQUATIONS
 
     ! Silicon
     bPZ = (PZ_bins%Si - 1) * M + 1

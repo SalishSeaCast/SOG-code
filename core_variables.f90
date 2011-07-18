@@ -163,10 +163,11 @@ module core_variables
           Phyto,   &  ! Phytoplankton ?? column number in CTD, Nuts
                       ! or bottle data file
           Si,      &  ! Silicon column number in Nuts data file
-!--- BEGIN ADDING DIC TO COLUMN INDICES
-          DIC         ! Dissolved inorganic carbon column number in
+!--- BEGIN ADDING CHEMISTRY TO COLUMN INDICES
+          DIC,     &  ! Dissolved inorganic carbon column number in
                       ! bottle data file
-!--- END ADDING DIC TO COLUMN INDICES
+          Oxy         ! Dissolved oxygen column number in CTD
+!--- END ADDING CHEMISTRY TO COLUMN INDICES
   end type col_indices
  
 
@@ -196,22 +197,27 @@ contains
     use input_processor, only: getpars, getpardv, getpard
     use unit_conversions, only: CtoK
     use forcing, only: vary
+    use fundamental_constants, only: R_gas
     implicit none
     ! Local variables:
-    character*80 :: fn  ! name of data file to read
+    character*80 :: fn    ! name of data file to read
     integer :: &
          i,            &  ! loop index
          ctd_records,  &  ! CTD data record counter
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records     ! IOS bottle data record counter
-!--- BEGIN ADDING got_DIC LOGICAL ARGUMENT
-    logical :: got_Fluores, got_NO, got_Si, got_DIC
-!--- END ADDING got_DIC LOGICAL ARGUMENT
+!--- BEGIN ADDING got_DIC, got_Oxy LOGICAL ARGUMENTS
+    logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Oxy
+!--- END ADDING got_DIC, got_Oxy LOGICAL ARGUMENTS
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
-         data  ! Data records read
+         data    ! Data records read
     real(kind=dp), dimension(3) :: &
          Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
+!--- BEGIN LOCAL OXYGEN VARIABLES
+!    real(kind=dp), dimension(:), allocatable :: &
+!         Oxy_uM  ! Dissolved oxygen [uM]
+!--- END LOCAL OXYGEN VARIABLES
     type(col_indices) :: col  ! Column numbers of quantities in data records
 
     ! Initializes N2chl ratio
@@ -240,6 +246,9 @@ contains
     ! and nitrate data are included in the file
     got_Fluores = .false.
     got_NO = .false.
+!--- BEGIN OXY LOGICAL ARGUMENT
+    got_Oxy = .false.
+!--- END OXY LOGICAL ARGUMENT
     call read_init_data(getpars("ctd_in"), ctd_records, col, data)
     ! Interpolate CTD data to grid point depths
     if(col%T /= -1) then
@@ -288,6 +297,28 @@ contains
                             data(:ctd_records, col%NO))
        got_NO = .true.
     endif
+
+!--- BEGIN DISSOLVED OXYGEN INITIALIZATION FROM CTD DATA
+    if(col%Oxy /= -1) then
+
+       ! SBE OX ml L-1 to uM O2 using 22.4 L/mol at STP
+!       Oxy_uM = data(:ctd_records, col%oxy) * 1.0d3 / 22.4d0
+
+       ! SBE OX ml L-1 to uM O2 using PV = nRT
+       ! (Decide whether to use this later)
+       !
+       ! Oxy_uM = data(:ctd_records, col%Oxy) * 1.0d4 *            &
+       !         (data(:ctd_records, col%depth) + 10.0d0)/         &
+       !         (R_gas * (data(:ctd_records, col%T) + 273.15d0))
+       
+       ! Dissolve oxygen profile comes from CTD profile if the
+       ! data are available, otherwise it comes from the IOS
+       ! bottle data file
+       Oxy = interp_to_grid(data(:ctd_records, col%depth), &
+                            data(:ctd_records, col%Oxy) * (1.0d3/22.4d0))
+       got_Oxy = .true.
+    endif
+!--- END DISSOLVED OXYGEN INITIALIZATION FROM CTD DATA
 
     ! If a STRATOGEM bottle data file is specified, read it to get
     ! data to initialize the silicon profile, and the nitrate profile
@@ -378,12 +409,17 @@ contains
     if(.not. got_Si) then
        Si = 50.0d0
     endif
-!--- BEGIN DIC ALTERNATIVE CASE
+!--- BEGIN CHEMISTRY ALTERNATIVE CASES
+    ! Revisit these...
     ! No dissolved inorganic carbon data? Initialize it to zero.
     if(.not. got_DIC) then
        DIC = 0.0d0
     endif
-!--- END DIC ALTERNATIVE CASE
+    ! No dissolved oxygen data? Initialize it to zero.
+    if(.not. got_Oxy) then
+       Oxy = 0.0d0
+    endif
+!--- END CHEMISTRY ALTERNATIVE CASES
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
     P%micro = P%micro / N2chl
     ! Read the initial ratios of phytoplankton classes from infile,
@@ -437,9 +473,9 @@ contains
     ! Read data quantity column numbers, and set the number of column
     ! to read from each data record
     read(field_data, *) col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                        col%NO, col%Phyto, col%Si, col%DIC
+                        col%NO, col%Phyto, col%Si, col%DIC, col%Oxy
     n_cols = max(col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                 col%NO, col%Phyto, col%Si, col%DIC)
+                 col%NO, col%Phyto, col%Si, col%DIC, col%Oxy)
     ! Read data to model depth, or next deeper record.  If data ends
     ! before model depth, read the whole file
     data_to_model_depth = .false.

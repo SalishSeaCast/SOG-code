@@ -101,11 +101,14 @@
 "Silicon"
   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Silicon (constant)"
-!--- BEGIN BOTTOM BOUNDARY CONDITIONS FOR DIC
+!--- BEGIN CHEMISTRY BOTTOM BOUNDARY CONDITIONS
 "DIC"
   2124.2233d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Dissolved Inorganic Carbon (constant)"
-!--- END BOTTOM BOUNDARY CONDITIONS FOR DIC
+"Oxy"
+  148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Dissolved Oxygen (constant)"
+!--- END CHEMISTRY BOTTOM BOUNDARY CONDITIONS
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
   "Ammonium (constant)"

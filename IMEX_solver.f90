@@ -64,9 +64,10 @@ module IMEX_solver
           Z,      &  ! Micro zooplankton RHS array
           NO,     &  ! Nitrate concentration RHS array
           NH,     &  ! Ammonium concentration RHS array
-!--- BEGIN CARBON DECLARATIONS
+!--- BEGIN CHEMISTRY DECLARATIONS
           DIC,    &  ! Dissolved inorganic carbon RHS array
-!--- END CARBON DECLARATIONS
+          Oxy,    &  ! Dissolved oxygen RHS array
+!--- END CHEMISTRY DECLARATIONS
           Si,     &  ! Silicon concentration RHS array
           D_DON,  &  ! Dissolved organic nitrogen detritus RHS array
           D_PON,  &  ! Particulate organic nitrogen detritus RHS array
@@ -296,7 +297,7 @@ contains
   end subroutine solve_phys_tridiags
 
 
-  subroutine solve_bio_eqns(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
+  subroutine solve_bio_eqns(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time)
     ! Solve the semi-implicit diffusion/advection PDEs for the
     ! biology quantities.
@@ -321,9 +322,10 @@ contains
          Z,      &  ! Micro Zooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
-!--- BEGIN CARBON DECLARATIONS
+!--- BEGIN CHEMISTRY DECLARATIONS
          DIC,    &  ! Dissolved inorganic carbon
-!--- END CARBON DECLARATIONS
+         Oxy,    &  ! Dissolved oxygen
+!--- END CHEMISTRY DECLARATIONS
          Si,     &  ! Silicon
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -337,7 +339,7 @@ contains
     
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
-    call build_bio_Hvectors(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
+    call build_bio_Hvectors(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, Si, &
        D_DON, D_PON, D_refr, D_bSi)
 
     ! Build the LHS matrix (A) for the discretized semi-implicit PDE
@@ -345,18 +347,18 @@ contains
     call build_Amatrix(Bmatrix%bio%new, Amatrix%bio)
 
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
-    call solve_bio_tridiags(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
+    call solve_bio_tridiags(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, Si, &
        D_DON, D_PON, D_refr, D_bSi)
 
     ! Check for negative values in results, and print with a warning
     ! message if any are found
-    call check_bio_negatives(Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
+    call check_bio_negatives(Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, Si, &
        D_DON, D_PON, D_refr, D_bSi, day, time, fatal=.false.)
   end subroutine solve_bio_eqns
 
 
-  subroutine build_bio_Hvectors(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
-       D_DON, D_PON, D_refr, D_bSi)
+  subroutine build_bio_Hvectors(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, &
+       Si, D_DON, D_PON, D_refr, D_bSi)
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
 
@@ -366,16 +368,17 @@ contains
     use precision_defs, only: dp
     ! Variables:
     use biology_eqn_builder, only: &
-         Bmatrix,   &  ! Precursor diffusion coefficient matrices
+         Bmatrix,    &  ! Precursor diffusion coefficient matrices
          Pmicro_RHS, &  ! Micro phytoplankton (diatoms) RHS arrays
          Pnano_RHS,  &  ! Nano phytoplankton (mesorub) RHS arrays         
          Ppico_RHS,  &  ! Pico phytoplankton (flagellates) RHS arrays
          Z_RHS,      &  ! Zooplankton (micro) RHS arrays
          NO_RHS,     &  ! Nitrate concentration RHS arrays
          NH_RHS,     &  ! Ammonium concentration RHS arrays
-!--- BEGIN CARBON RHS INCLUSIONS
+!--- BEGIN CHEMISTRY RHS INCLUSIONS
          DIC_RHS,    &  ! Dissolved inorganic carbon RHS arrays
-!--- END CARBON RHS INCLUSIONS
+         Oxy_RHS,    &  ! Dissolved oxygen RHS arrays
+!--- END CHEMISTRY RHS INCLUSIONS
          Si_RHS,     &  ! Silicon concentration RHS arrays
          D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
          D_PON_RHS,  &  ! Particulate organic nitrogen detritus RHS arrays
@@ -394,9 +397,10 @@ contains
          Z,      &  ! Microzooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
-!--- BEGIN CARBON DECLARATIONS
+!--- BEGIN CHEMISTRY DECLARATIONS
          DIC,    &  ! Dissolved inorganic carbon
-!--- END CARBON DECLARATIONS
+         Oxy,    &  ! Dissolved oxygen
+!--- END CHEMISTRY DECLARATIONS
          Si,     &  ! Silicon
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -433,13 +437,18 @@ contains
          NH_RHS%diff_adv%old, NH_RHS%bio, null_vector, &
          Bmatrix%bio%old, &
          Hvector%NH)
-!--- BEGIN CARBON NON-SINKING CODE
+!--- BEGIN CHEMISTRY NON-SINKING CODE
     ! Dissolved inorganic carbon; non-sinking
     call bio_Hvector(M, DIC, DIC_RHS%diff_adv%new, &
          DIC_RHS%diff_adv%old, DIC_RHS%bio, null_vector, &
          Bmatrix%bio%old, &
          Hvector%DIC)
-!--- END CARBON NON-SINKING CODE
+    ! Dissolved oxygen; non-sinking
+    call bio_Hvector(M, Oxy, Oxy_RHS%diff_adv%new, &
+         Oxy_RHS%diff_adv%old, Oxy_RHS%bio, null_vector, &
+         Bmatrix%bio%old, &
+         Hvector%Oxy)
+!--- END CHEMISTRY NON-SINKING CODE
     ! Silicon; non-sinking
     call bio_Hvector(M, Si, Si_RHS%diff_adv%new, &
          Si_RHS%diff_adv%old, Si_RHS%bio, null_vector, &
@@ -511,8 +520,8 @@ contains
   end subroutine bio_Hvector
 
 
-  subroutine solve_bio_tridiags(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
-       D_DON, D_PON, D_refr, D_bSi)
+  subroutine solve_bio_tridiags(M, Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, &
+       Si, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h.
 
     ! Type definitions from other modules:
@@ -530,9 +539,10 @@ contains
          Z,      &  ! Micro zooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
-!--- BEGIN CARBON DECLARATIONS
+!--- BEGIN CHEMISTRY DECLARATIONS
          DIC,    &  ! Dissolved inorganic carbon
-!--- END CARBON DECLARATIONS
+         Oxy,    &  ! Dissolved oxygen
+!--- END CHEMISTRY DECLARATIONS
          Si,     &  ! Silicon
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -551,10 +561,12 @@ contains
     call solve_tridiag(Amatrix%bio, Hvector%NO, NO(1:M))
     ! Ammonium
     call solve_tridiag(Amatrix%bio, Hvector%NH, NH(1:M))
-!--- BEGIN SOLVING CARBON TRIDIAGS
+!--- BEGIN SOLVING CHEMISTRY TRIDIAGS
     ! Dissolved inorganic carbon
     call solve_tridiag(Amatrix%bio, Hvector%DIC, DIC(1:M))
-!--- END SOLVING CARBON TRIDIAGS
+    ! Dissolved oxygen
+    call solve_tridiag(Amatrix%bio, Hvector%Oxy, Oxy(1:M))
+!--- END SOLVING CHEMISRY TRIDIAGS
     ! Silicon
     call solve_tridiag(Amatrix%bio, Hvector%Si, Si(1:M))
     ! Dissolved organic nitrogen detritus
@@ -568,8 +580,8 @@ contains
   end subroutine solve_bio_tridiags
 
 
-  subroutine check_bio_negatives(Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Si, &
-       D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
+  subroutine check_bio_negatives(Pmicro, Pnano, Ppico, Z, NO, NH, DIC, Oxy, &
+       Si, D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
     ! Check for negative values in results.
 
     ! Elements from other modules:
@@ -589,9 +601,10 @@ contains
          Z,      &  ! Microzooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
-!--- BEGIN CARBON DECLARATIONS
+!--- BEGIN CHEMISTRY DECLARATIONS
          DIC,    &  ! Dissolved inorganic carbon
-!--- END CARBON DECLARATIONS
+         Oxy,    &  ! Dissolved oxygen
+!--- END CHEMISTRY DECLARATIONS
          Si,     &  ! Silicon
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -625,6 +638,9 @@ contains
 !--- BEGIN CHECK CARBON NEGATIVES
     ! Dissolved inorganic carbon
     call check_negative(0, DIC, "DIC after solve_tridiag()", &
+         day, time, fatal)
+    ! Dissolved oxygen
+    call check_negative(0, Oxy, "Oxy after solve_tridiag()", &
          day, time, fatal)
 !--- END CHECK CARBON NEGATIVES
     ! Silicon
@@ -747,7 +763,7 @@ contains
          Hvector%S(1:M), Hvector%Pmicro(1:M), Hvector%Pnano(1:M),     &
          Hvector%Ppico(1:M), Hvector%Z(1:M),                          &
          Hvector%NO(1:M), Hvector%NH(1:M), Hvector%DIC(1:M),          &
-         Hvector%Si(1:M),                                             &
+         Hvector%Oxy(1:M), Hvector%Si(1:M),                           &
          Hvector%D_DON(1:M), Hvector%D_PON(1:M), Hvector%D_refr(1:M), &
          Hvector%D_bSi(1:M),                                          &
          stat=allocstat)
@@ -769,13 +785,13 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "LHS matrices (A) for semi-implicit PDE matrix eqns"
-    deallocate(Amatrix%vel%sub, Amatrix%vel%diag, &
+    deallocate(Amatrix%vel%sub, Amatrix%vel%diag,  &
          Amatrix%vel%sup,                          &
-         Amatrix%T%sub, Amatrix%T%diag,           &
+         Amatrix%T%sub, Amatrix%T%diag,            &
          Amatrix%T%sup,                            &
-         Amatrix%S%sub, Amatrix%S%diag,           &
+         Amatrix%S%sub, Amatrix%S%diag,            &
          Amatrix%S%sup,                            &
-         Amatrix%bio%sub, Amatrix%bio%diag,       &
+         Amatrix%bio%sub, Amatrix%bio%diag,        &
          Amatrix%bio%sup,                          &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
@@ -784,7 +800,7 @@ contains
          Hvector%S, Hvector%Pmicro, Hvector%Pnano,     &
          Hvector%Ppico, Hvector%Z,                     &
          Hvector%NO, Hvector%NH, Hvector%DIC,          &
-         Hvector%Si,                                   &
+         Hvector%Oxy, Hvector%Si,                      &
          Hvector%D_DON, Hvector%D_PON, Hvector%D_refr, &
          Hvector%D_bSi,                                &
          stat=dallocstat)
