@@ -336,16 +336,20 @@ contains
     if(fn /= "N/A") then
        call read_init_data(fn, botl_records, col, data)
        ! Nitrate
-       if(col%NO /= -1) then
-          N%O = interp_to_grid(data(:botl_records, col%depth), &
-                               data(:botl_records, col%NO))
-          got_NO = .true.
+       if(.not. got_NO) then
+          if(col%NO /= -1) then
+             N%O = interp_to_grid(data(:botl_records, col%depth), &
+                                  data(:botl_records, col%NO))
+             got_NO = .true.
+          endif
        endif
        ! Silicon
-       if(col%Si /= -1) then
-          Si = interp_to_grid(data(:botl_records, col%depth), &
-                              data(:botl_records, col%Si))
-          got_Si = .true.
+       if(.not. got_si) then
+          if(col%Si /= -1) then
+             Si = interp_to_grid(data(:botl_records, col%depth), &
+                                 data(:botl_records, col%Si))
+             got_Si = .true.
+          endif
        endif
 !--- BEGIN DIC INITIALIZATION FROM BOTTLE DATA
        ! Dissolved inorganic carbon
