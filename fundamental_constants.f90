@@ -22,7 +22,6 @@ module fundamental_constants
        g,          &  ! Acceleration due to gravity [m/s^2]
        latitude,   &  ! Latitude of location being modeled [deg]
        pi,         &  ! Ratio of circumference to diameter of a circle [-]
-       R_gas,      &  ! Gas constant [J K-1 mol-1]
        Redfield_C, &  ! Biological uptake ratio Carbon to Nitrogen
        Redfield_O, &  ! Biological uptake ratio O2 to Nitrogen
        ! Subroutine:
@@ -35,7 +34,6 @@ module fundamental_constants
   real(kind=dp), parameter :: &
        g = 9.80665d0,            &       ! Acceleration due to gravity [m/s^2]
        pi = 3.141592653589793d0, &
-       R_gas = 8.314,            &       ! Gas constant [J K-1 mol-1]
        Redfield_C = 6.625d0,     &       ! 106:16:1:-150 (C:N:P:O2)
        Redfield_O = 9.375d0              ! 106:16:1:-150 (C:N:P:O2)
 

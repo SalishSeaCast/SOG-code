@@ -197,7 +197,6 @@ contains
     use input_processor, only: getpars, getpardv, getpard
     use unit_conversions, only: CtoK
     use forcing, only: vary
-    use fundamental_constants, only: R_gas
     implicit none
     ! Local variables:
     character*80 :: fn    ! name of data file to read
@@ -214,10 +213,6 @@ contains
          data    ! Data records read
     real(kind=dp), dimension(3) :: &
          Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
-!--- BEGIN LOCAL OXYGEN VARIABLES
-!    real(kind=dp), dimension(:), allocatable :: &
-!         Oxy_uM  ! Dissolved oxygen [uM]
-!--- END LOCAL OXYGEN VARIABLES
     type(col_indices) :: col  ! Column numbers of quantities in data records
 
     ! Initializes N2chl ratio
@@ -300,22 +295,12 @@ contains
 
 !--- BEGIN DISSOLVED OXYGEN INITIALIZATION FROM CTD DATA
     if(col%Oxy /= -1) then
-
-       ! SBE OX ml L-1 to uM O2 using 22.4 L/mol at STP
-!       Oxy_uM = data(:ctd_records, col%oxy) * 1.0d3 / 22.4d0
-
-       ! SBE OX ml L-1 to uM O2 using PV = nRT
-       ! (Decide whether to use this later)
-       !
-       ! Oxy_uM = data(:ctd_records, col%Oxy) * 1.0d4 *            &
-       !         (data(:ctd_records, col%depth) + 10.0d0)/         &
-       !         (R_gas * (data(:ctd_records, col%T) + 273.15d0))
-       
-       ! Dissolve oxygen profile comes from CTD profile if the
+       ! Dissolved oxygen profile comes from CTD profile if the
        ! data are available, otherwise it comes from the IOS
        ! bottle data file
+       ! 44.660 umol/ml O2 unit conversion from SeaBird electronics
        Oxy = interp_to_grid(data(:ctd_records, col%depth), &
-                            data(:ctd_records, col%Oxy) * (1.0d3/22.4d0))
+                            data(:ctd_records, col%Oxy) * 44.660d0)
        got_Oxy = .true.
     endif
 !--- END DISSOLVED OXYGEN INITIALIZATION FROM CTD DATA

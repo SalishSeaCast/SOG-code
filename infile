@@ -40,7 +40,7 @@
   "../SOG-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
 "botl_in"
-  "../SOG-initial/chem/Chem-SOGN-2010-73.sog"
+  "../SOG-initial/chem/Chem-SOGS-2010-73.sog"
   "IOS bottle data file"
 "initial chl split"
   0.33d0 0.33d0 0.33d0
