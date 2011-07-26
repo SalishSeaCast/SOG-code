@@ -55,6 +55,12 @@ module freshwater
   real(kind=dp), parameter :: phys_circ_Zoo = 0.0d0
 
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
+!--- BEGIN CHEMISTRY PARAMETERS
+  ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
+  real(kind=dp), parameter :: phys_circ_DIC = 2124.2d0 - 1354.7d0
+  ! From Environment Canada Fraser River bouy October 2010
+  real(kind=dp), parameter :: phys_circ_Oxy = 148.38d0 - 343.75d0
+!--- END CHEMISTRY PARAMETERS
 
   ! Variable Declarations:
   !
@@ -301,6 +307,12 @@ contains
           elseif (qty.eq."silicon") then
              surf_flux = Ft * phys_circ_silicon * &
                   min(4.0, current_value(1)) / 4.0
+!--- BEGIN CHEMISTRY FRESHWATER FLUXES
+          elseif (qty.eq."DIC") then
+             surf_flux = Ft * (phys_circ_DIC)
+          elseif (qty.eq."Oxy") then
+             surf_flux = Ft * (phys_circ_Oxy)
+!--- END CHEMISTRY FRESHWATER FLUXES
           else
              write (*,*) "problems in freshwater, river flux for ", qty, &
                   " is not defined."
@@ -324,6 +336,12 @@ contains
                 distrib_flux(i) = Fw(i) * phys_circ_silicon * &
                      min(4.0, current_value(i))/4.0
              enddo
+!--- BEGIN CHEMISTRY FRESHWATER FLUXES
+          elseif (qty.eq."DIC") then
+             distrib_flux = Fw * (phys_circ_DIC)
+          elseif (qty.eq."Oxy") then
+             distrib_flux = Fw * (phys_circ_Oxy)
+!--- END CHEMISTRY FRESHWATER FLUXES
           else
              write (*,*) "problems in freshwater, river flux for ", qty, &
                   " is not defined."

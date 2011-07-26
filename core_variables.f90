@@ -94,7 +94,7 @@ module core_variables
   type :: nitrogen
      real(kind=dp), dimension(:), allocatable :: &
           O, &  ! N%O is nitrate (NO3) concentration profile
-          H     ! H%H is ammonium (NH4) concentration profile
+          H     ! N%H is ammonium (NH4) concentration profile
   end type nitrogen
   !
   ! Plankton
@@ -162,7 +162,12 @@ module core_variables
                       ! or Nuts data file
           Phyto,   &  ! Phytoplankton ?? column number in CTD, Nuts
                       ! or bottle data file
-          Si          ! Silicon column number in Nuts data file
+          Si,      &  ! Silicon column number in Nuts data file
+!--- BEGIN ADDING CHEMISTRY TO COLUMN INDICES
+          DIC,     &  ! Dissolved inorganic carbon column number in
+                      ! bottle data file
+          Oxy         ! Dissolved oxygen column number in CTD
+!--- END ADDING CHEMISTRY TO COLUMN INDICES
   end type col_indices
  
 
@@ -194,16 +199,18 @@ contains
     use forcing, only: vary
     implicit none
     ! Local variables:
-    character*80 :: fn  ! name of data file to read
+    character*80 :: fn    ! name of data file to read
     integer :: &
          i,            &  ! loop index
          ctd_records,  &  ! CTD data record counter
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records     ! IOS bottle data record counter
-    logical :: got_Fluores, got_NO, got_Si
+!--- BEGIN ADDING got_DIC, got_Oxy LOGICAL ARGUMENTS
+    logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Oxy
+!--- END ADDING got_DIC, got_Oxy LOGICAL ARGUMENTS
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
-         data  ! Data records read
+         data    ! Data records read
     real(kind=dp), dimension(3) :: &
          Psplit  ! Initial ratios of phytoplankton classes (micro, nano, pico)
     type(col_indices) :: col  ! Column numbers of quantities in data records
@@ -234,6 +241,9 @@ contains
     ! and nitrate data are included in the file
     got_Fluores = .false.
     got_NO = .false.
+!--- BEGIN OXY LOGICAL ARGUMENT
+    got_Oxy = .false.
+!--- END OXY LOGICAL ARGUMENT
     call read_init_data(getpars("ctd_in"), ctd_records, col, data)
     ! Interpolate CTD data to grid point depths
     if(col%T /= -1) then
@@ -283,6 +293,18 @@ contains
        got_NO = .true.
     endif
 
+!--- BEGIN DISSOLVED OXYGEN INITIALIZATION FROM CTD DATA
+    if(col%Oxy /= -1) then
+       ! Dissolved oxygen profile comes from CTD profile if the
+       ! data are available, otherwise it comes from the IOS
+       ! bottle data file
+       ! 44.660 umol/ml O2 unit conversion from SeaBird electronics
+       Oxy = interp_to_grid(data(:ctd_records, col%depth), &
+                            data(:ctd_records, col%Oxy) * 44.660d0)
+       got_Oxy = .true.
+    endif
+!--- END DISSOLVED OXYGEN INITIALIZATION FROM CTD DATA
+
     ! If a STRATOGEM bottle data file is specified, read it to get
     ! data to initialize the silicon profile, and the nitrate profile
     ! if those data weren't in the CTD data file
@@ -305,23 +327,38 @@ contains
     endif
 
     ! If an IOS bottle data file is specfied, read it to get data to
-    ! initialize the nitrate, microphytoplankton, and silicon
-    ! profiles, if those data weren't in the CTD data file.
+    ! initialize the nitrate, microphytoplankton, silicon, and dissolved
+    ! inorganic carbon profiles, if those data weren't in the CTD data file.
+!--- BEGIN DIC LOGICAL ARGUMENT
+    got_DIC = .false.
+!--- END DIC LOGICAL ARGUMENT
     fn = getpars("botl_in")
     if(fn /= "N/A") then
        call read_init_data(fn, botl_records, col, data)
        ! Nitrate
-       if(col%NO /= -1) then
-          N%O = interp_to_grid(data(:botl_records, col%depth), &
-                               data(:botl_records, col%NO))
-          got_NO = .true.
+       if(.not. got_NO) then
+          if(col%NO /= -1) then
+             N%O = interp_to_grid(data(:botl_records, col%depth), &
+                                  data(:botl_records, col%NO))
+             got_NO = .true.
+          endif
        endif
        ! Silicon
-       if(col%Si /= -1) then
-          Si = interp_to_grid(data(:botl_records, col%depth), &
-                              data(:botl_records, col%Si))
-          got_Si = .true.
+       if(.not. got_si) then
+          if(col%Si /= -1) then
+             Si = interp_to_grid(data(:botl_records, col%depth), &
+                                 data(:botl_records, col%Si))
+             got_Si = .true.
+          endif
        endif
+!--- BEGIN DIC INITIALIZATION FROM BOTTLE DATA
+       ! Dissolved inorganic carbon
+       if(col%DIC /= -1) then
+          DIC = interp_to_grid(data(:botl_records, col%depth), &
+                              data(:botl_records, col%DIC))
+          got_DIC = .true.
+       endif
+!--- END DIC INITIALIZATION
        ! Phytoplankton
        if(.not. got_Fluores) then
           ! First choice is fluorescence data
@@ -361,6 +398,17 @@ contains
     if(.not. got_Si) then
        Si = 50.0d0
     endif
+!--- BEGIN CHEMISTRY ALTERNATIVE CASES
+    ! Revisit these...
+    ! No dissolved inorganic carbon data? Initialize it to zero.
+    if(.not. got_DIC) then
+       DIC = 0.0d0
+    endif
+    ! No dissolved oxygen data? Initialize it to zero.
+    if(.not. got_Oxy) then
+       Oxy = 0.0d0
+    endif
+!--- END CHEMISTRY ALTERNATIVE CASES
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
     P%micro = P%micro / N2chl
     ! Read the initial ratios of phytoplankton classes from infile,
@@ -414,9 +462,9 @@ contains
     ! Read data quantity column numbers, and set the number of column
     ! to read from each data record
     read(field_data, *) col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                        col%NO, col%Phyto, col%Si
+                        col%NO, col%Phyto, col%Si, col%DIC, col%Oxy
     n_cols = max(col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                 col%NO, col%Phyto, col%Si)
+                 col%NO, col%Phyto, col%Si, col%DIC, col%Oxy)
     ! Read data to model depth, or next deeper record.  If data ends
     ! before model depth, read the whole file
     data_to_model_depth = .false.

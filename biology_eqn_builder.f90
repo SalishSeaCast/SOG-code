@@ -24,6 +24,10 @@ module biology_eqn_builder
   !
   !   NH_RHS -- Ammonium concentration right-hand side arrays
   !
+  !   DIC_RHS -- Dissolved inorganic carbon right-hand side arrays
+  !
+  !   Oxy_RHS -- Dissolved oxygen right-hand side arrays
+  !
   !   Si_RHS -- Silicon concentration right-hand side arrays
   !
   !   D_DON_RHS -- Dissolved organic nitrogen detritus right-hand side arrays
@@ -69,6 +73,10 @@ module biology_eqn_builder
        Z_RHS,           &  ! Zooplankton (micro) RHS arrays
        NO_RHS,          &  ! Nitrate concentration RHS arrays
        NH_RHS,          &  ! Ammonium concentration RHS arrays
+!--- BEGIN CHEMISTRY DECLARATIONS
+       DIC_RHS,         &  ! Dissolved inorganic carbon concentration RHS arrays
+       Oxy_RHS,         &  ! Dissolved oxygen concentration RHS arrays
+!--- END CHEMISTRY DECLARATIONS
        Si_RHS,          &  ! Silicon concentration RHS arrays
        D_DON_RHS,       &  ! Dissolved organic nitrogen detritus RHS arrays
        D_PON_RHS,       &  ! Particulate organic nitrogen detritus RHS arrays
@@ -146,6 +154,10 @@ module biology_eqn_builder
        Z_RHS,      &  ! micro Zooplankton RHS arrays
        NO_RHS,     &  ! Nitrate concentration RHS arrays
        NH_RHS,     &  ! Ammonium concentration RHS arrays
+!--- BEGIN CHEMISTRY DECLARATIONS
+       DIC_RHS,    &  ! Dissolved inorganic carbon concentration RHS arrays
+       Oxy_RHS,    &  ! Dissolved oxygen concentration RHS arrays
+!--- END CHEMISTRY DECLARATIONS
        Si_RHS,     &  ! Silicon concentration RHS arrays
        D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
        D_PON_RHS,  &  ! Particulate organic nitro detritus RHS arrays
@@ -178,7 +190,8 @@ contains
   end subroutine read_sink_params
   
 
-  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Ppico, Z, NO, NH, & ! in
+  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Ppico, Z, &
+       NO, NH, DIC, Oxy, & ! in
        Si, D_DON, D_PON, D_refr, D_bSi)
     ! Build the terms for the diffusion/advection equations for the
     ! biology quantities.
@@ -212,6 +225,10 @@ contains
          Z,      &  ! Micro Zooplankton
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
+!--- BEGIN CHEMISTRY DECLARATIONS
+         DIC,    &  ! Dissolved inorganic carbon
+         Oxy,    &  ! Dissolved oxygen
+!--- END CHEMISTRY DECLARATIONS
          Si,     &  ! Silicon
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
@@ -263,6 +280,18 @@ contains
     call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
          NH(grid%M+1),                                   &  ! in
          NH_RHS%diff_adv%new)                               ! out
+!--- BEGIN CHEMISTRY FLUXES
+    call freshwater_bio ('DIC', DIC(0:grid%M),           &
+         surf_flux, distrib_flux)
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
+         surf_flux, distrib_flux, DIC(grid%M+1),         &  ! in
+         DIC_RHS%diff_adv%new)                              ! out
+    call freshwater_bio ('Oxy', Oxy(0:grid%M),           &
+         surf_flux, distrib_flux)
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
+         surf_flux, distrib_flux, Oxy(grid%M+1),         &  ! in
+         Oxy_RHS%diff_adv%new)                              ! out
+!--- END CHEMISTRY FLUXES
     call freshwater_bio ('silicon', Si(0:grid%M),        &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
@@ -286,6 +315,10 @@ contains
     call upwelling_advection(dt, Z, Z_RHS%diff_adv%new)
     call upwelling_advection(dt, NO, NO_RHS%diff_adv%new)
     call upwelling_advection(dt, NH, NH_RHS%diff_adv%new)
+!--- BEGING CHEMISTRY UPWELLING
+    call upwelling_advection(dt, DIC, DIC_RHS%diff_adv%new)
+    call upwelling_advection(dt, Oxy, Oxy_RHS%diff_adv%new)
+!--- END CHEMISTRY UPWELLING
     call upwelling_advection(dt, Si, Si_RHS%diff_adv%new)
     call upwelling_advection(dt, D_DON, D_DON_RHS%diff_adv%new)
     call upwelling_advection(dt, D_PON, D_PON_RHS%diff_adv%new)
@@ -362,6 +395,10 @@ contains
     Z_RHS%diff_adv%old = Z_RHS%diff_adv%new
     NO_rhs%diff_adv%old = NO_RHS%diff_adv%new
     NH_rhs%diff_adv%old = NH_RHS%diff_adv%new
+!--- BEGIN CHEMISTRY RHS EQUATIONS
+    DIC_rhs%diff_adv%old = DIC_RHS%diff_adv%new
+    Oxy_rhs%diff_adv%old = Oxy_RHS%diff_adv%new
+!--- END CHEMISTRY RHS EQUATIONS
     Si_rhs%diff_adv%old = Si_RHS%diff_adv%new
     D_DON_rhs%diff_adv%old = D_DON_RHS%diff_adv%new
     D_PON_rhs%diff_adv%old = D_PON_RHS%diff_adv%new
@@ -429,6 +466,18 @@ contains
          NH_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+!--- BEGIN CHEMISTRY MEMORY ALLOCATION
+    msg = "DIC concentration RHS arrays"
+    allocate(DIC_RHS%diff_adv%new(1:M), DIC_RHS%diff_adv%old(1:M), &
+         DIC_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Oxygen concentration RHS arrays"
+    allocate(Oxy_RHS%diff_adv%new(1:M), Oxy_RHS%diff_adv%old(1:M), &
+         Oxy_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+!--- END CHEMISTRY MEMORY ALLOCATION
     msg = "Silicon concentration RHS arrays"
     allocate(Si_RHS%diff_adv%new(1:M), Si_RHS%diff_adv%old(1:M), &
          Si_RHS%bio(1:M), &
@@ -503,6 +552,18 @@ contains
          NH_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+!--- BEGIN CHEMISTRY RHS DEALLOCATION
+    msg = "DIC concentration RHS arrays"
+    deallocate(DIC_RHS%diff_adv%new, DIC_RHS%diff_adv%old, &
+         DIC_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Oxygen concentration RHS arrays"
+    deallocate(Oxy_RHS%diff_adv%new, Oxy_RHS%diff_adv%old, &
+         Oxy_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+!--- END CHEMISTRY RHS DEALLOCATION
     msg = "Silicon concentration RHS arrays"
     deallocate(Si_RHS%diff_adv%new, Si_RHS%diff_adv%old, &
          Si_RHS%bio, &

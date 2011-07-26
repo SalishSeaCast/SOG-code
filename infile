@@ -40,7 +40,7 @@
   "../SOG-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog"
   "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
 "botl_in"
-  "N/A"
+  "../SOG-initial/chem/Chem-SOGS-2010-73.sog"
   "IOS bottle data file"
 "initial chl split"
   0.33d0 0.33d0 0.33d0
@@ -101,6 +101,14 @@
 "Silicon"
   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Silicon (constant)"
+!--- BEGIN CHEMISTRY BOTTOM BOUNDARY CONDITIONS
+"DIC"
+  2124.2233d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Dissolved Inorganic Carbon (constant)"
+"Oxy"
+  148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Dissolved Oxygen (constant)"
+!--- END CHEMISTRY BOTTOM BOUNDARY CONDITIONS
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
   "Ammonium (constant)"
@@ -281,7 +289,6 @@
 ! of same order as a number of papers including Brzezinski et al,; Bidle and 
 ! Azam 1998 without bacteria
 "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
-
 ! Waste and detritus
 ! Micro Natural Mortality
 "Waste, dnm, NH"        0.d0      "fraction of waste from micro nat mort to NH"

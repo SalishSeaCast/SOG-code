@@ -51,7 +51,11 @@ module NPZD
   type :: bins
      integer :: &
           Quant, micro, nano, pico, zoo, NO, NH, Si, det, &
-          D_DON, D_PON, D_refr, D_bSi
+          D_DON, D_PON, D_refr, D_bSi, &
+!--- BEGIN CHEMISTRY BIN INDICES
+          DIC, Oxy
+!--- END CHEMISTRY BIN INDICES
+
   end type bins
   !
   ! Rate parameters for phytoplankton
@@ -124,7 +128,12 @@ module NPZD
   type :: uptake_
      real(kind=dp), dimension(:), pointer :: &
           NO, &  ! Nitrate uptake profile
-          NH     ! Ammonium uptake profile
+          NH, &  ! Ammonium uptake profile
+
+!--- BEGIN CARBON UPTAKE TERM DEFS
+          PC     ! Differential DIC uptake profile
+!--- END CARBON UPTAKE TERM DEFS
+
   end type uptake_
   !
   ! Plankton growth
@@ -154,7 +163,7 @@ module NPZD
   !
   ! Indices for quantities (e.g. phyto, nitrate, etc.) in PZ vector
   type(bins):: PZ_bins
-  data PZ_bins%Quant /7/    ! Size of the biology (Quantities vs Detritus)
+  data PZ_bins%Quant /9/    ! Size of the biology (Quantities vs Detritus)
   data PZ_bins%micro /1/    ! Position of Diatoms (micro plankton)
   data PZ_bins%nano  /2/    ! Position of Meso rub (nano plankton)
   data PZ_bins%pico  /3/    ! Position of Flagellates (pico plankton)
@@ -162,11 +171,15 @@ module NPZD
   data PZ_bins%NO    /5/    ! Position of Nitrate
   data PZ_bins%NH    /6/    ! Position of Ammonium
   data PZ_bins%Si    /7/    ! Position of Silicon
-  data PZ_bins%det   /8/    ! Start of detritus
-  data PZ_bins%D_DON   /8/  ! Position of dissolved organic nitrogen detritus
-  data PZ_bins%D_PON   /9/  ! Position of particulate organic nitrogen detritus
-  data PZ_bins%D_refr  /11/  ! Position of refractory nitrogen detritus
-  data PZ_bins%D_bSi   /10/  ! Position of dissolved biogenic silcon detritus
+!--- BEGIN CARBON BINS
+  data PZ_bins%DIC   /8/    ! Position of Dissolved Inorganic Carbon
+  data PZ_bins%Oxy   /9/    ! Position of Dissolved Inorganic Carbon
+!--- END CARBON BINS
+  data PZ_bins%det   /10/    ! Start of detritus
+  data PZ_bins%D_DON   /10/  ! Position of dissolved organic nitrogen detritus
+  data PZ_bins%D_PON   /11/  ! Position of particulate organic nitrogen detritus
+  data PZ_bins%D_refr  /13/  ! Position of refractory nitrogen detritus
+  data PZ_bins%D_bSi   /12/  ! Position of dissolved biogenic silcon detritus
   !
   ! PZ vector
   real(kind=dp), dimension(:), allocatable :: PZ
@@ -344,6 +357,7 @@ contains
     rate_micro%Rm = getpard('Micro, nat mort')
     rate_nano%Rm = getpard('Nano, nat mort')
     rate_pico%Rm = getpard('Pico, nat mort')
+
     ! Remineralization rates:
     ! Ammonium
     remin%NH = getpard('NH remin rate')
@@ -490,6 +504,12 @@ contains
     allocate(uptake%NO(1:M), uptake%NH(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+!--- BEGIN CARBON UPTAKE ARRAY ALLOCATION
+    msg = "Carbon compounds uptake diagnostic arrays"
+    allocate(uptake%PC(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+!--- END CARBON UPTAKE ARRAY ALLOCATION
     msg = "Nitrogen remineralization diagnostic arrays"
     allocate(remin_NH(1:M), NH_oxid(1:M), &
          stat=allocstat)
@@ -528,6 +548,12 @@ contains
     deallocate(uptake%NO, uptake%NH, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+!--- BEGIN CARBON UPTAKE ARRAY DEALLOCATION
+    msg = "Carbon compounds uptake diagnostic arrays"
+    deallocate(uptake%PC, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+!--- END CARBON UPTAKE ARRAY DEALLOCATION
     msg = "Nitrogen remineralization diagnostic arrays"
     deallocate(remin_NH, NH_oxid, &
          stat=dallocstat)
@@ -716,6 +742,10 @@ contains
 
           END IF
 
+       ! Excess DIC uptake, PC
+       ! Chlr Redux Factor = 0.2 (Ianson and Allen 2002)
+       uptake%PC(j) = (Rmax(j) * Uc(j) - plank%growth%new(j)) * 0.2d0 * P(j)
+
        endif
     END DO
  
@@ -725,7 +755,7 @@ contains
     ! Calculate the derivatives of the biology quantities for odeint()
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
-    use fundamental_constants, only: pi
+    use fundamental_constants, only: pi, Redfield_C, Redfield_O
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
     implicit none
@@ -750,6 +780,10 @@ contains
           Z,              &  ! Micro zooplankton profile
           NO,             &  ! Nitrate concentrationy
           NH,             &  ! Ammonium concentration profile
+!--- BEGIN CHEMISTRY VARIABLES
+          DIC,            &  ! Dissolved Inorganic Carbon
+          Oxy,            &  ! Dissolved Oxygen
+!--- END CHEMISTRY VARIABLES
           Si,             &  ! Silicon concentration profile
           D_DON,          &  ! Dissolved organic nitrogen detritus profile
           D_PON,          &  ! Particulate organic nitrogen detritus profile
@@ -835,6 +869,21 @@ contains
     else
        NH = 0.
     endif
+
+!---BEGIN CHEMISTRY EQUATIONS
+    ! Dissolved Inorganic Carbon
+    bPZ = (PZ_bins%DIC - 1) * M + 1
+    ePZ = PZ_bins%DIC * M
+    DIC = PZ(bPZ:ePZ)
+    where (DIC > 0.) DIC = 0.
+
+    ! Dissolved Oxygen
+    bPZ = (PZ_bins%Oxy - 1) * M + 1
+    ePZ = PZ_bins%Oxy * M
+    DIC = PZ(bPZ:ePZ)
+    where (Oxy > 0.) Oxy = 0.
+!---END CHEMISTRY EQUATIONS
+
     ! Silicon
     bPZ = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M
@@ -1252,6 +1301,23 @@ contains
                + was_NH &
                + remin_NH - NH_oxid
     endwhere
+
+!---BEGIN CHEMISTRY EQUATIONS
+    ! Dissolved Inorganic Carbon
+    bPZ = (PZ_bins%DIC - 1) * M + 1
+    ePZ = PZ_bins%DIC * M
+    where (DIC > 0.) 
+       dPZdt(bPZ:ePZ) = (remin_NH - uptake%NO - uptake%NH - uptake%PC) * Redfield_C
+    endwhere
+
+    ! Dissolved Oxygen
+    bPZ = (PZ_bins%Oxy - 1) * M + 1
+    ePZ = PZ_bins%Oxy * M
+    where (Oxy > 0.) 
+       dPZdt(bPZ:ePZ) = (uptake%NO + uptake%NH - remin_NH - NH_oxid) * Redfield_O
+    endwhere
+!---END CHEMISTRY EQUATIONS
+
     ! Silicon
     bPZ = (PZ_bins%Si - 1) * M + 1
     ePZ = PZ_bins%Si * M

@@ -4,7 +4,8 @@ module fitbottom
   !
   ! Public Subroutines:
   !
-  ! bot__bound_time (day, day_time, Tbot, Sbot, Nobot, Sibot, Pmbot, Pnbot)
+  ! bot__bound_time (day, day_time, Tbot, Sbot, Nobot, Sibot, DICbot, &
+  !                                                          Pmbot, Pnbot)
   !  -- Calculate the values at the bottom of the grid for those
   !     quantities that we have data for from an annual fit.
   !
@@ -24,10 +25,10 @@ module fitbottom
   ! Private module variable declarations:
   ! 
   ! Number of different quantities
-  integer, parameter :: NQ = 7
+  integer, parameter :: NQ = 9
   ! Quantity names
   character(len=3), dimension(NQ), parameter :: quantity &
-       = ['sal', 'tmp', 'chl', 'nit', 'sil', 'NH4', 'prt']
+       = ['sal', 'tmp', 'chl', 'nit', 'sil', 'DIC', 'Oxy', 'NH4', 'prt']
 
     ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
     ! fitted.m in
@@ -48,15 +49,19 @@ contains
 
     ! Is the temperature coming up through the bottom constant?
     temp_constant = getparl('temp_constant')
-    ! Read in values for sal, temp, chl, nit, sil, NH4, prt and set up
-    ! c matrix
+    ! Read in values for sal, temp, chl, nit, sil, DIC, NH4, prt and
+    ! set up c matrix
     call getpardv("salinity", 7, c(:,1))
     call getpardv("temperature", 7, c(:,2))
     call getpardv("Phytoplankton", 7, c(:,3))
     call getpardv("Nitrate", 7, c(:,4))
     call getpardv("Silicon", 7, c(:,5))
-    call getpardv("Ammonium", 7, c(:,6))
-    call getpardv("Ratio", 7, c(:,7))
+!--- BEGIN GETTING CHEMISTRY BOTTOM CONDITIONS FROM INFILE
+    call getpardv("DIC", 7, c(:,6))
+    call getpardv("Oxy", 7, c(:,7))
+!--- END GETTING CHEMISTRY BOTTOM CONDITIONS FROM INFILE
+    call getpardv("Ammonium", 7, c(:,8))
+    call getpardv("Ratio", 7, c(:,9))
   end subroutine init_fitbottom
 
   function bottom_value (arg, qty) result(value)
@@ -100,6 +105,10 @@ contains
        index = 6
     elseif (qty == quantity(7)) then
        index = 7
+    elseif (qty == quantity(8)) then
+       index = 8
+    elseif (qty == quantity(9)) then
+       index = 9
     else
        write (stdout,*) 'bottom_value in fitbottom.f90:', &
             'Unexpected quantity: ', qty
@@ -115,7 +124,8 @@ contains
 
 
   subroutine bot_bound_time (year, day, day_time, &
-       Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, Pnbot, Ppbot, uZbot)
+       Tbot, Sbot, Nobot, Sibot, DICbot, Oxybot, Nhbot, &
+       Pmbot, Pnbot, Ppbot, uZbot)
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
     use precision_defs, only: dp
@@ -126,8 +136,8 @@ contains
     ! Arguments:
     integer, intent(in) :: year, day
     real(kind=dp), intent(in) :: day_time
-    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, Nhbot, Pmbot, &
-         Pnbot, Ppbot, uZbot
+    real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, DICbot, Oxybot, &
+         Nhbot, Pmbot, Pnbot, Ppbot, uZbot
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio, yeartime
 
@@ -142,6 +152,10 @@ contains
     Sbot = bottom_value(arg, 'sal')
     Nobot = bottom_value(arg, 'nit')
     Sibot = bottom_value(arg, 'sil')
+!--- BEGIN CHEMISTRY BOTTOM VALUE
+    DICbot = bottom_value(arg, 'DIC')
+    Oxybot = bottom_value(arg, 'Oxy')
+!--- END CHEMISTRY BOTTOM VALUE
     Nhbot = bottom_value(arg, 'NH4')
     chl = bottom_value(arg, 'chl')
     ratio = bottom_value(arg, 'prt')
