@@ -166,7 +166,7 @@ contains
   end subroutine bot_bound_time
 
 
-  subroutine bot_bound_uniform (M, D_DON, D_PON, D_refr, D_bSi)
+  subroutine bot_bound_uniform (M, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
     ! Set the values at the bottom of the grid for those
     ! quantities that we don't have time series data for.
     use precision_defs, only: dp
@@ -174,11 +174,15 @@ contains
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), intent(inout), dimension(0:) :: &
+         D_DOC,  &  ! Dissolved organic carbon concentration profile array
+         D_POC,  &  ! Particulate organic carbon concentration profile array
          D_DON,  &  ! Dissolved organic nitrogen concentration profile array
          D_PON,  &  ! Particulate organic nitrogen concentration profile array
          D_refr, &  ! Refractory nitrogen concentration profile array
          D_bSi      ! Biogenic silicon concentration profile array
 
+    D_DOC(M+1) = D_DOC(M)
+    D_POC(M+1) = D_POC(M)
     D_DON(M+1) = D_DON(M)
     D_PON(M+1) = D_PON(M)
     D_refr(M+1) = D_refr(M)
