@@ -953,6 +953,7 @@ contains
     ! Initialize transfer rates between the pools
     uptake%NO = 0.
     uptake%NH = 0.
+    uptake%PC = 0.
     ! new waste variables
     was_NH = 0.
     was_DON = 0.

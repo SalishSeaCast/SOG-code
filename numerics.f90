@@ -73,20 +73,20 @@ module numerics
                            ! module to be made public if the module
                            ! exports any type defs.
        !  Variables:
-       initDatetime, &   ! Date/time of initial conditions
-       curDatetime,  &       ! Date/time of current time step
-       year, &   ! Year counter
-       day,  &   ! Year-day counter
-       day_time, &  ! Day-sec counter
-       time, &  ! Time counter through run; seconds since midnight of
-                ! initDatetime
-       dt, &      ! Time step [s]
-       steps, &   ! Number of time steps in the main time loop
-       max_iter, &  ! Maximum number of iterations allowed for
-                    ! implicit solver loop.
-       hprev, &  ! Values of h%new, u%new and v%new from previous
-       Uprev, &  ! iteration for blending with new value to stabilize
-       Vprev, &  ! convergence of the implicit solver loop
+       initDatetime,    &  ! Date/time of initial conditions
+       curDatetime,     &  ! Date/time of current time step
+       year,            &  ! Year counter
+       day,             &  ! Year-day counter
+       day_time,        &  ! Day-sec counter
+       time,            &  ! Time counter through run; seconds since midnight of
+                           ! initDatetime
+       dt,              &  ! Time step [s]
+       steps,           &  ! Number of time steps in the main time loop
+       max_iter,        &  ! Maximum number of iterations allowed for
+                           ! implicit solver loop.
+       hprev,           &  ! Values of h%new, u%new and v%new from previous
+       Uprev,           &  ! iteration for blending with new value to stabilize
+       Vprev,           &  ! convergence of the implicit solver loop
        new_weight, prev_weight, &  ! Weighting factors for convergence
                                    ! stabilization blending.
        vel_scale, h_scale,  &  ! Scale factors used to normalize the
@@ -94,7 +94,7 @@ module numerics
                                ! depth values to calculate the
                                ! convergence metrics for the implicit
                                ! solver loop.
-       del, &  ! Convergence metrics for implicit solver loop.
+       del,             &  ! Convergence metrics for implicit solver loop.
        ! Subroutines:
        init_numerics, check_negative, dalloc_numerics_variables
 
@@ -128,16 +128,16 @@ module numerics
        curDatetime       ! Date/time of current time step
   ! *** These should be replaced with a datetime structure
   integer :: &
-       year, &   ! Year counter
-       day   ! Year-day counter
+       year,         &   ! Year counter
+       day               ! Year-day counter
   real(kind=dp) :: &
-       day_time, &  ! Day-sec counter
-       time  ! Time counter through run; seconds since midnight of
-             ! initDatetime.
+       day_time,     &   ! Day-sec counter
+       time              ! Time counter through run; seconds since
+                         ! midnight of initDatetime.
   real(kind=dp) :: &
-       dt      ! Time step [s]
+       dt                ! Time step [s]
   integer :: &
-       steps  ! Number of time steps in the main time loop
+       steps             ! Number of time steps in the main time loop
   integer :: &
        max_iter  ! Maximum number of iterations allowed for implicit
                  ! solver loop.

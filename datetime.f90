@@ -106,7 +106,8 @@ module datetime
   type :: timedelta
      integer :: &
           days, &  ! Number of days
-          secs     ! Number of seconds (0 to 86399)
+          secs, &  ! Number of seconds (0 to 86399)
+          chem     ! Number of seconds for dt_chem (0 to size(secs))
   end type timedelta
 
 contains
