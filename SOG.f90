@@ -103,6 +103,7 @@ program SOG
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
        increment_date_time
   use irradiance, only: calc_irradiance
+  use chemistry_fluxes, only: solve_gas_flux
 
   implicit none
 
@@ -431,8 +432,8 @@ program SOG
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
      call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M), &
-          P%micro, P%nano, P%pico, Z, N%O, N%H, Si,             &
-          D%DON, D%PON, D%refr, D%bSi)
+          P%micro, P%nano, P%pico, Z, N%O, N%H, Si, DIC, Oxy,   &
+          D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
      !
@@ -441,7 +442,7 @@ program SOG
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
-          N%O, N%H, Si, D%DON, D%PON, D%refr, D%bSi)
+          N%O, N%H, Si, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
@@ -452,10 +453,14 @@ program SOG
         call new_to_old_bio_Bmatrix()
      endif
 
+     ! Calculate the gas fluxes and iterate the diffusion
+     call solve_gas_flux(grid, dt, T%new(0), S%new(0), rho%g(0), &
+          unow, vnow, DIC, Oxy, day, time)
+
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
      call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
-          D%DON, D%PON, D%refr, D%bSi, day, time)
+          D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, day, time)
      !
      !---------- End of Biology Model ----------
 
@@ -467,6 +472,10 @@ program SOG
      N%O(0) = N%O(1)
      N%H(0) = N%H(1)
      Si(0) = Si(1)
+     DIC(0) = DIC(1)
+     Oxy(0) = Oxy(1)
+     D%DOC(0) = D%DOC(1)
+     D%POC(0) = D%POC(1)
      D%DON(0) = D%DON(1)
      D%PON(0) = D%PON(1)
      D%refr(0) = D%refr(1)
@@ -479,11 +488,12 @@ program SOG
      ! calculated from the data
      call bot_bound_time(year, day, day_time, &                       ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
-          Si(grid%M+1), N%H(grid%M+1), P%micro(grid%M+1), &
+          Si(grid%M+1), DIC(grid%M+1), Oxy(grid%M+1), &
+          N%H(grid%M+1), P%micro(grid%M+1), &
           P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
-     call bot_bound_uniform(grid%M, D%DON, D%PON, D%refr, D%bSi)
+     call bot_bound_uniform(grid%M, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason.    !!!
@@ -513,8 +523,8 @@ program SOG
      call write_std_profiles(datetime_str(runDatetime),                  &
           datetime_str(initDatetime), year, day, day_time, dt, grid,     &
           T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
-          D%DON, D%PON, D%refr, D%bSi, K%m, K%T, K%S,                    &
-          U%new, V%new)
+          DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, &
+          K%m, K%T, K%S, U%new, V%new)
 
      ! Write user-specified profiles results
      ! !!! Please don't add arguments to this call.           !!!

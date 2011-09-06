@@ -227,7 +227,8 @@ contains
 
   subroutine write_std_profiles(str_run_Datetime, str_CTD_Datetime, &
        year, day, day_time, dt, grid, T, S, rho, Pmicro, Pnano, Ppico, Z,  &
-       NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, U, V)
+       NO, NH, Si, DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, &
+       Ku, Kt, Ks, U, V)
     ! Check to see if the time is right to write a profiles output
     ! file.  If so, open the file, write the profile results, and
     ! close it.  Also write a line of data to the haloclines output
@@ -257,6 +258,12 @@ contains
          NO(0:),      &  ! Nitrates [uM N]
          NH(0:),      &  ! Ammonium [uM N]
          Si(0:),      &  ! Silicon [uM]
+!--- BEGIN CHEMISTRY DECLARATIONS
+         DIC(0:),     &  ! Dissolved inorganic carbon [uM C]
+         Oxy(0:),     &  ! Dissolved oxygen [uM O2]
+         D_DOC(0:),   &  ! Dissolved organic carbon detritus [uM C]
+         D_POC(0:),   &  ! Particulate organic carbon detritus [uM C]
+!--- END CHEMISTRY DECLARATIONS
          D_DON(0:),   &  ! Dissolved organic nitrogen detritus [uM N]
          D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
          D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
@@ -311,8 +318,8 @@ contains
                profileDatetime(iprof), derS, dep)
           ! Write the profiles numbers, and close the profiles file
           call write_profiles_numbers(profiles, grid, T, S, rho,   &
-               Pmicro, Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, &
-               D_bSi, Ku, Kt, Ks, I_par, U, V)
+               Pmicro, Pnano, Ppico, Z, NO, NH, Si, DIC, Oxy, D_DOC, D_POC, &
+               D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
           close(profiles)          
           ! Increment profile counter
           iprof = iprof + 1
@@ -324,8 +331,8 @@ contains
        if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
           ! Write the profiles numbers
           call write_profiles_numbers(Hoffmueller, grid, T, S, rho, &
-               Pmicro, Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr,  &
-               D_bSi, Ku, Kt, Ks, I_par, U, V)
+               Pmicro, Pnano, Ppico, Z, NO, NH, Si, DIC, Oxy, D_DOC, D_POC, &
+               D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
           ! Add empty line as separator
           write(Hoffmueller, *)
           ! Increment the Hoffmueller output counters
@@ -379,14 +386,14 @@ contains
 
     str_pro_Datetime = datetime_str(pro_Datetime)
     write(profiles, 400)
-400 format("! Profiles of Temperature, Salinity, Density, ",           &
-         "Phytoplankton (micro & nano & pico),"/,                      &
-         "! Micro zooplankton, Nitrate, Ammonium, Silicon, and ",      &
-         "Detritus (DON, PON, "/,                                      &
-         "! refractory N & biogenic Si), Total Eddy Diffusivities ",   &
-         "(momentum, "/,                                               &
-         "! temperature & salinity), Photosynthetic Available ",       &
-         "Radiation, and ",                                            &
+400 format("! Profiles of Temperature, Salinity, Density, ",          &
+         "Phytoplankton (micro & nano & pico),"/,                     &
+         "! Micro zooplankton, Nitrate, Ammonium, Silicon, ",         &
+         "Dissolved inorganic carbon, Dissolved Oxygen,"/,            &
+         "! Detritus (DOC, POC, DON, PON, refractory N & ",           &
+         "biogenic Si), Total Eddy Diffusivities (momentum,"/,        &
+         "! temperature & salinity), Photosynthetically ",            &
+         "Active Radiation, and"/,                                    &
          "! Mean Velocity Components (u & v)")
     call write_cmn_hdr_id(profiles, str_run_Datetime, str_CTD_Datetime)
     call write_cmn_hdr_fields(profiles)
@@ -407,25 +414,26 @@ contains
          unit  ! I/O unit to write to
 
     write(unit, 500)
-500 format("*FieldNames: depth, temperature, salinity, sigma-t, ",     &
-         "micro phytoplankton, nano phytoplankton, ",                  &
-         "pico phytoplankton, ",                                       &
-         "micro zooplankton, nitrate, ammonium, silicon, ",            &
-         "DON detritus, PON detritus, refractory N detritus, ",        &
-         "biogenic Si detritus, total momentum eddy diffusivity, ",    &
-         "total temperature eddy diffusivity, ",                       &
-         "total salinity eddy diffusivity, ",                          &
-         "photosynthetic available radiation, ",                       &
-         "u velocity, v velocity"/,                                    &
-         "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",&
-         "uM N, uM, uM N, uM N, uM N, uM N, uM, m^2/s, m^2/s, m^2/s, ",      &
-         "W/m^2, m/s, m/s")
+500 format("*FieldNames: depth, temperature, salinity, sigma-t, ",        &
+         "micro phytoplankton, nano phytoplankton, pico phytoplankton, ", &
+         "micro zooplankton, nitrate, ammonium, silicon, ",               &
+         "dissolved inorganic carbon, dissolved oxygen, ",                &
+         "DOC detritus, POC detritus, DON detritus, PON detritus, ",      &
+         "refractory N detritus, biogenic Si detritus, ",                 &
+         "total momentum eddy diffusivity, ",                             &
+         "total temperature eddy diffusivity, ",                          &
+         "total salinity eddy diffusivity, ",                             &
+         "photosynthetic available radiation, ",                          &
+         "u velocity, v velocity"/,                                       &
+         "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",   &
+         "uM N, uM N, uM, uM C, uM O2, uM C, uM C, uM N, uM N, uM N, ",   &
+         "uM, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s")
   end subroutine write_cmn_hdr_fields
 
 
-  subroutine write_profiles_numbers(unit, grid, T, S, rho, Pmicro,    &
-       Pnano, Ppico, Z, NO, NH, Si, D_DON, D_PON, D_refr, D_bSi, Ku, Kt, Ks, &
-       I_par, U, V)
+  subroutine write_profiles_numbers(unit, grid, T, S, rho, Pmicro,     &
+       Pnano, Ppico, Z, NO, NH, Si, DIC, Oxy, D_DOC, D_POC, D_DON,     &
+       D_PON, D_refr, D_bSi, Ku, Kt, Ks, I_par, U, V)
     ! Write the profiles numbers.  This is broken out to reduce code
     ! duplications.
     use precision_defs, only: dp
@@ -449,6 +457,12 @@ contains
          NO(0:),      &  ! Nitrates [uM N]
          NH(0:),      &  ! Ammonium [uM N]
          Si(0:),      &  ! Silicon [uM]
+!--- BEGIN CHEMISTRY INPUT DECLARATIONS
+         DIC(0:),     &  ! Dissolved inorganic carbon [uM C]
+         Oxy(0:),     &  ! Dissolved oxygen [uM O2]
+         D_DOC(0:),   &  ! Dissolved organic carbon detritus [uM C]
+         D_POC(0:),   &  ! Particulate organic carbon detritus [uM C]
+!--- END CHEMISTY INPUT DECLARATIONS
          D_DON(0:),   &  ! Dissolved organic nitrogen detritus [uM N]
          D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
          D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
@@ -467,31 +481,31 @@ contains
     ! Write the profile values at the surface.  Eddy diffusivity
     ! arrays don't have values there, so write zeros for them
     sigma_t = rho(0) - 1000.
-    write(unit, 600) grid%d_g(0), KtoC(T(0)), &
-         S(0), sigma_t, Pmicro(0), Pnano(0),  &
-         Ppico(0), Z(0), NO(0), NH(0), Si(0), &
-         D_DON(0), D_PON(0), D_refr(0),       &
-         D_bSi(0), 0., 0., 0.,                &
-         I_par(0), U(0), V(0)
+    write(unit, 600) grid%d_g(0), KtoC(T(0)), S(0), sigma_t, &
+         Pmicro(0), Pnano(0), Ppico(0), Z(0), NO(0), NH(0),  &
+         Si(0), DIC(0), Oxy(0), D_DOC(0), D_POC(0),          &
+         D_DON(0), D_PON(0), D_refr(0), D_bSi(0),            &
+         0., 0., 0., I_par(0), U(0), V(0)
     ! Write the profile values at the interior grid points
     do i = 1, grid%M
        sigma_t = rho(i) - 1000.
-       write(unit, 600) grid%d_g(i), KtoC(T(i)), S(i), sigma_t, &
-            Pmicro(i), Pnano(i), Ppico(i), Z(i), NO(i), NH(i), Si(i),     &
-            D_DON(i), D_PON(i), D_refr(i), D_bSi(i),            &
-            Ku(i), Kt(i), Ks(i), I_par(i), U(i), V(i)
+       write(unit, 600) grid%d_g(i), KtoC(T(i)), S(i), sigma_t,   &
+            Pmicro(i), Pnano(i), Ppico(i), Z(i), NO(i), NH(i),    &
+            Si(i), DIC(i), Oxy(i), D_DOC(i), D_POC(i), D_DON(i),  &
+            D_PON(i), D_refr(i), D_bSi(i), Ku(i), Kt(i), Ks(i),   &
+            I_par(i), U(i), V(i)
     enddo
     ! Write the values at the bottom grid boundary.  Some quantities are
     ! not defined there, so use their values at the Mth grid point.
     sigma_t = rho(grid%M+1) - 1000.
-    write(unit, 600) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),       &
-         S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1), &
-         Ppico(grid%M+1),                                         &
-         Z(grid%M+1), NO(grid%M+1), NH(grid%M+1), Si(grid%M+1),   &
-         D_DON(grid%M+1), D_PON(grid%M+1), D_refr(grid%M+1),      &
-         D_bSi(grid%M+1), Ku(grid%M), Kt(grid%M), Ks(grid%M),     &
-         I_par(grid%M), U(grid%M+1), V(grid%M+1)
-600 format(f7.3, 80(2x, f8.4))
+    write(unit, 600) grid%d_g(grid%M+1), KtoC(T(grid%M+1)),           &
+         S(grid%M+1), sigma_t, Pmicro(grid%M+1), Pnano(grid%M+1),     &
+         Ppico(grid%M+1), Z(grid%M+1), NO(grid%M+1), NH(grid%M+1),    &
+         Si(grid%M+1), DIC(grid%M+1), Oxy(grid%M+1), D_DOC(grid%M+1), &
+         D_POC(grid%M+1), D_DON(grid%M+1), D_PON(grid%M+1),           &
+         D_refr(grid%M+1), D_bSi(grid%M+1), Ku(grid%M), Kt(grid%M),   &
+         Ks(grid%M), I_par(grid%M), U(grid%M+1), V(grid%M+1)
+600 format(f7.3, 10(2x, f8.4), 2(2x, f12.4), 80(2x, f8.4))
   end subroutine write_profiles_numbers
 
 

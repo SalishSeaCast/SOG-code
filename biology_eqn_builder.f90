@@ -26,6 +26,14 @@ module biology_eqn_builder
   !
   !   Si_RHS -- Silicon concentration right-hand side arrays
   !
+  !   DIC_RHS -- Dissolved inorganic carbon right-hand side arrays
+  !
+  !   Oxy_RHS -- Dissolved oxygen right-hand side arrays
+  !
+  !   D_DOC_RHS -- Dissolved organic carbon detritus right-hand side arrays
+  !
+  !   D_POC_RHS -- Particulate organic carbon detritus right-hand side arrays
+  !
   !   D_DON_RHS -- Dissolved organic nitrogen detritus right-hand side arrays
   !
   !   D_PON_RHS -- Particulate organic nitro detritus right-hand side arrays
@@ -47,7 +55,15 @@ module biology_eqn_builder
   !                         arrays to the %old component for use by the
   !                         IMEX semi-impllicit PDE solver.
   !
+  !   new_to_old_chem_RHS -- Copy %new component of the chem *_RHS%diff_adv
+  !                         arrays to the %old component for use by the
+  !                         IMEX semi-impllicit PDE solver.
+  !
   !   new_to_old_bio_Bmatrix -- Copy %new component of the Bmatrix%bio
+  !                             arrays to the %old component for use by the
+  !                             IMEX semi-impllicit PDE solver.
+  !
+  !   new_to_old_chem_Bmatrix -- Copy %new component of the Bmatrix%chem
   !                             arrays to the %old component for use by the
   !                             IMEX semi-impllicit PDE solver.
   !
@@ -70,6 +86,10 @@ module biology_eqn_builder
        NO_RHS,          &  ! Nitrate concentration RHS arrays
        NH_RHS,          &  ! Ammonium concentration RHS arrays
        Si_RHS,          &  ! Silicon concentration RHS arrays
+       DIC_RHS,         &  ! Dissolved inorganic carbon RHS arrays
+       Oxy_RHS,         &  ! Dissolved oxygen RHS arrays
+       D_DOC_RHS,       &  ! Dissolved organic carbon detritus RHS arrays
+       D_POC_RHS,       &  ! Particulate organic carbon detritus RHS arrays
        D_DON_RHS,       &  ! Dissolved organic nitrogen detritus RHS arrays
        D_PON_RHS,       &  ! Particulate organic nitrogen detritus RHS arrays
        D_refr_RHS,      &  ! Refractory nitrogen detritus RHS arrays
@@ -82,6 +102,7 @@ module biology_eqn_builder
        ! Subroutines:
        read_sink_params, build_biology_equations, &
        new_to_old_bio_RHS, new_to_old_bio_Bmatrix, &
+       new_to_old_chem_RHS, new_to_old_chem_Bmatrix, &
        alloc_bio_RHS_variables, dalloc_bio_RHS_variables
 
   ! Type Definitions:
@@ -98,7 +119,8 @@ module biology_eqn_builder
   ! Diffusion coefficient matrix type:
   type :: diff_coeffs_matrix
      type(new_old) :: &
-          bio  ! Biology quantities diffusion coefficients matrix
+          bio,  &  ! Biology quantities diffusion coefficients matrix
+          chem     ! Chemistry quantities diffusion coefficients matrix
   end type diff_coeffs_matrix
   !
   ! New/old array components:
@@ -134,6 +156,7 @@ module biology_eqn_builder
        Bmatrix  ! Tridiagonal matrix of diffusion coefficient values
                 ! Components:
                 !   Bmatrix%bio
+                !   Bmatrix%chem
                 !              %new
                 !              %old
                 !                  %sub
@@ -147,6 +170,10 @@ module biology_eqn_builder
        NO_RHS,     &  ! Nitrate concentration RHS arrays
        NH_RHS,     &  ! Ammonium concentration RHS arrays
        Si_RHS,     &  ! Silicon concentration RHS arrays
+       DIC_RHS,    &  ! Dissolved inorganic carbon RHS arrays
+       Oxy_RHS,    &  ! Dissolved oxygen RHS arrays
+       D_DOC_RHS,  &  ! Dissolved organic carbon detritus RHS arrays
+       D_POC_RHS,  &  ! Particulate organic carbon detritus RHS arrays
        D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
        D_PON_RHS,  &  ! Particulate organic nitro detritus RHS arrays
        D_refr_RHS, &  ! Refractory nitrogen detritus RHS arrays
@@ -178,8 +205,8 @@ contains
   end subroutine read_sink_params
   
 
-  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Ppico, Z, NO, NH, & ! in
-       Si, D_DON, D_PON, D_refr, D_bSi)
+  subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Ppico, Z, &
+       NO, NH, Si, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
     ! Build the terms for the diffusion/advection equations for the
     ! biology quantities.
     !
@@ -213,6 +240,8 @@ contains
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
+         D_DOC,  &  ! Dissolved organic carbon detritus profile
+         D_POC,  &  ! Particulate organic carbon detritus profile
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
          D_PON,  &  ! Particulate organic nitrogen detritus profile
          D_refr, &  ! Refractory nitrogen detritus profile
@@ -269,6 +298,12 @@ contains
          surf_flux, distrib_flux, Si(grid%M+1),          &  ! in
          Si_RHS%diff_adv%new)                               ! out
     call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
+         D_DOC(grid%M+1),                                &  ! in
+         D_DOC_RHS%diff_adv%new)                            ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
+         D_POC(grid%M+1),                                &  ! in
+         D_POC_RHS%diff_adv%new)                            ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
          D_DON(grid%M+1),                                &  ! in
          D_DON_RHS%diff_adv%new)                            ! out
     call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
@@ -287,6 +322,8 @@ contains
     call upwelling_advection(dt, NO, NO_RHS%diff_adv%new)
     call upwelling_advection(dt, NH, NH_RHS%diff_adv%new)
     call upwelling_advection(dt, Si, Si_RHS%diff_adv%new)
+    call upwelling_advection(dt, D_DOC, D_DOC_RHS%diff_adv%new)
+    call upwelling_advection(dt, D_POC, D_POC_RHS%diff_adv%new)
     call upwelling_advection(dt, D_DON, D_DON_RHS%diff_adv%new)
     call upwelling_advection(dt, D_PON, D_PON_RHS%diff_adv%new)
     call upwelling_advection(dt, D_bSi, D_bSi_RHS%diff_adv%new)
@@ -297,6 +334,9 @@ contains
           + w_sink%Pmicro_max * (1 - micro%Nlimit)
      call sinking_advection(grid, dt, Pmicro, Pmicro_w_sink, &
           Pmicro_RHS%sink)
+     ! D_POC Sinking: Used w_sink%D_PON for this
+     call sinking_advection(grid, dt, D_POC, w_sink%D_PON*unit, &
+          D_POC_RHS%sink)
      call sinking_advection(grid, dt, D_PON, w_sink%D_PON*unit, &
           D_PON_RHS%sink)
      call sinking_advection(grid, dt, D_refr, w_sink%D_refr*unit, &
@@ -360,14 +400,26 @@ contains
     Pnano_RHS%diff_adv%old = Pnano_RHS%diff_adv%new
     Ppico_RHS%diff_adv%old = Ppico_RHS%diff_adv%new
     Z_RHS%diff_adv%old = Z_RHS%diff_adv%new
-    NO_rhs%diff_adv%old = NO_RHS%diff_adv%new
-    NH_rhs%diff_adv%old = NH_RHS%diff_adv%new
-    Si_rhs%diff_adv%old = Si_RHS%diff_adv%new
-    D_DON_rhs%diff_adv%old = D_DON_RHS%diff_adv%new
-    D_PON_rhs%diff_adv%old = D_PON_RHS%diff_adv%new
-    D_refr_rhs%diff_adv%old = D_refr_RHS%diff_adv%new
-    D_bSi_rhs%diff_adv%old = D_bSi_RHS%diff_adv%new
+    NO_RHS%diff_adv%old = NO_RHS%diff_adv%new
+    NH_RHS%diff_adv%old = NH_RHS%diff_adv%new
+    Si_RHS%diff_adv%old = Si_RHS%diff_adv%new
+    D_DOC_RHS%diff_adv%old = D_DOC_RHS%diff_adv%new
+    D_POC_RHS%diff_adv%old = D_POC_RHS%diff_adv%new
+    D_DON_RHS%diff_adv%old = D_DON_RHS%diff_adv%new
+    D_PON_RHS%diff_adv%old = D_PON_RHS%diff_adv%new
+    D_refr_RHS%diff_adv%old = D_refr_RHS%diff_adv%new
+    D_bSi_RHS%diff_adv%old = D_bSi_RHS%diff_adv%new
   end subroutine new_to_old_bio_RHS
+
+
+  subroutine new_to_old_chem_RHS()
+    ! Copy %new component of the biology *_RHS%diff_adv arrays to the
+    ! %old component for use by the IMEX semi-impllicit PDE solver.
+    implicit none
+
+    DIC_RHS%diff_adv%old = DIC_RHS%diff_adv%new
+    Oxy_RHS%diff_adv%old = Oxy_RHS%diff_adv%new
+  end subroutine new_to_old_chem_RHS
 
 
   subroutine new_to_old_bio_Bmatrix()
@@ -379,6 +431,17 @@ contains
     Bmatrix%bio%old%diag = Bmatrix%bio%new%diag
     Bmatrix%bio%old%sup = Bmatrix%bio%new%sup
   end subroutine new_to_old_bio_Bmatrix
+
+
+  subroutine new_to_old_chem_Bmatrix()
+    ! Copy %new component of the Bmatrix%bio arrays to the
+    ! %old component for use by the IMEX semi-impllicit PDE solver.
+    implicit none
+
+    Bmatrix%chem%old%sub = Bmatrix%chem%new%sub
+    Bmatrix%chem%old%diag = Bmatrix%chem%new%diag
+    Bmatrix%chem%old%sup = Bmatrix%chem%new%sup
+  end subroutine new_to_old_chem_Bmatrix
 
 
   subroutine alloc_bio_RHS_variables(M)
@@ -399,6 +462,15 @@ contains
          Bmatrix%bio%old%sup(1:M),                                &
          stat=allocstat)
     call alloc_check(allocstat, msg)
+    !--- Bmatrix%chem ---
+    msg = "Diffusion coefficients tridiagonal matrix arrays"
+    allocate(Bmatrix%chem%new%sub(1:M), Bmatrix%chem%new%diag(1:M), &
+         Bmatrix%chem%new%sup(1:M),                                 &
+         Bmatrix%chem%old%sub(1:M), Bmatrix%chem%old%diag(1:M),     &
+         Bmatrix%chem%old%sup(1:M),                                 &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    !--------------------
     msg = "Micro phytoplankton RHS arrays"
     allocate(Pmicro_RHS%diff_adv%new(1:M), Pmicro_RHS%diff_adv%old(1:M), &
          Pmicro_RHS%bio(1:M), Pmicro_RHS%sink(1:M), &
@@ -432,6 +504,26 @@ contains
     msg = "Silicon concentration RHS arrays"
     allocate(Si_RHS%diff_adv%new(1:M), Si_RHS%diff_adv%old(1:M), &
          Si_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Dissolved inorganic carbon concentration RHS arrays"
+    allocate(DIC_RHS%diff_adv%new(1:M), DIC_RHS%diff_adv%old(1:M), &
+         DIC_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Dissolved oxygen concentration RHS arrays"
+    allocate(Oxy_RHS%diff_adv%new(1:M), Oxy_RHS%diff_adv%old(1:M), &
+         Oxy_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Dissolved organic carbon detritus RHS arrays"
+    allocate(D_DOC_RHS%diff_adv%new(1:M), D_DOC_RHS%diff_adv%old(1:M), &
+         D_DOC_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Particulate organic carbon detritus RHS arrays"
+    allocate(D_POC_RHS%diff_adv%new(1:M), D_POC_RHS%diff_adv%old(1:M), &
+         D_POC_RHS%bio(1:M), D_POC_RHS%sink(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Dissolved organic nitrogen detritus RHS arrays"
@@ -473,6 +565,15 @@ contains
          Bmatrix%bio%old%sup,                             &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+    !--- Bmatrix%chem ---
+    msg = "Diffusion coefficients tridiagonal matrix arrays"
+    deallocate(Bmatrix%chem%new%sub, Bmatrix%chem%new%diag, &
+         Bmatrix%chem%new%sup,                              &
+         Bmatrix%chem%old%sub, Bmatrix%chem%old%diag,       &
+         Bmatrix%chem%old%sup,                              &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    !--------------------
     msg = "Micro phytoplankton RHS arrays"
     deallocate(Pmicro_RHS%diff_adv%new, Pmicro_RHS%diff_adv%old, &
          Pmicro_RHS%bio, Pmicro_RHS%sink, &
@@ -506,6 +607,26 @@ contains
     msg = "Silicon concentration RHS arrays"
     deallocate(Si_RHS%diff_adv%new, Si_RHS%diff_adv%old, &
          Si_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Dissolved inorganic carbon concentration RHS arrays"
+    deallocate(DIC_RHS%diff_adv%new, DIC_RHS%diff_adv%old, &
+         DIC_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Dissolved oxygen concentration RHS arrays"
+    deallocate(Oxy_RHS%diff_adv%new, Oxy_RHS%diff_adv%old, &
+         Oxy_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Dissolved organic carbon detritus RHS arrays"
+    deallocate(D_DOC_RHS%diff_adv%new, D_DOC_RHS%diff_adv%old, &
+         D_DOC_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Particulate organic carbon detritus RHS arrays"
+    deallocate(D_POC_RHS%diff_adv%new, D_POC_RHS%diff_adv%old, &
+         D_POC_RHS%bio, D_POC_RHS%sink, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved organic nitrogen detritus RHS arrays"

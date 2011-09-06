@@ -363,7 +363,7 @@ contains
     call interp_value(20.0d0, 0, grid%d_g, D_reC, D_reC_20m, j_below)
     write(std_chem_timeseries, 300) time, Oxy(0), Oxy_avg_3m, &
          DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, D_reC_20m
-300 format(f10.4, 80(2x, f8.4))
+300 format(f10.4, 80(2x, f12.4))
   end subroutine write_std_timeseries
 
 
