@@ -106,7 +106,8 @@ module datetime
   type :: timedelta
      integer :: &
           days, &  ! Number of days
-          secs     ! Number of seconds (0 to 86399)
+          secs, &  ! Number of seconds (0 to 86399)
+          chem     ! Seconds for interal timestep
   end type timedelta
 
 contains

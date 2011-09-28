@@ -297,6 +297,7 @@ contains
     ! Unload the biological quantities from the PZ vector into the
     ! appropriate *_RHS%bio arrays.
     use precision_defs, only: dp
+    use numerics, only: chem_steps
     use NPZD, only: PZ_bins
     use biology_eqn_builder, only: Pmicro_RHS, Pnano_RHS, Ppico_RHS, Z_RHS, &
          NO_RHS, NH_RHS, Si_RHS, DIC_RHS, Oxy_RHS, &
@@ -358,11 +359,11 @@ contains
     ! Unload dissolved inorganic carbon
     bPZ = (PZ_bins%DIC - 1) * M + 1
     ePZ = PZ_bins%DIC * M
-    DIC_RHS%bio = PZ(bPZ:ePZ) - DIC(1:M)
+    DIC_RHS%bio = (PZ(bPZ:ePZ) - DIC(1:M))/chem_steps
     ! Unload dissolved oxygen
     bPZ = (PZ_bins%Oxy - 1) * M + 1
     ePZ = PZ_bins%Oxy * M
-    Oxy_RHS%bio = PZ(bPZ:ePZ) - Oxy(1:M)
+    Oxy_RHS%bio = (PZ(bPZ:ePZ) - Oxy(1:M))/chem_steps
     ! Unload dissolved organic carbon detritus
     bPz = (PZ_bins%D_DOC - 1) * M + 1
     ePz = PZ_bins%D_DOC * M

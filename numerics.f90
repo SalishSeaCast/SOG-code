@@ -32,6 +32,10 @@ module numerics
   !
   !   steps --  Number of time steps in the main time loop
   !
+  !   chem_dt -- Time step for internal chemistry loop [s]
+  !
+  !   chem_steps -- Number of time steps in interal chemistry loop
+  !
   !   max_iter -- Maximum number of iterations allowed for implicit
   !               solver loop.
   !
@@ -82,6 +86,8 @@ module numerics
                 ! initDatetime
        dt, &      ! Time step [s]
        steps, &   ! Number of time steps in the main time loop
+       chem_dt, & ! Time step for internal chemistry loop [s]
+       chem_steps, & ! Number of time steps in interal chemistry loop
        max_iter, &  ! Maximum number of iterations allowed for
                     ! implicit solver loop.
        hprev, &  ! Values of h%new, u%new and v%new from previous
@@ -135,9 +141,11 @@ module numerics
        time  ! Time counter through run; seconds since midnight of
              ! initDatetime.
   real(kind=dp) :: &
-       dt      ! Time step [s]
+       dt,       &   ! Time step [s]
+       chem_dt       ! Time step for internal chemistry loop [s]
   integer :: &
-       steps  ! Number of time steps in the main time loop
+       steps,      &   ! Number of time steps in the main time loop
+       chem_steps      ! Number of time steps in interal chemistry loop
   integer :: &
        max_iter  ! Maximum number of iterations allowed for implicit
                  ! solver loop.
@@ -196,6 +204,8 @@ contains
     day_time = dble(initDatetime%day_sec)
     time = dble(initDatetime%day_sec)
     dt = dble(ndt%secs)
+    chem_dt = dble(ndt%chem)
+    chem_steps = ndt%secs / ndt%chem  ! Integer division
     ! Calculate the number of time steps for the run (note that we're
     ! using integer division here)
     dur = datetime_diff(endDatetime, initDatetime)
@@ -215,6 +225,7 @@ contains
     ! Time step
     ndt%days = 0
     ndt%secs = getpari("dt")
+    ndt%chem = getpari("chem_dt")
     ! Maximum number of iterations allowed for implicit solver loop.
     max_iter = getpari('max_iter')     
   end subroutine read_numerics_params

@@ -454,7 +454,7 @@ program SOG
      endif
 
      ! Calculate the gas fluxes and iterate the diffusion
-     call solve_gas_flux(grid, dt, T%new(0), S%new(0), rho%g(0), &
+     call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), &
           unow, vnow, DIC, Oxy, day, time)
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
