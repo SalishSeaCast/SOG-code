@@ -197,6 +197,7 @@ contains
     use input_processor, only: getpars, getpardv, getpard
     use unit_conversions, only: CtoK
     use forcing, only: vary
+    use fundamental_constants, only: Redfield_C
     implicit none
     ! Local variables:
     character*80 :: fn    ! name of data file to read
@@ -400,13 +401,13 @@ contains
     endif
 !--- BEGIN CHEMISTRY ALTERNATIVE CASES
     ! Revisit these...
-    ! No dissolved inorganic carbon data? Initialize it to zero.
+    ! No dissolved inorganic carbon data? Initialize it to 2000 uM.
     if(.not. got_DIC) then
-       DIC = 0.0d0
+       DIC = 2.0d3
     endif
-    ! No dissolved oxygen data? Initialize it to zero.
+    ! No dissolved oxygen data? Initialize it to 200 uM.
     if(.not. got_Oxy) then
-       Oxy = 0.0d0
+       Oxy = 2.0d2
     endif
 !--- END CHEMISTRY ALTERNATIVE CASES
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
@@ -423,6 +424,10 @@ contains
     D%DON = D%PON / 10.0d0 ! estimate
     D%bSi = D%PON
     D%refr = 0.0d0
+!--- BEGIN CHEMISTRY DETRITUS ESTIMATES
+    D%DOC = D%DON * Redfield_C
+    D%POC = D%PON * Redfield_C
+!--- END CHEMISTRY DETRITUS ESTIMATES
   end subroutine init_state
 
 
