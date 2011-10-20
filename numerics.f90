@@ -32,9 +32,9 @@ module numerics
   !
   !   steps --  Number of time steps in the main time loop
   !
-  !   chem_dt -- Time step for internal chemistry loop [s]
+  !   chem_dt -- Internal time step for chemistry loop [s]
   !
-  !   chem_steps -- Number of time steps in interal chemistry loop
+  !   chem_steps -- Number of internal time steps for chemistry loop
   !
   !   max_iter -- Maximum number of iterations allowed for implicit
   !               solver loop.
@@ -68,31 +68,31 @@ module numerics
 
   private
   public :: &
-       ! Type definitions:
+                                ! Type definitions:
        tridiag,         &  ! Tridiagonal matrix vectors
        converg_metrics, &  ! Convergence metrics for implicit solver
-                           ! loop.  *** Note that this is public due
-                           ! to a pgf90 bug that seems to require the
-                           ! types defs for all public variables in a
-                           ! module to be made public if the module
-                           ! exports any type defs.
-       !  Variables:
-       initDatetime, &   ! Date/time of initial conditions
-       curDatetime,  &       ! Date/time of current time step
-       year, &   ! Year counter
-       day,  &   ! Year-day counter
-       day_time, &  ! Day-sec counter
-       time, &  ! Time counter through run; seconds since midnight of
-                ! initDatetime
-       dt, &      ! Time step [s]
-       steps, &   ! Number of time steps in the main time loop
-       chem_dt, & ! Time step for internal chemistry loop [s]
-       chem_steps, & ! Number of time steps in interal chemistry loop
-       max_iter, &  ! Maximum number of iterations allowed for
-                    ! implicit solver loop.
-       hprev, &  ! Values of h%new, u%new and v%new from previous
-       Uprev, &  ! iteration for blending with new value to stabilize
-       Vprev, &  ! convergence of the implicit solver loop
+                                ! loop.  *** Note that this is public due
+                                ! to a pgf90 bug that seems to require the
+                                ! types defs for all public variables in a
+                                ! module to be made public if the module
+                                ! exports any type defs.
+                                !  Variables:
+       initDatetime,    &  ! Date/time of initial conditions
+       curDatetime,     &  ! Date/time of current time step
+       year,            &  ! Year counter
+       day,             &  ! Year-day counter
+       day_time,        &  ! Day-sec counter
+       time,            &  ! Time counter through run; seconds since midnight
+                           ! of initDatetime
+       dt,              &  ! Time step [s]
+       steps,           &  ! Number of time steps in the main time loop
+       chem_dt,         &  ! Internal time step for chemistry loop [s]
+       chem_steps,      &  ! Number of internal time steps for chemistry loop
+       max_iter,        &  ! Maximum number of iterations allowed for
+                           ! implicit solver loop.
+       hprev,           &  ! Values of h%new, u%new and v%new from previous
+       Uprev,           &  ! iteration for blending with new value to stabilize
+       Vprev,           &  ! convergence of the implicit solver loop
        new_weight, prev_weight, &  ! Weighting factors for convergence
                                    ! stabilization blending.
        vel_scale, h_scale,  &  ! Scale factors used to normalize the
@@ -100,7 +100,7 @@ module numerics
                                ! depth values to calculate the
                                ! convergence metrics for the implicit
                                ! solver loop.
-       del, &  ! Convergence metrics for implicit solver loop.
+       del,             &  ! Convergence metrics for implicit solver loop.
        ! Subroutines:
        init_numerics, check_negative, dalloc_numerics_variables
 
@@ -141,11 +141,11 @@ module numerics
        time  ! Time counter through run; seconds since midnight of
              ! initDatetime.
   real(kind=dp) :: &
-       dt,       &   ! Time step [s]
-       chem_dt       ! Time step for internal chemistry loop [s]
+       dt,         &   ! Time step [s]
+       chem_dt         ! Internal time step for chemistry loop [s]
   integer :: &
        steps,      &   ! Number of time steps in the main time loop
-       chem_steps      ! Number of time steps in interal chemistry loop
+       chem_steps      ! Number of internal time steps for chemistry loop
   integer :: &
        max_iter  ! Maximum number of iterations allowed for implicit
                  ! solver loop.
@@ -205,7 +205,7 @@ contains
     time = dble(initDatetime%day_sec)
     dt = dble(ndt%secs)
     chem_dt = dble(ndt%chem)
-    chem_steps = ndt%secs / ndt%chem  ! Integer division
+    chem_steps = ndt%secs / ndt%chem ! Integer division
     ! Calculate the number of time steps for the run (note that we're
     ! using integer division here)
     dur = datetime_diff(endDatetime, initDatetime)

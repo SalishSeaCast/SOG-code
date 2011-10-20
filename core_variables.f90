@@ -94,7 +94,7 @@ module core_variables
   type :: nitrogen
      real(kind=dp), dimension(:), allocatable :: &
           O, &  ! N%O is nitrate (NO3) concentration profile
-          H     ! N%H is ammonium (NH4) concentration profile
+          H     ! H%H is ammonium (NH4) concentration profile
   end type nitrogen
   !
   ! Plankton
@@ -203,7 +203,8 @@ contains
          i,            &  ! loop index
          ctd_records,  &  ! CTD data record counter
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
-         botl_records     ! IOS bottle data record counter
+         botl_records, &  ! IOS bottle data record counter
+         chem_records     ! IOS chem bottle data record counter
     logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Oxy
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
@@ -239,6 +240,7 @@ contains
     got_Fluores = .false.
     got_NO = .false.
     got_Oxy = .false.
+    got_DIC = .false.
     call read_init_data(getpars("ctd_in"), ctd_records, col, data)
     ! Interpolate CTD data to grid point depths
     if(col%T /= -1) then
@@ -320,33 +322,22 @@ contains
     endif
 
     ! If an IOS bottle data file is specfied, read it to get data to
-    ! initialize the nitrate, microphytoplankton, silicon, and dissolved
-    ! inorganic carbon profiles, if those data weren't in the CTD data file.
-    got_DIC = .false.
+    ! initialize the nitrate, microphytoplankton, and silicon
+    ! profiles, if those data weren't in the CTD data file.
     fn = getpars("botl_in")
     if(fn /= "N/A") then
        call read_init_data(fn, botl_records, col, data)
        ! Nitrate
-       if(.not. got_NO) then
-          if(col%NO /= -1) then
-             N%O = interp_to_grid(data(:botl_records, col%depth), &
-                                  data(:botl_records, col%NO))
-             got_NO = .true.
-          endif
+       if(col%NO /= -1) then
+          N%O = interp_to_grid(data(:botl_records, col%depth), &
+                               data(:botl_records, col%NO))
+          got_NO = .true.
        endif
        ! Silicon
-       if(.not. got_Si) then
-          if(col%Si /= -1) then
-             Si = interp_to_grid(data(:botl_records, col%depth), &
-                                 data(:botl_records, col%Si))
-             got_Si = .true.
-          endif
-       endif
-       ! Dissolved inorganic carbon
-       if(col%DIC /= -1) then
-          DIC = interp_to_grid(data(:botl_records, col%depth), &
-                               data(:botl_records, col%DIC))
-          got_DIC = .true.
+       if(col%Si /= -1) then
+          Si = interp_to_grid(data(:botl_records, col%depth), &
+                              data(:botl_records, col%Si))
+          got_Si = .true.
        endif
        ! Phytoplankton
        if(.not. got_Fluores) then
@@ -366,6 +357,26 @@ contains
                                       data(:botl_records, col%Phyto))
              got_Fluores = .true.
           endif
+       endif
+    endif
+
+    ! If an IOS chemistry bottle data file is specfied, read it to
+    ! get data to initialize the dissolved inorganic carbon and dissolved
+    ! oxygen profiles, if those data weren't in the CTD data file.
+    fn = getpars("chem_in")
+    if(fn /= "N/A") then
+       call read_init_data(fn, chem_records, col, data)
+       ! Dissolved inorganic carbon
+       if(col%DIC /= -1) then
+          DIC = interp_to_grid(data(:chem_records, col%depth), &
+                               data(:chem_records, col%DIC))
+          got_DIC = .true.
+       endif
+       ! Dissolved oxygen
+       if(col%Oxy /= -1) then
+          Oxy = interp_to_grid(data(:chem_records, col%depth), &
+                               data(:chem_records, col%Oxy))
+          got_Oxy = .true.
        endif
     endif
 
@@ -397,6 +408,7 @@ contains
     if(.not. got_Oxy) then
        Oxy = 2.0d2
     endif
+
     ! Convert fluorescence to phytoplankton biomass expressed in uMol N
     P%micro = P%micro / N2chl
     ! Read the initial ratios of phytoplankton classes from infile,

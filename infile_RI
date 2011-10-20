@@ -18,6 +18,7 @@
 ! End of run date/time
 "end datetime"	"2008-11-01 00:18:00"	"end of run date/time"
 "dt"		900	 "time step [s]"
+"chem_dt"	900	 "internal chemistry time step [s]"
 ! Implicit solver iteration limit
 "max_iter"	30	"implicit solver max iterations"
 
@@ -41,6 +42,9 @@
 "botl_in"
   "../SOG-initial/RI_nuts/Nuts-DF02-weightedMean.sog"
   "IOS bottle data file"
+"chem_in"
+  "N/A"
+  "IOS chemistry bottle data file"
 "initial chl split"
   0.33d0 0.33d0 0.33d0
   "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"

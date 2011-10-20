@@ -61,8 +61,7 @@ contains
 
     ! Local variables:
     integer :: &
-         count,     &  ! Loop index
-         max_iter      ! Maximum number of iterations
+         count         ! Loop index
     real(kind=dp) :: &
          DIC_flux,  &  ! Dissolved inorganic carbon surface flux [umol m-2 s-1]
          Oxy_flux,  &  ! Oxygen surface flux [umol m-2 s-1]
@@ -79,14 +78,6 @@ contains
        ! Calculate surface CO2 gas flux
        call gas_flux('CO2', T, S, CO2, unow, vnow, DIC_flux)
        call gas_flux('Oxy', T, S, Oxy(1), unow, vnow, Oxy_flux)
-
-       !----------------------------
-       write(stdout,*) 'Iteration = ', count
-       write(stdout,*) 'Surface CO2 = ', DIC(1)
-       write(stdout,*) 'Surface Oxy = ', Oxy(1)
-       write(stdout,*) 'DIC Flux = ', DIC_flux
-       write(stdout,*) 'Oxy Flux = ', Oxy_flux
-       !----------------------------
        
        ! This calculates the values of the precursor diffusion
        ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
@@ -97,11 +88,6 @@ contains
        ! Solve the semi-implicit diffusion/advection PDEs for the
        ! biology quantities.
        call solve_chem_equations(grid%M, DIC, Oxy, day, time)
-
-       !----------------------------
-       write(stdout,*) 'New Surface DIC = ', DIC(1)
-       write(stdout,*) 'New Surface Oxy = ', Oxy(1)
-       !----------------------------
 
     enddo !---- End Iteration Loop ----
 
@@ -158,12 +144,12 @@ contains
     call freshwater_bio ('DIC', DIC(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
-         surf_flux + DIC_flux, distrib_flux, DIC(grid%M+1),  &  ! in
+         surf_flux, distrib_flux, DIC(grid%M+1),  &  ! in
          DIC_RHS%diff_adv%new)                                  ! out
     call freshwater_bio ('Oxy', Oxy(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
-         surf_flux + Oxy_flux, distrib_flux, Oxy(grid%M+1),  &  ! in
+         surf_flux, distrib_flux, Oxy(grid%M+1),  &  ! in
          Oxy_RHS%diff_adv%new)                                  ! out
 
     ! Add vertical advection due to upwelling

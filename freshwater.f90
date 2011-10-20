@@ -120,7 +120,10 @@ contains
     ! Read the fresh water parameter values from the infile.
     use input_processor, only: getpard, getparl
     implicit none
-
+!-----------------------------------------------
+    ! DIC circulations strength
+!    phys_circ_DIC = getpard("phys_circ_DIC")
+!-----------------------------------------------
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
    ! Fresh water scale factor for river flows 

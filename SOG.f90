@@ -442,7 +442,7 @@ program SOG
      ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
-          N%O, N%H, Si, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
+          N%O, N%H, Si, DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
 
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
@@ -454,13 +454,13 @@ program SOG
      endif
 
      ! Calculate the gas fluxes and iterate the diffusion
-     call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), &
-          unow, vnow, DIC, Oxy, day, time)
+     ! call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), &
+     !      unow, vnow, DIC, Oxy, day, time)
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
      call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
-          D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, day, time)
+          DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, day, time)
      !
      !---------- End of Biology Model ----------
 
