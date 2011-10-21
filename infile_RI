@@ -391,6 +391,7 @@
 "bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
 ! File names and control variables for forcing data (wind, meteorology, river flows)
+"use average forcing data" "no" "should average forcing data be used exclusively or for fill"
 "wind"          "../SOG-forcing/wind/RI_Winds.txt"  "wind forcing data"
 "air temp"      "../SOG-forcing/met/RIhistAT"       "air temperature forcing data"
 "cloud"         "../SOG-forcing/met/RIhistCF"       "cloud fraction forcing data"
