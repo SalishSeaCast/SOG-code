@@ -300,12 +300,6 @@ contains
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
          surf_flux, distrib_flux, Si(grid%M+1),              &  ! in
          Si_RHS%diff_adv%new)                                   ! out
-!--- BEGIN CHEMISTRY FLUXES
-    call freshwater_bio ('DIC', DIC(0:grid%M),               &
-         surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, Si(grid%M+1),          &  ! in
-         Si_RHS%diff_adv%new)                               ! out
     call freshwater_bio ('DIC', DIC(0:grid%M),           &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
