@@ -94,7 +94,7 @@ module core_variables
   type :: nitrogen
      real(kind=dp), dimension(:), allocatable :: &
           O, &  ! N%O is nitrate (NO3) concentration profile
-          H     ! H%H is ammonium (NH4) concentration profile
+          H     ! N%H is ammonium (NH4) concentration profile
   end type nitrogen
   !
   ! Plankton

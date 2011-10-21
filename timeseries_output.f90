@@ -180,8 +180,8 @@ contains
          "DON detritus at 20 m, PON detritus at 20 m, ",                     &
          "refractory N detritus at 20 m, biogenic Si detritus at 20 m"/,     &
          "*FieldUnits: hr since ", a, " LST, uM N, uM N, uM N, uM N, ",      &
-         "uM, uM, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, ",   &
-         "uM"/,                                                              &
+         "uM, uM, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, uM N, ",   &
+         "uM N, uM N, uM"/,                                                  &
          "*EndOfHeader")
   end subroutine write_std_bio_timeseries_hdr
 

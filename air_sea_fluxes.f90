@@ -11,7 +11,8 @@ module air_sea_fluxes
   
   private
   public :: &
-       ! Subroutine:
+       ! Variables:
+       ! Subroutines:
        wind_stress, longwave_latent_sensible_heat, gas_flux, solubility
   
   ! Parameter Value Declarations:

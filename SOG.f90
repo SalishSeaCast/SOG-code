@@ -40,19 +40,20 @@ program SOG
   use mixing_layer, only: &
        h  ! Mixing layer depth value & indices
   use numerics, only: &
-       initDatetime, &   ! Date/time of initial conditions
-       year, &   ! Year counter
-       day,  &   ! Year-day counter
-       day_time, &  ! Day-sec counter
-       time, &  ! Time counter through run; seconds since midnight of 
-                ! initDatetime.
-       dt, &      ! Time step [s]
-       steps, &   ! Number of time steps in the main time loop
-       max_iter, &  ! Maximum number of iterations allowed for
-                    ! implicit solver loop.
-       hprev, &  ! Values of h%new, u%new and v%new from previous
-       Uprev, &  ! iteration for blending with new value to stabilize
-       Vprev, &  ! convergence of the implicit solver loop
+       initDatetime,      &  ! Date/time of initial conditions
+       year,              &  ! Year counter
+       day,               &  ! Year-day counter
+       day_time,          &  ! Day-sec counter
+       time,              &  ! Time counter through run; seconds since
+                             ! midnight of initDatetime.
+       dt,                &  ! Time step [s]
+       steps,             &  ! Number of time steps in the main time loop
+       max_iter,          &  ! Maximum number of iterations allowed for
+                             ! implicit solver loop.
+       hprev,             &  ! Values of h%new, u%new and v%new from previous
+       Uprev,             &  ! iteration for blending with new value to
+                             ! stabilize
+       Vprev,             &  ! convergence of the implicit solver loop
        new_weight, prev_weight, &  ! Weighting factors for convergence
                                    ! stabilization blending.
        vel_scale, h_scale, &  ! Scale factors used to normalize the
@@ -60,7 +61,7 @@ program SOG
                               ! depth values to calculate the
                               ! convergence metrics for the implicit
                               ! solver loop.
-       del  ! Convergence metrics for implicit solver loop
+       del                    ! Convergence metrics for implicit solver loop
   use irradiance, only: &
        I_total, &  ! Total light available for water column heating
        Q_n         ! Non-turbulent hear flux profile
@@ -357,7 +358,7 @@ program SOG
         rho%grad_i = gradient_i(rho%g)
         alpha%grad_i = gradient_i(alpha%g)
         beta%grad_i = gradient_i(beta%g)
-        ! Calculate the gradient of denisty at the grid point depths.
+        ! Calculate the gradient of density at the grid point depths.
         rho%grad_g = gradient_g(rho%g)
 
         ! Update the buoyancy profile, surface turbulent kinematic
@@ -443,7 +444,7 @@ program SOG
      ! vectors (*_RHS%sink).
      call build_biology_equations(grid, dt, P%micro, P%nano, P%pico, Z, &
           N%O, N%H, Si, DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
-
+     !
      ! Store %new components of RHS and Bmatrix variables in %old
      ! their components for use by the IMEX solver.  Necessary for the
      ! 1st time step because the values just calculated are a better
@@ -488,9 +489,9 @@ program SOG
      ! calculated from the data
      call bot_bound_time(year, day, day_time, &                       ! in
           T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
-          Si(grid%M+1), DIC(grid%M+1), Oxy(grid%M+1), &
-          N%H(grid%M+1), P%micro(grid%M+1), &
-          P%nano(grid%M+1), P%pico(grid%M+1), Z(grid%M+1)) ! out
+          Si(grid%M+1), DIC(grid%M+1), Oxy(grid%M+1), &               ! out
+          N%H(grid%M+1), P%micro(grid%M+1), P%nano(grid%M+1), &       ! out
+          P%pico(grid%M+1), Z(grid%M+1))                              ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform(grid%M, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
@@ -520,11 +521,11 @@ program SOG
      ! !!! If it is changed, the change should be committed to Mercurial. !!!
      ! !!! For exploratory, debugging, etc. output use                    !!!
      ! !!! write_user_profiles() below.                                   !!!
-     call write_std_profiles(datetime_str(runDatetime),                  &
-          datetime_str(initDatetime), year, day, day_time, dt, grid,     &
-          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
-          DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, &
-          K%m, K%T, K%S, U%new, V%new)
+     call write_std_profiles(datetime_str(runDatetime),                   &
+          datetime_str(initDatetime), year, day, day_time, dt, grid,      &
+          T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,  &
+          DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, K%m, K%T,  &
+          K%S, U%new, V%new)
 
      ! Write user-specified profiles results
      ! !!! Please don't add arguments to this call.           !!!

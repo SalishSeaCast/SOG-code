@@ -175,7 +175,7 @@ module biology_eqn_builder
        D_DOC_RHS,  &  ! Dissolved organic carbon detritus RHS arrays
        D_POC_RHS,  &  ! Particulate organic carbon detritus RHS arrays
        D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
-       D_PON_RHS,  &  ! Particulate organic nitro detritus RHS arrays
+       D_PON_RHS,  &  ! Particulate organic nitrogen detritus RHS arrays
        D_refr_RHS, &  ! Refractory nitrogen detritus RHS arrays
        D_bSi_RHS      ! Biogenic silicon detritus RHS arrays
   !
@@ -224,6 +224,7 @@ contains
     use freshwater, only: freshwater_bio
     use buoyancy, only: &
          Bf  ! Surface buoyancy forcing
+    use io_unit_defs, only: stdout
 
     implicit none
 
@@ -266,35 +267,41 @@ contains
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid
-    call freshwater_bio ('Pmicro', Pmicro(0:grid%M),     &
+    call freshwater_bio ('Pmicro', Pmicro(0:grid%M),         &
          surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, Pmicro(grid%M+1),      &  ! in
-         Pmicro_RHS%diff_adv%new)                           ! out
-    call freshwater_bio ('Pnano', Pnano(0:grid%M),       &
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
+         surf_flux, distrib_flux, Pmicro(grid%M+1),          &  ! in
+         Pmicro_RHS%diff_adv%new)                               ! out
+    call freshwater_bio ('Pnano', Pnano(0:grid%M),           &
          surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, Pnano(grid%M+1),       &  ! in
-         Pnano_RHS%diff_adv%new)                            ! out
-    call freshwater_bio ('Ppico', Ppico(0:grid%M),       &
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
+         surf_flux, distrib_flux, Pnano(grid%M+1),           &  ! in
+         Pnano_RHS%diff_adv%new)                                ! out
+    call freshwater_bio ('Ppico', Ppico(0:grid%M),           &
          surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, Ppico(grid%M+1),       &  ! in
-         Ppico_RHS%diff_adv%new)                            ! out
-    call freshwater_bio ('Zoo', Z(0:grid%M),             &
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
+         surf_flux, distrib_flux, Ppico(grid%M+1),           &  ! in
+         Ppico_RHS%diff_adv%new)                                ! out
+    call freshwater_bio ('Zoo', Z(0:grid%M),                 &
          surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, Z(grid%M+1),           &  ! in
-         Z_RHS%diff_adv%new)                                ! out
-    call freshwater_bio ('nitrate', NO(0:grid%M),        &
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
+         surf_flux, distrib_flux, Z(grid%M+1),               &  ! in
+         Z_RHS%diff_adv%new)                                    ! out
+    call freshwater_bio ('nitrate', NO(0:grid%M),            &
          surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, NO(grid%M+1),          &  ! in
-         NO_RHS%diff_adv%new)                               ! out
-    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
-         NH(grid%M+1),                                   &  ! in
-         NH_RHS%diff_adv%new)                               ! out
-    call freshwater_bio ('silicon', Si(0:grid%M),        &
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
+         surf_flux, distrib_flux, NO(grid%M+1),              &  ! in
+         NO_RHS%diff_adv%new)                                   ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
+         NH(grid%M+1),                                       &  ! in
+         NH_RHS%diff_adv%new)                                   ! out
+    call freshwater_bio ('silicon', Si(0:grid%M),            &
+         surf_flux, distrib_flux)
+    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
+         surf_flux, distrib_flux, Si(grid%M+1),              &  ! in
+         Si_RHS%diff_adv%new)                                   ! out
+!--- BEGIN CHEMISTRY FLUXES
+    call freshwater_bio ('DIC', DIC(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
          surf_flux, distrib_flux, Si(grid%M+1),          &  ! in
@@ -322,9 +329,9 @@ contains
          D_PON(grid%M+1),                                &  ! in
          D_PON_RHS%diff_adv%new)                            ! out
     D_refr_RHS%diff_adv%new = 0.
-    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
-         D_bSi(grid%M+1),                                &  ! in
-         D_bSi_RHS%diff_adv%new)                            ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
+         D_bSi(grid%M+1),                                    &  ! in
+         D_bSi_RHS%diff_adv%new)                                ! out
 
     ! Add vertical advection due to upwelling
     call upwelling_advection(dt, Pmicro, Pmicro_RHS%diff_adv%new)
@@ -429,7 +436,7 @@ contains
 
 
   subroutine new_to_old_chem_RHS()
-    ! Copy %new component of the biology *_RHS%diff_adv arrays to the
+    ! Copy %new component of the chemistry *_RHS%diff_adv arrays to the
     ! %old component for use by the IMEX semi-impllicit PDE solver.
     implicit none
 
@@ -450,7 +457,7 @@ contains
 
 
   subroutine new_to_old_chem_Bmatrix()
-    ! Copy %new component of the Bmatrix%bio arrays to the
+    ! Copy %new component of the Bmatrix%chem arrays to the
     ! %old component for use by the IMEX semi-impllicit PDE solver.
     implicit none
 
