@@ -144,12 +144,12 @@ contains
     call freshwater_bio ('DIC', DIC(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
-         surf_flux, distrib_flux, DIC(grid%M+1),  &  ! in
+         surf_flux + DIC_flux, distrib_flux, DIC(grid%M+1),  &  ! in
          DIC_RHS%diff_adv%new)                                  ! out
     call freshwater_bio ('Oxy', Oxy(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
-         surf_flux, distrib_flux, Oxy(grid%M+1),  &  ! in
+         surf_flux + Oxy_flux, distrib_flux, Oxy(grid%M+1),  &  ! in
          Oxy_RHS%diff_adv%new)                                  ! out
 
     ! Add vertical advection due to upwelling
