@@ -206,7 +206,7 @@ contains
   
 
   subroutine build_biology_equations(grid, dt, Pmicro, Pnano, Ppico, Z, &
-       NO, NH, Si, DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
+       NO, NH, Si, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
     ! Build the terms for the diffusion/advection equations for the
     ! biology quantities.
     !
@@ -241,8 +241,6 @@ contains
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
-         DIC,    &  ! Dissolved inorganic carbon profile
-         Oxy,    &  ! Dissolved oxygen profile
          D_DOC,  &  ! Dissolved organic carbon detritus profile
          D_POC,  &  ! Particulate organic carbon detritus profile
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
@@ -300,28 +298,18 @@ contains
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
          surf_flux, distrib_flux, Si(grid%M+1),              &  ! in
          Si_RHS%diff_adv%new)                                   ! out
-    call freshwater_bio ('DIC', DIC(0:grid%M),           &
-         surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, DIC(grid%M+1),         &  ! in
-         DIC_RHS%diff_adv%new)                              ! out
-    call freshwater_bio ('Oxy', Oxy(0:grid%M),           &
-         surf_flux, distrib_flux)
-    call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,   &  ! in
-         surf_flux, distrib_flux, Oxy(grid%M+1),         &  ! in
-         Oxy_RHS%diff_adv%new)                              ! out
-    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
-         D_DOC(grid%M+1),                                &  ! in
-         D_DOC_RHS%diff_adv%new)                            ! out
-    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
-         D_POC(grid%M+1),                                &  ! in
-         D_POC_RHS%diff_adv%new)                            ! out
-    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
-         D_DON(grid%M+1),                                &  ! in
-         D_DON_RHS%diff_adv%new)                            ! out
-    call diffusion_bot_surf_flux(dt, K%S, 0.d0,          &  ! in
-         D_PON(grid%M+1),                                &  ! in
-         D_PON_RHS%diff_adv%new)                            ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
+         D_DOC(grid%M+1),                                    &  ! in
+         D_DOC_RHS%diff_adv%new)                                ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
+         D_POC(grid%M+1),                                    &  ! in
+         D_POC_RHS%diff_adv%new)                                ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
+         D_DON(grid%M+1),                                    &  ! in
+         D_DON_RHS%diff_adv%new)                                ! out
+    call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
+         D_PON(grid%M+1),                                    &  ! in
+         D_PON_RHS%diff_adv%new)                                ! out
     D_refr_RHS%diff_adv%new = 0.
     call diffusion_bot_surf_flux(dt, K%S, 0.d0,              &  ! in
          D_bSi(grid%M+1),                                    &  ! in
@@ -335,8 +323,6 @@ contains
     call upwelling_advection(dt, NO, NO_RHS%diff_adv%new)
     call upwelling_advection(dt, NH, NH_RHS%diff_adv%new)
     call upwelling_advection(dt, Si, Si_RHS%diff_adv%new)
-    call upwelling_advection(dt, DIC, DIC_RHS%diff_adv%new)
-    call upwelling_advection(dt, Oxy, Oxy_RHS%diff_adv%new)
     call upwelling_advection(dt, D_DOC, D_DOC_RHS%diff_adv%new)
     call upwelling_advection(dt, D_POC, D_POC_RHS%diff_adv%new)
     call upwelling_advection(dt, D_DON, D_DON_RHS%diff_adv%new)
@@ -480,13 +466,13 @@ contains
          stat=allocstat)
     call alloc_check(allocstat, msg)
     !--- Bmatrix%chem ---
-    ! msg = "Diffusion coefficients tridiagonal matrix arrays"
-    ! allocate(Bmatrix%chem%new%sub(1:M), Bmatrix%chem%new%diag(1:M), &
-    !      Bmatrix%chem%new%sup(1:M),                                 &
-    !      Bmatrix%chem%old%sub(1:M), Bmatrix%chem%old%diag(1:M),     &
-    !      Bmatrix%chem%old%sup(1:M),                                 &
-    !      stat=allocstat)
-    ! call alloc_check(allocstat, msg)
+    msg = "Diffusion coefficients tridiagonal matrix arrays"
+    allocate(Bmatrix%chem%new%sub(1:M), Bmatrix%chem%new%diag(1:M), &
+         Bmatrix%chem%new%sup(1:M),                                 &
+         Bmatrix%chem%old%sub(1:M), Bmatrix%chem%old%diag(1:M),     &
+         Bmatrix%chem%old%sup(1:M),                                 &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
     !--------------------
     msg = "Micro phytoplankton RHS arrays"
     allocate(Pmicro_RHS%diff_adv%new(1:M), Pmicro_RHS%diff_adv%old(1:M), &
@@ -583,13 +569,13 @@ contains
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     !--- Bmatrix%chem ---
-    ! msg = "Diffusion coefficients tridiagonal matrix arrays"
-    ! deallocate(Bmatrix%chem%new%sub, Bmatrix%chem%new%diag, &
-    !      Bmatrix%chem%new%sup,                              &
-    !      Bmatrix%chem%old%sub, Bmatrix%chem%old%diag,       &
-    !      Bmatrix%chem%old%sup,                              &
-    !      stat=dallocstat)
-    ! call dalloc_check(dallocstat, msg)
+    msg = "Diffusion coefficients tridiagonal matrix arrays"
+    deallocate(Bmatrix%chem%new%sub, Bmatrix%chem%new%diag, &
+         Bmatrix%chem%new%sup,                              &
+         Bmatrix%chem%old%sub, Bmatrix%chem%old%diag,       &
+         Bmatrix%chem%old%sup,                              &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
     !--------------------
     msg = "Micro phytoplankton RHS arrays"
     deallocate(Pmicro_RHS%diff_adv%new, Pmicro_RHS%diff_adv%old, &

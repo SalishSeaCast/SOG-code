@@ -298,7 +298,7 @@ contains
 
 
   subroutine solve_bio_eqns(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, day, time)
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, day, time)
     ! Solve the semi-implicit diffusion/advection PDEs for the
     ! biology quantities.
 
@@ -323,8 +323,6 @@ contains
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
-         DIC,    &  ! Dissolved inorganic carbon profile
-         Oxy,    &  ! Dissolved oxygen profile
          D_DOC,  &  ! Dissolved organic carbon detritus profile
          D_POC,  &  ! Particulate organic carbon detritus profile
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
@@ -340,7 +338,7 @@ contains
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
     call build_bio_Hvectors(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
 
     ! Build the LHS matrix (A) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
@@ -348,18 +346,18 @@ contains
 
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h
     call solve_bio_tridiags(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
 
     ! Check for negative values in results, and print with a warning
     ! message if any are found
     call check_bio_negatives(Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, day, time, &
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, day, time, &
        fatal=.false.)
   end subroutine solve_bio_eqns
 
 
   subroutine build_bio_Hvectors(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
 
@@ -377,8 +375,6 @@ contains
          NO_RHS,     &  ! Nitrate concentration RHS arrays
          NH_RHS,     &  ! Ammonium concentration RHS arrays
          Si_RHS,     &  ! Silicon concentration RHS arrays
-         DIC_RHS,    &  ! Dissolved inorganic carbon RHS arrays
-         Oxy_RHS,    &  ! Dissolved oxygen RHS arrays
          D_DOC_RHS,  &  ! Dissolved organic carbon detritus RHS arrays
          D_POC_RHS,  &  ! Particulate organic carbon detritus RHS arrays
          D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
@@ -399,8 +395,6 @@ contains
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
-         DIC,    &  ! Dissolved inorganic carbon profile
-         Oxy,    &  ! Dissolved oxygen profile
          D_DOC,  &  ! Dissolved organic carbon detritus profile
          D_POC,  &  ! Particulate organic carbon detritus profile
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
@@ -443,16 +437,6 @@ contains
          Si_RHS%diff_adv%old, Si_RHS%bio, null_vector, &
          Bmatrix%bio%old, &
          Hvector%Si)
-    ! Dissolved inorganic carbon; non-sinking
-    call bio_Hvector(M, DIC, DIC_RHS%diff_adv%new, &
-         DIC_RHS%diff_adv%old, DIC_RHS%bio, null_vector, &
-         Bmatrix%bio%old, &
-         Hvector%DIC)
-    ! Dissolved oxygen; non-sinking
-    call bio_Hvector(M, Oxy, Oxy_RHS%diff_adv%new, &
-         Oxy_RHS%diff_adv%old, Oxy_RHS%bio, null_vector, &
-         Bmatrix%bio%old, &
-         Hvector%Oxy)
     ! Dissolved organic carbon detritus; non-sinking
     call bio_Hvector(M, D_DOC, D_DOC_RHS%diff_adv%new, &
          D_DOC_RHS%diff_adv%old, D_DOC_RHS%bio, null_vector, &
@@ -532,7 +516,7 @@ contains
 
 
   subroutine solve_bio_tridiags(M, Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi)
     ! Solve the discretized semi-implicit PDE matrix equations Aq = h.
 
     ! Type definitions from other modules:
@@ -551,8 +535,6 @@ contains
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
-         DIC,    &  ! Dissolved inorganic carbon profile
-         Oxy,    &  ! Dissolved oxygen profile
          D_DOC,  &  ! Dissolved organic carbon detritus profile
          D_POC,  &  ! Particulate organic carbon detritus profile
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
@@ -574,10 +556,6 @@ contains
     call solve_tridiag(Amatrix%bio, Hvector%NH, NH(1:M))
     ! Silicon
     call solve_tridiag(Amatrix%bio, Hvector%Si, Si(1:M))
-    ! Dissolved inorganic carbon
-    call solve_tridiag(Amatrix%bio, Hvector%DIC, DIC(1:M))
-    ! Dissolved oxygen
-    call solve_tridiag(Amatrix%bio, Hvector%Oxy, Oxy(1:M))
     ! Dissolved organic carbon detritus
     call solve_tridiag(Amatrix%bio, Hvector%D_DOC, D_DOC(1:M))
     ! Particulate organic carbon detritus
@@ -594,7 +572,7 @@ contains
 
 
   subroutine check_bio_negatives(Pmicro, Pnano, Ppico, Z, NO, NH, Si, &
-       DIC, Oxy, D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
+       D_DOC, D_POC, D_DON, D_PON, D_refr, D_bSi, day, time, fatal)
     ! Check for negative values in results.
 
     ! Elements from other modules:
@@ -615,8 +593,6 @@ contains
          NO,     &  ! Nitrate
          NH,     &  ! Ammonium
          Si,     &  ! Silicon
-         DIC,    &  ! Dissolved inorganic carbon profile
-         Oxy,    &  ! Dissolved oxygen profile
          D_DOC,  &  ! Dissolved organic carbon detritus profile
          D_POC,  &  ! Particulate organic carbon detritus profile
          D_DON,  &  ! Dissolved organic nitrogen detritus profile
@@ -650,12 +626,6 @@ contains
          day, time, fatal)
     ! Silicon
     call check_negative(0, Si, "Si after solve_tridiag()", &
-         day, time, fatal)
-    ! Dissolved inorganic carbon
-    call check_negative(0, DIC, "DIC after solve_tridiag()", &
-         day, time, fatal)
-    ! Dissolved oxygen
-    call check_negative(0, Oxy, "Oxy after solve_tridiag()", &
          day, time, fatal)
     ! Dissolved organic carbon detritus
     call check_negative(0, D_DOC, "D%DOC after solve_tridiag()", &
