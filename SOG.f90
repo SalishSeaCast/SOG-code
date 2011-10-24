@@ -222,6 +222,10 @@ program SOG
      call get_forcing(year, day, day_time, &
           Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
           unow, vnow)
+     if (day == 2) then
+        write (*,*) Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
+             unow, vnow
+     endif
 
      ! Calculate sunlight effects
      call calc_irradiance(cf_value, day_time, day, Qinter, &
