@@ -19,7 +19,7 @@
 ! End of run date/time
 "end datetime"	"2005-10-11 00:22:00"	"end of run date/time"
 "dt"		900	 "time step [s]"
-"chem_dt"	900	 "internal chemistry time step [s]"
+"chem_dt"	5	 "internal chemistry time step [s]"
 ! Implicit solver iteration limit
 "max_iter"	30	"implicit solver max iterations"
 
