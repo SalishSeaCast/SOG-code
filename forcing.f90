@@ -183,7 +183,7 @@ contains
           wind_northwest(jc) = wind_northwest(jc-wind_n/2)
        enddo
        close(forcing_data)
-    elseif (use_average_forcing_date .eq. "histfill") then
+    elseif (use_average_forcing_data .eq. "histfill") then
        open(unit=forcing_data, file=getpars("average/hist wind"))
        do jc = 1, wind_n
           read(forcing_data,*) day, month, year, hour, &
@@ -193,7 +193,8 @@ contains
     endif
 
     ! standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_date .eq. "histfill" .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
+                                             .or. use_average_forcing_data .eq. "no") then
        open(unit=forcing_data, file=getpars("wind"))
        found_data = .false.
        do while (.not. found_data)
@@ -232,7 +233,7 @@ contains
           atemp(jc,:) = atemp(jc-met_n/2,:)
        enddo
        close(forcing_data)
-    elseif (use_average_forcing_date .eq. "histfill") then
+    elseif (use_average_forcing_data .eq. "histfill") then
        open(unit=forcing_data, file=getpars("average/hist air temp"))
        do jc = 1, met_n
           read(forcing_data,*) stn, year, month, day, para, (atemp(jc,j), j=1,24)
@@ -244,7 +245,8 @@ contains
     endif
 
     ! Standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_date .eq. "histfill" .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
+                                             .or. use_average_forcing_data .eq. "no") then
        open(unit=forcing_data, file=getpars("air temp"))
        found_data = .false.
        do while (.not. found_data)
@@ -289,7 +291,7 @@ contains
           cf(jc,:) = cf(jc-met_n/2,:)
        enddo
        close(forcing_data)
-    elseif  (use_average_forcing_date .eq. "histfill") then
+    elseif  (use_average_forcing_data .eq. "histfill") then
        open(unit=forcing_data, file=getpars("average/hist cloud"))
        do jc = 1, met_n
           read(forcing_data,*) stn, year, month, day, para, (cf(jc,j), j=1,24)
@@ -298,7 +300,8 @@ contains
     endif
 
     ! standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_date .eq. "histfill" .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
+                                             .or. use_average_forcing_data .eq. "no") then
        open(unit=forcing_data, file=getpars("cloud"))
        found_data = .false.
        do while (.not. found_data)
@@ -332,7 +335,7 @@ contains
           humid(jc,:) = humid(jc-met_n/2,:)
        enddo
        close(forcing_data)
-    elseif (use_average_forcing_date .eq. "histfill") then
+    elseif (use_average_forcing_data .eq. "histfill") then
        open(unit=forcing_data, file=getpars("average/hist humidity"))
        do jc = 1, met_n
           read(forcing_data,*) stn, year, month, day, para, (humid(jc,j), j=1,24)
@@ -341,7 +344,8 @@ contains
     endif
 
     ! Standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_date .eq. "histfill" .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
+                                             .or. use_average_forcing_data .eq. "no") then
        open(unit=forcing_data, file=getpars("humidity"))
        found_data = .false.
        do while (.not. found_data)
@@ -372,7 +376,7 @@ contains
 
     ! check if using average data
     if (use_average_forcing_data .eq. "yes" .or. use_average_forcing_data .eq. "fill") then
-       major_river_file = getspars("average/hist major river"))
+       major_river_file = getpars("average/hist major river")
        open(unit=forcing_data, file=major_river_file)
        do jc = 1, rivers_startday-1
           read(forcing_data, *) year, month, day, Qriver(jc)
@@ -391,8 +395,8 @@ contains
        do jc = river_n/2+1, river_n
           Qriver(jc) = Qriver(jc-river_n/2)
        enddo
-    elseif  (use_average_forcing_date .eq. "histfill") then
-       major_river_file = getspars("average/hist major river"))
+    elseif  (use_average_forcing_data .eq. "histfill") then
+       major_river_file = getpars("average/hist major river")
        open(unit=forcing_data, file=major_river_file)
        do jc = 1, rivers_startday-1
           read(forcing_data, *) year, month, day, Qriver(jc)
@@ -411,7 +415,8 @@ contains
     endif
 
     ! standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_date .eq. "histfill" .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
+                                             .or. use_average_forcing_data .eq. "no") then
        open(forcing_data, file=getpars("major river"))  
        found_data = .false.
        do while(.not. found_data)
@@ -469,7 +474,7 @@ contains
              Eriver(jc) = 0.0d0
           enddo
        endif
-    elseif  (use_average_forcing_date .eq. "histfill") then
+    elseif  (use_average_forcing_data .eq. "histfill") then
        minor_river_file = getpars("average/hist minor river")
        if (minor_river_file /= "N/A") then
           open(unit=forcing_data, file=minor_river_file) 
@@ -496,7 +501,8 @@ contains
     endif
 
     ! standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_date .eq. "histfill" .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
+                                             .or. use_average_forcing_data .eq. "no") then
        minor_river_file = getpars("minor river")
        if(minor_river_file /= "N/A") then
           open(forcing_data, file=minor_river_file)
