@@ -536,7 +536,7 @@ contains
        endif
     endif
  
-   ! Number of days to integrate the minor river data over.  This is
+    ! Number of days to integrate the minor river data over.  This is
     ! used because the minor river can be a proxy for regional
     ! rainfall events. In the case of the Strait of Georgia, the
     ! Englishman River is used to represent all of the fresh water
