@@ -546,17 +546,19 @@ contains
     ! the minor river flow data accounts for these effects. The number
     ! of days over which to integrate needs to be determined by data
     ! fitting.
-    integ_days = getpari("minor river integ days")
-    ! Integrate minor river data over the specified number of
-    ! days.
-    do ic = 1, integ_days
-       integ_minor_river(ic) = sum(Eriver(1:ic)) / dble(ic)
-    enddo
-    do ic = integ_days + 1, river_n
-       integ_minor_river(ic) = sum(Eriver(ic - integ_days:ic)) / integ_days
-    enddo
-    Eriver(1:river_n) = integ_minor_river(1:river_n)
-  
+    if (minor_river_file /= "N/A") then
+       integ_days = getpari("minor river integ days")
+       ! Integrate minor river data over the specified number of
+       ! days.
+       do ic = 1, integ_days
+          integ_minor_river(ic) = sum(Eriver(1:ic)) / dble(ic)
+       enddo
+       do ic = integ_days + 1, river_n
+          integ_minor_river(ic) = sum(Eriver(ic - integ_days:ic)) / integ_days
+       enddo
+       Eriver(1:river_n) = integ_minor_river(1:river_n)
+    endif
+
 end subroutine read_forcing
 
 
