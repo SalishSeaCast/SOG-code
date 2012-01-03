@@ -29,7 +29,7 @@
 "vary%rivers%enabled"  .false.       "Variation of river flow?"
 "vary%temperature%enabled" .false.   "Variation of temperature?"
 
-!N2chl ratio
+! Nitrogen to Chlorophyll ratio in phytoplankton
 "N2chl"  1.5d0  "ratio of chl mg/m3 to uMol N in phytoplankton"
 
 ! Initial conditions
