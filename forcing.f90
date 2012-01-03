@@ -169,7 +169,7 @@ contains
     endif
 
     ! check if using average data
-    use_average_forcing_data = getpars("use average forcing data")
+    use_average_forcing_data = getpars("use average/hist forcing")
     if (use_average_forcing_data .eq. "yes" .or. use_average_forcing_data .eq. "fill") then
        open(unit=forcing_data, file=getpars("average/hist wind"))
        do jc = 1, wind_n/2
@@ -458,17 +458,6 @@ contains
              enddo
              close(forcing_data)
           endif
-          integ_days = getpari("minor river integ days") ! see large info paragraph below
-          do jc = river_n/2+1, river_n
-             Eriver(jc) = Eriver(jc-river_n/2)
-          enddo
-          do ic = 1, integ_days
-             integ_minor_river(ic) = sum(Eriver(1:ic)) / dble(ic)
-          enddo
-          do ic = integ_days + 1, river_n
-             integ_minor_river(ic) = sum(Eriver(ic - integ_days:ic)) / integ_days
-          enddo
-          Eriver(1:river_n) = integ_minor_river(1:river_n)
        else ! no average minor river
           do jc = 1, river_n             
              Eriver(jc) = 0.0d0
