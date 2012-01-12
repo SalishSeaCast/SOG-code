@@ -17,8 +17,8 @@
 #   - path_to/new_infile is the path and the name of the new infile to be
 #     created.
 
---- infile	2011-01-29 10:28:26.000000000 -0800
-+++ SoG_spring_flagellates	2011-01-29 10:29:09.000000000 -0800
+--- infile	2012-01-04 15:40:55.000000000 -0800
++++ SoG_spring_flagellates	2012-01-04 16:05:24.000000000 -0800
 @@ -1,9 +1,7 @@
  ! -*- mode: f90 -*-  ! This line must be at the top of the file!
  
@@ -42,9 +42,9 @@
 -"end datetime"	"2005-10-11 00:22:00"	"end of run date/time"
 +"end datetime"	"2002-05-01 00:49:00"	"end of run date/time"
  "dt"		900	 "time step [s]"
+ "chem_dt"	5	 "internal chemistry time step [s]"
  ! Implicit solver iteration limit
- "max_iter"	30	"implicit solver max iterations"
-@@ -33,51 +32,48 @@
+@@ -34,11 +33,11 @@
  
  ! Initial conditions
  "ctd_in"
@@ -58,7 +58,9 @@
    "pre-processed nitrate & silicon profile data from STRATOGEM bottles"
  "botl_in"
    "N/A"
-   "IOS bottle data file"
+@@ -47,41 +46,42 @@
+   "../SOG-initial/chem/Chem-SOGS-2010-73.sog"
+   "IOS chemistry bottle data file"
  "initial chl split"
 -  0.33d0 0.33d0 0.33d0
 +  0.50d0 0.00d0 0.50d0
@@ -97,23 +99,23 @@
  
  ! Profiles output
 -"noprof"	1		"no. of profiles to print"
--! *** It would be nice to replace the yr-day and day-sec lists with a list
--! *** of dates/times for profiles output
++"noprof"        16       "number of profiles to be produced"
+ ! *** It would be nice to replace the yr-day and day-sec lists with a list
+ ! *** of dates/times for profiles output
 -"profday"	303		"yr-day for profile"
 -"proftime"	43200.		"day-sec for profile"
 -"haloclinefile"	"profiles/halo-SOG.out"	"file for halocline results"
 -"profile_base"	"profiles/SOG"	"profile file base (datetime will be added)"
--! Hoffmueller diagram output (a collection of profiles at time intervals
--! for contour or colourmap plotting)
--"Hoffmueller file"	"profiles/hoff-SOG.dat"	"file for Hoffmueller results"
--"Hoffmueller start yr"	2004			"yr to start Hoff output"
--"Hoffmueller start day"	294			"yr-day to start Hoff output"
-+"noprof"        16       "number of profiles to be produced"
 +"profday"       310 344 016 042 062 077 084 089 098 105 119 159 192 224 245 293   		"year day for profiles"
 +"proftime"      41760. 42120. 43020. 42600. 43620. 48480. 42360. 48120. 34560. 48300. 64920. 24600. 21240. 43800. 40620. 44520.
 + 		"time of day for profiles (s)"
 +"haloclinefile" "profiles/halo-myear_wflmz_R1.dat" 	"file for halocline results"
 +"profile_base"	"profiles/myear_wflmz_R1"	"profiles file base (datetime will be adnded)"
+ ! Hoffmueller diagram output (a collection of profiles at time intervals
+ ! for contour or colourmap plotting)
+-"Hoffmueller file"	"profiles/hoff-SOG.dat"	"file for Hoffmueller results"
+-"Hoffmueller start yr"	2004			"yr to start Hoff output"
+-"Hoffmueller start day"	294			"yr-day to start Hoff output"
 +"Hoffmueller file" "profiles/hoff-myear_wflmz_R1.dat"  "file for Hoffmueller profiles"
 +"Hoffmueller start yr"	2001			"yr to start Hoff output"
 +"Hoffmueller start day" 263			"yr-day to start Hoff output"
@@ -123,7 +125,7 @@
  "Hoffmueller end day"	305			"yr-day to end Hoff output"
  "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
  "Hoffmueller interval"	1.			"days between Hoff outputs"
-@@ -146,74 +142,76 @@
+@@ -156,74 +156,76 @@
  ! Biology model parameters:
  ! Model complexity flags:
  "flagellates_on"	.true.	"include flagellates in model?"
@@ -235,7 +237,7 @@
  ! Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
  "Micro, I_opt" 		38.4d0         "Micro, optimum light (W/m2)"
  ! Yih plus Cloern 1977 Half-sat very similar
-@@ -221,56 +219,54 @@
+@@ -231,56 +233,54 @@
  ! small
  "Pico, I_opt"           10.d0          "Pico, optimum light"
  ! Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
@@ -314,7 +316,7 @@
  "DON remin rate"        2.3d-6       "DON detritus remineralization rate [1/s]"
  ! Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes but this
  ! is for deeply sinking and thus refractory stuff?)
-@@ -290,7 +286,7 @@
+@@ -299,7 +299,7 @@
  "Waste, dnm, PON"       0.475d0  "fraction of waste from micro nat mort to PON"
  ! some loss
  "Waste, dnm, Ref"       0.05d0  "fraction of waste from micro nat mort to Ref"
