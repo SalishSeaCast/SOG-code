@@ -178,6 +178,7 @@ contains
           wind_eastnorth(jc) = 0.94* wind_eastnorth(jc)  ! tune the wind down
           wind_northwest(jc) = 0.94* wind_northwest(jc)
        enddo
+       write (*,*) "We are averaging Wind", day, month, year, hour
        do jc = wind_n/2+1, wind_n
           wind_eastnorth(jc) = wind_eastnorth(jc-wind_n/2)
           wind_northwest(jc) = wind_northwest(jc-wind_n/2)
@@ -421,6 +422,8 @@ contains
        found_data = .false.
        do while(.not. found_data)
           read(forcing_data, *, end=778) year, month, day, Qriver(1)
+          write (*,*) "What are we doing here?"
+          stop
           if(year == rivers_startyear .and. day == rivers_startday) then
              do jc = 2, river_n             
                 read(forcing_data,*,end=778) year, month, day, Qriver(jc)
@@ -458,6 +461,9 @@ contains
              enddo
              close(forcing_data)
           endif
+          do jc = river_n/2+1, river_n
+             Eriver(jc) = Eriver(jc-river_n/2)
+          enddo
        else ! no average minor river
           do jc = 1, river_n             
              Eriver(jc) = 0.0d0
