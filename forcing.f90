@@ -458,6 +458,9 @@ contains
              enddo
              close(forcing_data)
           endif
+          do jc = river_n/2+1, river_n
+             Eriver(jc) = Eriver(jc-river_n/2)
+          enddo
        else ! no average minor river
           do jc = 1, river_n             
              Eriver(jc) = 0.0d0
