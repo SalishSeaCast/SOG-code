@@ -9,9 +9,9 @@
 "latitude"  49.1253d0  "latitude [deg] 49.0d0 + 7.517d0 / 60.0d0"
 
 ! Grid parameters:
-"maxdepth"  40.d0  "depth of modelled domain [m]"
-"gridsize"  80     "number of grid points"
-"lambda"    0.d0   "grid spacing parameter"
+"maxdepth"	40.d0	"depth of modelled domain [m]"
+"gridsize"	80	"number of grid points"
+"lambda"	0.d0	"grid spacing parameter"
 
 ! Run timing parameters:
 ! Initial conditions date/time (must match a CTD profile date/time)
