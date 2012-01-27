@@ -99,7 +99,7 @@ contains
     ! Calculate CO2* from DIC at T, S and 1 atm. Total alkalinity
     ! is required for this calculation, but for our purposes will
     ! obtained using a linear fit to salinity.
-    ! (Ianson and Allen WCVI model - from summer 1998 data)
+    ! (2010 SoG cruise data)
     !
     ! Elements from other modules:
     !
@@ -131,8 +131,8 @@ contains
          DIC_molal        ! DIC converted to mol/kg
 
     ! Total alkalinity in terms of salinity (mol/kg)
-    ! (Ianson and Allen WCVI model - from summer 1998 data)
-    Alk = (52.8485d0 * S + 472.1601d0) * 1.0d-6
+    ! Fit from 2010 SOG cruises
+    Alk = (47.3210d0 * S + 653.8105d0) * 1.0d-6
 
     ! DIC from uM to mol/kg
     DIC_molal = DIC * (1.0d-3/rho)

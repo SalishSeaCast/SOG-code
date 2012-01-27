@@ -221,9 +221,9 @@ contains
          "surface oxygen concentration, 3 m avg oxygen concentration, ",     &
          "surface DIC concentration, 3 m avg DIC concentration, ",           &
          "DOC detritus at 20 m, POC detritus at 20 m, ",                     &
-         "refractory C detritus at 20 m"/,                                   &
+         "refractory C detritus at 20 m, surface pCO2, surface pO2"/,        &
          "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM C, uM C, ",      &
-         "uM C, uM C, uM C"/,                                                &
+         "uM C, uM C, uM C, ppm, ppm"/,                                      &
          "*EndOfHeader")
   end subroutine write_std_chem_timeseries_hdr
   
@@ -234,7 +234,7 @@ contains
        ! Variables for standard biology model output
        NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi, &
        ! Variables for standard chemistry model output
-       Oxy, DIC, D_DOC, D_POC, D_reC)
+       Oxy, DIC, D_DOC, D_POC, D_reC, pCO2, pO2)
     ! Write results of the current time step to the time series files.
     use precision_defs, only: dp
     use io_unit_defs, only: &
@@ -252,7 +252,9 @@ contains
     integer, intent(in) :: &
          iter_cnt  ! Timestep iteration count
     real(kind=dp), intent(in) :: &
-         h  ! Mixing layer depth [m]
+         h,      &  ! Mixing layer depth [m]
+         pCO2,   &  ! Partial pressure of CO2 [ppm]
+         pO2        ! Partial pressure of O2 [ppm]
     real(kind=dp), dimension(0:), intent(in) :: &
          U,      &  ! Cross-strait velocity component profile [m/s]
          V,      &  ! Along-strait velocity component profile [m/s]
@@ -362,7 +364,7 @@ contains
     call interp_value(20.0d0, 0, grid%d_g, D_POC, D_POC_20m, j_below)
     call interp_value(20.0d0, 0, grid%d_g, D_reC, D_reC_20m, j_below)
     write(std_chem_timeseries, 300) time, Oxy(0), Oxy_avg_3m, &
-         DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, D_reC_20m
+         DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, D_reC_20m, pCO2, pO2
 300 format(f10.4, 80(2x, f12.4))
   end subroutine write_std_timeseries
 

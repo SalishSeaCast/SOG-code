@@ -165,7 +165,7 @@ contains
   end subroutine longwave_latent_sensible_heat
 
 
-  subroutine gas_flux(type, T, S, C_water, unow, vnow, gasflux)
+  subroutine gas_flux(type, T, S, C_water, unow, vnow, gasflux, p_gas)
     ! Calculate the gas flux.
     !
     ! This calculates the value of the gasflux variable determined
@@ -192,7 +192,8 @@ contains
          unow,     &  ! 35 degree wind component (cross-strait)
          vnow         ! 325 degree wind component (along-strait)
     real(kind=dp), intent(out) :: &
-         gasflux      ! Gas flux [umol m-2 s-1]
+         gasflux,  &  ! Gas flux [umol m-2 s-1]
+         p_gas        ! Partial pressure of gas [ppm]
 
     ! Local variables:
     real(kind=dp) :: &
@@ -239,9 +240,12 @@ contains
     kps = (0.22d0 * ws10**2 + 0.33d0 * ws10) * (sc/600.0d0)**(-0.5d0)
     kps = kps * 2.778d-6   ! m/s
     
+    ! Partial Pressure
+    p_gas = 1.0d3 * (C_water/sol)
+
     ! Gas flux
-    ! (m/s * mol/m^3atm * umol/mol * atm = umol m-2 s-1)
-    gasflux = kps * sol * 1.0d6 * (1.0d-3 * (C_water/sol) - p_air)
+    ! (m/s * mol/m^3atm * (umol/mol * m^3/L) * atm = umol m-2 s-1)
+    gasflux = kps * sol * 1.0d3 * (1.0d-6 * p_gas - p_air)
 
   end subroutine gas_flux
 

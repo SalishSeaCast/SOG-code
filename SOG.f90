@@ -127,6 +127,8 @@ program SOG
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
   real(kind=dp) :: unow, vnow
+  ! Partial Pressures
+  real(kind=dp) :: pCO2, pO2
 
 
   ! ---------- Beginning of Initialization Section ----------
@@ -460,7 +462,7 @@ program SOG
 
      ! Calculate the gas fluxes and iterate the diffusion
      call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), &
-          unow, vnow, DIC, Oxy, day, time)
+          unow, vnow, DIC, Oxy, day, time, pCO2, pO2)
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
@@ -512,7 +514,7 @@ program SOG
        N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, &
        D%bSi,                                                           &
        ! Variables for standard chemistry model output
-       Oxy, DIC, D%DOC, D%POC, D%reC)
+       Oxy, DIC, D%DOC, D%POC, D%reC, pCO2, pO2)
 
      ! Write user-specified time series results
      ! !!! Please don't add arguments to this call.           !!!

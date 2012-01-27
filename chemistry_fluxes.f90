@@ -24,7 +24,7 @@ module chemistry_fluxes
 contains
 
   subroutine solve_gas_flux(grid, T, S, rho, unow, vnow, DIC, Oxy, &
-       day, time)
+       day, time, pCO2, pO2)
     ! Iteration for successful diffusion of CO2 and oxygen gas fluxes
 
     ! Variables:
@@ -58,6 +58,9 @@ contains
     real(kind=dp), dimension(0:), intent(inout) :: &
          DIC,       &  ! Surface dissolved inorganic carbon [uM]
          Oxy           ! Surface dissolved oxygen [uM]
+    real(kind=dp), intent(out) :: &
+         pCO2,      &  ! Partial pressure CO2 [ppm]
+         pO2           ! Partial pressure O2 [ppm]
 
     ! Local variables:
     integer :: &
@@ -76,9 +79,9 @@ contains
        call calculate_co2(T, S, rho, DIC(1), CO2)
 
        ! Calculate surface CO2 gas flux
-       call gas_flux('CO2', T, S, CO2, unow, vnow, DIC_flux)
-       call gas_flux('Oxy', T, S, Oxy(1), unow, vnow, Oxy_flux)
-       
+       call gas_flux('CO2', T, S, CO2, unow, vnow, DIC_flux, pCO2)
+       call gas_flux('Oxy', T, S, Oxy(1), unow, vnow, Oxy_flux, pO2)
+
        ! This calculates the values of the precursor diffusion
        ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
        ! term vectors (*_RHS%diff_adv%new), and the RHS sinking term

@@ -57,7 +57,7 @@ module freshwater
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 !--- BEGIN CHEMISTRY PARAMETERS
   ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
-  real(kind=dp), parameter :: phys_circ_DIC = 2124.2d0 - 1354.7d0
+  real(kind=dp), parameter :: phys_circ_DIC = 2021.04d0 - 663.1d0
   ! From Environment Canada Fraser River bouy October 2010
   real(kind=dp), parameter :: phys_circ_Oxy = 148.38d0 - 343.75d0
 !--- END CHEMISTRY PARAMETERS
