@@ -195,10 +195,6 @@ contains
     real(kind=dp), intent(in) :: &
          time  ! Time of current time step [s since start of run]
 
-    ! Local Variables:
-    logical :: &
-         fatal
-
     ! Build the RHS vectors (h) for the discretized semi-implicit PDE
     ! matrix equations Aq = h
     call bio_Hvector(M, DIC, DIC_RHS%diff_adv%new, &
