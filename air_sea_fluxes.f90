@@ -5,16 +5,16 @@ module air_sea_fluxes
   ! Public Subroutines:
   !
   !   wind_stress -- Calculate the wind-stress.
-  
+
   use precision_defs, only: dp, sp
   implicit none
-  
+
   private
   public :: &
        ! Variables:
        ! Subroutines:
        wind_stress, longwave_latent_sensible_heat, gas_flux, solubility
-  
+
   ! Parameter Value Declarations:
   !
   ! Private to module:
@@ -28,9 +28,9 @@ module air_sea_fluxes
   ! Private to module:
   real(kind=dp) :: &
        UU  ! Surface wind-speed (calculated in wind-stress; used in heat flux)
-  
+
 contains
-  
+
   subroutine wind_stress(unow, vnow, rho)
     ! Calculate the wind-stress.
     !
@@ -46,7 +46,7 @@ contains
          wbar  ! Turbulent kinematic flux profile arrays
 
     implicit none
-    
+
     ! Arguments:
     real(kind=dp), intent(in) :: &
          unow, &  ! 35 degree wind component (cross-strait)
@@ -78,7 +78,7 @@ contains
     wbar%v(0) = -stress_v / rho
   end subroutine wind_stress
 
-  
+
   subroutine longwave_latent_sensible_heat(cf, atemp, humid, T_o, rho_o, Cp_o)
     ! Calculate the surface turbulent heat flux.
     !
@@ -117,7 +117,7 @@ contains
                                 ! the spectrum
     real(kind=dp) :: &
          lw_in,  &  ! Downward long wave radiation
-         lw_out, &  ! Upward emission of long wave radiation 
+         lw_out, &  ! Upward emission of long wave radiation
          lw_net     ! Net longwave radiation
     !
     ! Sensible heat flux
@@ -127,7 +127,7 @@ contains
     real(kind=dp) :: &
          h_sens  ! Sensible heat flux
     !
-    ! Latent heat flux 
+    ! Latent heat flux
     real(kind=dp), parameter :: &
          a = 7.5,      &  ! Vapour pressure consts
          b = 237.3,    &
@@ -143,21 +143,21 @@ contains
     ! Downward radiation from atmosphere
     ! *** There are several different ways to calculate this
     lw_in = (1 - r) * (1 + 0.170 * cf**2) * Ce * atemp**2 &
-         * sigma * atemp**4  
+         * sigma * atemp**4
     ! Upward emission of radiation from earth's surface, stull page 48
-    lw_out = -epsilon_w * sigma * T_o**4                      
+    lw_out = -epsilon_w * sigma * T_o**4
     lw_net = lw_in + lw_out
     ! Sensible heat flux
-    h_sens = Cs * rho_atm * Cp * UU * (atemp - T_o) 
+    h_sens = Cs * rho_atm * Cp * UU * (atemp - T_o)
     ! Vapour pressure in mb
     ea = (humid / 100) * &
          exp(2.303 * ((a * KtoC(atemp) / ( KtoC(atemp) + b)) + c))
-    !Saturated vapour pressure 
+    !Saturated vapour pressure
     ! *** Same const as above??
     es = exp(2.3026 * ((a * KtoC(T_o) / (KtoC(T_o) + b)) + c))
     ! Latent heat
     h_latent = (0.622 / 1013) * CL * rho_atm * LE * UU * (ea - es)
-    h_latent = max(h_latent, 0)
+    h_latent = max(h_latent, 0.0d0)
     ! Surface heat flux in W/m^2
     Q_t = lw_net + h_sens + h_latent
     ! Surface turbulent heat flux (Large, et al (1994), eq'n A2c)
@@ -170,7 +170,7 @@ contains
     !
     ! This calculates the value of the gasflux variable determined
     ! somewhere.
-    
+
     ! Elements from other modules:
     !
     ! Type Definitions:
@@ -181,7 +181,7 @@ contains
     ! Variable Declarations:
 
     implicit none
-    
+
     ! Arguments:
     character(len=*), intent(in):: &
          type         ! Either 'CO2' or 'Oxy'
@@ -201,7 +201,7 @@ contains
          sol,      &  ! Solubility [mol m-3 atm-1]
          sc,       &  ! Schmidt number (dimensionless)
          kps,      &  ! Transfer velocity [m/s]
-         p_air,    &  ! Partial pressure in air [atm] 
+         p_air,    &  ! Partial pressure in air [atm]
          ws10         ! Surface windspeed
 
     ! Temperature in celcius
@@ -239,7 +239,7 @@ contains
     ! Transfer velocity, Nightingale et al. 2000
     kps = (0.22d0 * ws10**2 + 0.33d0 * ws10) * (sc/600.0d0)**(-0.5d0)
     kps = kps * 2.778d-6   ! m/s
-    
+
     ! Partial Pressure
     p_gas = 1.0d3 * (C_water/sol)
 
@@ -256,7 +256,7 @@ contains
     ! This calculates the value of the 'sol' variable needed in
     ! the gas_flux subroutine and the solve_gas_flux subroutine in
     ! chemistry_fluxes
-    
+
     ! Elements from other modules:
     !
     ! Type Definitions:
@@ -266,7 +266,7 @@ contains
     ! Variable Declarations:
 
     implicit none
-    
+
     ! Arguments:
     character(len=*), intent(in):: &
          type         ! Either 'CO2' or 'Oxy'
@@ -298,4 +298,3 @@ contains
   end subroutine solubility
 
 end module air_sea_fluxes
-
