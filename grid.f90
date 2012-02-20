@@ -38,12 +38,12 @@ module grid_mod
   !                        at the grid point depths.
   !
   !   interp_i(qty_g) -- Return the interpolated values of a quantity at
-  !                      the grid interface depths from its values at the 
+  !                      the grid interface depths from its values at the
   !                      grid point depths.
   !   interp_g(qty_i) -- Return the interpolated values of a quantity at
-  !                      the grid pionts depths from its values at the 
+  !                      the grid pionts depths from its values at the
   !                      grid interface depths.
-  ! 
+  !
   ! Public Subroutines:
   !
   !   dalloc_grid() -- Deallocate memory from grid arrays.
@@ -123,9 +123,6 @@ module grid_mod
        below_g, &  ! Fraction of grid point spacing that interface j
                    ! is below grid point j.
        below_i     ! Fraction of interface spacing that gridpoint  ***
-  integer, dimension(:), allocatable :: &
-       indices  ! Array of index numbers used by the interp_value
-                ! function.
 
 contains
 
@@ -190,8 +187,6 @@ contains
          / grid%i_space(1:grid%M)
     below_i%factor(1:grid%M) = abs(grid%d_i(0:grid%M-1) - grid%d_g(1:grid%M)) &
          / grid%i_space(1:grid%M)
-    ! Set index numbers for use by interp_value() function
-    forall (j = 0:size(indices)-1) indices(j) = j
   end subroutine init_grid
 
 
@@ -273,7 +268,7 @@ contains
             + 0.5 * (qty_g(j_below_d1) + q_i_d1) * &
             (grid%d_i(j_below_d1) - grid%d_g(j_below_d1))
        ! Portion between whole grid layer interfaces (note, if the second
-       ! index is less that the first the dot product gets 0 (so we don't 
+       ! index is less that the first the dot product gets 0 (so we don't
        ! need to test to this)
        avg = avg + dot_product(qty_g(j_below_d1+1:j_above_d2-1), &
             grid%i_space(j_below_d1+1:j_above_d2-1))
@@ -393,7 +388,7 @@ contains
     ! Calculate the value of the quantity in the interp_array that
     ! corresponds to the the specified value in the search_array,
     ! and the index of the grid point or interface immediately below
-    ! the calculated value.  This can be used to find the value of a 
+    ! the calculated value.  This can be used to find the value of a
     ! quantity at a specified depth:
     !   call interp_value(d, 0, d_g, qty_g, qty_g(d), j_below) or
     !   call interp_value(d, 0, d_i, qty_i, qty_i(d), j_below)
@@ -422,9 +417,14 @@ contains
 
     ! Local variables:
     integer :: &
-         ub  !  Upper bound of search_array
-    logical, dimension(lb:size(search_array)+lb-1) :: &
-         mask  ! Mask array used as an faster alternative to looping
+         ub, &  !  Upper bound of search_array
+         i
+    integer, dimension(lb:size(search_array) + lb - 1) :: &
+         indices  ! Array of grid point/interface indices used to find
+                  ! the index of the search array element below the
+                  ! search value
+    logical, dimension(lb:size(search_array) + lb - 1) :: &
+         mask  ! Mask array used as a faster alternative to looping
                ! over the search array
 
     ! Mask the search array for values greater than or equal to the
@@ -433,20 +433,21 @@ contains
     ! are exactly equal to the specified value.
     mask(lb) = search_array(lb) >= (value + epsilon(value))
     ub = size(search_array) + lb - 1
-    mask(lb+1:ub-1) = search_array(lb+1:ub-1) >= value
+    mask(lb + 1 : ub - 1) = search_array(lb + 1 : ub - 1) >= value
     mask(ub) = search_array(ub) >= (value - epsilon(value))
     ! Confirm that the specified value is within the range of the
     ! search array.
     if (any(mask) .and. .not. all(mask)) then
        ! Find the index of the search array element below the
        ! specified value
+       indices = (/ (i, i = lb, size(mask) - 1) /)
        j_below = minval(indices, mask)
        ! Interpolate the value of the quantity in interp_array that
        ! corresponds to the specified value in the search array
-       interp_val = interp_array(j_below-1) &
-            + (interp_array(j_below) - interp_array(j_below-1)) &
-            * (value - search_array(j_below-1)) &
-            / (search_array(j_below) - search_array(j_below-1))
+       interp_val = interp_array(j_below - 1) &
+            + (interp_array(j_below) - interp_array(j_below - 1)) &
+            * (value - search_array(j_below - 1)) &
+            / (search_array(j_below) - search_array(j_below - 1))
     else
        write(stdout, *) "Warning: value = ", value, &
             " out of range in interp_value()"
@@ -475,10 +476,6 @@ contains
          above_i%factor(1:grid%M), below_i%factor(1:grid%M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Grid index number array"
-    allocate(indices(0:grid%M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
   end subroutine alloc_grid
 
 
@@ -501,10 +498,7 @@ contains
     deallocate(above_g%factor, below_g%factor, above_i%factor, &
          below_i%factor, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Grid index number array"
-    deallocate(indices, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
   end subroutine dalloc_grid
-  
+
 end module grid_mod
 
