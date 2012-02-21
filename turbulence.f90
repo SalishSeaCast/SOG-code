@@ -7,9 +7,9 @@ module turbulence
   !
   !   Constants for the nondimensional flux profiles.  See Large, et al
   !   (1994) pg 392, eqn B2
-  !      zeta_m -- Maximum zeta value of the -1/3 power law regime of 
+  !      zeta_m -- Maximum zeta value of the -1/3 power law regime of
   !                non-dimensional turbulent momentum flux profile
-  !      zeta_s -- Maximum zeta value of the -1/3 power law regime of 
+  !      zeta_s -- Maximum zeta value of the -1/3 power law regime of
   !                non-dimensional turbulent scalar flux profile
   !      a_m -- Coefficient of  non-dimensional turbulent momentum flux
   !             profile in 1/3 power law regime
@@ -231,7 +231,7 @@ module turbulence
        K  ! Overall diffusivity of the water column; a continuous
           ! profile of K_ML%* in the mixing layer, and K%*%total below it
   type(turbulent_fluxes) :: &
-       wbar  ! Turbulent kinematic flux profiles. 
+       wbar  ! Turbulent kinematic flux profiles.
              ! *** Note that only the surface values (index = 0) are used
              ! *** in the model, but that code to calculate the full
              ! *** profiles is available in ***.  It is commented out, but
@@ -336,7 +336,7 @@ contains
     ! salinity diffusivities for the whole water column based on
     ! shear, double diffusion, and internal wave breaking
     ! instabilities.
-    
+
     ! Calculate the turbulent momentum diffusivity due to shear
     ! instabilities (nu%m%shear) using the Large, et al (1994)
     ! parameterization based on the local gradient Richardson number.
@@ -424,7 +424,7 @@ contains
             c_s, G%T, nu%T%total(h_g-1), K_ML%T(h_g-1))
        ! Salinity
        K_ML%S(h_g-1) = modify_K(h, h_i, h_g, Bf, nondim_scalar_flux, &
-            c_s, G%S, nu%S%total(h_g-1), K_ML%S(h_g-1))       
+            c_s, G%S, nu%S%total(h_g-1), K_ML%S(h_g-1))
     else ! no mixing layer
        K_ML%m = 0.0d0
        K_ML%T = 0.0d0
@@ -524,37 +524,37 @@ contains
     ! Smooth the shear diffusivity over adjacent grid layer interfaces
     ! because the estimation of shear diffusivity is noisy as it is
     ! the ratio of a pair of differences.
-    ! 
+    !
     ! Calculate the coefficients:
     ! central points
     a1 = shear_diff_smooth(1)
-    a2 = shear_diff_smooth(2)/ 2.0d0
-    a3 = (1.0d0 - a1 - a2*2) / 2.0d0
+    a2 = shear_diff_smooth(2) / 2.0d0
+    a3 = (1.0d0 - a1 - a2 * 2) / 2.0d0
     ! points one from boundary
-    a4 = (a1 + 2*a2 + a3)
+    a4 = a1 + 2 * a2 + a3
     ! boundary points
-    a5 = (a1 + a2 + a3)
+    a5 = a1 + a2 + a3
     !
     ! Calculate the smoothed sher diffusivity profile
     smoothed(1) = (a1 * nu%m%shear(1) + a2 * nu%m%shear(2) &
-                  + a3 * nu%m%shear(3))/a5
+                  + a3 * nu%m%shear(3)) / a5
     smoothed(2) = (a2 * nu%m%shear(1) + a1 * nu%m%shear(2)       &
-                  + a2 * nu%m%shear(3) + a3 * nu%m%shear(4))/a4
-    smoothed(3:grid%M-2) = a3 * nu%m%shear(1:grid%M-2)  &
-         + a2 * nu%m%shear(2:grid%M-1)                  &
-         + a1 * nu%m%shear(3:grid%M)                    &
-         + a2 * nu%m%shear(4:grid%M+1)                  &
-         + a3 * nu%m%shear(5:grid%M+2)
-    smoothed(grid%M-1) = (a3 * nu%m%shear(grid%M-3)   &
-                         + a2 * nu%m%shear(grid%M-2)  &
-                         + a1 * nu%m%shear(grid%M-1)  &
-                         + a2 * nu%m%shear(grid%M))/a4
-    smoothed(grid%M) = (a3 * nu%m%shear(grid%M-2)    &
-                        + a2 * nu%m%shear(grid%M-1)  &
-                        + a1 * nu%m%shear(grid%M))/a5
+                  + a2 * nu%m%shear(3) + a3 * nu%m%shear(4)) / a4
+    smoothed(3:grid%M-2) = a3 * nu%m%shear(1 : grid%M - 4)  &
+         + a2 * nu%m%shear(2 : grid%M - 3)                  &
+         + a1 * nu%m%shear(3 : grid%M - 2)                  &
+         + a2 * nu%m%shear(4 : grid%M - 1)                  &
+         + a3 * nu%m%shear(5 : grid%M)
+    smoothed(grid%M-1) = (a3 * nu%m%shear(grid%M - 3)   &
+                         + a2 * nu%m%shear(grid%M - 2)  &
+                         + a1 * nu%m%shear(grid%M - 1)  &
+                         + a2 * nu%m%shear(grid%M)) / a4
+    smoothed(grid%M) = (a3 * nu%m%shear(grid%M - 2)    &
+                        + a2 * nu%m%shear(grid%M - 1)  &
+                        + a1 * nu%m%shear(grid%M)) / a5
     nu%m%shear = smoothed
   end subroutine shear_diffusivity
-  
+
 
   subroutine double_diffusion()
     ! Calculate turbulent temperature and salinity diffusivities
@@ -598,14 +598,14 @@ contains
 
     ! Calculate double diffusion density ratio (Large, et al, (1994) eq'n 30)
     R_rho = alpha%i(1:) * T%grad_i / (beta%i(1:) * S%grad_i + epsilon(S%grad_i(1)))
-      
+
     do j = 1, grid%M
        ! Determine if there is double diffision, and if so, what type,
        ! salt fingering, or diffusive convection
        if (1.0d0 < R_rho(j) &
             .and. R_rho(j) < 2.0d0 &
             .and. alpha%i(j) * T%grad_i(j) > 0.0d0 &
-            .and. beta%i(j) * S%grad_i(j) > 0.0d0) then  
+            .and. beta%i(j) * S%grad_i(j) > 0.0d0) then
           ! Salt fingering
           if (1.0d0 < R_rho(j) .and. R_rho(j) < R_rho_o) then
              ! Large, et al, (1994) eq'n 31a
@@ -621,7 +621,7 @@ contains
        else if (0. < R_rho(j) &
             .and. R_rho(j) < 1.0d0 &
             .and. alpha%i(j) * T%grad_i(j) < 0.0d0 &
-            .and. beta%i(j) * S%grad_i(j) < 0.0d0) then   
+            .and. beta%i(j) * S%grad_i(j) < 0.0d0) then
           ! Diffusive convection
           ! Large, et al, (1994) eq'n 32
           nu%T%dd(j) = nu_m * 0.909d0 &
@@ -726,7 +726,7 @@ contains
   function w_scale_special(h, d, c) result(w_value)
     ! Calculate the vertical turbulent velocity scale value at the
     ! specified depth for use in the bottom of (20) when no wind
-    ! note that abs(u_star) < epsilon(u_star) .and. Bf < 0.0d0 
+    ! note that abs(u_star) < epsilon(u_star) .and. Bf < 0.0d0
 
     ! Elements from other modules:
     ! Type Definitions:
@@ -1140,7 +1140,7 @@ contains
     Lambda = (1.0d0 - del) * nu_h_gm1 + del * K_star
   end function modify_K
 
-  
+
   function nonlocal_scalar_transport(flux, h, d_i, Bf) result(gamma_value)
     ! Return the value of the non-local transport term for the
     ! specified flux, and depth.  (Large, et al (1994), eqn 20).
@@ -1200,7 +1200,7 @@ contains
        elseif (abs(Bf) > epsilon(Bf)) then
           ! there is no wind forcing
           ! because, typically the salinity is stabilizing and the temp
-          ! is destabilizing, if we use (20) from Large we can get 
+          ! is destabilizing, if we use (20) from Large we can get
           ! enormous forcing if Bf is close to zero because w* is in the
           ! denominator.  Instead make gamma propto wbar%t(0) to the 2/3
           ! K remains propto Bf**1/3
@@ -1222,7 +1222,7 @@ contains
 
 
   subroutine calc_turbulent_fluxes(h, h_i, Bf)
-    ! Calculate the turbulent kinematic flux profiles.  
+    ! Calculate the turbulent kinematic flux profiles.
     !
     ! Note that only the surface values (index = 0) are used in the
     ! model.  This subroutine calculates the full profiles.  It is not
@@ -1260,7 +1260,7 @@ contains
     ! Local variable:
     integer :: &
          j  ! Index over grid depth
-         
+
     do j = 1, grid%M
        if (j <= h_i .and. grid%d_i(j) <= h) then
           ! Large, et al (1994), eqn 9
