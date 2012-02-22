@@ -179,7 +179,7 @@ contains
     ! Variable Declarations:
     use turbulence, only: &
          K  ! Turbulent diffusivity profile arrays
-    
+
     implicit none
 
     ! Arguments:
@@ -215,9 +215,9 @@ contains
          F_n  ! Profile of fresh water contribution to salinity flux
     use irradiance, only: &
          Q_n  ! Non-turbulent heat flux profile array
-    
+
     implicit none
-    
+
     ! Arguments:
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]
@@ -282,9 +282,9 @@ contains
 
     ! Parameters values from other modules:
     use fundamental_constants, only: f
-    
+
     implicit none
-    
+
     ! Arguments:
     real(kind=dp), intent(in) :: &
          dt  ! Time step [s]
@@ -295,7 +295,7 @@ contains
     real(kind=dp), dimension(1:), intent(out) :: &
          RHS  ! Velocity component right-hand side array
 
-    RHS = (f * vel(1:) - P_grad) * dt
+    RHS = (f * vel(1:size(P_grad)) - P_grad) * dt
   end subroutine Coriolis_and_pg
 
 
@@ -424,4 +424,3 @@ contains
   end subroutine dalloc_phys_RHS_variables
 
 end module physics_eqn_builder
-       
