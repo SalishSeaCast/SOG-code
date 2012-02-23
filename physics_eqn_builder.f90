@@ -120,7 +120,7 @@ module physics_eqn_builder
 
 contains
 
-  subroutine build_physics_equations(dt, U, V, T, S, Qriver)
+  subroutine build_physics_equations(dt, U, V, T, S)
     ! Build the terms for the diffusion/advection/Coriolis/baroclinic
     ! pressure gradient equations for the physics quantities.
     !
@@ -147,7 +147,6 @@ contains
          V, &  ! V velocity component(along-strait) profile
          T, &  ! Temperature profile
          S     ! Salinity profile
-    real(kind=dp), intent(in) :: Qriver  ! River flow
 
     ! Calculate the precursor diffusion coefficients matrices for the
     ! physics model quantities.
@@ -159,7 +158,7 @@ contains
 
     ! Add vertical advection due to upwelling to velocity components,
     ! temperature, and salinity RHS arrays
-    call calc_phys_upwell_advection(dt, U, V, T, S, Qriver)
+    call calc_phys_upwell_advection(dt, U, V, T, S)
 
     ! Calculate the Coriolis and baroclinic pressure gradient
     ! components of the RHS arrays for the velocity components
@@ -245,7 +244,7 @@ contains
   end subroutine init_phys_RHS_fluxes
 
 
-  subroutine calc_phys_upwell_advection(dt, U, V, T, S, Qriver)
+  subroutine calc_phys_upwell_advection(dt, U, V, T, S)
     ! Add vertical advection due to upwelling to velocity components,
     ! temperature, and salinity RHS arrays
     use upwelling, only: &
@@ -260,10 +259,9 @@ contains
          V, &  ! V velocity component(along-strait) profile
          T, &  ! Temperature profile
          S     ! Salinity profile
-    real(kind=dp), intent(in) :: Qriver  ! River flow
 
     ! Calculate profile of upwelling velocity
-    call upwelling_profile(Qriver)
+    call upwelling_profile
     ! Apply upwelling advection
     !
     ! Velocity components

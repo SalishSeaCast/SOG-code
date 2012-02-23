@@ -5,11 +5,11 @@ module user_output
   !
   !   write_user_phys_timeseries_hdr --
   !
-  !   write_user_bio_timeseries_hdr -- 
+  !   write_user_bio_timeseries_hdr --
   !
-  !   write_user_timeseries -- 
+  !   write_user_timeseries --
   !
-  !   write_user_profiles -- 
+  !   write_user_profiles --
 
   implicit none
 
@@ -95,9 +95,9 @@ contains
          "*FieldUnits: hr since ", a, " LST"/, &
          "*EndOfHeader")
   end subroutine write_user_bio_timeseries_hdr
-  
 
-  subroutine write_user_timeseries(time, grid)
+
+  subroutine write_user_timeseries(time)
     ! Write user-specified results of the current time step to the
     ! time series files.
     !
@@ -111,14 +111,11 @@ contains
     use precision_defs, only: dp
     use io_unit_defs, only: user_phys_timeseries, user_bio_timeseries
     use unit_conversions, only: KtoC
-    use grid_mod, only: grid_
     use baroclinic_pressure, only: ut, vt, dPdx_b, dPdy_b
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: &
          time  ! [hr aftr start midnight]
-    type(grid_), intent(in) :: &
-         grid  ! Grid arrays
     ! Local variables:
 
     ! Write user-specified physics model time series results
@@ -162,10 +159,15 @@ contains
 
   subroutine write_user_profiles(str_run_Datetime, &
        str_CTD_Datetime, year, day, day_time, dt, grid)
-    ! Check to see if the time is right to write a profiles output
-    ! file.  If so, open the file, write the profile results, and
-    ! close it.  Also write a line of data to the haloclines output
-    ! file.
+    ! Write user-specified profiles results.
+    !
+    ! !!! Please add use statements here to bring variables in from !!!
+    ! !!! other module instead of adding them to the argument list. !!!
+    ! !!! Doing the latter requires a change to SOG.f90 that should !!!
+    ! !!! be taken out prior to commits on that file.               !!!
+    !
+    ! !!! You can freely change this subroutine without committing  !!!
+    ! !!! changes.                                                  !!!
     use precision_defs, only: dp
     use io_unit_defs, only: profiles, haloclines
     use datetime, only: calendar_date, clock_time, datetime_str

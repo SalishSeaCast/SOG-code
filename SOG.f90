@@ -1,4 +1,4 @@
-program SOG      
+program SOG
   ! Coupled physical and biological model of the deep estuaries.
 
   ! Things that we will use from other modules
@@ -302,7 +302,7 @@ program SOG
         ! Bmatrix%S%*), the RHS diffusion/advection term vectors
         ! (*_RHS%diff_adv%new), and the RHS Coriolis and barolcinic
         ! pressure gradient term vectors (*_RHS%C_pg).
-        call build_physics_equations(dt, U%new, V%new, T%new, S%new, Qinter)
+        call build_physics_equations(dt, U%new, V%new, T%new, S%new)
 
         ! Store %new components of RHS and Bmatrix variables in %old
         ! their components for use by the IMEX solver.  Necessary for the
@@ -322,21 +322,20 @@ program SOG
         ! Solve the semi-implicit diffusion/advection PDEs with
         ! Coriolis and baroclinic pressure gradient terms for the
         ! physics quantities.
-        call solve_phys_eqns(grid%M, day, time, &  ! in
-             U%old, V%old, T%old, S%old,        &  ! in
-             U%new, V%new, T%new, S%new)           ! out
+        call solve_phys_eqns(grid%M, U%old, V%old, T%old, S%old, &  ! in
+             U%new, V%new, T%new, S%new)                            ! out
         if (minval(S%new) < 0.0d0) then
            write (stdout, *) 'Salinity less than 0'
            call exit(1)
         endif
-    
+
         ! Update boundary conditions at surface, and bottom of grid
         U%new(0) = U%new(1)
         V%new(0) = V%new(1)
-        S%new(0) = S%new(1)   
+        S%new(0) = S%new(1)
         T%new(0) = T%new(1)
-        U%new(grid%M+1) = U%new(grid%M) 
-        V%new(grid%M+1) = V%new(grid%M) 
+        U%new(grid%M+1) = U%new(grid%M)
+        V%new(grid%M+1) = V%new(grid%M)
         T%new(grid%M+1) = T%old(grid%M+1)
         S%new(grid%M+1) = S%old(grid%M+1)
 
@@ -382,7 +381,7 @@ program SOG
         hprev = h%new
         ! Find the mixing layer depth by comparing the profile of bulk
         ! Richardson number to a critical value.
-        ! 
+        !
         ! This sets the values of the components of h%*.
         call find_mixing_layer_depth(year, day, day_time, count)
 
@@ -416,7 +415,7 @@ program SOG
 
         ! Calculate the mixing layer depth convergence metric for
         ! measuring the progress of the implicit solver
-        ! Accuracy is 2% at large mixed layer 
+        ! Accuracy is 2% at large mixed layer
         ! depths and about 4 cm at 1 m mixed layer depths
         h_scale = 0.02d0 * hprev + 0.02d0
         del%h = abs(h%new - hprev) / h_scale
@@ -520,7 +519,7 @@ program SOG
      ! !!! Please don't add arguments to this call.           !!!
      ! !!! Instead put use statements in your local copy of   !!!
      ! !!! write_user_timeseries() in the user_output module. !!!
-     call write_user_timeseries(time / 3600., grid)
+     call write_user_timeseries(time / 3600.)
 
      ! Write standard profiles results
      ! !!! Please don't change this argument list without good reason.    !!!
@@ -573,5 +572,5 @@ program SOG
 
   ! Return a successful exit status to the operating system
   call exit(0)
-  
+
 end program SOG

@@ -8,7 +8,7 @@ module upwelling
   ! init_upwelling()
   !   -Read parameter values from the infile.
   !
-  ! upwelling_profile(Qriver)
+  ! upwelling_profile
   !   -Calculate the vertical profile of the entrainment velocity based
   !    on the strength of the River, and the maximum upwelling velocity.
   !
@@ -42,7 +42,7 @@ contains
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
-  
+
     ! Allocate memory for upwelling quantity arrays
     call alloc_upwelling_variables(M)
     ! Read upwelling parameter values from the infile.
@@ -54,14 +54,14 @@ contains
     ! Read the fresh water depth parameter value from the infile.
     use input_processor, only: getpard
     implicit none
- 
+
     ! Read values for d fit equation from infile
     ! fix d because fit is poor and not enough surface NO3 in winter
     d = getpard("d")
   end subroutine read_upwelling_params
 
 
-  subroutine upwelling_profile(Qriver)
+  subroutine upwelling_profile
     ! Calculate the vertical profile of the entrainment velocity based
     ! on the river flow, and the maximum freshwater upwelling
     ! velocity.  The latter is a function of the river flow, and is
@@ -74,8 +74,6 @@ contains
 
     implicit none
 
-    ! Argument:
-    real(kind=dp), intent(in) :: Qriver  ! River flow
     ! Local variables:
     real(kind=dp) :: d25  ! Depth of upwelling variation
     integer :: index      ! Grid step index
@@ -86,10 +84,9 @@ contains
     !      calculation of d from the salinity profile.
     !   2. Set the depth of 68% fresh water content to the fit found
     !      in entrainment.pdf.
-!!$    d = 11.7 * (Qriver/2720.)**(-0.23)
     !   3. A value of d calculated according to entrainment.pdf for
     !      the specific estuary being modeled is read from the infile.
- 
+
    ! Depth of upwelling variation is defined as 2.5*d (see entrainment.pdf)
     d25 = 2.5d0 * d
     ! Set upwelling velocity profile (on interfaces!)
@@ -139,8 +136,8 @@ contains
           write (*,*) "Problem in find_upwell, upwelling too strong for dt"
           stop
        endif
-       valuelost = ( qty(index) * & 
-            (grid%i_space(index) - w_upwell(index-1) * dt) + & 
+       valuelost = ( qty(index) * &
+            (grid%i_space(index) - w_upwell(index-1) * dt) + &
             qty(index+1) * (w_upwell(index) * dt) ) / &
             (grid%i_space(index) + squashing * dt)
        advection(index) = advection(index) + dt / grid%i_space(index) &
@@ -162,7 +159,7 @@ contains
 
     msg = "Vertical profiles of uwelling velocity arrays"
     allocate(w_entrain(0:M), w_upwell(0:M), &
-         stat=allocstat) 
+         stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_upwelling_variables
 
