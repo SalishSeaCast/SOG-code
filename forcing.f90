@@ -30,7 +30,7 @@ module forcing
      logical :: enabled ! is the parameter (wind, cf, rivers, T) to be varied
      real(kind=dp) :: shift ! use wind/rivers shifted in time (in years)
      real(kind=dp) :: fraction ! multiply wind/rivers strength by this amount
-     logical :: fixed ! use a fixed value 
+     logical :: fixed ! use a fixed value
      ! (if this is set to true, shift and fraction are not used and value is)
      real(kind=dp) :: value ! use this value if fixed is set true
      real(kind=dp) :: addition ! add this value (after fraction is multiplied)
@@ -41,7 +41,7 @@ module forcing
   END TYPE vary_forcing
 
   ! Public Variable Declarations:
-  type(vary_forcing) :: vary 
+  type(vary_forcing) :: vary
   ! Do we add the cooling/warming effect of the Major River?
   logical :: UseRiverTemp
 
@@ -65,7 +65,7 @@ module forcing
 contains
 
   subroutine read_variation
-    ! Read variation parameters from the infile.  
+    ! Read variation parameters from the infile.
     use io_unit_defs, only: stderr
     implicit none
 
@@ -128,7 +128,7 @@ contains
   end subroutine read_variation
 
 
-  subroutine read_forcing 
+  subroutine read_forcing
     ! Read forcing data and apply variations (time shift, scale,
     ! etc.), if requested.
     use input_processor, only: getpari, getpars, getparl
@@ -141,22 +141,22 @@ contains
     !
 
     ! Should average data be used
-    character*8 :: use_average_forcing_data
+    character*80 :: use_average_forcing_data
     ! File name for minor and major river data files
-    character* 80 :: minor_river_file, major_river_file
+    character*80 :: minor_river_file, major_river_file
     ! Indices
     integer :: ic, jc, j
     ! Data file values
     integer :: para, stn, year, day, month
     real(kind=sp) :: hour
     ! Parameters for integration of minor river flow
-    integer :: integ_days                        ! number of days to integrate over
+    integer :: integ_days  ! number of days to integrate over
     real(kind=dp) :: integ_minor_river(river_n)  ! integrated flow
     ! Years and days for data shifting
     integer :: wind_startyear, cf_startyear, rivers_startyear, rivers_startday
     logical ::  found_data
 
-    
+
     ! Start year for forcing data from initialization date/time for run
     startyear = initDatetime%yr
 
@@ -170,7 +170,8 @@ contains
 
     ! check if using average data
     use_average_forcing_data = getpars("use average/hist forcing")
-    if (use_average_forcing_data .eq. "yes" .or. use_average_forcing_data .eq. "fill") then
+    if (use_average_forcing_data .eq. "yes"  &
+       .or. use_average_forcing_data .eq. "fill") then
        open(unit=forcing_data, file=getpars("average/hist wind"))
        do jc = 1, wind_n/2
           read(forcing_data,*) day, month, year, hour, &
@@ -193,8 +194,9 @@ contains
     endif
 
     ! standard data
-    if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
-                                             .or. use_average_forcing_data .eq. "no") then
+    if (use_average_forcing_data .eq. "fill"          &
+       .or. use_average_forcing_data .eq. "histfill"  &
+       .or. use_average_forcing_data .eq. "no") then
        open(unit=forcing_data, file=getpars("wind"))
        found_data = .false.
        do while (.not. found_data)
@@ -205,7 +207,7 @@ contains
           hour = hour
           month = month
           if (year == wind_startyear) then
-             do jc = 2, wind_n             
+             do jc = 2, wind_n
                 read(forcing_data,*,end=777) day, month, year, hour, &
                      wind_eastnorth(jc), wind_northwest(jc)
              enddo
@@ -285,7 +287,7 @@ contains
        open(unit=forcing_data, file=getpars("average/hist cloud"))
        do jc = 1, met_n/2
           read(forcing_data,*) stn, year, month, day, para, (cf(jc,j), j=1,24)
-          cf(jc,:) = floor(cf(jc,:) + 0.5)  ! later on basically use integers by taking floor 
+          cf(jc,:) = floor(cf(jc,:) + 0.5)  ! later on basically use integers by taking floor
        enddo
        do jc = met_n/2+1, met_n
           cf(jc,:) = cf(jc-met_n/2,:)
@@ -311,7 +313,7 @@ contains
           stn = stn
           para = para
           if (year == cf_startyear) then
-             do jc = 2, met_n             
+             do jc = 2, met_n
                 read(forcing_data, *, end=779) stn, year, month, day, para, (cf(jc,j), j=1,24)
              enddo
              found_data = .true.
@@ -351,7 +353,7 @@ contains
        do while (.not. found_data)
           read (forcing_data, *, end=781) stn, year, month, day, para, (humid(1,j), j=1,24)
           if (year == startyear) then
-             do jc = 2, met_n             
+             do jc = 2, met_n
                 read(forcing_data, *, end=781)stn, year, month, day, para, (humid(jc,j), j=1,24)
              enddo
              found_data = .true.
@@ -417,12 +419,12 @@ contains
     ! standard data
     if (use_average_forcing_data .eq. "fill" .or. use_average_forcing_data .eq. "histfill" &
                                              .or. use_average_forcing_data .eq. "no") then
-       open(forcing_data, file=getpars("major river"))  
+       open(forcing_data, file=getpars("major river"))
        found_data = .false.
        do while(.not. found_data)
           read(forcing_data, *, end=778) year, month, day, Qriver(1)
           if(year == rivers_startyear .and. day == rivers_startday) then
-             do jc = 2, river_n             
+             do jc = 2, river_n
                 read(forcing_data,*,end=778) year, month, day, Qriver(jc)
              enddo
              found_data = .true.
@@ -442,7 +444,7 @@ contains
     if (use_average_forcing_data .eq. "yes" .or. use_average_forcing_data .eq. "fill") then
        minor_river_file = getpars("average/hist minor river")
        if (minor_river_file /= "N/A") then
-          open(unit=forcing_data, file=minor_river_file) 
+          open(unit=forcing_data, file=minor_river_file)
           ! Use same shift as major river
           do jc = 1, rivers_startday-1
              read(forcing_data, *) year, month, day, Eriver(jc)
@@ -462,14 +464,14 @@ contains
              Eriver(jc) = Eriver(jc-river_n/2)
           enddo
        else ! no average minor river
-          do jc = 1, river_n             
+          do jc = 1, river_n
              Eriver(jc) = 0.0d0
           enddo
        endif
     elseif  (use_average_forcing_data .eq. "histfill") then
        minor_river_file = getpars("average/hist minor river")
        if (minor_river_file /= "N/A") then
-          open(unit=forcing_data, file=minor_river_file) 
+          open(unit=forcing_data, file=minor_river_file)
           ! Use same shift as major river
           do jc = 1, rivers_startday-1
              read(forcing_data, *) year, month, day, Eriver(jc)
@@ -486,7 +488,7 @@ contains
              close(forcing_data)
           endif
        else ! no average minor river
-          do jc = 1, river_n             
+          do jc = 1, river_n
              Eriver(jc) = 0.0d0
           enddo
        endif
@@ -503,7 +505,7 @@ contains
              read (forcing_data, *, end=175) year, month, day, Eriver(1)
              ! Use same shift as major river
              if (year == rivers_startyear .and. day == rivers_startday) then
-                do jc = 2, river_n             
+                do jc = 2, river_n
                    read (12,*, end=175) year, month, day, Eriver(jc)
                 enddo
                 found_data = .true.
@@ -520,7 +522,7 @@ contains
              do while (.not. found_data)
                 read (forcing_data, *, end=782) year, month, day, Eriver(1)
                 if (year == rivers_startyear .and. day == rivers_startday) then
-                   do jc = 2, river_n             
+                   do jc = 2, river_n
                       read (12,*) year, month, day, Eriver(jc)
                    enddo
                    found_data = .true.
@@ -531,14 +533,14 @@ contains
                 stop
              endif
            endif
-          close(forcing_data)  
-       else 
-          do jc = 1, river_n             
+          close(forcing_data)
+       else
+          do jc = 1, river_n
              Eriver(jc) = 0.0d0
           enddo
        endif
     endif
- 
+
     ! Number of days to integrate the minor river data over.  This is
     ! used because the minor river can be a proxy for regional
     ! rainfall events. In the case of the Strait of Georgia, the
@@ -576,7 +578,7 @@ end subroutine read_forcing
     integer, intent(in) :: year ! current year
     integer, intent(in) :: day ! current year day
     real(kind=dp), intent(in) :: day_time ! current time of day in seconds
-    
+
     real(kind=dp), intent(out) :: Qinter, Einter ! values of river flows
     real(kind=dp), intent(out) :: RiverTemp ! temperature of Major River
     real(kind=sp), intent(out) :: cf_value     ! cloud fraction
@@ -590,7 +592,7 @@ end subroutine read_forcing
     ! local variable
 
     integer:: accul_day ! accumulated day number starting from startyear
-    integer:: j ! index to hour, 1 am has j=2 
+    integer:: j ! index to hour, 1 am has j=2
     integer:: index_day ! index into wind data for the end of the day before
     real(kind=dp) :: hr_frac ! fraction of the hour
     real(kind=dp) :: dday ! decimal yearday
@@ -604,7 +606,7 @@ end subroutine read_forcing
        Qinter = SNGL(vary%rivers%value)
        Einter = 0.
     else
-       Qinter = (day_time * Qriver(accul_day) & 
+       Qinter = (day_time * Qriver(accul_day) &
             + (86400 - day_time) * Qriver(accul_day - 1)) / 86400.
        Einter = (day_time * Eriver(accul_day) &
             + (86400 - day_time) * Eriver(accul_day-1)) / 86400.
@@ -634,8 +636,8 @@ end subroutine read_forcing
     ! MET DATA (cloud fraction, air temperature and humidity)
 
     ! index into met data array for the appropriate hr
-    j = floor(day_time/3600.0) + 1  
-    
+    j = floor(day_time/3600.0) + 1
+
     if (vary%cf%enabled) then
        if (vary%cf%fixed) then
           cf_value = sngl(vary%cf%value)
@@ -649,7 +651,7 @@ end subroutine read_forcing
     ! TEMPERATURE
 
     if (vary%temperature%enabled .and. .not.vary%temperature%fixed) then
-       ! multiply water temperature increment but 1.33 to get observed 
+       ! multiply water temperature increment but 1.33 to get observed
        ! Masson and Cummins 2004 air temperature increment
        atemp_value = atemp(accul_day,j) + sngl(vary%temperature%addition)*1.33
     else
@@ -663,7 +665,7 @@ end subroutine read_forcing
     ! wind for the previous day, last value is at
     index_day = (accul_day-1) * 24
 
-    ! frac hour is 
+    ! frac hour is
     hr_frac = day_time/3600. - (j-1)
     ! index the wind at the start of the hour is
     j = index_day + j
@@ -686,7 +688,7 @@ end subroutine read_forcing
     implicit none
     ! Arguments:
     ! the leading part of the variable quantity to be read in (eg vary%wind)
-    character, intent(in) :: quantity_string*(*) 
+    character, intent(in) :: quantity_string*(*)
     type(vary_quantity), intent(out) :: quantity
 
     quantity%enabled = getparl(quantity_string//"%enabled")
@@ -709,7 +711,7 @@ end subroutine read_forcing
     implicit none
     ! Arguments:
     integer, intent(in) :: day, year ! year day and year
-    
+
     if (year == startyear) then
        day_met = day
     else
@@ -747,15 +749,15 @@ end subroutine read_forcing
        endif
     enddo
   end subroutine shift_time
-    
+
 
   logical function leapyear(year)
-    ! Determine if year is a leap-year 
+    ! Determine if year is a leap-year
     use io_unit_defs, only: stderr
     implicit none
     ! Argument:
     integer, intent(in) :: year
-    
+
     leapyear = .FALSE.
     if (year .gt. 1953 .and. year .lt. 2013) then
        if (year .eq. 1956 .or. year .eq. 1960 .or. year .eq. 1964 .or.  &
@@ -771,5 +773,5 @@ end subroutine read_forcing
        call exit(1)
     endif
   end function leapyear
-      
+
 end module forcing
