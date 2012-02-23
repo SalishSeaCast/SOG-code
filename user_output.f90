@@ -157,9 +157,14 @@ contains
   end subroutine write_user_timeseries
 
 
-  subroutine write_user_profiles(str_run_Datetime, &
-       str_CTD_Datetime, year, day, day_time, dt, grid)
+  subroutine write_user_profiles
     ! Write user-specified profiles results.
+    !
+    ! Recommended signature:
+    !   subroutine write_user_profiles(str_run_Datetime, &
+    !         str_CTD_Datetime, year, day, day_time, dt, grid)
+    ! Arguments have been removed from the subroutine signature because
+    ! they are not presently used.
     !
     ! !!! Please add use statements here to bring variables in from !!!
     ! !!! other module instead of adding them to the argument list. !!!
@@ -174,12 +179,12 @@ contains
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_
     implicit none
-    ! Arguments:
-    character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
-    character(len=19), intent(in) :: str_CTD_Datetime  ! Date/time of CTD init
-    integer, intent(in) :: year, day
-    real(kind=dp), intent(in) :: day_time, dt ! can't expect exact time match
-    type(grid_), intent(in) :: grid
+    ! Recommended argument declarations:
+    ! character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
+    ! character(len=19), intent(in) :: str_CTD_Datetime  ! Date/time of CTD init
+    ! integer, intent(in) :: year, day
+    ! real(kind=dp), intent(in) :: day_time, dt ! can't expect exact time match
+    ! type(grid_), intent(in) :: grid
 
   end subroutine write_user_profiles
 

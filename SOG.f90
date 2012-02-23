@@ -533,11 +533,16 @@ program SOG
           K%S, U%new, V%new)
 
      ! Write user-specified profiles results
-     ! !!! Please don't add arguments to this call.           !!!
-     ! !!! Instead put use statements in your local copy of   !!!
-     ! !!! write_user_profiles() in the user_output module.   !!!
-     call write_user_profiles(datetime_str(runDatetime), &
-          datetime_str(initDatetime), year, day, day_time, dt, grid)
+     call write_user_profiles
+     ! !!! Change the call signature to the one below to use  !!!
+     ! !!! subroutine. Also change the subroutien declaration !!!
+     ! !!! signature in the user_output module.               !!!
+     ! !!! Put use statements in your local copy of           !!!
+     ! !!! write_user_profiles() in the user_output module    !!!
+     ! !!! to bring in the variable you want to output.       !!!
+     !
+     ! call write_user_profiles(datetime_str(runDatetime), &
+     !      datetime_str(initDatetime), year, day, day_time, dt, grid)
 
      ! Increment time, calendar date and clock time
      call increment_date_time(day_time, day, year, time, dt)
