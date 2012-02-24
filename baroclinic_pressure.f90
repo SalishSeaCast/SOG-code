@@ -5,10 +5,10 @@ module baroclinic_pressure
   !
   ! Public Variables:
   !
-  !   dPdx_b -- Baroclinic pressure gradient x (cross-strait) component 
+  !   dPdx_b -- Baroclinic pressure gradient x (cross-strait) component
   !             [kg/m^2 . s^2]
   !
-  !   dPdy_b -- Baroclinic pressure gradient y (along-strait) component 
+  !   dPdy_b -- Baroclinic pressure gradient y (along-strait) component
   !             [kg/m^2 . s^2]
   !
   !   ut -- Integral of u (cross-strait) velocity component over time
@@ -89,7 +89,7 @@ contains
     implicit none
     ! Argument:
     integer :: M  ! Number of grid points
-    
+
     ! Initializes x and y model domain axes
     Lx = getpard('Lx')
     Ly = getpard('Ly')
@@ -120,13 +120,14 @@ contains
     use fundamental_constants, only: g
     ! Variable Declarations:
     use grid_mod, only: &
-         grid  ! Grid parameters and depth & spacing arrays
+         grid, &       ! Grid parameters and depth & spacing arrays
+         interp_value
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays; we need
                ! wbar%u(0) & wbar%v(0)
-    
+
     implicit none
-    
+
     ! Agruments:
     real(kind=dp), intent(in) :: &
          dt    ! Time step [s]
@@ -135,13 +136,24 @@ contains
          V_new, &  ! V component (along-strait, 305 deg) velocity profile [m/s]
          rho_g     ! Density profile at grid point depths [kg/m^3]
 
+    ! Local parameter:
+    !
+    ! Surface layer depth of calculation of wind-driven upwelling
+    ! effect on baroclinic pressure gradient in open-ended (fjord)
+    ! domains like Rivers Inlet. The value of 15 m is based on Knight
+    ! Inlet.
+    real(kind=dp), parameter :: surface_layer_depth = 15.0d0
+
     ! Local variables:
     real(kind=dp) :: &
-         decayscale ! to keep the isopycnals less tilted than size of domain
-    real(kind=dp), dimension(0:grid%M) :: kink ! in m, kink the in isopycnals
-    integer :: gridbotsurf ! grid points at bottom of surface layer       
-    integer :: yy ! index over array
-     
+         decayscale, &  ! to keep the isopycnals less tilted than size
+                        ! of domain
+         unused         ! Unused value calculated by interp_value
+    real(kind=dp), dimension(0:grid%M) :: kink  ! in m, kink the in isopycnals
+    integer :: &
+         gridbotsurf, &  ! grid point at bottom of surface layer
+         yy              ! Loop index over depth of grid
+
     ! Remove barotropic mode from velocity field
     U_new = U_new - depth_average(U_new, 0.0d0, grid%D)
     V_new = V_new - depth_average(V_new, 0.0d0, grid%D)
@@ -168,7 +180,7 @@ contains
     ! *** depth is changed from 40 m.
     decayscale = sum(abs(ut%old(1:grid%M))) ** 2 / (90.0d0 * 86400.0d0) &
          / (6.0d0 ** 2)
-    
+
     ! Calculate the added thickness of each layer at the "east" and
     ! "north" side of basin, respectively, in metres.
     ut%new(1:grid%M) = ut%old(1:grid%M) * (1.0d0 - decayscale * dt) &
@@ -176,11 +188,13 @@ contains
            * (2.0d0 / (Lx / 2.0d0))
     vt%new(1:grid%M) = vt%old(1:grid%M) * (1.0d0 - decayscale * dt) &
          + V_new(1:grid%M) * dt * grid%i_space(1:grid%M) &
-           * (2.0d0 / (Ly / 2.0d0)) 
+           * (2.0d0 / (Ly / 2.0d0))
 
-    ! set the bottom of the surface layer, this is 15 m based on Knight Inlet and here I am assuming a grid space of 0.25 m.  This should be cleaned up.
-
-    gridbotsurf = 15./0.25
+    ! Get grid point index at the depth of the bottom of the surface
+    ! layer
+    call interp_value(surface_layer_depth, 0, grid%d_g, grid%d_g, &
+         unused, gridbotsurf)
+    gridbotsurf = gridbotsurf - 1
 
     ! Calculate the depths of the distorted isopycnals in metres.
     call iso_distortion(ut%new, dze)
@@ -189,20 +203,19 @@ contains
     if (openend) then
        call iso_distortion_openend(-vt%new, dzs, gridbotsurf)
     else
-       call iso_distortion(-vt%new,dzs)
+       call iso_distortion(-vt%new, dzs)
     endif
 
     ! Make sure values are not below 40m
-
-    dze = min(dze,grid%D)
-    dzw = min(dzw,grid%D)
-    dzn = min(dzn,grid%D)
-    dzs = min(dzs,grid%D)
+    dze = min(dze, grid%D)
+    dzw = min(dzw, grid%D)
+    dzn = min(dzn, grid%D)
+    dzs = min(dzs, grid%D)
 
     ! Calculate the baroclinic pressure gradient
     call delta_p(dze, dzw, rho_g, dPdx_b)
     call delta_p(dzn, dzs, rho_g, dPdy_b)
-    
+
     ! At this point we have calculated delta P.  To make it into the
     ! pressure gradient term we need to multiply by g, divide by rho
     ! and the distance between the sides and the center of the domain.
@@ -213,37 +226,35 @@ contains
     dPdy_b = dPdy_b * g / (Ly * rho_g(1:grid%M)) - wbar%v(0) / grid%D
 
 
-    if (openEnd) then 
-       ! calculate the upwelling driven by the wind and its correction on ut
-       ! kink is the change in orientation of the isopycnals along the fjord
-
+    if (openEnd) then
+       ! Calculate the upwelling driven by the wind and its correction
+       ! on ut. kink is the change in orientation of the isopycnals
+       ! along the fjord
        kink(0) = 0.d0
        w_wind(0) = 0.d0
-
-       do yy=1,gridbotsurf
-          kink(yy) = - dzn(yy) - dzs(yy) + 2*grid%d_i(yy)
-          kink(yy) = max(min(kink(yy),1.d0),0.d0)
+       do yy = 1, gridbotsurf
+          kink(yy) = - dzn(yy) - dzs(yy) + 2 * grid%d_i(yy)
+          kink(yy) = max(min(kink(yy), 1.d0), 0.d0)
           if (V_new(yy) < 0) then  ! velocity above the kinked isopycnal
-             w_wind(yy) = w_wind(yy-1) - 2*grid%i_space(yy)*V_new(yy)/Ly*kink(yy)
-          else 
+             w_wind(yy) = w_wind(yy-1) &
+                  - 2 * grid%i_space(yy) * V_new(yy) / Ly * kink(yy)
+          else
              w_wind(yy) = w_wind(yy-1)
           endif
-          vt%new(yy) = vt%new(yy) + (w_wind(yy)-w_wind(yy-1))*dt
+          vt%new(yy) = vt%new(yy) + (w_wind(yy) - w_wind(yy-1)) * dt
        enddo
-       do yy=gridbotsurf+1,grid%M
+       do yy = gridbotsurf + 1, grid%M
           w_wind(yy) = w_wind(yy-1)
        enddo
     endif
-
-!  Remove barotropic mode
+    !  Remove barotropic mode
     vt%new = vt%new - depth_average(vt%new, 0.d0, grid%D)
-
   end subroutine baroclinic_P_gradient
 
 
   subroutine iso_distortion(ut, dz)
     ! Calculate the depths of the distorted isopycnals in metres.
-    
+
     ! Variables from other modules:
     use grid_mod, only: &
          grid  !  Grid parameters and depth & spacing arrays
@@ -258,7 +269,7 @@ contains
          resid_u
     integer :: &
          yy
-    
+
     if (ut(1) > -grid%i_space(1)) then
        dz(1) = ut(1) + grid%i_space(1)
        resid_u = 0.0d0
@@ -279,7 +290,7 @@ contains
 
   subroutine iso_distortion_openend(ut, dz, gridbotsurf)
     ! Calculate the depths of the distorted isopycnals in metres, assuming this end is open
-    
+
     ! Variables from other modules:
     use grid_mod, only: &
          grid  !  Grid parameters and depth & spacing arrays
@@ -336,10 +347,10 @@ contains
           resid_u = ut(yy) + grid%i_space(yy) + resid_u + extra
        endif
     enddo
-    
+
 
   end subroutine iso_distortion_openend
-  
+
 
   subroutine delta_p (dzpos, dzneg, rho, dPres)
     use grid_mod, only: full_depth_average
@@ -352,7 +363,7 @@ contains
 
     real(kind=dp) :: cpos, cneg
     integer :: ii, jj, yy
-    
+
     cpos = 0.0d0
     cneg = 0.0d0
     ii = 1
@@ -381,7 +392,7 @@ contains
        enddo
        dPres(yy) = dPres(yy) + rho(ii) * (grid%d_g(yy) - cpos)
        cpos = grid%d_g(yy)
-       
+
        ! Then, substract the pressure on the western side.
        do while (dzneg(jj) - grid%d_g(yy) < epsilon(dzneg(jj) - grid%d_g(yy))&
             .and. jj < grid%M)
@@ -392,7 +403,7 @@ contains
        dPres(yy) = dPres(yy) - rho(jj) * (grid%d_g(yy) - cneg)
        cneg = grid%d_g(yy)
     enddo
-    
+
     ! At this point we have pressure on the grid points, assuming that the
     ! pressure at the surface is zero.
     !
@@ -400,8 +411,8 @@ contains
     ! need to subtract the average of the calculated pressure.
     dPres = dPres - full_depth_average(dPres)
   end subroutine delta_p
-  
-  
+
+
   subroutine new_to_old_vel_integrals()
     ! Copy %new component of the velocity component integrals to %old
     ! component for use at next time step.
