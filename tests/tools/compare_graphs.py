@@ -1,14 +1,12 @@
 """SOG buildbot timeseries comparison graph generator.
 
 Usage:
-  python compare_graphs.py run_results_dir ref_results_dir std_phys_file std_bio_file graph_file
+  python compare_graphs.py run_results_dir ref_results_dir std_phys_file std_bio_file std_chem_file graph_file
 """
 """
 test_compare_graphs.py is the test suite for this module.
 
 :Author: Doug Latornell <dlatorne@eos.ubc.ca>
-:Created: 2009-07-28
-
 """
 # Standard library:
 import getopt
@@ -47,7 +45,6 @@ class Relation(object):
         """
         self.datafile = datafile
 
-
     def _read_header(self, fobj):
         """This method is expected to be implemented by classes based
         on Relation.
@@ -57,7 +54,6 @@ class Relation(object):
         """
         raise NotImplementedError
 
-    
     def read_data(self, indep_field, dep_field):
         """Read the data for the specified independent and dependent
         fields from the data file.
@@ -101,8 +97,6 @@ class Relation(object):
 
 
 class SOG_Timeseries(Relation):
-    """
-    """
     def _read_header(self, fobj):
         """Read a SOG timeseries file header, return the field_names
         and field_units lists, and set attributes with the
@@ -130,9 +124,7 @@ class SOG_Timeseries(Relation):
 
 
 class GraphPage(object):
-    """
-    """
-    def __init__(self, figsize=(8, 10), subplot_rows=3, subplot_cols=1):
+    def __init__(self, figsize=(8, 14), subplot_rows=4, subplot_cols=1):
         """Create a GraphPage instance with various attributes initialized.
 
         :arg figsize:
@@ -149,7 +141,6 @@ class GraphPage(object):
         self.subplot_cols = subplot_cols
         self.legend_data = []
 
-
     def save_pdf(self, filename):
         """Save the graph page as a PDF.
         """
@@ -158,12 +149,10 @@ class GraphPage(object):
         canvas = matplotlib.backends.backend_pdf.FigureCanvasPdf(self.fig)
         canvas.print_figure(filename)
 
-
     def _add_subplot(self, num):
         """Add a subplot to the figure.
         """
         return self.fig.add_subplot(self.subplot_rows, self.subplot_cols, num)
-
 
     def one_axis_subplot(self, num, field, run_ts, ref_ts, colour='k'):
         """Create a subplot with a single y-axis on the left.
@@ -186,7 +175,7 @@ class GraphPage(object):
         # y-axis label
         ax_left.set_ylabel(
             '%(title)s [%(dep_units)s]'
-            % {'title': field.title(), 'dep_units':run_ts.dep_units},
+            % {'title': field.title(), 'dep_units': run_ts.dep_units},
             color=colour, size='x-small')
         # Legend
         if not self.legend_data:
@@ -195,8 +184,8 @@ class GraphPage(object):
                 'labels': ('Run: %(run_datetime)s' % vars(run_ts),
                            'Ref: %(run_datetime)s' % vars(ref_ts))}
 
-
-    def two_axis_subplot(self, num, fields, run_ts, ref_ts, colours=('b', 'g')):
+    def two_axis_subplot(self, num, fields, run_ts, ref_ts,
+                         colours=('b', 'g')):
         """Create a subplot with both left and right y-axis and one
         field plotted on each.
         """
@@ -242,27 +231,28 @@ class GraphPage(object):
                 'labels': ('Run: %(run_datetime)s' % vars(run_ts),
                            'Ref: %(run_datetime)s' % vars(ref_ts))}
 
-
     def legend(self):
         self.fig.legend(self.legend_data['lines'], self.legend_data['labels'],
                         'upper left', prop=FontProperties(size=8.0))
 
 
 def make_graphs(run_results_dir, ref_results_dir, phys_results_file,
-                bio_results_file, graph_file):
-    """Create a PDF with 3 graphs showing run and ref results for:
+                bio_results_file, chem_results_file, graph_file):
+    """Create a PDF with 4 graphs showing run and ref results for:
 
        * surface temperature
        * surface salinity
        * mixing layer depth
        * suface nitrate concentration
        * surface micro phytoplankton biomass
+       * surface dissolved inorganic carbon concentration
+       * surface dissolved oxygen concentration
     """
     pg = GraphPage()
     run_ts = SOG_Timeseries(os.path.join(run_results_dir, phys_results_file))
     ref_ts = SOG_Timeseries(os.path.join(ref_results_dir, phys_results_file))
     pg.two_axis_subplot(
-        1, ('surface temperature', 'surface salinity'), 
+        1, ('surface temperature', 'surface salinity'),
         run_ts, ref_ts, colours=('r', 'b'))
     pg.one_axis_subplot(
         2, 'mixing layer depth', run_ts, ref_ts, colour='m')
@@ -272,6 +262,11 @@ def make_graphs(run_results_dir, ref_results_dir, phys_results_file,
         3, ('surface nitrate concentration',
             'surface micro phytoplankton biomass'),
         run_ts, ref_ts, colours=('c', 'g'))
+    run_ts = SOG_Timeseries(os.path.join(run_results_dir, chem_results_file))
+    ref_ts = SOG_Timeseries(os.path.join(ref_results_dir, chem_results_file))
+    pg.two_axis_subplot(
+        4, ('surface DIC concentration', 'surface oxygen concentration'),
+        run_ts, ref_ts, colours=('brown', 'orange'))
     pg.legend()
     pg.save_pdf(graph_file)
 
@@ -288,12 +283,12 @@ def main(argv=[__name__]):
                 sys.exit(0)
         try:
             run_results_dir, ref_results_dir = args[:2]
-            phys_results_file, bio_results_file = args[2:4]
-            graph_file = args[4]
+            phys_results_file, bio_results_file, chem_results_file = args[2:5]
+            graph_file = args[5]
         except IndexError:
             raise Usage('missing 1 or more arguments')
         make_graphs(run_results_dir, ref_results_dir, phys_results_file,
-                    bio_results_file, graph_file)
+                    bio_results_file, chem_results_file, graph_file)
     except Usage, err:
         print >>sys.stderr, err.msg
         print >>sys.stderr, 'for help use --help'
