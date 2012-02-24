@@ -74,8 +74,8 @@ class Relation(object):
         for field in (indep_field, dep_field):
             if field not in field_names:
                 return_code = 2
-                msg = ("Invalid field name: %(field)s, "
-                       "choices are:\n %(field_names)s" % vars())
+                msg = ("Invalid field name: {0}, choices are:\n {1}"
+                       .format(field, field_names))
                 print msg
                 raise SystemExit(return_code)
         indep_col = field_names.index(indep_field)
@@ -162,27 +162,26 @@ class GraphPage(object):
         ref_ts.read_data('time', field)
         ref_line = ax_left.plot(
             ref_ts.indep_data, ref_ts.dep_data, 'k+-',
-            label='Ref: %(run_datetime)s' % vars(ref_ts))
+            label='Ref: {0.run_datetime}'.format(ref_ts))
         # Plot run results as a coloured line. Plot run results 2nd so
         # that the coloured line is visible when the run and ref
         # results are identical.
         run_ts.read_data('time', field)
         run_line = ax_left.plot(
             run_ts.indep_data, run_ts.dep_data, color=colour,
-            label='Run: %(run_datetime)s' % vars(run_ts))
+            label='Run: {0.run_datetime}'.format(run_ts))
         # Anchor x-axis at 0
         ax_left.set_xlim(xmin=0)
         # y-axis label
         ax_left.set_ylabel(
-            '%(title)s [%(dep_units)s]'
-            % {'title': field.title(), 'dep_units': run_ts.dep_units},
+            '{0} [{1.dep_units}]'.format(field.title(), run_ts),
             color=colour, size='x-small')
         # Legend
         if not self.legend_data:
             self.legend_data = {
                 'lines': (run_line, ref_line),
-                'labels': ('Run: %(run_datetime)s' % vars(run_ts),
-                           'Ref: %(run_datetime)s' % vars(ref_ts))}
+                'labels': ('Run: {0.run_datetime}'.format(run_ts),
+                           'Ref: {0.run_datetime}'.format(ref_ts))}
 
     def two_axis_subplot(self, num, fields, run_ts, ref_ts,
                          colours=('b', 'g')):
@@ -196,31 +195,29 @@ class GraphPage(object):
         ref_ts.read_data('time', fields[0])
         ref_line = ax_left.plot(
             ref_ts.indep_data, ref_ts.dep_data, 'k+-',
-            label='Ref: %(run_datetime)s' % vars(ref_ts))
+            label='Ref: {0.run_datetime}'.format(ref_ts))
         ref_ts.read_data('time', fields[1])
         ax_right.plot(
             ref_ts.indep_data, ref_ts.dep_data, 'k+-',
-            label='Ref: %(run_datetime)s' % vars(ref_ts))
+            label='{0.run_datetime}'.format(ref_ts))
         # Plot run results as coloured lines. Plot run results 2nd so
         # that the coloured line is visible when the run and ref
         # results are identical.
         run_ts.read_data('time', fields[0])
         run_line = ax_left.plot(
             run_ts.indep_data, run_ts.dep_data, color=colours[0],
-            label='Run: %(run_datetime)s' % vars(run_ts))
+            label='Run: {0.run_datetime}'.format(run_ts))
         # Left y-axis label
         ax_left.set_ylabel(
-            '%(title)s [%(dep_units)s]'
-            % {'title': fields[0].title(), 'dep_units': run_ts.dep_units},
+            '{0} [{1.dep_units}]'.format(fields[0].title(), run_ts),
             color=colours[0], size='x-small')
         run_ts.read_data('time', fields[1])
         ax_right.plot(
             run_ts.indep_data, run_ts.dep_data, '-', color=colours[1],
-            label='Run: %(run_datetime)s' % vars(run_ts))
+            label='Run: {0.run_datetime}'.format(run_ts))
         # Right y-axis label
         ax_right.set_ylabel(
-            '%(title)s [%(dep_units)s]'
-            % {'title': fields[1].title(), 'dep_units': run_ts.dep_units},
+            '{0} [{1.dep_units}]'.format(fields[1].title(), run_ts),
             color=colours[1], size='x-small')
         # Anchor x-axis at 0
         ax_left.set_xlim(xmin=0)
@@ -228,8 +225,8 @@ class GraphPage(object):
         if not self.legend_data:
             self.legend_data = {
                 'lines': (run_line, ref_line),
-                'labels': ('Run: %(run_datetime)s' % vars(run_ts),
-                           'Ref: %(run_datetime)s' % vars(ref_ts))}
+                'labels': ('Run: {0.run_datetime}'.format(run_ts),
+                           'Ref: {0.run_datetime}'.format(ref_ts))}
 
     def legend(self):
         self.fig.legend(self.legend_data['lines'], self.legend_data['labels'],
