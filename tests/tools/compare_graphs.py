@@ -174,7 +174,7 @@ class GraphPage(object):
         ax_left.set_xlim(xmin=0)
         # y-axis label
         ax_left.set_ylabel(
-            '{0} [{1.dep_units}]'.format(field.title(), run_ts),
+            '{0} [{1.dep_units}]'.format(self.titlecase(field), run_ts),
             color=colour, size='x-small')
         # Legend
         if not self.legend_data:
@@ -209,7 +209,7 @@ class GraphPage(object):
             label='Run: {0.run_datetime}'.format(run_ts))
         # Left y-axis label
         ax_left.set_ylabel(
-            '{0} [{1.dep_units}]'.format(fields[0].title(), run_ts),
+            '{0} [{1.dep_units}]'.format(self.titlecase(fields[0]), run_ts),
             color=colours[0], size='x-small')
         run_ts.read_data('time', fields[1])
         ax_right.plot(
@@ -217,7 +217,7 @@ class GraphPage(object):
             label='Run: {0.run_datetime}'.format(run_ts))
         # Right y-axis label
         ax_right.set_ylabel(
-            '{0} [{1.dep_units}]'.format(fields[1].title(), run_ts),
+            '{0} [{1.dep_units}]'.format(self.titlecase(fields[1]), run_ts),
             color=colours[1], size='x-small')
         # Anchor x-axis at 0
         ax_left.set_xlim(xmin=0)
@@ -227,6 +227,12 @@ class GraphPage(object):
                 'lines': (run_line, ref_line),
                 'labels': ('Run: {0.run_datetime}'.format(run_ts),
                            'Ref: {0.run_datetime}'.format(ref_ts))}
+
+    def titlecase(self, title):
+        title_words = []
+        for word in title.split():
+            title_words.append(word if word.isupper() else word.title())
+        return ' '.join(title_words)
 
     def legend(self):
         self.fig.legend(self.legend_data['lines'], self.legend_data['labels'],
