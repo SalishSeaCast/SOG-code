@@ -1,41 +1,19 @@
 module biology_model
   ! Type definitions, variable & parameter value declarations, and
   ! subroutines related to the biolgy model in the SOG code.
-  !
-  ! Public Type Definitions:
-  !
-  !   cheese -- Description
-  !
-  ! Public Parameters:
-  !
-  !   spam -- Description
-  !
-  !
-  ! Public subroutine:
-  !
-  !   calc_bio_rate -- A wrapper around a bunch of subroutine calls that
-  !               advance the biological quantities to the next time step.
 
   implicit none
-
   private
-  public :: &
-       ! Type definitions:
-!!$       cheese, &
-       ! Parameter values:
-!!$       spam, &
-       ! Subroutines:
-       init_biology, calc_bio_rate, dalloc_biology_variables
 
-  ! Type Definitions:
-  !
-  ! Public:
-  !
-  ! Private to module:
+  public :: &
+       ! Subroutines:
+       init_biology,  &          ! Initialize the biology model.
+       calc_bio_rate, &          ! A wrapper around a bunch of subroutine
+                                 ! calls that advance the biological
+                                 ! quantities to the next time step.
+       dalloc_biology_variables  ! Deallocate memory used by biology variables.
 
   ! Parameter Value Declarations:
-  !
-  ! Public:
   !
   ! Private to module:
   integer, parameter :: &
@@ -43,10 +21,8 @@ module biology_model
                           ! nutrients, phytoplankton, zooplankton, and
                           ! detritus (dissolved, slow sink, fast sink,
                           ! and silicon)
-  !
+
   ! Variable Declarations:
-  !
-  ! Public:
   !
   ! Private to module:
   integer :: PZ_length
@@ -55,10 +31,9 @@ contains
 
   subroutine init_biology(M)
     ! Initialize the biology model.
-
-    ! Subroutines from other modules:
-    use NPZD, only: alloc_NPZD_variables, init_NPZD
+    use NPZD, only: init_NPZD
     use biology_eqn_builder, only: alloc_bio_RHS_variables, read_sink_params
+
     implicit none
 
     ! Argument:
@@ -67,24 +42,15 @@ contains
 
     ! Length of PZ array
     PZ_length = NPZD_bins * M
-    ! Allocate memory for NPZD model variables
-    call alloc_NPZD_variables(M, PZ_length)
+    ! Allocate memory for biology model variables, and read
+    ! parameter values from infile.
+    call init_NPZD(M, PZ_length)
     ! Allocate memory for arrays for right-hand sides of
-    ! diffusion/advection equations for the biology model.
+    ! diffusion/advection equations for the biology model, and read
+    ! parameter values from infile.
     call alloc_bio_RHS_variables(M)
-
-!!$    call read_biology_params()
-    call init_NPZD
     call read_sink_params
   end subroutine init_biology
-  
-
-!!$  subroutine read_biology_params
-!!$    ! Read the biology model parameters from the input file
-!!$    use input_processor, only: getpari, getpard
-!!$    implicit none
-!!$
-!!$  end subroutine read_biology_params
 
 
   subroutine calc_bio_rate(time, day, dt, M, T_new, Pmicro, Pnano, Ppico, &
@@ -98,6 +64,7 @@ contains
     use numerics, only: check_negative
     use irradiance, only: &
          I_par  ! Photosynthetic available radiation profile
+
     implicit none
 
     ! Arguments:
@@ -161,7 +128,9 @@ contains
     ! sequentially into the PZ vector for the ODE solver to use.
     use precision_defs, only: dp
     use NPZD, only: PZ_bins, flagellates, remineralization, microzooplankton
+
     implicit none
+
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), dimension(0:), intent(in) :: &
@@ -302,7 +271,9 @@ contains
     use biology_eqn_builder, only: Pmicro_RHS, Pnano_RHS, Ppico_RHS, Z_RHS, &
          NO_RHS, NH_RHS, Si_RHS, DIC_RHS, Oxy_RHS, &
          D_DOC_RHS, D_POC_RHS, D_DON_RHS, D_PON_RHS, D_refr_RHS, D_bSi_RHS
+
     implicit none
+
     ! Arguments:
     integer, intent(in) :: M  ! Number of grid points
     real(kind=dp), dimension(1:), intent(in) :: &
@@ -398,7 +369,7 @@ contains
     use malloc, only: dalloc_check
     use NPZD, only: dalloc_NPZD_variables
     use biology_eqn_builder, only: dalloc_bio_RHS_variables
-    
+
     implicit none
 
     ! Deallocate memory from NPZD model arrays
