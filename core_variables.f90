@@ -1,85 +1,59 @@
 module core_variables
   ! Type definitions, variable declarationss, and subroutines related
   ! to the core variables that the SOG code calculates.
-  ! 
-  ! Public Variables:
-  !
-  !   U -- Velocity component in the u (cross-strait, 35 deg) direction [m/s]
-  !
-  !   V -- Velocity component in the v (along-strait, 305 deg) direction [m/s]
-  !
-  !   T -- Water column temperature [K]
-  !
-  !   S -- Water column salinity [-]
-  !
-  !   P -- Phytoplankton biomasses:
-  !          P%micro -- Micro phytoplankton (diatoms) [uM N]
-  !          P%nano -- Nano phytoplankton (meso-rub) [uM N]
-  !          P%pico -- Pico phytoplankton (flagellates) [uM N]
-  !
-  !   Z -- Microzooplankton biomass [uM N]
-  !
-  !   N -- Nitrogen compounds concentrations:
-  !          N%O -- Nitrate concentration [uM N]
-  !          N%H -- Ammonium concentration [uM N]
-  !
-  !   Si -- Silicon concentration [uM Si]
-  !
-  !   DIC -- Dissolved inorganic carbon concentration [uM C]
-  !
-  !   Oxy -- Dissolved oxygen concentration [uM O]
-  !
-  !   D -- Detritus concentrations:
-  !          D%DON -- Dissolved organic nitrogen [uM N]
-  !          D%PON -- Particulate organic nitrogen [uM N]
-  !          D%refr -- Refractory nitrogen [uM N]
-  !          D%bSi -- Biogenic silicon [uM Si]
-  !          D%DOC -- Dissolved organic carbon [uM C]
-  !          D%POC -- Particulate organic carbon [uM C]
-  !          D%reC -- Refractory carbon [uM C]
-  !
-  ! Public Subroutines:
-  !
-  !   init_core_variables -- Allocate memory for core variable arrays,
-  !                          and set their initial values to assumed
-  !                          values, and values interpolated from
-  !                          field data (CTD, STRATOGEM bottles, IOS
-  !                          bottles).
-  !
-  !   dalloc_core_variables -- De-allocate memory for core variables arrays.
 
   use precision_defs, only: dp
   implicit none
 
   private
   public :: &
+       ! Variables:
+       U,   &  ! Cross-estuary velocity component profile arrays [m/s]
+       V,   &  ! Along-estuary velocity component profile arrays [m/s]
+       T,   &  ! Water column temperature profile arrays [K]
+       S,   &  ! Water column Salinity profile arrays [-]
+       P,   &  ! Phytoplankton biomass profile arrays [uM N]
+               !   P%micro: Diatoms
+               !   P%nano: Mesodinium rubrum
+               !   P%pico: Flagellates
+       Z,   &  ! Microzooplankton biomass profile array [uM N]
+       N,   &  ! Nitrogen compounds concentation profile arrays [uM N]
+               !   N%O: Nitrate
+               !   N%H: Ammonium
+       Si,  &  ! Silicon concentration profile array [uM Si]
+       DIC, &  ! Dissolved inorganic carbon concentration profile array [uM C]
+       Oxy, &  ! Dissolved oxygen concentration profile array [uM O]
+       Alk, &  ! Alkalinity profile array [uM]
+       D,   &  ! Detritus concentration profile arrays
+               !   D%DON -- Dissolved organic nitrogen [uM N]
+               !   D%PON -- Particulate organic nitrogen [uM N]
+               !   D%refr -- Refractory nitrogen [uM N]
+               !   D%bSi -- Biogenic silicon [uM Si]
+               !   D%DOC -- Dissolved organic carbon [uM C]
+               !   D%POC -- Particulate organic carbon [uM C]
+               !   D%reC -- Refractory carbon [uM C]
+
+       ! Subroutines:
+       init_core_variables,   &  ! Allocate memory for core variable
+                                 ! arrays, and set their initial values
+                                 ! to assumed values, and values
+                                 ! interpolated from field data (CTD,
+                                 ! STRATOGEM bottles, IOS bottles).
+       dalloc_core_variables, &  ! De-allocate memory for core
+                                 ! variables arrays.
+
        ! Parameter values:
        N2chl, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
-       ho,    &  ! Initial mixing layer depth [m]
-       ! Variables:
-       U,   &  ! Cross-strait (35 deg) velocity component profile arrays
-       V,   &  ! Along-strait (305 deg) velocity component profile arrays
-       T,   &  ! Temperature profile arrays
-       S,   &  ! Salinity profile arrays
-       P,   &  ! Micro, nano & pico phytoplankton profile arrays
-       Z,   &  ! Microzooplankton profile array
-       N,   &  ! Nitrate & ammonium concentation profile arrays
-       Si,  &  ! Silicon concentration profile arrays
-       DIC, &  ! Dissolved inorganic carbon concentration profile arrays
-       Oxy, &  ! Dissolved oxygen concentration profile arrays
-       D,   &  ! Detritus concentration profile arrays
-       ! Subroutines:
-       init_core_variables, dalloc_core_variables
+       ho         ! Initial mixing layer depth [m]
 
 
   ! Public parameter declaration:
   real(kind=dp), parameter :: &
        ho = 2.0d0        ! Initial mixing layer depth [m]
-  
   real(kind=dp) :: &
-       N2chl    ! ratio of chl mg/m3 to uMol N in phytoplankton
-  
-   
+       N2chl    ! ratio of chlorophyl mg/m3 to uMol N in phytoplankton
+
+
   ! Public type definitions:
   !
   ! Velocities, temperature, and salinity
@@ -119,8 +93,8 @@ module core_variables
   !
   ! Public variable declarations:
   type(profiles) :: &
-       U, &  ! Cross-strait (35 deg) velocity component arrays
-       V, &  ! Along-strait (305 deg) velocity component arrays
+       U, &  ! Cross-estuary velocity component arrays
+       V, &  ! Along-estuary velocity component arrays
        T, &  ! Temperature profile arrays
        S     ! Salinity profile arrays
   type(plankton) :: &
@@ -130,17 +104,18 @@ module core_variables
   type(nitrogen) :: &
        N  ! Nitrate & ammonium concentration profile arrays
   real(kind=dp), dimension(:), allocatable :: &
-       Si,  & ! Silicon concentration profile array
-       DIC, & ! Dissolved inorganic carbon concentration profile array
-       Oxy    ! Dissolved oxygen concentration profile array
+       Si,  &  ! Silicon concentration profile array
+       DIC, &  ! Dissolved inorganic carbon concentration profile array
+       Oxy, &  ! Dissolved oxygen concentration profile array
+       Alk     ! Alkalinity profile array
   type(detritus) :: &
        D  ! Detritus concentration profile arrays
 
 
   ! Private parameter declarations:
   real(kind=dp), parameter :: &
-       Uo = 0.0d0,  &  ! Initial cross-strait velocity component [m/s]
-       Vo = 0.0d0,  &  ! Initial along-strait velocity component [m/s]
+       Uo = 0.0d0,  &  ! Initial cross-estuary velocity component
+       Vo = 0.0d0,  &  ! Initial along-estuary velocity component
        NHo = 1.0d0     ! Estimate of deep ammonium from
                        ! nitrate/salinity fits gives deep nitrate as
                        ! 31.5 uM but we measure 30.5 --- difference
@@ -167,7 +142,7 @@ module core_variables
                       ! bottle data file
           Oxy         ! Dissolved oxygen column number in CTD
   end type col_indices
- 
+
 
 contains
 
@@ -177,7 +152,7 @@ contains
     ! (CTD, STRATOGEM bottles, IOS bottles).
     use grid_mod, only: grid
     implicit none
-    
+
 
     ! Allocate memory for core variable arrays
     call alloc_core_variables(grid%M)
@@ -215,11 +190,11 @@ contains
 
     ! Initializes N2chl ratio
      N2chl = getpard('N2chl')
-    
+
     ! Initialize velocity profiles to assumed values
     U%new = Uo
     V%new = Vo
-    
+
 
     ! Initialize the ammonium profile to the assumed deep water value
     ! except in the mixed layer where it is assumed to be zero.
@@ -256,7 +231,7 @@ contains
           T%new = CtoK(T%new)
        endif
     else
- 
+
 
        ! Run can't proceed without temperature data
        write(stdout, *) "init_state: No temperature data found. Run aborted."
@@ -270,7 +245,7 @@ contains
        ! Run can't proceed without salinity data
        write(stdout, *) "init_state: No salinity data found. Run aborted."
        call exit(1)
-    endif 
+    endif
 
     if(col%Fluores /= -1) then
        ! Microphytoplankton biomass comes from fluorescence if that
@@ -511,7 +486,7 @@ contains
        n_records = n_records - 1
     endif
   end subroutine read_init_data
-  
+
 
   function interp_to_grid(depth, data_qty) result(qty)
     ! Return an array of quantity values at the grid point depths
@@ -538,8 +513,8 @@ contains
          qty_clean,   &  ! Valid quantity values from data
          del_depth,   &  ! Depth differences from data
          del_qty         ! Quantity value differences from data
-    
- 
+
+
     ! Remove records with negative data values (typically -99.0 or
     ! -99999) because that indicates invalid data
     mask(0:size(data_qty >= 0.0d0)-1) = data_qty >= 0.0d0
@@ -553,7 +528,7 @@ contains
     del_qty(0:data_records-2) = qty_clean(1:data_records-1) &
                                 - qty_clean(0:data_records-2)
 
-    
+
 
     ! Interpolate quantity values at grid point depths
     i_data = 1
@@ -578,10 +553,10 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Cross-strait velocity component profile arrays"
+    msg = "Cross-estuary velocity component profile arrays"
     allocate(U%new(0:M+1), U%old(0:M+1), U%grad_i(1:M), stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Along-strait velocity component profile arrays"
+    msg = "Along-estuary velocity component profile arrays"
     allocate(V%new(0:M+1), V%old(0:M+1), V%grad_i(1:M), stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Temperature profile arrays"
@@ -617,6 +592,9 @@ contains
     msg = "Dissolved oxygen concentration profile array"
     allocate(Oxy(0:M+1), stat=allocstat)
     call alloc_check(allocstat, msg)
+    msg = "Alkalinity profile array"
+    allocate(Alk(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
     msg = "Dissolved organic nitrogen detritus concentration profile array"
     allocate(D%DON(0:M+1), stat=allocstat)
     call alloc_check(allocstat, msg)
@@ -649,10 +627,10 @@ contains
     integer           :: dallocstat  ! Deallocation return status
     character(len=80) :: msg        ! Deallocation failure message prefix
 
-    msg = "Cross-strait velocity component profile arrays"
+    msg = "Cross-estuary velocity component profile arrays"
     deallocate(U%new, U%old, U%grad_i, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    msg = "Along-strait velocity component profile arrays"
+    msg = "Along-estuary velocity component profile arrays"
     deallocate(V%new, V%old, V%grad_i, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Temperature profile arrays"
@@ -687,6 +665,9 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved oxygen concentration profile array"
     deallocate(Oxy, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Alkalinity profile array"
+    deallocate(Alk, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved organic nitrogen detritus concentration profile array"
     deallocate(D%DON, stat=dallocstat)

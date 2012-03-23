@@ -16,16 +16,17 @@ program SOG
        grid, &  ! Grid parameters and depth and spacing arrays
        interp_value  ! interpolate salinity grid to find 1 m value
   use core_variables, only: &
-       U,   &  ! Cross-strait (35 deg) velocity component arrays
-       V,   &  ! Along-strait (305 deg) velocity component arrays
+       U,   &  ! Cross-estuary velocity component arrays
+       V,   &  ! Along-estuary  velocity component arrays
        T,   &  ! Temperature profile arrays
        S,   &  ! Salinity profile arrays
        P,   &  ! Micro & nano & pico phytoplankton profile arrays
        Z,   &  ! Microzooplankton profile array
        N,   &  ! Nitrate & ammonium concentration profile arrays
-       Si,  &  ! Silicon concentration profile arrays
-       DIC, &  ! Dissolved inorganic carbon concentration profile arrays
-       Oxy, &  ! Dissolved oxygen concentration profile arrays
+       Si,  &  ! Silicon concentration profile array
+       DIC, &  ! Dissolved inorganic carbon concentration profile array
+       Oxy, &  ! Dissolved oxygen concentration profile array
+       Alk, &  ! Alkalinity profile array
        D       ! Detritus concentration profile arrays
   use water_properties, only: &
        rho,   &  ! Density [kg/m^3]
@@ -476,6 +477,7 @@ program SOG
      Si(0) = Si(1)
      DIC(0) = DIC(1)
      Oxy(0) = Oxy(1)
+     Alk(0) = Alk(1)
      D%DOC(0) = D%DOC(1)
      D%POC(0) = D%POC(1)
      D%DON(0) = D%DON(1)
@@ -509,7 +511,7 @@ program SOG
        N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, &
        D%bSi,                                                           &
        ! Variables for standard chemistry model output
-       Oxy, DIC, D%DOC, D%POC, D%reC, pCO2, pO2)
+       Oxy, Alk, DIC, D%DOC, D%POC, D%reC, pCO2, pO2)
 
      ! Write user-specified time series results
      ! !!! Please don't add arguments to this call.           !!!
@@ -525,8 +527,8 @@ program SOG
      call write_std_profiles(datetime_str(runDatetime),                   &
           datetime_str(initDatetime), year, day, day_time, dt, grid,      &
           T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,  &
-          DIC, Oxy, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, K%m, K%T,  &
-          K%S, U%new, V%new)
+          DIC, Oxy, Alk, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, K%m,  &
+          K%T, K%S, U%new, V%new)
 
      ! Write user-specified profiles results
      call write_user_profiles

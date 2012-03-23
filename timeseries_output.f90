@@ -3,26 +3,22 @@ module timeseries_output
   ! parameters file.  The output files contain headers so that they
   ! can be used by the compareSOG package to create comparison
   ! graphs.
-  ! 
-  ! Public subroutines:
-  !
-  !   init_timeseries_output -- Get the names of the time series output
-  !                             files, open them, and write their headers.
-  !
-  !   write_std_timeseries -- Write results of the current time step to the
-  !                           time series files.
-  !
-  !   timeseries_output_close -- Close the time series output files.
 
   implicit none
 
   private
   public :: &
        ! Subroutines:
-       init_timeseries_output, write_std_timeseries, timeseries_output_close
+       init_timeseries_output, &  ! Get the names of the time series
+                                  ! output files, open them, and write
+                                  ! their headers.
+       write_std_timeseries,   &  !  Write results of the current time
+                                  !  step to the time series files.
+       timeseries_output_close    ! Close the time series output
+                                  ! files.
 
 contains
-  
+
   subroutine init_timeseries_output(str_run_Datetime, CTD_Datetime)
     ! Get the names of the time series output files from stdin using
     ! getpar(), open them, and write their headers.
@@ -219,14 +215,15 @@ contains
          "*InitialCTDDateTime: ", a/,                                        &
          "*FieldNames: time, ",                                              &
          "surface oxygen concentration, 3 m avg oxygen concentration, ",     &
+         "surface alkalinity, 3 m avg alkalinity, ",                         &
          "surface DIC concentration, 3 m avg DIC concentration, ",           &
          "DOC detritus at 20 m, POC detritus at 20 m, ",                     &
          "refractory C detritus at 20 m, surface pCO2, surface pO2"/,        &
-         "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM C, uM C, ",      &
-         "uM C, uM C, uM C, ppm, ppm"/,                                      &
+         "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM, uM, "/,         &
+         "uM C, uM C, uM C, uM C, uM C, ppm, ppm"/,                          &
          "*EndOfHeader")
   end subroutine write_std_chem_timeseries_hdr
-  
+
 
   subroutine write_std_timeseries(time, grid, &
        ! Variables for standard physics model output
@@ -234,7 +231,7 @@ contains
        ! Variables for standard biology model output
        NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi, &
        ! Variables for standard chemistry model output
-       Oxy, DIC, D_DOC, D_POC, D_reC, pCO2, pO2)
+       Oxy, Alk, DIC, D_DOC, D_POC, D_reC, pCO2, pO2)
     ! Write results of the current time step to the time series files.
     use precision_defs, only: dp
     use io_unit_defs, only: &
@@ -272,6 +269,7 @@ contains
          D_refr, &  ! Refractory nitrogen detritus profile [uM N]
          D_bSi,  &  ! Biogenic silicon detritus profile [uM]
          Oxy,    &  ! Dissolved oxygen conc profile [uM O]
+         Alk,    &  ! Alkalinity profile [uM]
          DIC,    &  ! Dissolved inorganic carbon conc profile [uM C]
          D_DOC,  &  ! Dissolved iorganic carbon detritus profile [uM C]
          D_POC,  &  ! Dissolved particulate carbon detritus profile [uM C]
@@ -290,6 +288,7 @@ contains
          Ppico_avg_3m,   &   ! Pico phytoplankton averaged over top 3 m [uM N]
          Z_avg_3m,       &   ! Micro zooplankton averaged over top 3 m [uM N]
          Oxy_avg_3m,     &   ! Dissolved oxygen averaged over top 3 m [uM O]
+         Alk_avg_3m,     &   ! Alkalinity averaged over top 3 m [uM]
          DIC_avg_3m,     &   ! Dissolved inorganic carbon avg top 3 m [uM C]
          D_DON_20m,      &   ! DON detritus at 20 m [uM N]
          D_PON_20m,      &   ! PON detritus at 20 m [uM N]
@@ -359,12 +358,14 @@ contains
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! above, or compareSOG plotting will fail. !!!
     Oxy_avg_3m = depth_average(Oxy, 0.0d0, 3.0d0)
+    Alk_avg_3m = depth_average(Alk, 0.0d0, 3.0d0)
     DIC_avg_3m = depth_average(DIC, 0.0d0, 3.0d0)
     call interp_value(20.0d0, 0, grid%d_g, D_DOC, D_DOC_20m, j_below)
     call interp_value(20.0d0, 0, grid%d_g, D_POC, D_POC_20m, j_below)
     call interp_value(20.0d0, 0, grid%d_g, D_reC, D_reC_20m, j_below)
-    write(std_chem_timeseries, 300) time, Oxy(0), Oxy_avg_3m, &
-         DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, D_reC_20m, pCO2, pO2
+    write(std_chem_timeseries, 300) time, Oxy(0), Oxy_avg_3m,          &
+         Alk(0), Alk_avg_3m, DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, &
+         D_reC_20m, pCO2, pO2
 300 format(f10.4, 80(2x, f12.4))
   end subroutine write_std_timeseries
 
@@ -374,7 +375,9 @@ contains
     use io_unit_defs, only: &
          std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
          user_phys_timeseries, user_bio_timeseries
+
     implicit none
+
     close(std_phys_timeseries)
     close(user_phys_timeseries)
     close(std_bio_timeseries)
