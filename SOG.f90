@@ -204,8 +204,9 @@ program SOG
   alpha%grad_i = gradient_i(alpha%g)
   beta%grad_i = gradient_i(beta%g)
 
-  ! Close the input parameters file
+  ! Close the input parameters file and flush input processor output to stdout
   close(stripped_infile)
+  flush(stdout)
 
   ! ---------- End of Initialization Section ---------
 
