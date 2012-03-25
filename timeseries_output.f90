@@ -219,7 +219,7 @@ contains
          "surface DIC concentration, 3 m avg DIC concentration, ",           &
          "DOC detritus at 20 m, POC detritus at 20 m, ",                     &
          "refractory C detritus at 20 m, surface pCO2, surface pO2"/,        &
-         "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM, uM, "/,         &
+         "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM, uM, ",          &
          "uM C, uM C, uM C, uM C, uM C, ppm, ppm"/,                          &
          "*EndOfHeader")
   end subroutine write_std_chem_timeseries_hdr
