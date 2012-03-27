@@ -412,7 +412,7 @@
 "humidity"     "../SOG-forcing/met/YVRhistHum"     "humidity forcing data"
 "major river"  "../SOG-forcing/rivers/Fraser_historic.dat"  "major river flow data"
 "use river temp"  .true.  "Include cooling/heating effect of major river?"
-"minor river"  "../SOG-forcing/rivers/Englishman_historic.dat"  "minor river flow data"
+"minor river"  "../SOG-forcing/rivers/Englishman_fullyears.dat"  "minor river flow data"
 "minor river integ days"  20  "Days over which to integrate minor river flow"
 "alt minor river" "../SOG-forcing/rivers/NanimoNorm_historic.dat"  "alternative minor river flow data"
 

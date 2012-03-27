@@ -425,7 +425,7 @@
 "use river temp"  .true.  "Include cooling/heating effect of major river?"
 
 "minor river"
-    "../SOG-forcing/rivers/Englishman_historic.dat"
+    "../SOG-forcing/rivers/Englishman_fullyears.dat"
     "minor river flow data"
 "minor river integ days"  20  "Days over which to integrate minor river flow"
 "alt minor river"
