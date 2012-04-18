@@ -1,0 +1,271 @@
+# SOG code infile template
+
+# SOG code infile for 356.5 day run starting at cruise 04-14 station
+# S3 CTD cast (2004-10-19 12:22 LST).
+
+grid:
+  model_depth:
+    value: 40
+    units: m
+    variable_name: grid%D
+    description: depth of modelled domain
+  grid_size:
+    value: 80
+    variable_name: grid%M
+    description: number of grid points
+  lambda_factor:
+    value: 0
+    variable_name: lambda
+    description: grid spacing parameter
+
+location:
+  latitude:
+    value: 49.1253
+    units: deg
+    variable_name: latitude
+    description: latitude of modelled estuary
+  minor_axis:
+    value: 30e3
+    units: m
+    variable_name: Lx
+    description: length of minor axis (cross-estuary) of model domain
+  major_axis:
+    value: 120e3
+    units: m
+    variable_name: Ly
+    description: length of major axis (along-estuary) of model domain
+  open_ended_estuary:
+    value: False
+    variable_name: openEnd
+    description: open basin system (True) or closed system (False)
+
+initial_conditions:
+  init_datetime:
+    value: 2004-10-19 12:22:00
+    variable_name: initDatetime
+    description: initial CTD profile date/time
+  CTD_file:
+    value: ../SOG-initial/ctd/SG-S3-2004-10-19.sog
+    variable_name: ctd_in
+    description: path/filename for initialization CTD file
+  # Give a path/filename for either STRATOGEM nutrients file
+  # or IOS bottle file; set the other to N/A
+  nutrients_file:
+    value: ../SOG-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog
+    variable_name: nuts_in
+    description: path/filename for STRATOGEM nutrients data file
+  bottle_file:
+    value: N/A
+    variable_name: botl_in
+    description: path/filename for IOS nutrients bottle data file
+  chemistry_file:
+    value: ../SOG-initial/chem/Chem-SOGS-2010-73.sog
+    variable_name: chem_in
+    description: path/filename for IOS chemistry bottle data file
+  init_chl_ratios:
+    value: [0.33, 0.33, 0.33]
+    variable_name: Psplit
+    description: initial micro/nano/pico phytoplankton ratios from chlorophyl
+  nitrate_chl_conversion:
+    value: 1.5
+    units: mg / m^3 . uM N
+    variable_name: N2chl
+    description: phytoplankton nitrate to chlorophyl conversion factor
+
+end_datetime:
+  value: 2005-10-11 00:22:00
+  variable_name: endDatetime
+  description: end of run date/time
+
+numerics:
+  dt:
+    value: 900
+    units: s
+    variable_name: dt
+    description: time step
+  chem_dt:
+    value: 5
+    units: s
+    variable_name: chem_dt
+    description: internal chemistry time step
+  max_iter:
+    value: 30
+    variable_name: max_iter
+    description: max number of implicit solver iterations per time step
+
+vary:
+  wind:
+    value: False
+    variable_name: vary%wind%enabled
+    description: use variation of wind initial conditions or forcing
+  cloud_fraction:
+    value: False
+    variable_name: vary%cf%enabled
+    description: use variation of cloud fraction initial conditions or forcing
+  river_flows:
+    value: False
+    variable_name: vary%rivers%enabled
+    description: use variation of river flows initial conditions or forcing
+  temperature:
+    value: False
+    variable_name: vary%temperature%enabled
+    description: use variation of air temperature initial conditions or forcing
+
+timeseries_results:
+  std_physics:
+    value: timeseries/std_phys_SOG.out
+    variable_name: std_phys_ts_out
+    description: path/filename for standard physics time series output
+  user_physics:
+    value: timeseries/user_phys_SOG.out
+    variable_name: user_phys_ts_out
+    description: path/filename for user physics time series output
+  std_biology:
+    value: timeseries/std_bio_SOG.out
+    variable_name: std_bio_ts_out
+    description: path/filename for standard biology time series output
+  user_biology:
+    value: timeseries/user_bio_SOG.out
+    variable_name: user_bio_ts_out
+    description: path/filename for user biology time series output
+  std_chemistry:
+    value: timeseries/std_chem_SOG.out
+    variable_name: std_chem_ts_out
+    description: path/filename for standard chemistry time series output
+
+profiles_results:
+  num_profiles:
+    value: 1
+    variable_name: noprof
+    description: number of profiles to output
+  # TODO: Replace year-day and day-second lists with a list of
+  # date/times for profile outputs
+  profile_days:
+    value: [303, 313]
+    variable_name: profday
+    description: list of year-days to output profiles for
+  profile_times:
+    value: [43200]
+    variable_name: proftime
+    description: list of day-seconds to output profiles for
+  profile_file_base:
+    value: profiles/SOG
+    variable_name: profilesBase_fn
+    description: path/filename base for profiles (datetime will be appended)
+  halocline_file:
+    value: profiles/halo-SOG.out
+    variable_name: haloclines_fn
+    description: path/filename for halocline results
+  hoffmueller_file:
+    value: profiles/hoff-SOG.dat
+    variable_name: Hoffmueller_fn
+    description: path/filename for Hoffmueller results
+  # TODO: Replace Hoffmueller results start and end year, day & second
+  # with date/times
+  hoffmueller_start_year:
+    value: 2004
+    variable_name: Hoff_startyr
+    description: year to start Hoffmueller results output
+  hoffmueller_start_day:
+    value: 294
+    variable_name: Hoff_startday
+    description: day to start Hoffmueller results output
+  hoffmueller_start_sec:
+    value: 43200
+    variable_name: Hoff_startsec
+    description: second to start Hoffmueller results output
+  hoffmueller_end_year:
+    value: 2004
+    variable_name: Hoff_endyr
+    description: year to end Hoffmueller results output
+  hoffmueller_end_day:
+    value: 294
+    variable_name: Hoff_endday
+    description: day to end Hoffmueller results output
+  hoffmueller_end_sec:
+    value: 43200
+    variable_name: Hoff_endsec
+    description: second to end Hoffmueller results output
+  hoffmueller_interval:
+    value: 1
+    variable_name: Hoff_interval
+    description: days between Hoffmueller results outputs
+
+physics:
+  bottom_boundary_conditions:
+    constant_temperature:
+      value: False
+      variable_name: temp_constant
+      description: is bottom temperature constant over time?
+    temperature_fit_coefficients:
+      value: [9.3044, 0.06384430, -0.84712324, 0, -0.05355254,
+              -0.05775216, 0.0292]
+      variable_name: c(:,2)
+      description: temperature (constant, seasonal and biseasonal components)
+    salinity_fit_coefficients:
+      value: [29.62605865, 0.10374454, -0.03562458, 0, -0.14156091,
+              -0.06348989, 0]
+      variable_name: c(:,1)
+      description: salinity (constant, seasonal and biseasonal components)
+    phyto_fluor_fit_coefficients:
+      value: [0.58316137, -0.11206845, 0.26241523, 0, 0, 0, 0]
+      variable_name: c(:,3)
+      description: phytoplankton from fluorescence (constant & seasonal)
+    nitrate_fit_coefficients:
+      value: [30.5, 0, 0, 0, 0, 0, 0]
+      variable_name: c(:,4)
+      description: nitrate bottom boundary condition (constant)
+    silicon_fit_coefficients:
+      value: [54, 0, 0, 0, 0, 0, 0]
+      variable_name: c(:,5)
+      description: silicon bottom boundary condition (constant)
+    DIC_fit_coefficients:
+      value: [2021.03575935, 0.10374454, -0.03562458, 0, -0.14156091,
+              -0.06348989, 0]
+      variable_name: c(:,6)
+      description: dissolved inorganic carbon (constant)
+    dissolved_oxygen_fit_coefficients:
+      value: [148.3763, 0, 0, 0, 0, 0, 0]
+      variable_name: c(:,7)
+      description: dissolved oxygen bottom boundary condition (constant)
+    alkalinity_fit_coefficients:
+      value: [0, 0, 0, 0, 0, 0, 0]
+      variable_name: c(:,8)
+      description: alkalinity bottom boundary condition (**values needed**)
+    ammonium_fit_coefficients:
+      value: [1, 0, 0, 0, 0, 0, 0]
+      variable_name: c(:,9)
+      description: ammonium bottom boundary condition (constant)
+    phyto_ratio_fit_coefficients:
+      value: [1.25948868, 0, 0, 0, 0.97697686, 0.46289294, 0]
+      variable_name: c(:,10)
+      description: ratio of pico/micro phytoplankton (constant & biseasonal)
+  turbulence:
+    momentum_wave_break_diffusivity:
+      value: 1.5e-4
+      units: m^2 / s
+      variable_name: nu%m%int_wave
+      description: internal wave breaking diffusivity for momentum qtys
+    scalar_wave_break_diffusivity:
+      value: 1.5e-5
+      units: m^2 / s
+      variable_name: nu%T%int_wave, nu%S%int_wave
+      description: internal wave breaking diffusivity for scalar qtys
+    shear_diffusivity_smoothing:
+      value: [0.375, 0.5]
+      variable_name: shear_diff_smooth
+      description: shear diffusivity smoothing parameters
+  fresh_water:
+    flux:
+    salinity_fit:
+    upwelling:
+      max_upwelling_velocity:
+        value: 2.5e-5
+        units: m/s
+        variable_name: upwell_const
+        description: maximum upwelling velocity
+      variation_depth__param:
+        value: 11.7
+        units: m
+        variable_name: d
+        description: upwelling variation depth parameter
