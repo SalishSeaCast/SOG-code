@@ -67,6 +67,7 @@ module IMEX_solver
           Si,     &  ! Silicon concentration RHS array
           DIC,    &  ! Dissolved inorganic carbon RHS array
           Oxy,    &  ! Dissolved oxygen RHS array
+          Alk,    &  ! Alkalinity RHS array
           D_DOC,  &  ! Dissolved organic carbon detritus RHS array
           D_POC,  &  ! Particulate organic carbon detritus RHS array
           D_DON,  &  ! Dissolved organic nitrogen detritus RHS array
@@ -746,7 +747,8 @@ contains
          Hvector%S(1:M), Hvector%Pmicro(1:M), Hvector%Pnano(1:M),     &
          Hvector%Ppico(1:M), Hvector%Z(1:M), Hvector%NO(1:M),         &
          Hvector%NH(1:M), Hvector%Si(1:M), Hvector%DIC(1:M),          &
-         Hvector%Oxy(1:M), Hvector%D_DOC(1:M), Hvector%D_POC(1:M),    &
+         Hvector%Oxy(1:M), Hvector%Alk(1:M),                          &
+         Hvector%D_DOC(1:M), Hvector%D_POC(1:M),                      &
          Hvector%D_DON(1:M), Hvector%D_PON(1:M), Hvector%D_refr(1:M), &
          Hvector%D_bSi(1:M),                                          &
          stat=allocstat)
@@ -783,7 +785,8 @@ contains
          Hvector%S, Hvector%Pmicro, Hvector%Pnano,     &
          Hvector%Ppico, Hvector%Z, Hvector%NO,         &
          Hvector%NH, Hvector%Si, Hvector%DIC,          &
-         Hvector%Oxy, Hvector%D_DOC, Hvector%D_POC,    &
+         Hvector%Oxy, Hvector%Alk,                     &
+         Hvector%D_DOC, Hvector%D_POC,                 &
          Hvector%D_DON, Hvector%D_PON, Hvector%D_refr, &
          Hvector%D_bSi,                                &
          stat=dallocstat)

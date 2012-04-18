@@ -114,6 +114,9 @@
 "Oxy"
   148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Dissolved Oxygen (constant)"
+"Alk"
+  0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Alkalinity (**values needed**)"
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Ammonium (constant)"

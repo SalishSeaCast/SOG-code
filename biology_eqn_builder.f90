@@ -30,6 +30,8 @@ module biology_eqn_builder
   !
   !   Oxy_RHS -- Dissolved oxygen right-hand side arrays
   !
+  !   Alk_RHS -- Alkalinity right-hand side arrays
+  !
   !   D_DOC_RHS -- Dissolved organic carbon detritus right-hand side arrays
   !
   !   D_POC_RHS -- Particulate organic carbon detritus right-hand side arrays
@@ -88,6 +90,7 @@ module biology_eqn_builder
        Si_RHS,          &  ! Silicon concentration RHS arrays
        DIC_RHS,         &  ! Dissolved inorganic carbon RHS arrays
        Oxy_RHS,         &  ! Dissolved oxygen RHS arrays
+       Alk_RHS,         &  ! Alkalinity RHS arrays
        D_DOC_RHS,       &  ! Dissolved organic carbon detritus RHS arrays
        D_POC_RHS,       &  ! Particulate organic carbon detritus RHS arrays
        D_DON_RHS,       &  ! Dissolved organic nitrogen detritus RHS arrays
@@ -172,6 +175,7 @@ module biology_eqn_builder
        Si_RHS,     &  ! Silicon concentration RHS arrays
        DIC_RHS,    &  ! Dissolved inorganic carbon RHS arrays
        Oxy_RHS,    &  ! Dissolved oxygen RHS arrays
+       Alk_RHS,    &  ! Alkalinity RHS arrays
        D_DOC_RHS,  &  ! Dissolved organic carbon detritus RHS arrays
        D_POC_RHS,  &  ! Particulate organic carbon detritus RHS arrays
        D_DON_RHS,  &  ! Dissolved organic nitrogen detritus RHS arrays
@@ -406,6 +410,7 @@ contains
     Si_RHS%diff_adv%old = Si_RHS%diff_adv%new
     DIC_RHS%diff_adv%old = DIC_RHS%diff_adv%new
     Oxy_RHS%diff_adv%old = Oxy_RHS%diff_adv%new
+    Alk_RHS%diff_adv%old = Alk_RHS%diff_adv%new
     D_DOC_RHS%diff_adv%old = D_DOC_RHS%diff_adv%new
     D_POC_RHS%diff_adv%old = D_POC_RHS%diff_adv%new
     D_DON_RHS%diff_adv%old = D_DON_RHS%diff_adv%new
@@ -422,6 +427,7 @@ contains
 
     DIC_RHS%diff_adv%old = DIC_RHS%diff_adv%new
     Oxy_RHS%diff_adv%old = Oxy_RHS%diff_adv%new
+    Alk_RHS%diff_adv%old = Alk_RHS%diff_adv%new
   end subroutine new_to_old_chem_RHS
 
 
@@ -517,6 +523,11 @@ contains
     msg = "Dissolved oxygen concentration RHS arrays"
     allocate(Oxy_RHS%diff_adv%new(1:M), Oxy_RHS%diff_adv%old(1:M), &
          Oxy_RHS%bio(1:M), &
+         stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Alkalinity RHS arrays"
+    allocate(Alk_RHS%diff_adv%new(1:M), Alk_RHS%diff_adv%old(1:M), &
+         Alk_RHS%bio(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "Dissolved organic carbon detritus RHS arrays"
@@ -620,6 +631,11 @@ contains
     msg = "Dissolved oxygen concentration RHS arrays"
     deallocate(Oxy_RHS%diff_adv%new, Oxy_RHS%diff_adv%old, &
          Oxy_RHS%bio, &
+         stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Alkalinity RHS arrays"
+    deallocate(Alk_RHS%diff_adv%new, Alk_RHS%diff_adv%old, &
+         Alk_RHS%bio, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "Dissolved organic carbon detritus RHS arrays"

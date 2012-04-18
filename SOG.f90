@@ -435,8 +435,8 @@ program SOG
      ! Solve the biology model ODEs to advance the biology quantity values
      ! to the next time step, and calculate the growth - mortality terms
      ! (*_RHS%bio) of the semi-implicit diffusion/advection equations.
-     call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M), &
-          P%micro, P%nano, P%pico, Z, N%O, N%H, Si, DIC, Oxy,   &
+     call calc_bio_rate(time, day, dt, grid%M, T%new(0:grid%M),     &
+          P%micro, P%nano, P%pico, Z, N%O, N%H, Si, DIC, Oxy, Alk,  &
           D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
      ! Build the rest of the terms of the semi-implicit diffusion/advection
      ! PDEs for the biology quantities.
@@ -459,7 +459,7 @@ program SOG
 
      ! Calculate the gas fluxes and iterate the diffusion
      call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), &
-          unow, vnow, DIC, Oxy, day, time, pCO2, pO2)
+          unow, vnow, DIC, Oxy, Alk, day, time, pCO2, pO2)
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
@@ -491,11 +491,11 @@ program SOG
      !
      ! For those variables that we have data for, use the annual fit
      ! calculated from the data
-     call bot_bound_time(year, day, day_time, &                       ! in
-          T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1), &          ! out
-          Si(grid%M+1), DIC(grid%M+1), Oxy(grid%M+1), &               ! out
-          N%H(grid%M+1), P%micro(grid%M+1), P%nano(grid%M+1), &       ! out
-          P%pico(grid%M+1), Z(grid%M+1))                              ! out
+     call bot_bound_time(year, day, day_time,                        &  ! in
+          T%new(grid%M+1), S%new(grid%M+1), N%O(grid%M+1),           &  ! out
+          Si(grid%M+1), DIC(grid%M+1), Oxy(grid%M+1), Alk(grid%M+1), &  ! out
+          N%H(grid%M+1), P%micro(grid%M+1), P%nano(grid%M+1),        &  ! out
+          P%pico(grid%M+1), Z(grid%M+1))                                ! out
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform(grid%M, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
