@@ -99,6 +99,7 @@
 ! From SoG data, NOT from RI
 "DIC"  2124.2233d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Dissolved Inorganic Carbon (constant)"
 "Oxy"  148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Dissolved Oxygen (constant)"
+"Alk"  0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Alkalinity (**values needed**)"
 !--- END CHEMISTRY BOTTOM BOUNDARY CONDITIONS
 "Ammonium"   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Ammonium (constant)"
 "Ratio"   1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0    "Ratio of pico/micro plankton (constant and biseasonal)"

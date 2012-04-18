@@ -25,10 +25,10 @@ module fitbottom
   ! Private module variable declarations:
   ! 
   ! Number of different quantities
-  integer, parameter :: NQ = 9
+  integer, parameter :: NQ = 10
   ! Quantity names
   character(len=3), dimension(NQ), parameter :: quantity &
-       = ['sal', 'tmp', 'chl', 'nit', 'sil', 'DIC', 'Oxy', 'NH4', 'prt']
+       = ['sal', 'tmp', 'chl', 'nit', 'sil', 'DIC', 'Oxy', 'Alk', 'NH4', 'prt']
 
     ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
     ! fitted.m in
@@ -49,7 +49,7 @@ contains
 
     ! Is the temperature coming up through the bottom constant?
     temp_constant = getparl('temp_constant')
-    ! Read in values for sal, temp, chl, nit, sil, DIC, Oxy, NH4, prt
+    ! Read in values for sal, temp, chl, nit, sil, DIC, Oxy, Alk, NH4, prt
     ! and set up c matrix
     call getpardv("salinity", 7, c(:,1))
     call getpardv("temperature", 7, c(:,2))
@@ -58,8 +58,9 @@ contains
     call getpardv("Silicon", 7, c(:,5))
     call getpardv("DIC", 7, c(:,6))
     call getpardv("Oxy", 7, c(:,7))
-    call getpardv("Ammonium", 7, c(:,8))
-    call getpardv("Ratio", 7, c(:,9))
+    call getpardv("Alk", 7, c(:,8))
+    call getpardv("Ammonium", 7, c(:,9))
+    call getpardv("Ratio", 7, c(:,10))
   end subroutine init_fitbottom
 
   function bottom_value (arg, qty) result(value)
@@ -107,6 +108,8 @@ contains
        index = 8
     elseif (qty == quantity(9)) then
        index = 9
+    elseif (qty == quantity(10)) then
+       index = 10
     else
        write (stdout,*) 'bottom_value in fitbottom.f90:', &
             'Unexpected quantity: ', qty
@@ -121,8 +124,8 @@ contains
   end function bottom_value
 
 
-  subroutine bot_bound_time (year, day, day_time, &
-       Tbot, Sbot, Nobot, Sibot, DICbot, Oxybot, Nhbot, &
+  subroutine bot_bound_time (year, day, day_time,               &
+       Tbot, Sbot, Nobot, Sibot, DICbot, Oxybot, Alkbot, Nhbot, &
        Pmbot, Pnbot, Ppbot, uZbot)
     ! Calculate the values at the bottom of the grid for those
     ! quantities that we have data for from an annual fit.
@@ -135,7 +138,7 @@ contains
     integer, intent(in) :: year, day
     real(kind=dp), intent(in) :: day_time
     real(kind=dp), intent(out) :: Tbot, Sbot, Nobot, Sibot, DICbot, Oxybot, &
-         Nhbot, Pmbot, Pnbot, Ppbot, uZbot
+         Alkbot, Nhbot, Pmbot, Pnbot, Ppbot, uZbot
     ! Local variables:
     real(kind=dp) :: arg, chl, ratio, yeartime
 
@@ -152,6 +155,7 @@ contains
     Sibot = bottom_value(arg, 'sil')
     DICbot = bottom_value(arg, 'DIC')
     Oxybot = bottom_value(arg, 'Oxy')
+    Alkbot = bottom_value(arg, 'Alk')
     Nhbot = bottom_value(arg, 'NH4')
     chl = bottom_value(arg, 'chl')
     ratio = bottom_value(arg, 'prt')

@@ -58,8 +58,10 @@ module freshwater
 !--- BEGIN CHEMISTRY PARAMETERS
   ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
   real(kind=dp), parameter :: phys_circ_DIC = 2021.04d0 - 663.1d0
-  ! From Environment Canada Fraser River bouy October 2010
+  ! From Environment Canada Fraser River buoy October 2010
   real(kind=dp), parameter :: phys_circ_Oxy = 148.38d0 - 343.75d0
+  ! **TODO**: Assign a sensible value for alkalinity
+  real(kind=dp), parameter :: phys_circ_Alk = 0.0d0
 !--- END CHEMISTRY PARAMETERS
 
   ! Variable Declarations:
@@ -315,6 +317,8 @@ contains
              surf_flux = Ft * (phys_circ_DIC)
           elseif (qty.eq."Oxy") then
              surf_flux = Ft * (phys_circ_Oxy)
+          elseif (qty.eq."Alk") then
+             surf_flux = Ft * (phys_circ_Alk)
 !--- END CHEMISTRY FRESHWATER FLUXES
           else
              write (*,*) "problems in freshwater, river flux for ", qty, &
@@ -344,6 +348,8 @@ contains
              distrib_flux = Fw * (phys_circ_DIC)
           elseif (qty.eq."Oxy") then
              distrib_flux = Fw * (phys_circ_Oxy)
+          elseif (qty.eq."Alk") then
+             distrib_flux = Fw * (phys_circ_Alk)
 !--- END CHEMISTRY FRESHWATER FLUXES
           else
              write (*,*) "problems in freshwater, river flux for ", qty, &
