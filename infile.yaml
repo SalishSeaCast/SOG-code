@@ -98,18 +98,22 @@ vary:
     value: False
     variable_name: vary%wind%enabled
     description: use variation of wind initial conditions or forcing
+    # TODO: Add variation parameter handling when value is True
   cloud_fraction:
     value: False
     variable_name: vary%cf%enabled
     description: use variation of cloud fraction initial conditions or forcing
+    # TODO: Add variation parameter handling when value is True
   river_flows:
     value: False
     variable_name: vary%rivers%enabled
     description: use variation of river flows initial conditions or forcing
+    # TODO: Add variation parameter handling when value is True
   temperature:
     value: False
     variable_name: vary%temperature%enabled
     description: use variation of air temperature initial conditions or forcing
+    # TODO: Add variation parameter handling when value is True
 
 timeseries_results:
   std_physics:
@@ -257,6 +261,42 @@ physics:
       description: shear diffusivity smoothing parameters
   fresh_water:
     flux:
+      mean_total_flow:
+        value: 3624
+        units: m^3 / s
+        variable_name: Qbar
+        description: mean total fresh water flow
+      common_exponent:
+        value: 0.2
+        variable_name: F_SOG
+        description: exponential for SoG/RI common component of flux
+      SoG_exponent:
+        value: 1
+        variable_name: F_RI
+        description: exponent for extra SoG term component of flux
+      scale_factor:
+        value: 11.67e-10
+        variable_name: Fw_scale
+        description: fresh water scale factor for rivers flows
+      add_freshwater_on_surface:
+        value: False
+        variable_name: Fw_surface
+        description: add all of the fresh water on the surface?
+      distribution_depth:
+        value: 3
+        units: m
+        variable_name: Fw_depth
+        description: depth to distribute fresh water flux over
+      northern_return_flow:
+        value: False
+        variable_name: Northern_return
+        description: include fresh water return flow from the north?
+        # TODO: handle northern return flow fraction when norther_return_flow
+        # is True
+      include_fresh_water_nutrients:
+        value: True
+        variable_name: use_Fw_nutrients
+        description: include influence of fresh water nutrients in biology
     salinity_fit:
     upwelling:
       max_upwelling_velocity:
@@ -264,7 +304,7 @@ physics:
         units: m/s
         variable_name: upwell_const
         description: maximum upwelling velocity
-      variation_depth__param:
+      variation_depth_param:
         value: 11.7
         units: m
         variable_name: d
