@@ -298,6 +298,31 @@ physics:
         variable_name: use_Fw_nutrients
         description: include influence of fresh water nutrients in biology
     salinity_fit:
+      bottom_salinity:
+        value: 30
+        variable_name: cbottom
+        description: salinity at bottom of modelled domain
+      alpha:
+        value: 2440
+        variable_name: calpha
+        description: alpha coefficient of fresh water salinity fit
+      alpha2:
+        value: 1
+        variable_name: calpha2
+        description: alpha2 coefficient of fresh water salinity fit
+        # For the Strait of Georgia the fresh water salinity fit
+        # doesn't actually have an alpha2 coefficient but we set it to
+        # 1 to avoid dividing by zero. The beta=0 value below causes
+        # the terms containing alpha2 to be eliminated from the
+        # calculation.
+      gamma:
+        value: 0.633
+        variable_name: cgamma
+        description: gamma coefficient of fresh water salinity fit
+      beta:
+        value: 0
+        variable_name: cbeta
+        description: beta coefficient of fresh water salinity fit
     upwelling:
       max_upwelling_velocity:
         value: 2.5e-5
