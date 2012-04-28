@@ -334,3 +334,30 @@ physics:
         units: m
         variable_name: d
         description: upwelling variation depth parameter
+  K_PAR_fit:
+    # Coefficients for Photosynthetic Available Radiation (PAR)
+    # elimination (K) from Collins, et al (2008)
+    ialpha:
+      value: 0.091
+      variable_name: ialpha
+      description: alpha coefficient of K-PAR fit
+    ibeta:
+      value: 0.0433
+      variable_name: ibeta
+      description: beta coefficient of K-PAR fit
+    igamma:
+      value: 2.62e-22
+      variable_name: igamma
+      description: gamma coefficient of K-PAR fit
+    isigma:
+      value: 5.5
+      variable_name: isigma
+      description: sigma coefficient of K-PAR fit
+    itheta:
+      value: 0.445
+      variable_name: itheta
+      description: theta coefficient of K-PAR fit
+    idl:
+      value: 2.56
+      variable_name: idl
+      description: dl coefficient of K-PAR fit
