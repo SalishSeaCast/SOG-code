@@ -361,3 +361,21 @@ physics:
       value: 2.56
       variable_name: idl
       description: dl coefficient of K-PAR fit
+
+biology:
+  include_flagellates:
+    value: True
+    variable_name: flagellates
+    description: include flagellates in model?
+  include_remineralization:
+    value: True
+    variable_name: remineralization
+    description: include remineralization in model?
+  include_microzooplankton:
+    value: True
+    variable_name: microzooplankton
+    description: include microzooplankton in model?
+  single_species_light:
+    value: False
+    variable_name: strong_limitation
+    description: high light limitation for single species case
