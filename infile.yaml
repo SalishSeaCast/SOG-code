@@ -379,3 +379,100 @@ biology:
     value: False
     variable_name: strong_limitation
     description: high light limitation for single species case
+  mesozooplankton:
+    mesozoo_winter_conc:
+      value: 0.1
+      units: uM N
+      variable_name: rate_mesozoo%winterconc
+      description: mesozooplankton background concentration
+    mesozoo_summer_conc:
+      value: 0.1
+      units: uM N
+      variable_name: rate_mesozoo%summerconc
+      description: mesozooplankton relative summer concentration
+    mesozoo_summer_peak_magnitudes:
+      value: [2.5, 8, 0]
+      units: uM N
+      variable_name: rate_mesozoo%sumpeakval
+      description: magnitude of mesozooplankton summer concentration peaks
+    mesozoo_summer_peak_days:
+      value: [110, 175, 280]
+      units: year-day
+      variable_name: rate_mesozoo%sumpeakpos
+      description: times of mesozooplankton summer concentration peaks
+    mesozoo_summer_peak_widths:
+      value: [25, 55, 50]
+      units: year-days
+      variable_name: rate_mesozoo%sumpeakwid
+      description: widths of mesozooplankton summer concentration peaks
+    mesozoo_max_ingestion:
+      value: 1.39e-5
+      units: uM N / s
+      variable_name: rate_mesozoo%R
+      description: mesozooplankton maximum ingestion rate
+    mesozoo_grazing_limit:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%PredSlope
+      description: mesozooplankton total grazing limit
+    mesozoo_grazing_half_saturation:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%HalfSat
+      description: mesozooplankton total grazing half saturation constant
+    mesozoo_diatom_preference:
+      value: 0.2
+      variable_name: rate_mesozoo%MicroPref
+      description: mesozooplankton preference for diatoms
+    mesozoo_diatom_grazing_limit:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%MicroPredSlope
+      description: mesozooplankton diatom grazing limit
+    mesozoo_diatom_grazing_half_saturation:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%MicroHalfSat
+      description: mesozooplankton diatom grazing half saturation constant
+    mesozoo_nano_preference:
+      value: 0.15
+      variable_name: rate_mesozoo%NanoPref
+      description: mesozooplankton preference for nano-phytoplankton
+    mesozoo_nano_grazing_limit:
+      value: 0.4
+      units: uM N
+      variable_name: rate_mesozoo%NanoPredSlope
+      description: mesozooplankton nano-phyto grazing limit
+    mesozoo_nano_grazing_half_saturation:
+      value: 0.4
+      units: uM N
+      variable_name: rate_mesozoo%NanoHalfSat
+      description: mesozooplankton nano-phyto grazing half saturation const
+    mesozoo_PON_preference:
+      value: 0.35
+      variable_name: rate_mesozoo%PON_Pref
+      description: mesozooplankton preference for PON
+    mesozoo_PON_grazing_limit:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%PON_PredSlope
+      description: mesozooplankton PON feeding limit
+    mesozoo_PON_grazing_half_saturation:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%PON_HalfSat
+      description: mesozooplankton PON feeding half saturation const
+    mesozoo_microzoo_preference:
+      value: 0.35
+      variable_name: rate_mesozoo%Z_Pref
+      description: mesozooplankton preference for microzooplankton
+    mesozoo_microzoo_grazing_limit:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%Z_PredSlope
+      description: mesozooplankton microzooplankton grazing limit
+    mesozoo_microzoo_grazing_half_saturation:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%Z_HalfSat
+      description: mesozooplankton microzoo grazing half saturation const
