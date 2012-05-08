@@ -244,6 +244,7 @@ physics:
       value: [1.25948868, 0, 0, 0, 0.97697686, 0.46289294, 0]
       variable_name: c(:,10)
       description: ratio of pico/micro phytoplankton (constant & biseasonal)
+
   turbulence:
     momentum_wave_break_diffusivity:
       value: 1.5e-4
@@ -259,6 +260,7 @@ physics:
       value: [0.375, 0.5]
       variable_name: shear_diff_smooth
       description: shear diffusivity smoothing parameters
+
   fresh_water:
     flux:
       mean_total_flow:
@@ -297,6 +299,7 @@ physics:
         value: True
         variable_name: use_Fw_nutrients
         description: include influence of fresh water nutrients in biology
+
     salinity_fit:
       bottom_salinity:
         value: 30
@@ -323,6 +326,7 @@ physics:
         value: 0
         variable_name: cbeta
         description: beta coefficient of fresh water salinity fit
+
     upwelling:
       max_upwelling_velocity:
         value: 2.5e-5
@@ -334,6 +338,7 @@ physics:
         units: m
         variable_name: d
         description: upwelling variation depth parameter
+
   K_PAR_fit:
     # Coefficients for Photosynthetic Available Radiation (PAR)
     # elimination (K) from Collins, et al (2008)
@@ -379,6 +384,7 @@ biology:
     value: False
     variable_name: strong_limitation
     description: high light limitation for single species case
+
   mesozooplankton:
     mesozoo_winter_conc:
       value: 0.1
@@ -476,3 +482,24 @@ biology:
       units: uM N
       variable_name: rate_mesozoo%Z_HalfSat
       description: mesozooplankton microzoo grazing half saturation const
+
+  mesodinium_rubrum:
+    mesorub_max_ingestion:
+      value: 1.0e-5
+      units: uM N
+      variable_name: rate_mesorub%R
+      description: mesodinium rubrum maximum ingestion rate
+    mesorub_chloroplast_assim_eff:
+      value: 0.6
+      variable_name: rate_mesorub%eff
+      description: mesodinium rubrum chloroplast assimilation efficiency
+    mesorub_grazing_limit:
+      value: 0.4
+      units: uM N
+      variable_name: rate_mesozoo%PicoPredSlope
+      description: mesodinium rubrum grazing limit
+    mesorub_grazing_half_saturation:
+      value: 0.2
+      units: uM N
+      variable_name: rate_mesozoo%PicoHalfSat
+      description: mesodinium rubrum grazing half saturation constant
