@@ -489,10 +489,10 @@ biology:
       units: uM N
       variable_name: rate_mesorub%R
       description: mesodinium rubrum maximum ingestion rate
-    mesorub_chloroplast_assim_eff:
+    mesorub_assimulation_efficiency:
       value: 0.6
       variable_name: rate_mesorub%eff
-      description: mesodinium rubrum chloroplast assimilation efficiency
+      description: mesodinium rubrum grazed mass assimilation efficiency
     mesorub_grazing_limit:
       value: 0.4
       units: uM N
