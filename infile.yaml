@@ -415,7 +415,7 @@ biology:
       value: 1.39e-5
       units: uM N / s
       variable_name: rate_mesozoo%R
-      description: mesozooplankton maximum ingestion rate
+      description: mesozooplankton maximum ingestion rate @ 20 deg C
     mesozoo_grazing_limit:
       value: 0.2
       units: uM N
@@ -486,10 +486,10 @@ biology:
   mesodinium_rubrum:
     mesorub_max_ingestion:
       value: 1.0e-5
-      units: uM N
+      units: uM N / s
       variable_name: rate_mesorub%R
-      description: mesodinium rubrum maximum ingestion rate
-    mesorub_assimulation_efficiency:
+      description: mesodinium rubrum maximum ingestion rate @ 20 deg C
+    mesorub_assimilation_efficiency:
       value: 0.6
       variable_name: rate_mesorub%eff
       description: mesodinium rubrum grazed mass assimilation efficiency
@@ -503,3 +503,104 @@ biology:
       units: uM N
       variable_name: rate_mesozoo%PicoHalfSat
       description: mesodinium rubrum grazing half saturation constant
+
+  microzooplankton:
+    microzoo_max_ingestion:
+      value: 2.32e-5
+      units: uM N / s
+      variable_name: rate_uzoo%R
+      description: microzooplankton maximum ingestion rate @ 20 deg C
+    microzoo_assimilation_efficiency:
+      value: 0.6
+      variable_name: rate_uzoo%eff
+      description: microzooplankton grazed mass assimilation efficiency
+    microzoo_natural_mortality:
+      value: 2.3e-6
+      units: uM N / s
+      variable_name: rate_uzoo%Rm
+      description: microzooplankton natural mortality rate @ 20 deg C
+    microzoo_excretion:
+      value: 1.39e-6
+      units: uM N / s
+      variable_name: rate_uzoo%excr
+      description: microzooplankton excretion rate @ 20 deg C
+    microzoo_grazing_limit:
+      value: 0.4
+      units: uM N
+      variable_name: rate_uzoo%PredSlope
+      description: microzooplankton total grazing limit
+    microzoo_grazing_half_saturation:
+      value: 0.4
+      units: uM N
+      variable_name: rate_uzoo%HalfSat
+      description: microzooplankton total grazing half saturation constant
+    microzoo_pico_preference:
+      value: 1
+      variable_name: rate_uzoo%PicoPref
+      description: microzooplankton preference for pico-phytoplankton
+    microzoo_pico_grazing_limit:
+      value: 0.2
+      units: uM N
+      variable_name: rate_uzoo%PicoPredSlope
+      description: microzooplankton pico-phyto grazing limit
+    microzoo_pico_grazing_half_saturation:
+      value: 0.4
+      units: uM N
+      variable_name: rate_uzoo%PicoHalfSat
+      description: microzooplankton pico-phyto grazing half saturation const
+    microzoo_micro_preference:
+      value: 0.34
+      variable_name: rate_uzoo%MicroPref
+      description: microzooplankton preference for micro-phytoplankton
+    microzoo_micro_grazing_limit:
+      value: 1
+      units: uM N
+      variable_name: rate_uzoo%MicroPredSlope
+      description: microzooplankton micro-phyto grazing limit
+    microzoo_micro_grazing_half_saturation:
+      value: 2
+      units: uM N
+      variable_name: rate_uzoo%MicroHalfSat
+      description: microzooplankton micro-phyto grazing half saturation const
+    microzoo_nano_preference:
+      value: 0.34
+      variable_name: rate_uzoo%NanoPref
+      description: microzooplankton preference for nano-phytoplankton
+    microzoo_nano_grazing_limit:
+      value: 1
+      units: uM N
+      variable_name: rate_uzoo%NanoPredSlope
+      description: microzooplankton nano-phyto grazing limit
+    microzoo_nano_grazing_half_saturation:
+      value: 2
+      units: uM N
+      variable_name: rate_uzoo%NanoHalfSat
+      description: microzooplankton nano-phyto grazing half saturation const
+    microzoo_PON_preference:
+      value: 0.33
+      variable_name: rate_uzoo%PON_Pref
+      description: microzooplankton preference for PON
+    microzoo_PON_grazing_limit:
+      value: 0.4
+      units: uM N
+      variable_name: rate_uzoo%PON_PredSlope
+      description: microzooplankton PON grazing limit
+    microzoo_PON_grazing_half_saturation:
+      value: 0.4
+      units: uM N
+      variable_name: rate_uzoo%PON_HalfSat
+      description: microzooplankton PON grazing half saturation const
+    microzoo_microzoo_preference:
+      value: 0.16
+      variable_name: rate_uzoo%PON_Pref
+      description: microzooplankton preference for microzoo cannibalism
+    microzoo_microzoo_grazing_limit:
+      value: 1
+      units: uM N
+      variable_name: rate_uzoo%PON_PredSlope
+      description: microzooplankton microzoo grazing limit
+    microzoo_microzoo_grazing_half_saturation:
+      value: 2
+      units: uM N
+      variable_name: rate_uzoo%PON_HalfSat
+      description: microzooplankton microzoo grazing half saturation const
