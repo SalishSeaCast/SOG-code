@@ -68,7 +68,7 @@ initial_conditions:
     description: initial micro/nano/pico phytoplankton ratios from chlorophyl
   nitrate_chl_conversion:
     value: 1.5
-    units: mg / m^3 . uM N
+    units: mg/m^3 . uM N
     variable_name: N2chl
     description: phytoplankton nitrate to chlorophyl conversion factor
 
@@ -248,12 +248,12 @@ physics:
   turbulence:
     momentum_wave_break_diffusivity:
       value: 1.5e-4
-      units: m^2 / s
+      units: m^2/s
       variable_name: nu%m%int_wave
       description: internal wave breaking diffusivity for momentum qtys
     scalar_wave_break_diffusivity:
       value: 1.5e-5
-      units: m^2 / s
+      units: m^2/s
       variable_name: nu%T%int_wave, nu%S%int_wave
       description: internal wave breaking diffusivity for scalar qtys
     shear_diffusivity_smoothing:
@@ -265,7 +265,7 @@ physics:
     flux:
       mean_total_flow:
         value: 3624
-        units: m^3 / s
+        units: m^3/s
         variable_name: Qbar
         description: mean total fresh water flow
       common_exponent:
@@ -604,3 +604,201 @@ biology:
       units: uM N
       variable_name: rate_uzoo%PON_HalfSat
       description: microzooplankton microzoo grazing half saturation const
+
+  phytoplankton_growth:
+    micro_max_growth:
+      value: 4.25e-5
+      units: 1/s
+      variable_name: rate_micro%R
+      description: micro-phyto maximum growth rate
+      # Hitchcock 1980, 1.4 d-1 for T. nordenskelii at 10degrees
+    nano_max_growth:
+      value: 2e-5
+      units: 1/s
+      variable_name: rate_nano%R
+      description: nano-phyto maximum growth rate
+      # Yih 2004, 0.5 d-1 for Mesodinium rubrum (at 15 degrees) and
+      # Q10**2 tuned up and at Q10**1
+    pico_max_growth:
+      value: 1.74e-5
+      units: 1/s
+      variable_name: rate_pico%R
+      description: pico-phyto maximum growth rate
+    micro_optimal_light:
+      value: 38.4
+      units: W/m^2
+      variable_name: rate_micro%Iopt
+      description: micro-phyto growth optimal light level
+      #  Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
+    nano_optimal_light:
+      value: 38.4
+      units: W/m^2
+      variable_name: rate_nano%Iopt
+      description: nano-phyto growth optimal light level
+      # Yih plus Cloern 1977 Half-sat very similar
+    pico_optimal_light:
+      value: 10
+      units: W/m^2
+      variable_name: rate_pico%Iopt
+      description: pico-phyto growth optimal light level
+    micro_max_temperature:
+      value: 25
+      units: deg C
+      variable_name: rate_micro%maxtemp
+      description: micro-phyto growth high temperature limit
+      # Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
+      # general diatoms increase this
+    nano_max_temperature:
+      value: 28
+      units: deg C
+      variable_name: rate_nano%maxtemp
+      description: nano-phyto growth high temperature limit
+      # Mesodinium, Cloern 1977
+    pico_max_temperature:
+      value: 35
+      units: deg C
+      variable_name: rate_pico%maxtemp
+      description: pico-phyto growth high temperature limit
+    micro_temperature_range:
+      value: 15
+      units: deg C
+      variable_name: rate_micro%temprange
+      description: micro-phyto growth limit range below max temperature
+      # equal growth at 10 and 15 so range down 8
+      # (which Q10 should be about const)
+    nano_temperature_range:
+      value: 12
+      units: deg C
+      variable_name: rate_nano%temprange
+      description: nano-phyto growth limit range below max temperature
+      # starts turning over earlier
+    pico_temperature_range:
+      value: 1
+      units: deg C
+      variable_name: rate_pico%temprange
+      description: pico-phyto growth limit range below max temperature
+    micro_Q10_exponent:
+      value: 1
+      variable_name: rate_micro%Q10exp
+      description: micro-phyto growth Q10 temperature effect exponent
+      # 1 for T. n.  but 2 is better for S.c.
+    nano_Q10_exponent:
+      value: 1
+      variable_name: rate_nano%Q10exp
+      description: nano-phyto growth Q10 temperature effect exponent
+      # Cloern 1977 data 2.0 not working try 1.0
+    pico_Q10_exponent:
+      value: 1
+      variable_name: rate_pico%Q10exp
+      description: pico-phyto growth Q10 temperature effect exponent
+    micro_gamma_loss:
+      value: 0
+      variable_name: rate_micro%gamma
+      description: micro-phyto growth light limitation loss parameter
+    nano_gamma_loss:
+      value: 0
+      variable_name: rate_nano%gamma
+      description: nano-phyto growth light limitation loss parameter
+    pico_gamma_loss:
+      value: 0
+      variable_name: rate_pico%gamma
+      description: pico-phyto growth light limitation loss parameter
+    micro_NO3_half_saturation:
+      value: 0.5
+      variable_name: rate_micro%k
+      description: micro-phyto growth NO3 half-saturation constant
+    nano_NO3_half_saturation:
+      value: 0.3
+      variable_name: rate_nano%k
+      description: nano-phyto growth NO3 half-saturation constant
+    pico_NO3_half_saturation:
+      value: 0.05
+      variable_name: rate_pico%k
+      description: pico-phyto growth NO3 half-saturation constant
+    micro_NO3_vs_NH_preference:
+      value: 1
+      variable_name: rate_micro%kapa
+      description: micro-phyto growth preference for NO3 over NH factor
+    nano_NO3_vs_NH_preference:
+      value: 0.6
+      variable_name: rate_nano%kapa
+      description: nano-phyto growth preference for NO3 over NH factor
+    pico_NO3_vs_NH_preference:
+      value: 0.2
+      variable_name: rate_pico%kapa
+      description: pico-phyto growth preference for NO3 over NH factor
+    micro_NH_inhibition_exponent:
+      value: 0
+      variable_name: rate_micro%gamma_o
+      description: micro-phyto growth exponential NH inhibition of NO3 uptake
+    nano_NH_inhibition_exponent:
+      value: 0
+      variable_name: rate_nano%gamma_o
+      description: nano-phyto growth exponential NH inhibition of NO3 uptake
+    pico_NH_inhibition_exponent:
+      value: 0
+      variable_name: rate_pico%gamma_o
+      description: pico-phyto growth exponential NH inhibition of NO3 uptake
+    micro_half_saturation:
+      value: 0
+      variable_name: rate_micro%N_o
+      description: micro-phyto growth overal half-saturation constant
+    nano_half_saturation:
+      value: 0
+      variable_name: rate_nano%N_o
+      description: nano-phyto growth overal half-saturation constant
+    pico_half_saturation:
+      value: 0
+      variable_name: rate_pico%N_o
+      description: pico-phyto growth overal half-saturation constant
+    micro_N_inhibition_exponent:
+      value: 0
+      variable_name: rate_micro%N_x
+      description: micro-phyto growth N inhibition exponent
+    nano_N_inhibition_exponent:
+      value: 0
+      variable_name: rate_nano%N_x
+      description: nano-phyto growth N inhibition exponent
+    pico_N_inhibition_exponent:
+      value: 0
+      variable_name: rate_pico%N_x
+      description: pico-phyto growth N inhibition exponent
+    micro_Si_N_ratio:
+      value: 2.2
+      variable_name: rate_micro%Si_ratio
+      description: micro-phyto silicon/nitrogen ratio
+    nano_Si_N_ratio:
+      value: 0
+      variable_name: rate_nano%Si_ratio
+      description: nano-phyto silicon/nitrogen ratio
+    pico_Si_N_ratio:
+      value: 0
+      variable_name: rate_pico%Si_ratio
+      description: pico-phyto silicon/nitrogen ratio
+    micro_Si_half_saturation:
+      value: 1
+      variable_name: rate_micro%K_Si
+      description: micro-phyto growth Si half saturation constant
+    nano_Si_half_saturation:
+      value: 0
+      variable_name: rate_nano%K_Si
+      description: nano-phyto growth Si half saturation constant
+    pico_Si_half_saturation:
+      value: 0
+      variable_name: rate_pico%K_Si
+      description: pico-phyto growth Si half saturation constant
+    micro_natural_mortality:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: rate_micro%Rm
+      description: micro-phyto natural mortality
+    nano_natural_mortality:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: rate_nano%Rm
+      description: nano-phyto natural mortality
+    pico_natural_mortality:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: rate_pico%Rm
+      description: pico-phyto natural mortality
