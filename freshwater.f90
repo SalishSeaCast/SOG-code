@@ -85,8 +85,7 @@ module freshwater
        use_Fw_nutrients, &  ! Include influence of Fw nutrients?
        Northern_return ! include return flow from North?
   real(kind=dp), dimension(:), allocatable :: &
-       Fw, &  ! Fresh water flux profile
-       FN     ! northern return flow profile
+       Fw    ! Fresh water flux profile
   real(kind=dp) :: &
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
@@ -94,7 +93,6 @@ module freshwater
        Qbar, &          ! mean total freshwater 
        F_SOG, &          ! exponential of SOG component of Ft     
        F_RI, &           ! exponential of RI component of Ft     
-       Northern_frac, & ! fraction of outgoing freshwater returned from the North
        cbottom, &       ! bottom salinity   
        ! values for salinity fit
        calpha, &        
@@ -143,9 +141,6 @@ contains
     use_Fw_nutrients = getparl('use_Fw_nutrients')
     ! Include the return flow from the Northern Strait
     Northern_return = getparl('northern_return_flow_on')
-    if (Northern_return) then
-       Northern_frac = getpard('northern_return_flow_frac')
-    end if 
 
     ! Values for salinity fit
     cbottom = getpard('cbottom')
@@ -266,15 +261,9 @@ contains
        F_n = 0.0d0
     else
        Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
-       if (Northern_return) then
-          FN = Northern_frac * 0.5d0 * Ft * &
-               (1.d0 - tanh((grid%d_i - 15.d0) / 7.5d0))
-       else
-          FN = 0.0d0
-       endif
-       F_n = cbottom * (Fw + FN * 0.d0)  ! remove salinity effect of return flow
+       F_n = cbottom * Fw  
        if (UseRiverTemp) then
-          Q_n = Q_n + (RiverTemp - Td_old) * Fw  ! northern impact not included yet
+          Q_n = Q_n + (RiverTemp - Td_old) * Fw  
        endif
     endif
   end subroutine freshwater_phys
@@ -375,7 +364,7 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Fresh water flux and salinity contribution profile arrays"
-    allocate(Fw(0:M), FN(0:M), F_n(0:M), &
+    allocate(Fw(0:M), F_n(0:M), &
          stat=allocstat) 
     call alloc_check(allocstat, msg)
   end subroutine alloc_freshwater_variables
@@ -390,7 +379,7 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "Fresh water flux and salinity contribution profile arrays"
-    deallocate(Fw, FN, F_n, &
+    deallocate(Fw, F_n, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_freshwater_variables
