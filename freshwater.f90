@@ -34,7 +34,8 @@ module freshwater
        Ft,         &  ! Total fresh water flux
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
-                      ! parameterization.
+                     ! parameterization.
+       Northern_return, & ! include return flow from North?
        ! Diagnostics:
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
@@ -68,7 +69,9 @@ module freshwater
   !
   ! Public:
   logical :: &
-       Fw_surface  ! Add all of the fresh water on the surface?
+       Fw_surface, &  ! Add all of the fresh water on the surface?
+       Northern_return ! include return flow from North?
+
   real(kind=dp) :: &
        Ft,  &  ! Total fresh water flux
        upwell  ! Upwelling velocity from river flows parameterization
@@ -82,8 +85,7 @@ module freshwater
   !
   ! Private:
   logical :: &
-       use_Fw_nutrients, &  ! Include influence of Fw nutrients?
-       Northern_return ! include return flow from North?
+       use_Fw_nutrients  ! Include influence of Fw nutrients?
   real(kind=dp), dimension(:), allocatable :: &
        Fw    ! Fresh water flux profile
   real(kind=dp) :: &
