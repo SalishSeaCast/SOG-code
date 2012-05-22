@@ -43,7 +43,7 @@ module northern_influence
 
 ! Private variables:
   type(quantities) :: sum  ! current integrated value of the various quantities
-
+  public :: quantities, sum  ! just for diagnostics
 contains
 
   subroutine init_northern(T, NO, NH, Si, DIC, Oxy)
@@ -82,7 +82,7 @@ contains
 
     ! Local variables
     real(kind=dp), parameter :: &
-        tauN = 10*86400.d0   ! integration timescale
+        tauN = 5*86400.d0   ! integration timescale
     real(kind=dp) :: a, b ! parameters, calculated once
 
     a = dt/tauN
@@ -116,13 +116,13 @@ contains
     integer :: index ! vertical grid step index
     real(kind=dp) :: requiredsum ! value of integrated sum for the quantity
     real(kind=dp), parameter :: & 
-         f = 1/43.d0 ! strength of upwelling influence, in 1/m, estimated 
-    ! May 18, 2012, page 173, Susan's lab book
+         f = 3 * 1/43.d0 ! strength of upwelling influence, in 1/m, estimated 
+    ! May 18, 2012, page 173, Susan's lab book ! 3 is scaling factor
 
     ! choose the sum we wish
-    if (quantity .eq. 'T') then
+    if (quantity .eq. 'T  ') then
        requiredsum = sum%T
-    elseif (quantity .eq. 'NO') then
+    elseif (quantity .eq. 'NO ') then
        requiredsum = sum%NO
     else
        write (*,*) 'problems in northern_influence'
@@ -130,9 +130,9 @@ contains
     endif
 
     do index = 1, grid%M
-       advection(index) = advection(index) + f * upwell * &
+       advection(index) = advection(index) + dt * f * upwell * &
        (requiredsum - qty(index)) * &
-       exp(-(grid%d_g(index)-15.d0)**2/(5.d0**2))
+       exp(-(grid%d_g(index)-17.d0)**2/(7.d0**2))
     enddo
 
   end subroutine northern_advection
