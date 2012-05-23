@@ -241,7 +241,7 @@ contains
     ! Handle the special cases of d1 = d2 and q_d1 = q_d2.  Note that
     ! abs(x) < epsilon(x) is a real-number-robust test for x == 0.
     if (abs(d2 - d1) < epsilon(d2 - d1) &
-         .or. abs(q_d2 - q_d1) < epsilon(q_d2 - q_d1)) then
+         .and. abs(q_d2 - q_d1) < epsilon(q_d2 - q_d1)) then
        avg = q_d1
        return
     endif
