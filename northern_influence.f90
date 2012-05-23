@@ -103,6 +103,8 @@ contains
     use precision_defs, only: dp
     use grid_mod, only: grid
     use freshwater, only: upwell  ! Maximum freshwater upwelling velocity
+    use buoyancy, only: Bnr_profile ! buoyancy profile, calculated here
+    use water_properties, only: alpha, rho, Cp ! expansion coefficient, density, specific heat capacity
 
     implicit none
     ! Arguments
@@ -118,6 +120,7 @@ contains
     real(kind=dp), parameter :: & 
          f = 3 * 1/43.d0 ! strength of upwelling influence, in 1/m, estimated 
     ! May 18, 2012, page 173, Susan's lab book ! 3 is scaling factor
+    real(kind=dp) :: increment ! the increase in temperature at a given depth
 
     ! choose the sum we wish
     if (quantity .eq. 'T  ') then
@@ -130,9 +133,14 @@ contains
     endif
 
     do index = 1, grid%M
-       advection(index) = advection(index) + dt * f * upwell * &
-       (requiredsum - qty(index)) * &
-       exp(-(grid%d_g(index)-17.d0)**2/(7.d0**2))
+       increment =  dt * f * upwell * &
+            (requiredsum - qty(index)) * &
+            exp(-(grid%d_g(index)-17.d0)**2/(7.d0**2))
+       advection(index) = advection(index) + increment
+       if (quantity .eq. 'T  ') then
+          Bnr_profile(index) = increment * &
+               alpha%g(index) / (cp%g(index) * rho%g(index))
+       endif
     enddo
 
   end subroutine northern_advection
