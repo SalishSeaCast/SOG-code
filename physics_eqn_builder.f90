@@ -132,7 +132,10 @@ contains
 
     ! Element from other modules:
     !
+    ! Functions:
+    use northern_influence, only: northern_advection
     ! Variable Declarations:
+    use freshwater, only: northern_return  ! include advection from north?
     use baroclinic_pressure, only: &
          dPdx_b, &  ! Cross-strait component of baroclinic pressure gradient
          dPdy_b     ! Along-strait component of baroclinic pressure gradient
@@ -159,6 +162,10 @@ contains
     ! Add vertical advection due to upwelling to velocity components,
     ! temperature, and salinity RHS arrays
     call calc_phys_upwell_advection(dt, U, V, T, S)
+
+    ! Add advection from north (only affects T and tracers)
+    if (northern_return) &
+         call northern_advection (dt, T, 'T  ', T_RHS%diff_adv%new)
 
     ! Calculate the Coriolis and baroclinic pressure gradient
     ! components of the RHS arrays for the velocity components

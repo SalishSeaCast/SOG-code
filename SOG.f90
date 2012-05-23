@@ -66,6 +66,9 @@ program SOG
   use irradiance, only: &
        I_total, &  ! Total light available for water column heating
        Q_n         ! Non-turbulent hear flux profile
+  use freshwater, only: & 
+       S_riv, &    ! value of salinity from fit (for diagnostics)
+       Northern_return  ! logical to determine use of northern influence code
   !
   ! Subroutines and functions:
   use fundamental_constants, only: init_constants
@@ -79,7 +82,7 @@ program SOG
        new_to_old_physics, dalloc_physics_variables
   use water_properties, only: calc_rho_alpha_beta_Cp_profiles
   use air_sea_fluxes, only: wind_stress, longwave_latent_sensible_heat
-  use freshwater, only: freshwater_phys, S_riv
+  use freshwater, only: freshwater_phys
   use buoyancy, only: calc_buoyancy
   use baroclinic_pressure, only: baroclinic_P_gradient, &
        new_to_old_vel_integrals
@@ -100,6 +103,7 @@ program SOG
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
+  use northern_influence, only: init_northern, integrate_northern
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
@@ -172,9 +176,14 @@ program SOG
 
   ! Initialize fitbottom
   call init_fitbottom()
-
+ 
   ! Initialize the physics model
   call init_physics(grid%M)
+
+! Initialize the Northern Influence
+  if (Northern_return)  &
+       call init_northern(T%new(0), N%O(0), N%H(0), Si(0), &
+       DIC(0), Oxy(0))
 
   ! Initialize the biology model
   call init_biology(grid%M)
@@ -499,6 +508,11 @@ program SOG
      ! For those variables that we have no data for, assume uniform at
      ! bottom of domain
      call bot_bound_uniform(grid%M, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi)
+
+     ! Integrate surface values for northern influence calculation
+     if (Northern_return) &
+          call integrate_northern(T%new(0), N%O(0), N%H(0), &
+           Si(0), DIC(0), Oxy(0), dt)
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason.    !!!
