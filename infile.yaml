@@ -802,3 +802,37 @@ biology:
       units: 1/s
       variable_name: rate_pico%Rm
       description: pico-phyto natural mortality
+
+  remineralization_rates:
+    NH_remin_rate:
+      value: 4e-7
+      units: 1/s
+      variable_name: remin%NH
+      description: ammonium remineralization rate
+      # 2 months at 10 degrees (Alain 0.1 d-1 at 10degrees)
+      # Denman 0.01d-1 at 10 degrees (2e-7)
+    DON_remin_rate:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: remin%D_DON
+      description: DON detritus remineralization rate
+      # Alain and Jeffery 0.2d-1
+      # Debby: should be longer than PON but she did not include very
+      # labile portion
+    PON_remin_rate:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: remin%D_PON
+      description: PON detritus remineralization rate
+      # Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes
+      # but this is for deeply sinking and thus refractory stuff?)
+      # Debby and Alain 0.2d-1
+      # Denman 0.1d-1 at 10 degrees
+    bSi_remin_rate:
+      value: 3.24e-6
+      units: 1/s
+      variable_name: remin%D_bSi
+      description: ammonium remineralization rate
+      # from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
+      # of same order as a number of papers including Brzezinski et al,;
+      # Bidle and Azam 1998 without bacteria
