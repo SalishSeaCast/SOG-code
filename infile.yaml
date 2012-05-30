@@ -902,7 +902,7 @@ biology:
       variable_name: frac_waste_FNM%Bsi
       description: waste fraction from pico-phyto natural mortality to bSi
 
-  micro_zooplankton_waste:
+  microzooplankton_waste:
     microzoo_mort_NH:
       value: 0
       variable_name: frac_waste_ZNM%NH
