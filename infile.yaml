@@ -943,3 +943,88 @@ biology:
       value: 0
       variable_name: frac_waste_ZEX%Bsi
       description: waste fraction from micro-zoo excretion to bSi
+
+  mesozooplankton_grazing_waste:
+    mesozoo_microphyto_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_DEM%NH
+      description: waste fraction from mesozoo grazing microphyto to NH
+      #  Alain, excretion rate to growth rate
+    mesozoo_microphyto_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_DEM%DON
+      description: waste fraction from mesozoo grazing microphyto to DON
+      # Denman and Pena about 1/2 to dissolved
+    mesozoo_microphyto_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_DEM%PON
+      description: waste fraction from mesozoo grazing microphyto to PON
+    mesozoo_microphyto_grazing_ref:
+      value: 0.57
+      variable_name: frac_waste_DEM%Ref
+      description: waste fraction from mesozoo grazing microphyto to Ref
+      # assimiliation minus excretion
+    mesozoo_microphyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_DEM%Bsi
+      description: waste fraction from mesozoo grazing microphyto to Bsi
+    mesozoo_nanophyto_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_NEM%NH
+      description: waste fraction from mesozoo grazing nanophyto to NH
+    mesozoo_nanophyto_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_NEM%DON
+      description: waste fraction from mesozoo grazing nanophyto to DON
+    mesozoo_nanophyto_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_NEM%PON
+      description: waste fraction from mesozoo grazing nanophyto to PON
+    mesozoo_nanophyto_grazing_ref:
+      value: 0.57
+      variable_name: frac_waste_NEM%Ref
+      description: waste fraction from mesozoo grazing nanophyto to Ref
+    mesozoo_nanophyto_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_NEM%Bsi
+      description: waste fraction from mesozoo grazing nanophyto to Bsi
+    mesozoo_PON_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_PEM%NH
+      description: waste fraction from mesozoo grazing PON to NH
+    mesozoo_PON_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_PEM%DON
+      description: waste fraction from mesozoo grazing PON to DON
+    mesozoo_PON_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_PEM%PON
+      description: waste fraction from mesozoo grazing PON to PON
+    mesozoo_PON_grazing_ref:
+      value: 0.57
+      variable_name: frac_waste_PEM%Ref
+      description: waste fraction from mesozoo grazing PON to Ref
+    mesozoo_PON_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_PEM%Bsi
+      description: waste fraction from mesozoo grazing PON to Bsi
+    mesozoo_microzoo_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_ZEM%NH
+      description: waste fraction from mesozoo grazing microzoo to NH
+    mesozoo_microzoo_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_ZEM%DON
+      description: waste fraction from mesozoo grazing microzoo to DON
+    mesozoo_microzoo_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_ZEM%PON
+      description: waste fraction from mesozoo grazing microzoo to PON
+    mesozoo_microzoo_grazing_ref:
+      value: 0.57
+      variable_name: frac_waste_ZEM%Ref
+      description: waste fraction from mesozoo grazing microzoo to Ref
+    mesozoo_microzoo_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_ZEM%Bsi
+      description: waste fraction from mesozoo grazing microzoo to Bsi
