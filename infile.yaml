@@ -901,3 +901,45 @@ biology:
       value: 1
       variable_name: frac_waste_FNM%Bsi
       description: waste fraction from pico-phyto natural mortality to bSi
+
+  micro_zooplankton_waste:
+    microzoo_mort_NH:
+      value: 0
+      variable_name: frac_waste_ZNM%NH
+      description: waste fraction from micro-zoo natural mortality to NH
+    microzoo_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_ZNM%DON
+      description: waste fraction from micro-zoo natural mortality to DON
+    microzoo_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_ZNM%PON
+      description: waste fraction from micro-zoo natural mortality to PON
+    microzoo_mort_ref:
+      value: 0.05
+      variable_name: frac_waste_ZNM%Ref
+      description: waste fraction from micro-zoo natural mortality to refractory
+    microzoo_mort_bSi:
+      value: 0
+      variable_name: frac_waste_ZNM%Bsi
+      description: waste fraction from micro-zoo natural mortality to bSi
+    microzoo_excrete_NH:
+      value: 1
+      variable_name: frac_waste_ZEX%NH
+      description: waste fraction from micro-zoo excretion to NH
+    microzoo_excrete_DON:
+      value: 0
+      variable_name: frac_waste_ZEX%DON
+      description: waste fraction from micro-zoo excretion to DON
+    microzoo_excrete_PON:
+      value: 0
+      variable_name: frac_waste_ZEX%PON
+      description: waste fraction from micro-zoo excretion to PON
+    microzoo_excrete_ref:
+      value: 0
+      variable_name: frac_waste_ZEX%Ref
+      description: waste fraction from micro-zoo excretion to refractory
+    microzoo_excrete_bSi:
+      value: 0
+      variable_name: frac_waste_ZEX%Bsi
+      description: waste fraction from micro-zoo excretion to bSi
