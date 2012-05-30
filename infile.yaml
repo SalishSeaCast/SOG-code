@@ -836,3 +836,68 @@ biology:
       # from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
       # of same order as a number of papers including Brzezinski et al,;
       # Bidle and Azam 1998 without bacteria
+
+  phytoplankton_mortality_waste:
+    micro_mort_NH:
+      value: 0
+      variable_name: frac_waste_DNM%NH
+      description: waste fraction from micro-phyto natural mortality to NH
+    micro_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_DNM%DON
+      description: waste fraction from micro-phyto natural mortality to DON
+      # Denman and Pena: about 1/2 to dissolved
+    micro_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_DNM%PON
+      description: waste fraction from micro-phyto natural mortality to PON
+    micro_mort_ref:
+      value: 0.05
+      variable_name: frac_waste_DNM%Ref
+      description: waste fraction from micro-phyto natural mort to refractory
+    micro_mort_bSi:
+      value: 1
+      variable_name: frac_waste_DNM%Bsi
+      description: waste fraction from micro-phyto natural mortality to bSi
+    nano_mort_NH:
+      value: 0
+      variable_name: frac_waste_NNM%NH
+      description: waste fraction from nano-phyto natural mortality to NH
+    nano_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_NNM%DON
+      description: waste fraction from nano-phyto natural mortality to DON
+      # Denman and Pena: about 1/2 to dissolved
+    nano_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_NNM%PON
+      description: waste fraction from nano-phyto natural mortality to PON
+    nano_mort_ref:
+      value: 0.05
+      variable_name: frac_waste_NNM%Ref
+      description: waste fraction from nano-phyto natural mort to refractory
+    nano_mort_bSi:
+      value: 1
+      variable_name: frac_waste_NNM%Bsi
+      description: waste fraction from nano-phyto natural mortality to bSi
+    pico_mort_NH:
+      value: 0
+      variable_name: frac_waste_FNM%NH
+      description: waste fraction from pico-phyto natural mortality to NH
+    pico_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_FNM%DON
+      description: waste fraction from pico-phyto natural mortality to DON
+      # Denman and Pena: about 1/2 to dissolved
+    pico_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_FNM%PON
+      description: waste fraction from pico-phyto natural mortality to PON
+    pico_mort_ref:
+      value: 0.05
+      variable_name: frac_waste_FNM%Ref
+      description: waste fraction from pico-phyto natural mort to refractory
+    pico_mort_bSi:
+      value: 1
+      variable_name: frac_waste_FNM%Bsi
+      description: waste fraction from pico-phyto natural mortality to bSi
