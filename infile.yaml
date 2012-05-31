@@ -944,7 +944,7 @@ biology:
       variable_name: frac_waste_ZEX%Bsi
       description: waste fraction from micro-zoo excretion to bSi
 
-  mesozooplankton_grazing_waste:
+  sloppy_eating:
     mesozoo_microphyto_grazing_NH:
       value: 0.03
       variable_name: frac_waste_DEM%NH
