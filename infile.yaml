@@ -1028,3 +1028,123 @@ biology:
       value: 0
       variable_name: frac_waste_ZEM%Bsi
       description: waste fraction from mesozoo grazing microzoo to Bsi
+    microzoo_microphyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_DEZ%NH
+      description: waste fraction from microzoo grazing microphyto to NH
+    microzoo_microphyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_DEZ%DON
+      description: waste fraction from microzoo grazing microphyto to DON
+    microzoo_microphyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_DEZ%PON
+      description: waste fraction from microzoo grazing microphyto to PON
+    microzoo_microphyto_grazing_ref:
+      value: 0
+      variable_name: frac_waste_DEZ%Ref
+      description: waste fraction from microzoo grazing microphyto to Ref
+    microzoo_microphyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_DEZ%Bsi
+      description: waste fraction from microzoo grazing microphyto to Bsi
+    microzoo_nanophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_NEZ%NH
+      description: waste fraction from microzoo grazing nanophyto to NH
+    microzoo_nanophyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_NEZ%DON
+      description: waste fraction from microzoo grazing nanophyto to DON
+    microzoo_nanophyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_NEZ%PON
+      description: waste fraction from microzoo grazing nanophyto to PON
+    microzoo_nanophyto_grazing_ref:
+      value: 0
+      variable_name: frac_waste_NEZ%Ref
+      description: waste fraction from microzoo grazing nanophyto to Ref
+    microzoo_nanophyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_NEZ%Bsi
+      description: waste fraction from microzoo grazing nanophyto to Bsi
+    microzoo_picophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_FEZ%NH
+      description: waste fraction from microzoo grazing picophyto to NH
+    microzoo_picophyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_FEZ%DON
+      description: waste fraction from microzoo grazing picophyto to DON
+    microzoo_picophyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_FEZ%PON
+      description: waste fraction from microzoo grazing picophyto to PON
+    microzoo_picophyto_grazing_ref:
+      value: 0
+      variable_name: frac_waste_FEZ%Ref
+      description: waste fraction from microzoo grazing picophyto to Ref
+    microzoo_picophyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_FEZ%Bsi
+      description: waste fraction from microzoo grazing picophyto to Bsi
+    microzoo_PON_grazing_NH:
+      value: 0
+      variable_name: frac_waste_PEZ%NH
+      description: waste fraction from microzoo grazing PON to NH
+    microzoo_PON_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_PEZ%DON
+      description: waste fraction from microzoo grazing PON to DON
+    microzoo_PON_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_PEZ%PON
+      description: waste fraction from microzoo grazing PON to PON
+    microzoo_PON_grazing_ref:
+      value: 0
+      variable_name: frac_waste_PEZ%Ref
+      description: waste fraction from microzoo grazing PON to Ref
+    microzoo_PON_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_PEZ%Bsi
+      description: waste fraction from microzoo grazing PON to Bsi
+    microzoo_microzoo_grazing_NH:
+      value: 0
+      variable_name: frac_waste_ZEZ%NH
+      description: waste fraction from microzoo grazing microzoo to NH
+    microzoo_microzoo_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_ZEZ%DON
+      description: waste fraction from microzoo grazing microzoo to DON
+    microzoo_microzoo_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_ZEZ%PON
+      description: waste fraction from microzoo grazing microzoo to PON
+    microzoo_microzoo_grazing_ref:
+      value: 0
+      variable_name: frac_waste_ZEZ%Ref
+      description: waste fraction from microzoo grazing microzoo to Ref
+    microzoo_microzoo_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_ZEZ%Bsi
+      description: waste fraction from microzoo grazing microzoo to Bsi
+    mesorub_picophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_FEN%NH
+      description: waste fraction from mesorub grazing picophyto to NH
+    mesorub_picophyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_FEN%DON
+      description: waste fraction from mesorub grazing picophyto to DON
+    mesorub_picophyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_FEN%PON
+      description: waste fraction from mesorub grazing picophyto to PON
+    mesorub_picophyto_grazing_ref:
+      value: 0
+      variable_name: frac_waste_FEN%Ref
+      description: waste fraction from mesorub grazing picophyto to Ref
+    mesorub_picophyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_FEN%Bsi
+      description: waste fraction from mesorub grazing picophyto to Bsi
