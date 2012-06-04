@@ -851,7 +851,7 @@ biology:
       value: 0.475
       variable_name: frac_waste_DNM%PON
       description: waste fraction from micro-phyto natural mortality to PON
-    micro_mort_ref:
+    micro_mort_refr:
       value: 0.05
       variable_name: frac_waste_DNM%Ref
       description: waste fraction from micro-phyto natural mort to refractory
@@ -872,7 +872,7 @@ biology:
       value: 0.475
       variable_name: frac_waste_NNM%PON
       description: waste fraction from nano-phyto natural mortality to PON
-    nano_mort_ref:
+    nano_mort_refr:
       value: 0.05
       variable_name: frac_waste_NNM%Ref
       description: waste fraction from nano-phyto natural mort to refractory
@@ -893,7 +893,7 @@ biology:
       value: 0.475
       variable_name: frac_waste_FNM%PON
       description: waste fraction from pico-phyto natural mortality to PON
-    pico_mort_ref:
+    pico_mort_refr:
       value: 0.05
       variable_name: frac_waste_FNM%Ref
       description: waste fraction from pico-phyto natural mort to refractory
@@ -915,7 +915,7 @@ biology:
       value: 0.475
       variable_name: frac_waste_ZNM%PON
       description: waste fraction from micro-zoo natural mortality to PON
-    microzoo_mort_ref:
+    microzoo_mort_refr:
       value: 0.05
       variable_name: frac_waste_ZNM%Ref
       description: waste fraction from micro-zoo natural mortality to refractory
@@ -935,7 +935,7 @@ biology:
       value: 0
       variable_name: frac_waste_ZEX%PON
       description: waste fraction from micro-zoo excretion to PON
-    microzoo_excrete_ref:
+    microzoo_excrete_refr:
       value: 0
       variable_name: frac_waste_ZEX%Ref
       description: waste fraction from micro-zoo excretion to refractory
@@ -959,7 +959,7 @@ biology:
       value: 0.2
       variable_name: frac_waste_DEM%PON
       description: waste fraction from mesozoo grazing microphyto to PON
-    mesozoo_microphyto_grazing_ref:
+    mesozoo_microphyto_grazing_refr:
       value: 0.57
       variable_name: frac_waste_DEM%Ref
       description: waste fraction from mesozoo grazing microphyto to Ref
@@ -980,7 +980,7 @@ biology:
       value: 0.2
       variable_name: frac_waste_NEM%PON
       description: waste fraction from mesozoo grazing nanophyto to PON
-    mesozoo_nanophyto_grazing_ref:
+    mesozoo_nanophyto_grazing_refr:
       value: 0.57
       variable_name: frac_waste_NEM%Ref
       description: waste fraction from mesozoo grazing nanophyto to Ref
@@ -1000,7 +1000,7 @@ biology:
       value: 0.2
       variable_name: frac_waste_PEM%PON
       description: waste fraction from mesozoo grazing PON to PON
-    mesozoo_PON_grazing_ref:
+    mesozoo_PON_grazing_refr:
       value: 0.57
       variable_name: frac_waste_PEM%Ref
       description: waste fraction from mesozoo grazing PON to Ref
@@ -1020,7 +1020,7 @@ biology:
       value: 0.2
       variable_name: frac_waste_ZEM%PON
       description: waste fraction from mesozoo grazing microzoo to PON
-    mesozoo_microzoo_grazing_ref:
+    mesozoo_microzoo_grazing_refr:
       value: 0.57
       variable_name: frac_waste_ZEM%Ref
       description: waste fraction from mesozoo grazing microzoo to Ref
@@ -1040,7 +1040,7 @@ biology:
       value: 0.5
       variable_name: frac_waste_DEZ%PON
       description: waste fraction from microzoo grazing microphyto to PON
-    microzoo_microphyto_grazing_ref:
+    microzoo_microphyto_grazing_refr:
       value: 0
       variable_name: frac_waste_DEZ%Ref
       description: waste fraction from microzoo grazing microphyto to Ref
@@ -1060,7 +1060,7 @@ biology:
       value: 0.5
       variable_name: frac_waste_NEZ%PON
       description: waste fraction from microzoo grazing nanophyto to PON
-    microzoo_nanophyto_grazing_ref:
+    microzoo_nanophyto_grazing_refr:
       value: 0
       variable_name: frac_waste_NEZ%Ref
       description: waste fraction from microzoo grazing nanophyto to Ref
@@ -1080,7 +1080,7 @@ biology:
       value: 0.5
       variable_name: frac_waste_FEZ%PON
       description: waste fraction from microzoo grazing picophyto to PON
-    microzoo_picophyto_grazing_ref:
+    microzoo_picophyto_grazing_refr:
       value: 0
       variable_name: frac_waste_FEZ%Ref
       description: waste fraction from microzoo grazing picophyto to Ref
@@ -1100,7 +1100,7 @@ biology:
       value: 0.5
       variable_name: frac_waste_PEZ%PON
       description: waste fraction from microzoo grazing PON to PON
-    microzoo_PON_grazing_ref:
+    microzoo_PON_grazing_refr:
       value: 0
       variable_name: frac_waste_PEZ%Ref
       description: waste fraction from microzoo grazing PON to Ref
@@ -1120,7 +1120,7 @@ biology:
       value: 0.5
       variable_name: frac_waste_ZEZ%PON
       description: waste fraction from microzoo grazing microzoo to PON
-    microzoo_microzoo_grazing_ref:
+    microzoo_microzoo_grazing_refr:
       value: 0
       variable_name: frac_waste_ZEZ%Ref
       description: waste fraction from microzoo grazing microzoo to Ref
@@ -1140,7 +1140,7 @@ biology:
       value: 0.5
       variable_name: frac_waste_FEN%PON
       description: waste fraction from mesorub grazing picophyto to PON
-    mesorub_picophyto_grazing_ref:
+    mesorub_picophyto_grazing_refr:
       value: 0
       variable_name: frac_waste_FEN%Ref
       description: waste fraction from mesorub grazing picophyto to Ref
