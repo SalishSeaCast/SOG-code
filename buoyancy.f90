@@ -119,7 +119,6 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
      Bnr_profile(grid%M+1) = Bnr_profile(grid%M)
      Bnr = depth_average(Bnr_profile, 0.d0, hml) * g * hml - &
           depth_average(Bnr_profile, hml, grid%D) * g * (grid%D - hml)
-     write (*,*) Bfw, Bnr, hml
   else
      Bnr = 0
   endif
