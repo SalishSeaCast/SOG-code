@@ -1148,3 +1148,34 @@ biology:
       value: 1
       variable_name: frac_waste_FEN%Bsi
       description: waste fraction from mesorub grazing picophyto to Bsi
+
+  sinking_rates:
+    microphyto_min_sink_rate:
+      value: 0.5
+      units: m/d
+      variable_name: w_sink%Pmicro_min
+      description: microphyto minimum sinking rate
+      # Alain
+    microphyto_max_sink_rate:
+      value: 1.2
+      units: m/d
+      variable_name: w_sink%Pmicro_max
+      description: microphyto maximum sinking rate
+      # Alain
+    PON_sink_rate:
+      value: 8e-5
+      units: m/s
+      variable_name: w_sink%D_PON
+      description: PON detritus sinking rate
+      # Jeffery quoting Dune and Bacon
+    refr_sink_rate:
+      value: 0
+      units: m/s
+      variable_name: w_sink%D_refr
+      description: refractory nitrogen detritus sinking rate
+    bSi_sink_rate:
+      value: 8e-5
+      units: m/s
+      variable_name: w_sink%D_bSi
+      description: biogenic silicon detritus sinking rate
+      # match NO3 particles
