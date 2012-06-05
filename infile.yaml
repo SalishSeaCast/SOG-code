@@ -145,7 +145,7 @@ profiles_results:
   # TODO: Replace year-day and day-second lists with a list of
   # date/times for profile outputs
   profile_days:
-    value: [303, 313]
+    value: [303]
     variable_name: profday
     description: list of year-days to output profiles for
   profile_times:
@@ -183,7 +183,7 @@ profiles_results:
     variable_name: Hoff_endyr
     description: year to end Hoffmueller results output
   hoffmueller_end_day:
-    value: 294
+    value: 305
     variable_name: Hoff_endday
     description: day to end Hoffmueller results output
   hoffmueller_end_sec:
@@ -319,7 +319,7 @@ physics:
         # the terms containing alpha2 to be eliminated from the
         # calculation.
       gamma:
-        value: 0.633
+        value: 0.0633
         variable_name: cgamma
         description: gamma coefficient of fresh water salinity fit
       beta:
@@ -469,7 +469,7 @@ biology:
       variable_name: rate_mesozoo%PON_HalfSat
       description: mesozooplankton PON feeding half saturation const
     mesozoo_microzoo_preference:
-      value: 0.35
+      value: 0.2
       variable_name: rate_mesozoo%Z_Pref
       description: mesozooplankton preference for microzooplankton
     mesozoo_microzoo_grazing_limit:
@@ -494,12 +494,12 @@ biology:
       variable_name: rate_mesorub%eff
       description: mesodinium rubrum grazed mass assimilation efficiency
     mesorub_grazing_limit:
-      value: 0.4
+      value: 0.2
       units: uM N
       variable_name: rate_mesozoo%PicoPredSlope
       description: mesodinium rubrum grazing limit
     mesorub_grazing_half_saturation:
-      value: 0.2
+      value: 0.4
       units: uM N
       variable_name: rate_mesozoo%PicoHalfSat
       description: mesodinium rubrum grazing half saturation constant
@@ -563,7 +563,7 @@ biology:
       variable_name: rate_uzoo%MicroHalfSat
       description: microzooplankton micro-phyto grazing half saturation const
     microzoo_nano_preference:
-      value: 0.34
+      value: 0.16
       variable_name: rate_uzoo%NanoPref
       description: microzooplankton preference for nano-phytoplankton
     microzoo_nano_grazing_limit:
@@ -1093,11 +1093,11 @@ biology:
       variable_name: frac_waste_PEZ%NH
       description: waste fraction from microzoo grazing PON to NH
     microzoo_PON_grazing_DON:
-      value: 0.5
+      value: 0
       variable_name: frac_waste_PEZ%DON
       description: waste fraction from microzoo grazing PON to DON
     microzoo_PON_grazing_PON:
-      value: 0.5
+      value: 1
       variable_name: frac_waste_PEZ%PON
       description: waste fraction from microzoo grazing PON to PON
     microzoo_PON_grazing_refr:
