@@ -802,3 +802,380 @@ biology:
       units: 1/s
       variable_name: rate_pico%Rm
       description: pico-phyto natural mortality
+
+  remineralization_rates:
+    NH_remin_rate:
+      value: 4e-7
+      units: 1/s
+      variable_name: remin%NH
+      description: ammonium remineralization rate
+      # 2 months at 10 degrees (Alain 0.1 d-1 at 10degrees)
+      # Denman 0.01d-1 at 10 degrees (2e-7)
+    DON_remin_rate:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: remin%D_DON
+      description: DON detritus remineralization rate
+      # Alain and Jeffery 0.2d-1
+      # Debby: should be longer than PON but she did not include very
+      # labile portion
+    PON_remin_rate:
+      value: 2.3e-6
+      units: 1/s
+      variable_name: remin%D_PON
+      description: PON detritus remineralization rate
+      # Jeffery 0.035 day-1 at 10 degrees (1 month agrees with 370 notes
+      # but this is for deeply sinking and thus refractory stuff?)
+      # Debby and Alain 0.2d-1
+      # Denman 0.1d-1 at 10 degrees
+    bSi_remin_rate:
+      value: 3.24e-6
+      units: 1/s
+      variable_name: remin%D_bSi
+      description: ammonium remineralization rate
+      # from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
+      # of same order as a number of papers including Brzezinski et al,;
+      # Bidle and Azam 1998 without bacteria
+
+  phytoplankton_mortality_waste:
+    micro_mort_NH:
+      value: 0
+      variable_name: frac_waste_DNM%NH
+      description: waste fraction from micro-phyto natural mortality to NH
+    micro_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_DNM%DON
+      description: waste fraction from micro-phyto natural mortality to DON
+      # Denman and Pena: about 1/2 to dissolved
+    micro_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_DNM%PON
+      description: waste fraction from micro-phyto natural mortality to PON
+    micro_mort_refr:
+      value: 0.05
+      variable_name: frac_waste_DNM%Ref
+      description: waste fraction from micro-phyto natural mort to refractory
+    micro_mort_bSi:
+      value: 1
+      variable_name: frac_waste_DNM%Bsi
+      description: waste fraction from micro-phyto natural mortality to bSi
+    nano_mort_NH:
+      value: 0
+      variable_name: frac_waste_NNM%NH
+      description: waste fraction from nano-phyto natural mortality to NH
+    nano_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_NNM%DON
+      description: waste fraction from nano-phyto natural mortality to DON
+      # Denman and Pena: about 1/2 to dissolved
+    nano_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_NNM%PON
+      description: waste fraction from nano-phyto natural mortality to PON
+    nano_mort_refr:
+      value: 0.05
+      variable_name: frac_waste_NNM%Ref
+      description: waste fraction from nano-phyto natural mort to refractory
+    nano_mort_bSi:
+      value: 1
+      variable_name: frac_waste_NNM%Bsi
+      description: waste fraction from nano-phyto natural mortality to bSi
+    pico_mort_NH:
+      value: 0
+      variable_name: frac_waste_FNM%NH
+      description: waste fraction from pico-phyto natural mortality to NH
+    pico_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_FNM%DON
+      description: waste fraction from pico-phyto natural mortality to DON
+      # Denman and Pena: about 1/2 to dissolved
+    pico_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_FNM%PON
+      description: waste fraction from pico-phyto natural mortality to PON
+    pico_mort_refr:
+      value: 0.05
+      variable_name: frac_waste_FNM%Ref
+      description: waste fraction from pico-phyto natural mort to refractory
+    pico_mort_bSi:
+      value: 1
+      variable_name: frac_waste_FNM%Bsi
+      description: waste fraction from pico-phyto natural mortality to bSi
+
+  microzooplankton_waste:
+    microzoo_mort_NH:
+      value: 0
+      variable_name: frac_waste_ZNM%NH
+      description: waste fraction from micro-zoo natural mortality to NH
+    microzoo_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_ZNM%DON
+      description: waste fraction from micro-zoo natural mortality to DON
+    microzoo_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_ZNM%PON
+      description: waste fraction from micro-zoo natural mortality to PON
+    microzoo_mort_refr:
+      value: 0.05
+      variable_name: frac_waste_ZNM%Ref
+      description: waste fraction from micro-zoo natural mortality to refractory
+    microzoo_mort_bSi:
+      value: 0
+      variable_name: frac_waste_ZNM%Bsi
+      description: waste fraction from micro-zoo natural mortality to bSi
+    microzoo_excrete_NH:
+      value: 1
+      variable_name: frac_waste_ZEX%NH
+      description: waste fraction from micro-zoo excretion to NH
+    microzoo_excrete_DON:
+      value: 0
+      variable_name: frac_waste_ZEX%DON
+      description: waste fraction from micro-zoo excretion to DON
+    microzoo_excrete_PON:
+      value: 0
+      variable_name: frac_waste_ZEX%PON
+      description: waste fraction from micro-zoo excretion to PON
+    microzoo_excrete_refr:
+      value: 0
+      variable_name: frac_waste_ZEX%Ref
+      description: waste fraction from micro-zoo excretion to refractory
+    microzoo_excrete_bSi:
+      value: 0
+      variable_name: frac_waste_ZEX%Bsi
+      description: waste fraction from micro-zoo excretion to bSi
+
+  sloppy_eating:
+    mesozoo_microphyto_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_DEM%NH
+      description: waste fraction from mesozoo grazing microphyto to NH
+      #  Alain, excretion rate to growth rate
+    mesozoo_microphyto_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_DEM%DON
+      description: waste fraction from mesozoo grazing microphyto to DON
+      # Denman and Pena about 1/2 to dissolved
+    mesozoo_microphyto_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_DEM%PON
+      description: waste fraction from mesozoo grazing microphyto to PON
+    mesozoo_microphyto_grazing_refr:
+      value: 0.57
+      variable_name: frac_waste_DEM%Ref
+      description: waste fraction from mesozoo grazing microphyto to Ref
+      # assimiliation minus excretion
+    mesozoo_microphyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_DEM%Bsi
+      description: waste fraction from mesozoo grazing microphyto to Bsi
+    mesozoo_nanophyto_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_NEM%NH
+      description: waste fraction from mesozoo grazing nanophyto to NH
+    mesozoo_nanophyto_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_NEM%DON
+      description: waste fraction from mesozoo grazing nanophyto to DON
+    mesozoo_nanophyto_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_NEM%PON
+      description: waste fraction from mesozoo grazing nanophyto to PON
+    mesozoo_nanophyto_grazing_refr:
+      value: 0.57
+      variable_name: frac_waste_NEM%Ref
+      description: waste fraction from mesozoo grazing nanophyto to Ref
+    mesozoo_nanophyto_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_NEM%Bsi
+      description: waste fraction from mesozoo grazing nanophyto to Bsi
+    mesozoo_PON_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_PEM%NH
+      description: waste fraction from mesozoo grazing PON to NH
+    mesozoo_PON_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_PEM%DON
+      description: waste fraction from mesozoo grazing PON to DON
+    mesozoo_PON_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_PEM%PON
+      description: waste fraction from mesozoo grazing PON to PON
+    mesozoo_PON_grazing_refr:
+      value: 0.57
+      variable_name: frac_waste_PEM%Ref
+      description: waste fraction from mesozoo grazing PON to Ref
+    mesozoo_PON_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_PEM%Bsi
+      description: waste fraction from mesozoo grazing PON to Bsi
+    mesozoo_microzoo_grazing_NH:
+      value: 0.03
+      variable_name: frac_waste_ZEM%NH
+      description: waste fraction from mesozoo grazing microzoo to NH
+    mesozoo_microzoo_grazing_DON:
+      value: 0.2
+      variable_name: frac_waste_ZEM%DON
+      description: waste fraction from mesozoo grazing microzoo to DON
+    mesozoo_microzoo_grazing_PON:
+      value: 0.2
+      variable_name: frac_waste_ZEM%PON
+      description: waste fraction from mesozoo grazing microzoo to PON
+    mesozoo_microzoo_grazing_refr:
+      value: 0.57
+      variable_name: frac_waste_ZEM%Ref
+      description: waste fraction from mesozoo grazing microzoo to Ref
+    mesozoo_microzoo_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_ZEM%Bsi
+      description: waste fraction from mesozoo grazing microzoo to Bsi
+    microzoo_microphyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_DEZ%NH
+      description: waste fraction from microzoo grazing microphyto to NH
+    microzoo_microphyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_DEZ%DON
+      description: waste fraction from microzoo grazing microphyto to DON
+    microzoo_microphyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_DEZ%PON
+      description: waste fraction from microzoo grazing microphyto to PON
+    microzoo_microphyto_grazing_refr:
+      value: 0
+      variable_name: frac_waste_DEZ%Ref
+      description: waste fraction from microzoo grazing microphyto to Ref
+    microzoo_microphyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_DEZ%Bsi
+      description: waste fraction from microzoo grazing microphyto to Bsi
+    microzoo_nanophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_NEZ%NH
+      description: waste fraction from microzoo grazing nanophyto to NH
+    microzoo_nanophyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_NEZ%DON
+      description: waste fraction from microzoo grazing nanophyto to DON
+    microzoo_nanophyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_NEZ%PON
+      description: waste fraction from microzoo grazing nanophyto to PON
+    microzoo_nanophyto_grazing_refr:
+      value: 0
+      variable_name: frac_waste_NEZ%Ref
+      description: waste fraction from microzoo grazing nanophyto to Ref
+    microzoo_nanophyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_NEZ%Bsi
+      description: waste fraction from microzoo grazing nanophyto to Bsi
+    microzoo_picophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_FEZ%NH
+      description: waste fraction from microzoo grazing picophyto to NH
+    microzoo_picophyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_FEZ%DON
+      description: waste fraction from microzoo grazing picophyto to DON
+    microzoo_picophyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_FEZ%PON
+      description: waste fraction from microzoo grazing picophyto to PON
+    microzoo_picophyto_grazing_refr:
+      value: 0
+      variable_name: frac_waste_FEZ%Ref
+      description: waste fraction from microzoo grazing picophyto to Ref
+    microzoo_picophyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_FEZ%Bsi
+      description: waste fraction from microzoo grazing picophyto to Bsi
+    microzoo_PON_grazing_NH:
+      value: 0
+      variable_name: frac_waste_PEZ%NH
+      description: waste fraction from microzoo grazing PON to NH
+    microzoo_PON_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_PEZ%DON
+      description: waste fraction from microzoo grazing PON to DON
+    microzoo_PON_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_PEZ%PON
+      description: waste fraction from microzoo grazing PON to PON
+    microzoo_PON_grazing_refr:
+      value: 0
+      variable_name: frac_waste_PEZ%Ref
+      description: waste fraction from microzoo grazing PON to Ref
+    microzoo_PON_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_PEZ%Bsi
+      description: waste fraction from microzoo grazing PON to Bsi
+    microzoo_microzoo_grazing_NH:
+      value: 0
+      variable_name: frac_waste_ZEZ%NH
+      description: waste fraction from microzoo grazing microzoo to NH
+    microzoo_microzoo_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_ZEZ%DON
+      description: waste fraction from microzoo grazing microzoo to DON
+    microzoo_microzoo_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_ZEZ%PON
+      description: waste fraction from microzoo grazing microzoo to PON
+    microzoo_microzoo_grazing_refr:
+      value: 0
+      variable_name: frac_waste_ZEZ%Ref
+      description: waste fraction from microzoo grazing microzoo to Ref
+    microzoo_microzoo_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_ZEZ%Bsi
+      description: waste fraction from microzoo grazing microzoo to Bsi
+    mesorub_picophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_FEN%NH
+      description: waste fraction from mesorub grazing picophyto to NH
+    mesorub_picophyto_grazing_DON:
+      value: 0.5
+      variable_name: frac_waste_FEN%DON
+      description: waste fraction from mesorub grazing picophyto to DON
+    mesorub_picophyto_grazing_PON:
+      value: 0.5
+      variable_name: frac_waste_FEN%PON
+      description: waste fraction from mesorub grazing picophyto to PON
+    mesorub_picophyto_grazing_refr:
+      value: 0
+      variable_name: frac_waste_FEN%Ref
+      description: waste fraction from mesorub grazing picophyto to Ref
+    mesorub_picophyto_grazing_bSi:
+      value: 1
+      variable_name: frac_waste_FEN%Bsi
+      description: waste fraction from mesorub grazing picophyto to Bsi
+
+  sinking_rates:
+    microphyto_min_sink_rate:
+      value: 0.5
+      units: m/d
+      variable_name: w_sink%Pmicro_min
+      description: microphyto minimum sinking rate
+      # Alain
+    microphyto_max_sink_rate:
+      value: 1.2
+      units: m/d
+      variable_name: w_sink%Pmicro_max
+      description: microphyto maximum sinking rate
+      # Alain
+    PON_sink_rate:
+      value: 8e-5
+      units: m/s
+      variable_name: w_sink%D_PON
+      description: PON detritus sinking rate
+      # Jeffery quoting Dune and Bacon
+    refr_sink_rate:
+      value: 0
+      units: m/s
+      variable_name: w_sink%D_refr
+      description: refractory nitrogen detritus sinking rate
+    bSi_sink_rate:
+      value: 8e-5
+      units: m/s
+      variable_name: w_sink%D_bSi
+      description: biogenic silicon detritus sinking rate
+      # match NO3 particles
