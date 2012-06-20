@@ -409,7 +409,7 @@
 
 ! File names and control variables for forcing data (wind, meteorology, river flows)
 "use average/hist forcing" "no" "yes = use aver. forcing data only; no = fail if insufficient data; fill = use forcing data below to end, then switch to aver. data; histfill = use forcing data below to end, then switch to hist data"
-"wind"         "../SOG-forcing/wind/SH_total.dat"  "wind forcing data"
+"wind"         "../SOG-forcing/wind/SH_patched_Jul22c_2010.dat"  "wind forcing data"
 "air temp"     "../SOG-forcing/met/YVRhistAT"      "air temperature forcing data"
 "cloud"        "../SOG-forcing/met/YVRhistCF"      "cloud fraction forcing data"
 "humidity"     "../SOG-forcing/met/YVRhistHum"     "humidity forcing data"
