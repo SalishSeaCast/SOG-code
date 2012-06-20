@@ -185,14 +185,6 @@ contains
          Td_old,       &  ! Deep (bottom of grid) temperature        
          h                ! Mixing layer depth
 
-    ! Local variables
-    real(kind=dp), parameter :: &
-         Qmean = 2720.0d0 ! Mean fraser river flow from entrainment fit
-    ! totalfresh water into system (Fraser + rest multiplied up from Englishman
-    !real (kind=dp) :: totalfresh 
-
- 
-
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qriver + Eriver
 
