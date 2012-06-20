@@ -50,7 +50,7 @@ module forcing
   !
   ! Number of years of data  (set to NY years)
   ! Array sizes for forcing data; based on NY years of data
-  integer, parameter :: NY = 5 ! number of years of data
+  integer, parameter :: NY = 2 ! number of years of data
   integer, parameter :: &
        wind_n = NY * 366 * 24, &  ! hourly data
        met_n =  NY * 366, &  ! daily data
