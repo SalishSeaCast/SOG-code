@@ -755,6 +755,7 @@ end subroutine read_forcing
   integer function accum_day (year, day) result(day_met)
     ! Calculate the accumulated day from Jan 1 of startyear. Based on
     ! the fact that NY years of data is read in. 
+    use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     integer, intent(in) :: day, year ! year day and year
@@ -772,10 +773,10 @@ end subroutine read_forcing
           stop
        endif
        nleap = 0
-       do i=1:numY
+       do i=1,numY
           if (leapyear(year-i)) nleap = nleap + 1
        enddo
-       day_met = day + NY*365 + nleap
+       day_met = day + numY*365 + nleap
     endif
 
   end function accum_day
