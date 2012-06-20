@@ -178,6 +178,7 @@ module numerics
   type(timedelta) :: &
        ndt, &  ! Time step
        dur     ! Run duration
+  integer :: count_negative
 
 contains
 
@@ -210,6 +211,7 @@ contains
     ! using integer division here)
     dur = datetime_diff(endDatetime, initDatetime)
     steps = 1 + (dur%days * 86400 + dur%secs) / ndt%secs
+    count_negative = 0
   end subroutine init_numerics
 
 
@@ -269,17 +271,30 @@ contains
        if (die) then
           write(stdout, *) "Error: Negative value(s) in " // msg, &
                " at day = ", day, " time = ", time
+          ! Find the index of the most -ve value
+          do j = lbound, size(vector) + lbound - 1
+             if (vector(j) < 0.0d0) then
+                ! Output the message
+                write(stdout, *) " j = ", j
+             endif
+          enddo
        else
-          write(stdout, *) "Warning: Negative value(s) in " // msg &
-               // " set to zero at day = ", day, " time = ", time
-       endif
-       ! Find the index of the most -ve value
-       do j = lbound, size(vector) + lbound - 1
-          if (vector(j) < 0.0d0) then
-             ! Output the message
-             write(stdout, *) " j = ", j
+          if (count_negative < 25) then
+             write(stdout, *) "Warning: Negative value(s) in " // msg &
+                  // " set to zero at day = ", day, " time = ", time
+             ! Find the index of the most -ve value
+             do j = lbound, size(vector) + lbound - 1
+                if (vector(j) < 0.0d0) then
+                   ! Output the message
+                   write(stdout, *) " j = ", j
+                endif
+             enddo
+             count_negative = count_negative + 1
+          elseif (count_negative == 25) then
+             write(stdout, *) "25 Negative warnings is all you get"
+             count_negative = count_negative + 1
           endif
-       enddo
+       endif
        ! Stop execution if -ve values are fatal
        if (die) then
           call exit(1)
