@@ -4,13 +4,13 @@ module northern_influence
   !
   ! Public Subroutines
   !
-  ! init_northern()
+  ! init_northern() 
   !   - set initial values for the sums
   !
-  ! read_northern_params (TO COME)
+  ! read_northern_params()
   !   - Read parameter values from the infile
   !
-  ! integrate_northern()
+  ! integrate_northern(T, NO, NH, Si, DON, DIC, DOC, Oxy, dt)
   !   - Calculates the back average of the surface values of the parameters
   !   Does this by damping the average with a timescale, tauN, and adding the
   !   new value at an appropriate scale
@@ -47,7 +47,9 @@ module northern_influence
           NO,      &  ! Nitrate
           NH,      &  ! Ammonium
           Si,      &  ! Silicon
+          DON,     &  ! Dissolved organic nitrogen 
           DIC,     &  ! Dissolved inorganic carbon
+          DOC,     &  ! Dissolved organic carbon 
           Oxy         ! Dissolved oxygen column number in CTD
   end type quantities
 
@@ -73,7 +75,9 @@ contains
          T,  &  ! Temperature profile arrays
          N, &  ! current surface nitrate conc.
          Si, &  ! current surface silicon conc.
+         DON, & ! current surface diss. org. N
          DIC, & ! current surface DIC conc.
+         DOC, & ! current surface DOC conc.
          Oxy    ! current surface oxygen conc.
     implicit none
     ! Argument:
@@ -88,7 +92,9 @@ contains
     sum%NO = N%O(0)
     sum%NH = N%H(0)
     sum%Si = Si(0)
+    sum%DON = DON(0)
     sum%DIC = DIC(0)
+    sum%DOC = DOC(0)
     sum%Oxy = Oxy(0)
   end subroutine init_northern
 
@@ -113,8 +119,7 @@ contains
     endif
   end subroutine read_northern_params
 
-
-  subroutine integrate_northern (T, NO, NH, Si, DIC, Oxy, dt)
+  subroutine integrate_northern (T, NO, NH, Si, DON, DIC, DOC, Oxy, dt)
     ! updates the integrated value for each of the quantities
     implicit none
     ! Arguments:
@@ -123,7 +128,9 @@ contains
           NO, &  ! current surface nitrate conc.
           NH, &  ! current surface ammonium conc.
           Si, &  ! current surface silicon conc.
+          DON, & ! current surface DON conc.
           DIC, & ! current surface DIC conc.
+          DOC, & ! current surface DOC conc.
           Oxy, & ! current surface oxygen conc.
           dt     ! time step
 
@@ -138,7 +145,9 @@ contains
     sum%NO = b*sum%NO + a*NO
     sum%NH = b*sum%NH + a*NH
     sum%Si = b*sum%Si + a*Si
+    sum%DON = b*sum%DON + a*DON
     sum%DIC = b*sum%DIC + a*DIC
+    sum%DOC = b*sum%DOC + a*DOC
     sum%Oxy = b*sum%Oxy + a*Oxy
   end subroutine integrate_northern
 
@@ -168,7 +177,15 @@ contains
        requiredsum = sum%T
     elseif (quantity .eq. 'NO ') then
        requiredsum = sum%NO
-    else
+    elseif (quantity .eq. 'NH ') then
+       requiredsum = sum%NH
+    elseif (quantity .eq. 'Si ') then
+       requiredsum = sum%Si    
+    elseif (quantity .eq. 'DON') then
+       requiredsum = sum%DON
+    elseif (quantity .eq. 'DOC') then
+       requiredsum = sum%DOC
+    else  ! still need to add carbon/oxygen
        write (*,*) 'problems in northern_influence'
        stop
     endif
