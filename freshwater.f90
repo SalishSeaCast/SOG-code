@@ -35,8 +35,7 @@ module freshwater
        Ft,         &  ! Total fresh water flux
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
-                     ! parameterization.
-       Northern_return, & ! include return flow from North?
+                      ! parameterization.
        ! Diagnostics:
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
@@ -70,8 +69,7 @@ module freshwater
   !
   ! Public:
   logical :: &
-       Fw_surface, &  ! Add all of the fresh water on the surface?
-       Northern_return ! include return flow from North?
+       Fw_surface  ! Add all of the fresh water on the surface?
 
   real(kind=dp) :: &
        Ft,  &  ! Total fresh water flux
@@ -153,8 +151,6 @@ contains
     endif
     ! Include effect of Fw nutrients?
     use_Fw_nutrients = getparl('use_Fw_nutrients')
-    ! Include the return flow from the Northern Strait
-    Northern_return = getparl('northern_return_flow_on')
 
     ! Values for salinity fit
     cbottom = getpard('cbottom')
@@ -206,9 +202,6 @@ contains
 
     ! Local variables
     real(kind=dp), parameter :: &
-         Qmean = 2720.0d0, & ! Mean fraser river flow from entrainment fit
-    ! totalfresh water into system (Fraser + rest multiplied up from Englishman
-    !real (kind=dp) :: totalfresh 
          pCO2_riv = 7.5d-4   ! River pCO2 [atm]
     real(kind=dp) :: &
          RiverTC,    &    ! Major river temperature [deg C]
@@ -330,7 +323,6 @@ contains
     ! Calculate the freshwater biological fluxes.
 
     use grid_mod, only: grid
-    use air_sea_fluxes, only: pCO2_atm
     implicit none
     
     character (len=*), intent(in) :: qty

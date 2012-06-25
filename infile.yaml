@@ -289,16 +289,41 @@ physics:
         units: m
         variable_name: Fw_depth
         description: depth to distribute fresh water flux over
-      northern_return_flow:
-        value: False
-        variable_name: Northern_return
-        description: include fresh water return flow from the north?
-        # TODO: handle northern return flow fraction when norther_return_flow
-        # is True
       include_fresh_water_nutrients:
         value: True
         variable_name: use_Fw_nutrients
         description: include influence of fresh water nutrients in biology
+      northern_return_flow:
+        value: False
+        variable_name: Northern_return
+        description: include fresh water return flow from the north?
+      # The next 5 "northern" parameters are only used when
+      # northern_return_flow == True
+      northern_influence_strength:
+        value: 0.8863  # 1 / 43
+        units: m
+        variable_name: strength
+        description: strength of northern influence
+      northern_influence_integration_time_scale:
+        value: 2
+        units: d
+        variable_name: tauN
+        description: integration time scale for northern influence
+      northern_water_depth_peak:
+        value: 23
+        units: m
+        variable_name: central_depth
+        description: depth peak of incoming northerrn water
+      northern_water_upper_extension:
+        value: 12
+        units: m
+        variable_name: upper_width
+        description: upward extension of incoming northern water
+      northern_water_lower_extension:
+        value: 10
+        units: m
+        variable_name: lower_width
+        description: downward extension of incoming northern water
 
     salinity_fit:
       bottom_salinity:
@@ -1187,7 +1212,7 @@ forcing_data:
     variable_name: use_average_forcing_data
     description: yes=avg only; no=fail if data runs out; fill=historic then avg
   wind_forcing_file:
-    value: ../SOG-forcing/wind/SH_total.dat
+    value: ../SOG-forcing/wind/SH_patched_Jul22c_2010.dat
     variable_name: n/a
     description: wind forcing data path/filename
   air_temperature_forcing_file:

@@ -6,7 +6,7 @@ module forcing
   ! 70s, 80s, 90s.  Metar data goes back to 50s and river data goes
   ! back to 1910s.
 
-  ! Read in 2 years of data at a time. Wind data is in a single array
+  ! Read in NY years of data at a time. Wind data is in a single array
   ! with 1 hour per line, cf, atemp and humid are in array of day and
   ! time, and the river flows are one value per day.
 
@@ -48,19 +48,20 @@ module forcing
 
   ! Private module variable declarations:
   !
-  ! Number of years of data  (set to 2 years)
-  ! Array sizes for forcing data; based on 2 years of data
+  ! Number of years of data  (set to NY years)
+  ! Array sizes for forcing data; based on NY years of data
+  integer, parameter :: NY = 2 ! number of years of data
   integer, parameter :: &
-       wind_n = (366 + 366) * 24, &  ! hourly data
-       met_n = 366 + 366, &  ! daily data
-       river_n = 366 + 366   ! daily data
+       wind_n = NY * 366 * 24, &  ! hourly data
+       met_n =  NY * 366, &  ! daily data
+       river_n = NY * 366   ! daily data
   ! Data variables
   real(kind=dp) :: wind_eastnorth(wind_n), &
        wind_northwest(wind_n)
   real(kind=sp) :: cf(met_n,24), atemp(met_n,24), &
-       humid(732,24)
+       humid(met_n,24)
   real(kind=dp) :: Qriver(river_n), Eriver(river_n)
-  ! Starting year (startyear + 1 more year of data)
+  ! Starting year (startyear + NY-1 more years of data)
   integer :: startyear
 
 contains
@@ -176,15 +177,15 @@ contains
         .or. use_average_forcing_data .eq. "fill") then
        open(unit=forcing_data, file=getpars("average/hist wind"))
        flush(stdout)
-       do jc = 1, wind_n/2
+       do jc = 1, wind_n/NY
           read(forcing_data,*) day, month, year, hour, &
                   wind_eastnorth(jc), wind_northwest(jc)
           wind_eastnorth(jc) = 0.94* wind_eastnorth(jc)  ! tune the wind down
           wind_northwest(jc) = 0.94* wind_northwest(jc)
        enddo
-       do jc = wind_n/2+1, wind_n
-          wind_eastnorth(jc) = wind_eastnorth(jc-wind_n/2)
-          wind_northwest(jc) = wind_northwest(jc-wind_n/2)
+       do jc = wind_n/NY+1, wind_n
+          wind_eastnorth(jc) = wind_eastnorth(jc-wind_n/NY)
+          wind_northwest(jc) = wind_northwest(jc-wind_n/NY)
        enddo
        close(forcing_data)
     elseif (use_average_forcing_data .eq. "histfill") then
@@ -232,15 +233,15 @@ contains
         .or. use_average_forcing_data .eq. "fill") then
        open(unit=forcing_data, file=getpars("average/hist air temp"))
        flush(stdout)
-       do jc = 1, met_n/2
+       do jc = 1, met_n/NY
           read(forcing_data,*) stn, year, month, day, para, &
                (atemp(jc,j), j=1,24)
           do j= 1, 24
              atemp(jc,j) = CtoK(atemp(jc,j) / 10.)
           enddo
        enddo
-       do jc = met_n/2+1, met_n
-          atemp(jc,:) = atemp(jc-met_n/2,:)
+       do jc = met_n/NY+1, met_n
+          atemp(jc,:) = atemp(jc-met_n/NY,:)
        enddo
        close(forcing_data)
     elseif (use_average_forcing_data .eq. "histfill") then
@@ -300,13 +301,13 @@ contains
         .or. use_average_forcing_data .eq. "fill") then
        open(unit=forcing_data, file=getpars("average/hist cloud"))
        flush(stdout)
-       do jc = 1, met_n/2
+       do jc = 1, met_n/NY
           read(forcing_data,*) stn, year, month, day, para, (cf(jc,j), j=1,24)
           ! later on basically use integers by taking floor
           cf(jc,:) = floor(cf(jc,:) + 0.5)
        enddo
-       do jc = met_n/2+1, met_n
-          cf(jc,:) = cf(jc-met_n/2,:)
+       do jc = met_n/NY+1, met_n
+          cf(jc,:) = cf(jc-met_n/NY,:)
        enddo
        close(forcing_data)
     elseif  (use_average_forcing_data .eq. "histfill") then
@@ -353,12 +354,12 @@ contains
         .or. use_average_forcing_data .eq. "fill") then
        open(unit=forcing_data, file=getpars("average/hist humidity"))
        flush(stdout)
-       do jc = 1, met_n/2
+       do jc = 1, met_n/NY
           read(forcing_data,*) stn, year, month, day, para, &
                (humid(jc,j), j=1,24)
        enddo
-       do jc = met_n/2+1, met_n
-          humid(jc,:) = humid(jc-met_n/2,:)
+       do jc = met_n/NY+1, met_n
+          humid(jc,:) = humid(jc-met_n/NY,:)
        enddo
        close(forcing_data)
     elseif (use_average_forcing_data .eq. "histfill") then
@@ -415,7 +416,7 @@ contains
        do jc = 1, rivers_startday-1
           read(forcing_data, *) year, month, day, Qriver(jc)
        enddo
-       do jc = rivers_startday, river_n/2
+       do jc = rivers_startday, river_n/NY
           read(forcing_data,*) year, month, day, Qriver(jc+1-rivers_startday)
        enddo
        close(forcing_data)
@@ -423,12 +424,12 @@ contains
           open(unit=forcing_data, file=major_river_file)
           do jc = 1, rivers_startday-1
              read(forcing_data,*) year, month, day, &
-                  Qriver(river_n/2+1-rivers_startday+jc)
+                  Qriver(river_n/NY+1-rivers_startday+jc)
           enddo
           close(forcing_data)
        endif
-       do jc = river_n/2+1, river_n
-          Qriver(jc) = Qriver(jc-river_n/2)
+       do jc = river_n/NY+1, river_n
+          Qriver(jc) = Qriver(jc-river_n/NY)
        enddo
     elseif  (use_average_forcing_data .eq. "histfill") then
        major_river_file = getpars("average/hist major river")
@@ -488,7 +489,7 @@ contains
           do jc = 1, rivers_startday-1
              read(forcing_data, *) year, month, day, Eriver(jc)
           enddo
-          do jc = rivers_startday, river_n/2
+          do jc = rivers_startday, river_n/NY
              read(forcing_data,*) year, month, day, Eriver(jc+1-rivers_startday)
           enddo
           close(forcing_data)
@@ -496,12 +497,12 @@ contains
              open(unit=forcing_data, file=minor_river_file)
              do jc = 1, rivers_startday-1
                 read(forcing_data,*) year, month, day, &
-                     Eriver(river_n/2+1-rivers_startday+jc)
+                     Eriver(river_n/NY+1-rivers_startday+jc)
              enddo
              close(forcing_data)
           endif
-          do jc = river_n/2+1, river_n
-             Eriver(jc) = Eriver(jc-river_n/2)
+          do jc = river_n/NY+1, river_n
+             Eriver(jc) = Eriver(jc-river_n/NY)
           enddo
        else ! no average minor river
           do jc = 1, river_n
@@ -753,20 +754,31 @@ end subroutine read_forcing
 
   integer function accum_day (year, day) result(day_met)
     ! Calculate the accumulated day from Jan 1 of startyear. Based on
-    ! the fact that 2 years of data is read in.
+    ! the fact that NY years of data is read in. 
+    use io_unit_defs, only: stderr
     implicit none
     ! Arguments:
     integer, intent(in) :: day, year ! year day and year
+    ! Local Variables:
+    integer :: i, & ! counter
+         numY, & ! number of years beyond startyear we are at
+         nleap   ! number of leap years we have modelled
 
     if (year == startyear) then
        day_met = day
     else
-       if (leapyear(year-1)) then
-          day_met = day + 366
-       else
-          day_met = day + 365
+       numY = year - startyear
+       if (numY+1 .gt. NY) then
+          write (stderr,*) "Run is exceeding data input"
+          stop
        endif
+       nleap = 0
+       do i=1,numY
+          if (leapyear(year-i)) nleap = nleap + 1
+       enddo
+       day_met = day + numY*365 + nleap
     endif
+
   end function accum_day
 
 

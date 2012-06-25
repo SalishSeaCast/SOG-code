@@ -132,10 +132,7 @@ contains
 
     ! Element from other modules:
     !
-    ! Functions:
-    use northern_influence, only: northern_advection
-    ! Variable Declarations:
-    use freshwater, only: northern_return  ! include advection from north?
+    use northern_influence, only: Northern_return, northern_advection
     use baroclinic_pressure, only: &
          dPdx_b, &  ! Cross-strait component of baroclinic pressure gradient
          dPdy_b     ! Along-strait component of baroclinic pressure gradient

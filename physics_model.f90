@@ -35,6 +35,7 @@ contains
     use buoyancy, only: alloc_buoyancy_variables
     use mixing_layer, only: init_mixing_layer
     use freshwater, only: init_freshwater
+    use northern_influence, only: init_northern
     use irradiance, only: init_irradiance
     use upwelling, only: init_upwelling
     implicit none
@@ -62,6 +63,9 @@ contains
     ! Allocate memory for fresh water variables, and read
     ! parameter values from infile.
     call init_freshwater(M)
+    ! Read northern return flow parameter values from infile, and
+    ! initialize the module.
+    call init_northern(M)
     ! Allocate memory for Kpar variables, and read parameter values
     ! from infile
     call init_irradiance(M)
@@ -102,6 +106,7 @@ contains
     use baroclinic_pressure, only: dalloc_baro_press_variables
     use turbulence, only: dalloc_turbulence_variables
     use buoyancy, only: dalloc_buoyancy_variables
+    use northern_influence, only : dalloc_northern_influence_variables
     use mixing_layer, only: dalloc_mixing_layer_variables
     use freshwater, only: dalloc_freshwater_variables
     use irradiance, only: dalloc_irradiance_variables
@@ -122,6 +127,8 @@ contains
     call dalloc_turbulence_variables
     ! Deallocate memory for buoyancy variables.
     call dalloc_buoyancy_variables
+    ! Deallocate memory for northern influence variables.
+    call dalloc_northern_influence_variables
     ! Deallocate memory for mixing layer variables.
     call dalloc_mixing_layer_variables
     ! Deallocate memory for fresh water variables.

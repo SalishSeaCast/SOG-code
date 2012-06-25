@@ -9,7 +9,7 @@ F90 = g95
 # and always revert to -O0 and all checks when adding new features
 FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -ftrace=full -Wall
 FFLAGS-PROD = -O3 -fimplicit-none -Wall
-LD = g95
+LD = $(F90)
 LDFLAGS = -o
 
 # Archiver to build objects library for unit tests
@@ -24,14 +24,14 @@ RMFLAGS = -rf
 
 # Emacs tag generator and flags
 ETAGS = etags
-ETFLAGS = 
+ETFLAGS =
 
 # List of objects (order matters)
 OBJS = precision_defs.o io_unit_defs.o datetime.o input_processor.o \
 fundamental_constants.o malloc.o unit_conversions.o \
 grid.o numerics.o forcing.o core_variables.o water_properties.o \
-irradiance.o turbulence.o air_sea_fluxes.o carbonate.o freshwater.o buoyancy.o mixing_layer.o \
-diffusion.o baroclinic_pressure.o upwelling.o northern_influence.o fitbottom.o \
+irradiance.o turbulence.o air_sea_fluxes.o carbonate.o freshwater.o northern_influence.o buoyancy.o \
+mixing_layer.o diffusion.o baroclinic_pressure.o upwelling.o fitbottom.o \
 physics_eqn_builder.o physics_model.o \
 NPZD.o biology_eqn_builder.o rungekutta.o biology_model.o \
 IMEX_solver.o chemistry_model.o \
@@ -50,7 +50,7 @@ $(EXEC): $(OBJS)
 # "make tests" creates or updates the library of object files, then
 # builds and runs the unit test suite
 tests: $(OBJLIB) $(UNITTESTS)/*.f90
-	(cd $(UNITTESTS); make)
+	(cd $(UNITTESTS) && make)
 
 $(OBJLIB): FFLAGS = $(FFLAGS-DEV)
 $(OBJLIB): $(OBJS)
@@ -63,8 +63,8 @@ $(OBJLIB): $(OBJS)
 tags:
 	$(ETAGS) $(ETFLAGS) *.f90
 
-# "make clean" deletes all object, and module files,
-# any core dump file, and the executable
+# "make clean" deletes all object, module files, any core dumps, the
+# executable, and the object library
 .PHONY: clean
 clean:
 	$(RM) $(RMFLAGS) *.o *.mod core $(EXEC) $(OBJLIB)

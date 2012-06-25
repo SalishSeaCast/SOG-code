@@ -29,7 +29,7 @@ module buoyancy
   real(kind=dp) :: &
        Bf  ! Surface buoyancy forcing
   ! Diagnostic:
-  real(kind=dp), dimension(:), allocatable ::&
+  real(kind=dp), dimension(:), allocatable :: &
        B  ! Buoyancy profile array
 
 contains
@@ -42,7 +42,7 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
   ! Parameter values:
   use fundamental_constants, only: g
   ! Subroutines:
-  use grid_mod, only: interp_value
+  use grid_mod, only: interp_value, depth_average
   ! Variables:
   use grid_mod, only: &
        grid  ! Grid parameters and depth & spacing arrays
@@ -54,6 +54,9 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
   use freshwater, only: &
        Fw_surface, &  ! Add all of the fresh water on the surface?
        F_n            ! Fresh water contribution to salinity flux
+  use northern_influence, only: &
+       Northern_return, &  ! include effect of northern advection
+       Bnr_profile         ! Buoyancy profile of northern return flow
 
   implicit none
 
@@ -83,7 +86,8 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
        Fn_ml,    &  ! Fresh water contraction to salinity flux at
                     ! mixing layer depth
        Br,       &  ! Radiative contributions to surface buoyancy forcing
-       Bfw          ! Fresh water flux contributions to surface buoyancy forcing
+       Bfw, &       ! Fresh water flux contributions to surface buoyancy forcing
+       Bnr          ! temperature from northern advection contribution
   integer :: j_junk ! Unused index returned by interp_value() subroutine
 
   ! Calculate buoyancy profile (Large, et al (1994), eqn A3a)
@@ -110,12 +114,20 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
   else
      Bfw = g * (beta(0) * F_n(0) - beta_ml * Fn_ml)
   endif
+  if (Northern_return) then
+     Bnr_profile(0) = Bnr_profile(1)
+     Bnr_profile(grid%M+1) = Bnr_profile(grid%M)
+     Bnr = depth_average(Bnr_profile, 0.d0, hml) * g * hml - &
+          depth_average(Bnr_profile, hml, grid%D) * g * (grid%D - hml)
+  else
+     Bnr = 0
+  endif
   ! Calculate the surface turbulent buoyancy flux (Large, et al
   ! (1994), eqn A3b).
   wbar%b(0) = g * (alpha(0) * wbar%t(0) - beta(0) * wbar%s(0))
   ! Calculate surface buoyancy forcing (an extension of Large, et al
   ! (1994) eqn A3d)
-  Bf = -wbar%b(0) + Br + Bfw
+  Bf = -wbar%b(0) + Br + Bfw + Bnr
 end subroutine calc_buoyancy
 
 
@@ -138,12 +150,8 @@ end subroutine calc_buoyancy
 
   subroutine dalloc_buoyancy_variables
     ! Deallocate memory from buoyancy variables arrays.
-
-    ! Subroutines from other modules:
     use malloc, only: dalloc_check
-    
     implicit none
-    
     ! Local variables:
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg         ! Allocation failure message prefix
