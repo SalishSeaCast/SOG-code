@@ -69,8 +69,7 @@ module freshwater
   !
   ! Public:
   logical :: &
-       Fw_surface  ! Add all of the fresh water on the surface?
-
+       Fw_surface   ! Add all of the fresh water on the surface?
   real(kind=dp) :: &
        Ft,  &  ! Total fresh water flux
        upwell  ! Upwelling velocity from river flows parameterization
@@ -111,6 +110,7 @@ module freshwater
        ! Alkalinity fit parameters
        slope,  &
        intercept
+
 contains
 
   subroutine init_freshwater(M)

@@ -225,8 +225,8 @@ contains
     use diffusion, only: diffusion_coeff, diffusion_bot_surf_flux, &
          diffusion_nonlocal_fluxes
     use upwelling, only: upwelling_advection
-    use freshwater, only: freshwater_bio, northern_return
-    use northern_influence, only: northern_advection
+    use freshwater, only: freshwater_bio
+    use northern_influence, only: northern_advection, northern_return
     use buoyancy, only: &
          Bf  ! Surface buoyancy forcing
     use io_unit_defs, only: stdout
