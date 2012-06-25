@@ -75,7 +75,7 @@ contains
          T,  &  ! Temperature profile arrays
          N, &  ! current surface nitrate conc.
          Si, &  ! current surface silicon conc.
-         D, & ! current surface detritus
+         D, & ! current surface Detritus %DON diss. org. N  %DOC diss. org. C
          DIC, & ! current surface DIC conc.
          Oxy    ! current surface oxygen conc.
     implicit none
