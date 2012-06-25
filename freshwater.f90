@@ -34,8 +34,7 @@ module freshwater
        Ft,         &  ! Total fresh water flux
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
-                     ! parameterization.
-       Northern_return, & ! include return flow from North?
+                      ! parameterization.
        ! Diagnostics:
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
@@ -69,8 +68,7 @@ module freshwater
   !
   ! Public:
   logical :: &
-       Fw_surface, &  ! Add all of the fresh water on the surface?
-       Northern_return ! include return flow from North?
+       Fw_surface  ! Add all of the fresh water on the surface?
 
   real(kind=dp) :: &
        Ft,  &  ! Total fresh water flux
@@ -141,8 +139,6 @@ contains
     endif
     ! Include effect of Fw nutrients?
     use_Fw_nutrients = getparl('use_Fw_nutrients')
-    ! Include the return flow from the Northern Strait
-    Northern_return = getparl('northern_return_flow_on')
 
     ! Values for salinity fit
     cbottom = getpard('cbottom')

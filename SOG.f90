@@ -66,8 +66,9 @@ program SOG
   use irradiance, only: &
        I_total, &  ! Total light available for water column heating
        Q_n         ! Non-turbulent hear flux profile
-  use freshwater, only: & 
-       S_riv, &    ! value of salinity from fit (for diagnostics)
+  use freshwater, only: &
+       S_riv       ! value of salinity from fit (for diagnostics)
+  use northern_influence, only: &
        Northern_return  ! logical to determine use of northern influence code
   !
   ! Subroutines and functions:
@@ -103,7 +104,7 @@ program SOG
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
-  use northern_influence, only: init_northern, integrate_northern
+  use northern_influence, only: Northern_return, integrate_northern
   use forcing, only: read_variation, read_forcing, get_forcing
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
@@ -176,14 +177,9 @@ program SOG
 
   ! Initialize fitbottom
   call init_fitbottom()
- 
+
   ! Initialize the physics model
   call init_physics(grid%M)
-
-! Initialize the Northern Influence
-  if (Northern_return)  &
-       call init_northern(T%new(0), N%O(0), N%H(0), Si(0), &
-       DIC(0), Oxy(0))
 
   ! Initialize the biology model
   call init_biology(grid%M)

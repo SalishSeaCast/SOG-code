@@ -140,7 +140,6 @@
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
 "Fw_depth"      3.0d0             "interface thickness"
 "use_Fw_nutrients" .false.       "include influence of Fw nutrients"
-"northern_return_flow_on" .false.  "include back flow from the north?"
 ! Salinity Fit
 "cbottom"  30.0d0          "bottom salinity"
 "calpha"   2440.0d0             "alpha"
@@ -148,6 +147,10 @@
 !- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
 "cgamma"   0.0633d0             "gamma"
 "cbeta"    0.0d0            "beta"
+! Northern return flow influence
+"northern_return_flow_on" .false.  "include back flow from the north?"
+
+
 ! Kpar Fit  - Collins et al 2008 equation 8
 "ialpha"   0.0910d0             "alpha"
 "ibeta"   0.0433d0              "beta - relates to chl"

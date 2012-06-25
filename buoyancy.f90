@@ -18,7 +18,6 @@ module buoyancy
   public :: &
        ! Variables:
        Bf, &  ! Surface buoyancy forcing
-       Bnr_profile, & ! Buoyancy profile of northern return flow
        ! Diagnostics:
        B, &  ! Buoyancy profile array
        ! Subroutines:
@@ -30,9 +29,8 @@ module buoyancy
   real(kind=dp) :: &
        Bf  ! Surface buoyancy forcing
   ! Diagnostic:
-  real(kind=dp), dimension(:), allocatable ::&
-       B, &  ! Buoyancy profile array
-       Bnr_profile ! Buoyancy profile of northern return flow
+  real(kind=dp), dimension(:), allocatable :: &
+       B  ! Buoyancy profile array
 
 contains
 
@@ -55,8 +53,10 @@ subroutine calc_buoyancy(Tnew, Snew, hml, Itotal, rho, alpha, beta, Cp)
              ! wbar%b(0).
   use freshwater, only: &
        Fw_surface, &  ! Add all of the fresh water on the surface?
-       F_n, &            ! Fresh water contribution to salinity flux
-       Northern_return  ! include effect of northern advection
+       F_n            ! Fresh water contribution to salinity flux
+  use northern_influence, only: &
+       Northern_return, &  ! include effect of northern advection
+       Bnr_profile         ! Buoyancy profile of northern return flow
 
   implicit none
 
@@ -145,32 +145,19 @@ end subroutine calc_buoyancy
     allocate(B(0:M+1), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    msg = "Northern Advection Buoyancy Profile Array"
-    allocate(Bnr_profile(0:M+1), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-
   end subroutine alloc_buoyancy_variables
 
 
   subroutine dalloc_buoyancy_variables
     ! Deallocate memory from buoyancy variables arrays.
-
-    ! Subroutines from other modules:
     use malloc, only: dalloc_check
-    
     implicit none
-    
     ! Local variables:
     integer           :: dallocstat  ! Allocation return status
     character(len=80) :: msg         ! Allocation failure message prefix
 
     msg = "Buoyancy profile array"
     deallocate(B, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Northern Advection Buoyancy Profile Array"
-    deallocate(Bnr_profile, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_buoyancy_variables
