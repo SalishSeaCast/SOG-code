@@ -17,7 +17,8 @@ module user_output
   public :: &
        ! Subroutines:
        write_user_phys_timeseries_hdr, write_user_bio_timeseries_hdr, &
-       write_user_timeseries, write_user_profiles
+       write_user_chem_timeseries_hdr, write_user_timeseries, &
+       write_user_profiles
 
 contains
 
@@ -97,6 +98,44 @@ contains
   end subroutine write_user_bio_timeseries_hdr
 
 
+  subroutine write_user_chem_timeseries_hdr(str_run_Datetime, &
+       str_CTD_Datetime, str_start_Datetime)
+    ! User chemistry model time series results
+    ! !!! This is the place to add exploratory, !!!
+    ! !!! special, debugging, etc. output !!!
+    ! !!! Please don't commit this file if you only make personal !!!
+    ! !!! changes here. !!!
+    ! !!! changes here. !!!
+    !
+    ! !!! To include add a variable to this output, add a use statement !!!
+    ! !!! for it at the top of the module.  (You may also have to add it !!!
+    !
+    ! !!! The *FieldNames, and *FieldUnits parts of the header must !!!
+    ! !!! be kept in sync with the appropriate write statement in  !!!
+    ! !!! write_timeseries(), or compareSOG plotting will fail. !!!
+    use io_unit_defs, only: user_chem_timeseries
+    implicit none
+    ! Arguments:
+    character(len=19), intent(in) :: &
+         str_run_Datetime,   &  ! Date/time of code run as a string
+         str_start_Datetime, &  ! Midnight of start day as a string
+         str_CTD_Datetime       ! CTD profile date/time as a string
+
+    write(user_chem_timeseries, 103) str_run_Datetime, &
+         str_CTD_Datetime, str_start_Datetime
+103 format("! User-defined time series output from chemistry model"/,    &
+         "! Time series of ..."/,                                      &
+         "*RunDateTime: ", a/,                                         &
+         "*InitialCTDDateTime: ", a/,                                  &
+         !SEA         "*FieldNames: time, Avg (0-3m) microplankton biomass, "       &
+    "*FieldNames: time"/,       &
+         !SEA         "Avg (0-3m) nanoplankton biomass"/, &
+         !SEA         "*FieldUnits: hr since ", a, " LST, uM N, uM N"/, &
+         "*FieldUnits: hr since ", a, " LST"/, &
+         "*EndOfHeader")
+  end subroutine write_user_chem_timeseries_hdr
+
+
   subroutine write_user_timeseries(time)
     ! Write user-specified results of the current time step to the
     ! time series files.
@@ -109,7 +148,8 @@ contains
     ! !!! You can freely change this subroutine without committing  !!!
     ! !!! changes.                                                  !!!
     use precision_defs, only: dp
-    use io_unit_defs, only: user_phys_timeseries, user_bio_timeseries
+    use io_unit_defs, only: user_phys_timeseries, user_bio_timeseries, &
+         user_chem_timeseries
     use unit_conversions, only: KtoC
     use baroclinic_pressure, only: ut, vt, dPdx_b, dPdy_b
     implicit none
@@ -154,6 +194,24 @@ contains
     ! !!! above, or compareSOG plotting will fail. !!!
     write(user_bio_timeseries, 200) time
 200 format(f10.4)
+
+    ! Write user-specified chemistry model time series results
+    !
+    ! !!! This is the place to add exploratory, special, debugging, !!!
+    ! !!! etc. output.  Please don't commit this file if you only   !!!
+    ! !!! make personal changes here.                               !!!
+    !
+    ! !!! To include add a variable to this output, add a use statement !!!
+    ! !!! for it at the top of the module.  (You may also have to add   !!!
+    ! !!! it to the public variables list in the module where it is     !!!
+    ! !!! declared.                                                     !!!
+    !
+    ! !!! This write statement must be kept in sync with the *FieldNames, !!!
+    ! !!! and *FieldUnits parts of the header in timeseries_output_open() !!!
+    ! !!! be kept in sync with the appropriate write statement in  !!!
+    ! !!! above, or compareSOG plotting will fail. !!!
+    write(user_chem_timeseries, 300) time
+300 format(f10.4)
   end subroutine write_user_timeseries
 
 

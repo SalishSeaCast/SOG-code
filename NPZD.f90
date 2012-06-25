@@ -734,7 +734,8 @@ contains
     ! Calculate the derivatives of the biology quantities for odeint()
     ! to use to calculate their values at the next time step.
     use precision_defs, only: dp
-    use fundamental_constants, only: pi, Redfield_C, Redfield_O
+    use fundamental_constants, only: &
+         pi, Redfield_C, Redfield_O, Redfield_NP
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
     implicit none
@@ -1331,7 +1332,8 @@ contains
     bPZ = (PZ_bins%Alk - 1) * M + 1
     ePZ = PZ_bins%Alk * M
     where (Alk > 0.)
-       dPZdt(bPZ:ePZ) = 0.0d0
+       dPZdt(bPZ:ePZ) = ((1 + Redfield_NP) * uptake%NO + (1 - Redfield_NP) &
+            * (uptake%NH - remin_NH)) * (1 / Redfield_NP) - 2 * NH_oxid
     endwhere
 
     ! Dissolved organic carbon detritus

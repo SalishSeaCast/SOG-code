@@ -22,5 +22,6 @@ module io_unit_defs
   integer, parameter :: std_bio_timeseries = 400
   integer, parameter :: user_bio_timeseries = 401
   integer, parameter :: std_chem_timeseries = 500
+  integer, parameter :: user_chem_timeseries = 501
 
 end module io_unit_defs

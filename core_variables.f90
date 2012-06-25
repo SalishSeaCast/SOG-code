@@ -140,6 +140,8 @@ module core_variables
           Si,      &  ! Silicon column number in Nuts data file
           DIC,     &  ! Dissolved inorganic carbon column number in
                       ! bottle data file
+          Alk,     &  ! Total alkalinity column number in
+                      ! bottle data file
           Oxy         ! Dissolved oxygen column number in CTD
   end type col_indices
 
@@ -180,7 +182,7 @@ contains
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records, &  ! IOS bottle data record counter
          chem_records     ! IOS chem bottle data record counter
-    logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Oxy
+    logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Alk, got_Oxy
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
          data  ! Data records read
@@ -216,6 +218,7 @@ contains
     got_NO = .false.
     got_Oxy = .false.
     got_DIC = .false.
+    got_Alk = .false.
     call read_init_data(getpars("ctd_in"), ctd_records, col, data)
     ! Interpolate CTD data to grid point depths
     if(col%T /= -1) then
@@ -347,6 +350,12 @@ contains
                                data(:chem_records, col%DIC))
           got_DIC = .true.
        endif
+       ! Total alkalinity
+       if(col%Alk /= -1) then
+          Alk = interp_to_grid(data(:chem_records, col%depth), &
+                               data(:chem_records, col%Alk))
+          got_Alk = .true.
+       endif
        ! Dissolved oxygen
        if(col%Oxy /= -1) then
           Oxy = interp_to_grid(data(:chem_records, col%depth), &
@@ -377,6 +386,11 @@ contains
     ! No dissolved inorganic carbon data? Initialize it to 2000 uM.
     if(.not. got_DIC) then
        DIC = 2.0d3
+    endif
+
+    ! No total alkalinity data? Initialize it to 2000 ueq/L.
+    if(.not. got_Alk) then
+       Alk = 2.0d3
     endif
 
     ! No dissolved oxygen data? Initialize it to 200 uM.
@@ -439,9 +453,9 @@ contains
     ! Read data quantity column numbers, and set the number of column
     ! to read from each data record
     read(field_data, *) col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                        col%NO, col%Phyto, col%Si, col%DIC, col%Oxy
+                        col%NO, col%Phyto, col%Si, col%DIC, col%Alk, col%Oxy
     n_cols = max(col%depth, col%T, col%S, col%Chloro, col%Fluores, &
-                 col%NO, col%Phyto, col%Si, col%DIC, col%Oxy)
+                 col%NO, col%Phyto, col%Si, col%DIC, col%Alk, col%Oxy)
     ! Read data to model depth, or next deeper record.  If data ends
     ! before model depth, read the whole file
     data_to_model_depth = .false.

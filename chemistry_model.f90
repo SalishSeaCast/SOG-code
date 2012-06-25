@@ -1,18 +1,45 @@
-module chemistry_fluxes
+module chemistry_model
   ! Type definitions, variable & parameter value declarations, and
-  ! subroutines related to the chemistry air/sea gas fluxes in the SOG code.
+  ! subroutines related to the chemistry model in the SOG code.
 
+  use precision_defs, only: dp
   implicit none
 
   private
   public :: &
-       ! Subroutine:
-       solve_gas_flux  !
+       ! Variables:
+       pH, pCO2, pO2, Omega_ca, Omega_ar, &
+       ! Subroutines:
+       init_chemistry, solve_gas_flux, dalloc_chem_variables
+
+  ! Variable Declarations:
+  !
+  ! Public
+  real(kind=dp), dimension(:), allocatable :: &
+       pH,         &   ! pH profile array
+       pCO2,       &   ! pCO2 profile array [uatm]
+       pO2,        &   ! pO2 profile array [uatm]
+       Omega_ca,   &   ! Calcite saturation state profile array
+       Omega_ar        ! Aragonite saturation state profile array
 
 contains
 
-  subroutine solve_gas_flux(grid, T, S, rho, unow, vnow, DIC, Oxy, Alk, &
-       day, time, pCO2, pO2)
+  subroutine init_chemistry(M)
+    ! Initialize the chemistry model.
+
+    implicit none
+
+    ! Argument:
+    integer, intent(in) :: &
+         M  ! Number of grid points
+
+    ! Allocate memory for arrays for chemistry outputs
+    call alloc_chem_variables(M)
+
+  end subroutine init_chemistry
+
+  subroutine solve_gas_flux(grid, T, S, rho, DIC, Oxy, Alk, &
+       day, time)
     ! Iteration for successful diffusion of CO2 and oxygen gas fluxes
 
     ! Variables:
@@ -25,7 +52,7 @@ contains
 
     ! Subroutines from other modules:
     use air_sea_fluxes, only: gas_flux
-    use carbonate, only: calculate_co2
+    use carbonate, only: DIC_to_carbonate
     use biology_eqn_builder, only: &
          new_to_old_chem_RHS, new_to_old_chem_Bmatrix
 
@@ -37,19 +64,15 @@ contains
     integer, intent(in) :: &
          day           ! Year-day of current time step
     real(kind=dp), intent(in) :: &
+         time          ! Time of current time step [s since start of run]
+    real(kind=dp), intent(in) :: &
          T,         &  ! Sea surface water temperature [K]
          S,         &  ! Sea surface practical salinity [PSU]
-         rho,       &  ! Sea surface water density  [kg/m^3]
-         unow,      &  ! 35 degree wind component (cross-strait)
-         vnow,      &  ! 325 degree wind component (along-strait)
-         time          ! Time of current time step [s since start of run]
+         rho           ! Sea surface water density  [kg/m^3]
     real(kind=dp), dimension(0:), intent(inout) :: &
          DIC,       &  ! Surface dissolved inorganic carbon [uM]
          Oxy,       &  ! Surface dissolved oxygen [uM]
          Alk           ! Alkalinity profile array
-    real(kind=dp), intent(out) :: &
-         pCO2,      &  ! Partial pressure CO2 [ppm]
-         pO2           ! Partial pressure O2 [ppm]
 
     ! Local variables:
     integer :: &
@@ -57,19 +80,19 @@ contains
     real(kind=dp) :: &
          DIC_flux,  &  ! Dissolved inorganic carbon surface flux [umol m-2 s-1]
          Oxy_flux,  &  ! Oxygen surface flux [umol m-2 s-1]
-         CO2           ! Surface carbon dioxide [uM]
+         CO2_star      ! Surface CO2 [uM]
 
     do count = 1, chem_steps !---- Begin Iteration Loop ----
 
        call new_to_old_chem_RHS()
        call new_to_old_chem_Bmatrix()
 
-       ! Calculate surface CO2 from surface DIC
-       call calculate_co2(T, S, rho, DIC(1), CO2)
+       ! Calculate surface CO2* from surface DIC
+       call DIC_to_carbonate(T, S, rho, Alk(1), DIC(1), CO2_star)
 
        ! Calculate surface CO2 gas flux
-       call gas_flux('CO2', T, S, CO2, unow, vnow, DIC_flux, pCO2)
-       call gas_flux('Oxy', T, S, Oxy(1), unow, vnow, Oxy_flux, pO2)
+       call gas_flux('CO2', T, S, CO2_star, DIC_flux)
+       call gas_flux('Oxy', T, S, Oxy(1), Oxy_flux)
 
        ! This calculates the values of the precursor diffusion
        ! coefficients matrix (Bmatrix%bio%*), the RHS diffusion/advection
@@ -81,6 +104,8 @@ contains
        ! Solve the semi-implicit diffusion/advection PDEs for the
        ! chemistry quantities.
        call solve_chem_equations(grid%M, DIC, Oxy, Alk, day, time)
+
+       ! write(stdout, *) DIC, Alk
 
     enddo !---- End Iteration Loop ----
 
@@ -230,4 +255,59 @@ contains
 
   end subroutine solve_chem_equations
 
-end module chemistry_fluxes
+  subroutine alloc_chem_variables(M)
+    ! Allocate memory for chem variable arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Argument:
+    integer, intent(in) :: M  ! Number of grid points
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "pH profile array"
+    allocate(pH(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "pCO2 profile array"
+    allocate(pCO2(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "pO2 profile array"
+    allocate(pO2(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Omega calcite profile array"
+    allocate(Omega_ca(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Omega aragonite profile array"
+    allocate(Omega_ar(0:M+1), stat=allocstat)
+    call alloc_check(allocstat, msg)
+
+  end subroutine alloc_chem_variables
+
+
+  subroutine dalloc_chem_variables
+    ! Deallocate memory for chem variables arrays.
+    use malloc, only: dalloc_check
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Deallocation return status
+    character(len=80) :: msg        ! Deallocation failure message prefix
+
+    msg = "pH profile array"
+    deallocate(pH, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "pCO2 profile array"
+    deallocate(pCO2, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "pO2 profile array"
+    deallocate(pO2, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Omega calcite profile array"
+    deallocate(Omega_ca, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Omega aragonite profile array"
+    deallocate(Omega_ar, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+
+  end subroutine dalloc_chem_variables
+
+end module chemistry_model

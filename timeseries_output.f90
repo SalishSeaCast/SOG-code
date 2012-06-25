@@ -24,11 +24,12 @@ contains
     ! getpar(), open them, and write their headers.
     use io_unit_defs, only: &
          std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
-         user_phys_timeseries, user_bio_timeseries
+         user_phys_timeseries, user_bio_timeseries, user_chem_timeseries
     use input_processor, only: getpars
     use datetime, only: datetime_, datetime_str
     use user_output, only: &
-         write_user_phys_timeseries_hdr, write_user_bio_timeseries_hdr
+         write_user_phys_timeseries_hdr, write_user_bio_timeseries_hdr, &
+         write_user_chem_timeseries_hdr
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: &
@@ -83,6 +84,11 @@ contains
     fn = getpars("std_chem_ts_out")
     open(unit=std_chem_timeseries, file=fn, status="replace", action="write")
     call write_std_chem_timeseries_hdr(str_run_Datetime, &
+         str_CTD_Datetime, str_start_Datetime)
+    ! User chemistry model time series results
+    fn = getpars("user_chem_ts_out")
+    open(unit=user_chem_timeseries, file=fn, status="replace", action="write")
+    call write_user_chem_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
   end subroutine init_timeseries_output
 
@@ -218,9 +224,9 @@ contains
          "surface alkalinity, 3 m avg alkalinity, ",                         &
          "surface DIC concentration, 3 m avg DIC concentration, ",           &
          "DOC detritus at 20 m, POC detritus at 20 m, ",                     &
-         "refractory C detritus at 20 m, surface pCO2, surface pO2"/,        &
+         "refractory C detritus at 20 m"/,        &
          "*FieldUnits: hr since ", a, " LST, uM O, uM O, uM, uM, ",          &
-         "uM C, uM C, uM C, uM C, uM C, ppm, ppm"/,                          &
+         "uM C, uM C, uM C, uM C, uM C"/,                          &
          "*EndOfHeader")
   end subroutine write_std_chem_timeseries_hdr
 
@@ -231,7 +237,7 @@ contains
        ! Variables for standard biology model output
        NO, NH, Si, Pmicro, Pnano, Ppico, Z, D_DON, D_PON, D_refr, D_bSi, &
        ! Variables for standard chemistry model output
-       Oxy, Alk, DIC, D_DOC, D_POC, D_reC, pCO2, pO2)
+       Oxy, Alk, DIC, D_DOC, D_POC, D_reC)
     ! Write results of the current time step to the time series files.
     use precision_defs, only: dp
     use io_unit_defs, only: &
@@ -249,9 +255,7 @@ contains
     integer, intent(in) :: &
          iter_cnt  ! Timestep iteration count
     real(kind=dp), intent(in) :: &
-         h,      &  ! Mixing layer depth [m]
-         pCO2,   &  ! Partial pressure of CO2 [ppm]
-         pO2        ! Partial pressure of O2 [ppm]
+         h          ! Mixing layer depth [m]
     real(kind=dp), dimension(0:), intent(in) :: &
          U,      &  ! Cross-strait velocity component profile [m/s]
          V,      &  ! Along-strait velocity component profile [m/s]
@@ -365,7 +369,7 @@ contains
     call interp_value(20.0d0, 0, grid%d_g, D_reC, D_reC_20m, j_below)
     write(std_chem_timeseries, 300) time, Oxy(0), Oxy_avg_3m,          &
          Alk(0), Alk_avg_3m, DIC(0), DIC_avg_3m, D_DOC_20m, D_POC_20m, &
-         D_reC_20m, pCO2, pO2
+         D_reC_20m
 300 format(f10.4, 80(2x, f12.4))
   end subroutine write_std_timeseries
 
@@ -374,7 +378,7 @@ contains
     ! Close the time series output files.
     use io_unit_defs, only: &
          std_phys_timeseries, std_bio_timeseries, std_chem_timeseries, &
-         user_phys_timeseries, user_bio_timeseries
+         user_phys_timeseries, user_bio_timeseries, user_chem_timeseries
 
     implicit none
 
@@ -383,6 +387,7 @@ contains
     close(std_bio_timeseries)
     close(user_bio_timeseries)
     close(std_chem_timeseries)
+    close(user_chem_timeseries)
   end subroutine timeseries_output_close
 
 end module timeseries_output

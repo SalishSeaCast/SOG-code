@@ -93,6 +93,8 @@ program SOG
        dalloc_biology_variables
   use biology_eqn_builder, only: build_biology_equations, &
        new_to_old_bio_RHS, new_to_old_bio_Bmatrix
+  use chemistry_model, only: init_chemistry, solve_gas_flux, &
+       dalloc_chem_variables
   use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
   use timeseries_output, only: init_timeseries_output, write_std_timeseries, &
@@ -109,7 +111,6 @@ program SOG
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
        increment_date_time
   use irradiance, only: calc_irradiance
-  use chemistry_fluxes, only: solve_gas_flux
 
   implicit none
 
@@ -132,8 +133,6 @@ program SOG
   real(kind=sp) :: cf_value, atemp_value, humid_value
   ! Wind data
   real(kind=dp) :: unow, vnow
-  ! Partial Pressures
-  real(kind=dp) :: pCO2, pO2
 
 
   ! ---------- Beginning of Initialization Section ----------
@@ -187,6 +186,9 @@ program SOG
 
   ! Initialize the biology model
   call init_biology(grid%M)
+
+  ! Initialize the chemistry model
+  call init_chemistry(grid%M)
 
   ! Initialize the IMEX semi-implicit PDE solver
   ! *** This should eventually go into init_numerics()
@@ -467,8 +469,8 @@ program SOG
      endif
 
      ! Calculate the gas fluxes and iterate the diffusion
-     call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), &
-          unow, vnow, DIC, Oxy, Alk, day, time, pCO2, pO2)
+     call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), DIC, Oxy, Alk, &
+          day, time)
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
@@ -526,7 +528,7 @@ program SOG
        N%O , N%H, Si, P%micro, P%nano, P%pico, Z, D%DON, D%PON, D%refr, &
        D%bSi,                                                           &
        ! Variables for standard chemistry model output
-       Oxy, Alk, DIC, D%DOC, D%POC, D%reC, pCO2, pO2)
+       Oxy, Alk, DIC, D%DOC, D%POC, D%reC)
 
      ! Write user-specified time series results
      ! !!! Please don't add arguments to this call.           !!!
@@ -586,6 +588,7 @@ program SOG
   call dalloc_core_variables
   call dalloc_physics_variables
   call dalloc_biology_variables
+  call dalloc_chem_variables
   call dalloc_IMEX_variables
 
   ! Return a successful exit status to the operating system

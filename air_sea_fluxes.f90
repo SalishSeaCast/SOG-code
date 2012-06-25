@@ -11,23 +11,29 @@ module air_sea_fluxes
 
   private
   public :: &
+       ! Parameters:
+       pCO2_atm, &
        ! Variables:
        ! Subroutines:
-       wind_stress, longwave_latent_sensible_heat, gas_flux, solubility
+       wind_stress, longwave_latent_sensible_heat, gas_flux
 
   ! Parameter Value Declarations:
+  !
+  ! Public
+  real(kind=dp), parameter :: &
+       pCO2_atm = 3.8d-4         ! Partial pressure of CO2 [atm]
   !
   ! Private to module:
   real(kind=dp), parameter :: &
        rho_atm = 1.25d0,      &  ! Density of air [kg/m^3]
-       pCO2_atm = 3.8d-4,     &  ! Partial pressure of CO2 [atm]
        pO2_atm = 0.20946d0       ! Partial pressure of O2 [atm]
 
   ! Variable Declarations:
   !
   ! Private to module:
   real(kind=dp) :: &
-       UU  ! Surface wind-speed (calculated in wind-stress; used in heat flux)
+       UU  ! Surface wind-speed (calculated in wind-stress;
+           ! used in heat flux and gas flux)
 
 contains
 
@@ -165,7 +171,7 @@ contains
   end subroutine longwave_latent_sensible_heat
 
 
-  subroutine gas_flux(type, T, S, C_water, unow, vnow, gasflux, p_gas)
+  subroutine gas_flux(type, T, S, C_water, gasflux)
     ! Calculate the gas flux.
     !
     ! This calculates the value of the gasflux variable determined
@@ -188,12 +194,9 @@ contains
     real(kind=dp), intent(in) :: &
          T,        &  ! Sea surface water temperature [K]
          S,        &  ! Sea surface practical salinity [PSU]
-         C_water,  &  ! Sea surface gas concentration [uM]
-         unow,     &  ! 35 degree wind component (cross-strait)
-         vnow         ! 325 degree wind component (along-strait)
+         C_water      ! Sea surface gas concentration [uM]
     real(kind=dp), intent(out) :: &
-         gasflux,  &  ! Gas flux [umol m-2 s-1]
-         p_gas        ! Partial pressure of gas [ppm]
+         gasflux      ! Gas flux [umol m-2 s-1]
 
     ! Local variables:
     real(kind=dp) :: &
@@ -202,19 +205,20 @@ contains
          sc,       &  ! Schmidt number (dimensionless)
          kps,      &  ! Transfer velocity [m/s]
          p_air,    &  ! Partial pressure in air [atm]
-         ws10         ! Surface windspeed
+         p_gas        ! Partial pressure of gas [ppm]
 
     ! Temperature in celcius
     T_c = KtoC(T)
 
-    ! Calculate the surface wind-speed
-    ws10 = sqrt(unow ** 2 + vnow ** 2)
-
-    ! Solubility [mol m-3 atm-1]
-    call solubility(type, T, S, sol)
-
     ! Solubility and Schmidt Number
     if (type == 'Oxy') then
+       ! from Wanninkhof 1992
+       ! Divide by molar volume of O2 (22.3914 from SeaBird Electronics)
+       ! (multiply by rho/rho = 1 for mol m-3 atm-1)
+       sol = exp(85.8079d0/(T/100.0d0) - 58.3877d0 + 23.8439d0 * &
+            log(T/100.0d0) + S * (-0.034892d0 + 0.015568d0 * (T/100.0d0) - &
+            0.0019387d0 * (T/100.0d0)**2))/22.3914d-3
+
        ! from Wanninkhof 1992
        ! (T in deg C)
        sc = 1953.4d0 - 128.00d0 * T_c + 3.9918d0 * T_c**2 - 0.050091d0 * T_c**3
@@ -223,6 +227,12 @@ contains
        p_air = pO2_atm
 
     elseif (type == 'CO2') then
+       ! from Weiss 1974 (M/atm)
+       ! (multiply by 1.0e3 for mol m-3 atm-1)
+       sol = exp(90.5069d0/(T/100.0d0) - 58.0931d0 + 22.2940d0 * &
+            log(T/100.0d0) + S * (0.027766d0 - 0.025888d0 * (T/100.0d0) + &
+            0.0050578d0 * (T/100.0d0)**2)) * 1.0d3
+
        ! from Wanninkhof et al. 1992
        ! (T in deg C)
        sc = 2073.1d0 - 125.62d0 * T_c + 3.6276d0 * T_c**2 - 0.043219d0 * T_c**3
@@ -237,7 +247,7 @@ contains
     endif
 
     ! Transfer velocity, Nightingale et al. 2000
-    kps = (0.22d0 * ws10**2 + 0.33d0 * ws10) * (sc/600.0d0)**(-0.5d0)
+    kps = (0.22d0 * UU**2 + 0.33d0 * UU) * (sc/600.0d0)**(-0.5d0)
     kps = kps * 2.778d-6   ! m/s
 
     ! Partial Pressure
@@ -248,53 +258,5 @@ contains
     gasflux = kps * sol * 1.0d3 * (1.0d-6 * p_gas - p_air)
 
   end subroutine gas_flux
-
-
-  subroutine solubility(type, T, S, sol)
-    ! Calculate the solubility of a gas type, 'type'
-    !
-    ! This calculates the value of the 'sol' variable needed in
-    ! the gas_flux subroutine and the solve_gas_flux subroutine in
-    ! chemistry_fluxes
-
-    ! Elements from other modules:
-    !
-    ! Type Definitions:
-    use precision_defs, only: dp
-    use io_unit_defs, only: stdout
-
-    ! Variable Declarations:
-
-    implicit none
-
-    ! Arguments:
-    character(len=*), intent(in):: &
-         type         ! Either 'CO2' or 'Oxy'
-    real(kind=dp), intent(in) :: &
-         T,        &  ! Sea surface water temperature [K]
-         S            ! Sea surface practical salinity [PSU]
-    real(kind=dp), intent(out) :: &
-         sol          ! Solubility [mol m-3 atm-1]
-
-    if (type == 'Oxy') then
-       ! from Wanninkhof 1992
-       ! Divide by molar volume of O2 (22.3914 from SeaBird Electronics)
-       ! (multiply by rho/rho = 1 for mol m-3 atm-1)
-       sol = exp(85.8079d0/(T/100.0d0) - 58.3877d0 + 23.8439d0 * &
-            log(T/100.0d0) + S * (-0.034892d0 + 0.015568d0 * (T/100.0d0) - &
-            0.0019387d0 * (T/100.0d0)**2))/22.3914d-3
-    elseif (type == 'CO2') then
-       ! from Weiss 1974 (M/atm)
-       ! (multiply by 1.0e3 for mol m-3 atm-1)
-       sol = exp(90.5069d0/(T/100.0d0) - 58.0931d0 + 22.2940d0 * &
-            log(T/100.0d0) + S * (0.027766d0 - 0.025888d0 * (T/100.0d0) + &
-            0.0050578d0 * (T/100.0d0)**2)) * 1.0d3
-    else
-       write (stdout,*) 'solubility in air_sea_fluxes.f90: ', &
-            'Unexpected gas type: ', type
-       call exit(1)
-    endif
-
-  end subroutine solubility
 
 end module air_sea_fluxes

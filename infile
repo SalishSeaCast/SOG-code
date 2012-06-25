@@ -44,7 +44,7 @@
   "N/A"
   "IOS bottle data file"
 "chem_in"
-  "../SOG-initial/chem/Chem-SOGS-2010-73.sog"
+  "../SOG-initial/chem/Chem-SOG42-2010-73.sog"
   "IOS chemistry bottle data file"
 "initial chl split"
   0.33d0 0.33d0 0.33d0
@@ -65,6 +65,9 @@
 	"user-defined biology timeseries"
 "std_chem_ts_out"   
 	"timeseries/std_chem_SOG.out"   
+	"standard chemistry timeseries"
+"user_chem_ts_out"   
+	"timeseries/user_chem_SOG.out"   
 	"standard chemistry timeseries"
 
 ! Profiles output
@@ -91,7 +94,7 @@
 "temp_constant"    .false.       "Is bottom temperature constant over time?"
 ! Fit parameters for core variables
 "salinity"
-  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0 
+  29.62605865d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0
   "Salinity (constant, seasonal and biseasonal components)"
 "temperature"
   9.3044d0 0.06384430d0 -0.84712324d0 0.d0 -0.05355254d0 -0.05775216d0 0.0292d0
@@ -106,14 +109,13 @@
   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Silicon (constant)"
 "DIC"
-!  2124.2233d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
-  2021.03575935d0 0.10374454d0 -0.03562458d0 0.d0 -0.14156091d0 -0.06348989d0 0.d0
+  2065.98993d0 9.18035435d0 -3.15241908d0 0.0d0 -12.52672493 -5.618220366 0.0d0
   "Dissolved Inorganic Carbon (constant)"
 "Oxy"
   148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Dissolved Oxygen (constant)"
 "Alk"
-  0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  2097.300118 6.25890810 -2.14923091 0.0d0 -8.540367d0 -3.83034506 0.0d0
   "Alkalinity (**values needed**)"
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
@@ -146,6 +148,9 @@
 !- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
 "cgamma"   0.0633d0             "gamma"
 "cbeta"    0.0d0            "beta"
+! Alkalinity freshwater fit
+"slope_alk"      -0.13d0       "slope for alkalinity freshwater fit"
+"intercept_alk"  1020.0d0      "zero-salinity intercept for freshwater fit"
 ! Kpar Fit  - Collins et al 2008 equation 8
 "ialpha"   0.0910d0             "alpha"
 "ibeta"   0.0433d0              "beta - relates to chl"

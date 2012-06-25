@@ -25,6 +25,7 @@ module freshwater
   !   freshwater_bio -- Calculate the freshwater biological fluxes.
 
   use precision_defs, only: dp
+
   implicit none
 
   private
@@ -58,11 +59,11 @@ module freshwater
   real(kind=dp), parameter :: phys_circ_silicon = 54.0d0 - 80.0d0
 !--- BEGIN CHEMISTRY PARAMETERS
   ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
-  real(kind=dp), parameter :: phys_circ_DIC = 2021.04d0 - 663.1d0
+  real(kind=dp) :: phys_circ_DIC
   ! From Environment Canada Fraser River buoy October 2010
   real(kind=dp), parameter :: phys_circ_Oxy = 148.38d0 - 343.75d0
   ! **TODO**: Assign a sensible value for alkalinity
-  real(kind=dp), parameter :: phys_circ_Alk = 0.0d0
+  real(kind=dp) :: phys_circ_Alk
 !--- END CHEMISTRY PARAMETERS
 
   ! Variable Declarations:
@@ -86,9 +87,17 @@ module freshwater
   ! Private:
   logical :: &
        use_Fw_nutrients  ! Include influence of Fw nutrients?
+  integer :: &
+       n_avg         ! Denominator for 30-day back-average
+  integer, parameter :: &
+       Ft_store_length = 30 * 86400 / 900
   real(kind=dp), dimension(:), allocatable :: &
        Fw    ! Fresh water flux profile
+  real(kind=dp), dimension(Ft_store_length) :: &
+       Ft_store    ! Ft storage vector
   real(kind=dp) :: &
+       rho_riv,   &  ! Surface freshwater density [kg/m^3]
+       Fresh_avg, &  ! Running 30-day back-average
        Fw_scale, &   ! Fresh water scale factor for river flows
        Fw_depth, &   ! Depth to distribute fresh water flux over
        upwell_const, &  ! Maximum upwelling velocity (tuning parameter)  
@@ -100,7 +109,10 @@ module freshwater
        calpha, &        
        calpha2, &
        cgamma, &
-       cbeta
+       cbeta,  &
+       ! Alkalinity fit parameters
+       slope,  &
+       intercept
 contains
 
   subroutine init_freshwater(M)
@@ -109,6 +121,10 @@ contains
     implicit none
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
+
+    ! Initialize 30-day back average for alkalinity fit
+    Ft_store = 0.0d0;
+    n_avg = 1
 
     ! Allocate memory for fresh water quantity arrays
     call alloc_freshwater_variables(M)
@@ -122,10 +138,6 @@ contains
     ! Read the fresh water parameter values from the infile.
     use input_processor, only: getpard, getparl
     implicit none
-!-----------------------------------------------
-    ! DIC circulations strength
-!    phys_circ_DIC = getpard("phys_circ_DIC")
-!-----------------------------------------------
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
    ! Fresh water scale factor for river flows 
@@ -150,6 +162,10 @@ contains
     calpha2 = getpard('calpha2')
     cgamma = getpard('cgamma')
     cbeta = getpard('cbeta')
+
+    ! Alkalinity fit parameters
+    slope = getpard('slope_alk')
+    intercept = getpard('intercept_alk')
   end subroutine read_freshwater_params
   
 
@@ -171,6 +187,9 @@ contains
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
          UseRiverTemp
+    ! Functions and subroutines
+    use unit_conversions, only: KtoC
+    use carbonate, only: pCO2_to_carbonate
    
     implicit none
 
@@ -187,11 +206,17 @@ contains
 
     ! Local variables
     real(kind=dp), parameter :: &
-         Qmean = 2720.0d0 ! Mean fraser river flow from entrainment fit
+         Qmean = 2720.0d0, & ! Mean fraser river flow from entrainment fit
     ! totalfresh water into system (Fraser + rest multiplied up from Englishman
     !real (kind=dp) :: totalfresh 
+         pCO2_riv = 7.5d-4   ! River pCO2 [atm]
+    real(kind=dp) :: &
+         RiverTC,    &    ! Major river temperature [deg C]
+         river_alk,  &    ! River alkalinity [ueq L-1]
+         river_DIC        ! River DIC [uM]
 
- 
+    ! Surface temperature to celsius
+    RiverTC = KtoC(RiverTemp)
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qriver + Eriver
@@ -234,7 +259,7 @@ contains
          /0.368
  
     ! Tuned fresh water flux value (to give, on average) the parameterized
-    ! value above.  
+    ! value above.
     Ft = Fw_scale * totalfresh * S_old/cbottom *  &
     ((1-0.35*exp(-(totalfresh-1.2*Qbar)**2/(4.*Qbar**2)))**F_RI * & !for SoG only
          (totalfresh/Qbar)**F_SOG) ! for both
@@ -244,6 +269,36 @@ contains
 !    ((1-0.35*exp(-(totalfresh-1.2*Qbar)**2/(4.*Qbar**2)))*(totalfresh/Qbar)**0.2)**F_SOG * & ! for SoG
 !    (1-exp(-totalfresh/Fm))**F_RI  ! for F_RI
 
+    !-------------------------------------------------------------
+    ! Calculate 30-day back average for alkalinity fit
+    Ft_store(n_avg) = totalfresh
+    Fresh_avg = sum(Ft_store) / n_avg
+    if (n_avg .lt. Ft_store_length) then
+       n_avg = n_avg + 1
+    else
+       Ft_store = cshift(Ft_store, 1)
+    endif
+
+    ! River density
+    ! Density of pure water at p = 0 from Rich Pawlowicz limstate.m
+    rho_riv = 999.842594d0 + RiverTC * ( 6.793952d-2      &
+                           + RiverTC * (-9.095290d-3      &
+                           + RiverTC * ( 1.001685d-4      &
+                           + RiverTC * (-1.120083d-6      &
+                           + RiverTC * ( 6.536332d-9)))))
+
+    ! River alkalinity parametrization
+    river_alk = intercept - slope * Fresh_avg
+
+    ! River DIC parametrization
+    call pCO2_to_carbonate(RiverTemp, 0.0d0, rho_riv, river_alk, &
+         pCO2_riv, river_DIC)
+
+    ! Circulation strength of a scalar is equal to deep value minus
+    ! river value (see BMM Labbook pg 45 for deep values)
+    phys_circ_Alk = 2092.98d0 - river_alk
+    phys_circ_DIC = 2059.68d0 - river_DIC
+    !-------------------------------------------------------------
 
     ! Calculate the surface turbulent kinematic salinity flux (Large,
     ! et al (1994), eqn A2d).  Note that fresh water flux is added via
@@ -275,6 +330,7 @@ contains
     ! Calculate the freshwater biological fluxes.
 
     use grid_mod, only: grid
+    use air_sea_fluxes, only: pCO2_atm
     implicit none
     
     character (len=*), intent(in) :: qty
