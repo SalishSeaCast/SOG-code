@@ -75,9 +75,8 @@ contains
          T,  &  ! Temperature profile arrays
          N, &  ! current surface nitrate conc.
          Si, &  ! current surface silicon conc.
-         DON, & ! current surface diss. org. N
+         D, & ! current surface Detritus %DON diss. org. N  %DOC diss. org. C
          DIC, & ! current surface DIC conc.
-         DOC, & ! current surface DOC conc.
          Oxy    ! current surface oxygen conc.
     implicit none
     ! Argument:
@@ -92,9 +91,9 @@ contains
     sum%NO = N%O(0)
     sum%NH = N%H(0)
     sum%Si = Si(0)
-    sum%DON = DON(0)
+    sum%DON = D%DON(0)
     sum%DIC = DIC(0)
-    sum%DOC = DOC(0)
+    sum%DOC = D%DOC(0)
     sum%Oxy = Oxy(0)
   end subroutine init_northern
 
@@ -104,7 +103,9 @@ contains
     implicit none
 
     ! Include the return flow from the Northern Strait
+    write (*,*) 'here'
     Northern_return = getparl('northern_return_flow_on')
+    write (*,*) 'now here'
     if (Northern_return) then
        ! Strength of Northern Influence (multiple of 1/43m)
        strength = getpard("strength_northern")/43.
