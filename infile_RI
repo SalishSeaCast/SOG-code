@@ -64,6 +64,9 @@
 "std_chem_ts_out"
 	"timeseries/std_chem_RI-test.out"
 	"chemistry model time series"
+"user_chem_ts_out"   
+	"timeseries/user_chem_SOG.out"   
+	"standard chemistry timeseries"
 
 ! Profiles output
 "noprof"        7       "number of profiles to be produced"
@@ -95,12 +98,17 @@
 "Phytoplankton"  0.25d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    " Phytoplankton from fluor (constant and seasonal)"
 "Nitrate"   21.435d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    "Nitrate (constant)"
 "Silicon"  54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0    "Silicon (constant)"
-!--- BEGIN CHEMISTRY BOTTOM BOUNDARY CONDITIONS
-! From SoG data, NOT from RI
-"DIC"  2124.2233d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Dissolved Inorganic Carbon (constant)"
-"Oxy"  148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Dissolved Oxygen (constant)"
-"Alk"  0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0  "Alkalinity (**values needed**)"
-!--- END CHEMISTRY BOTTOM BOUNDARY CONDITIONS
+! --- From SoG data, NOT from RI ----------
+"DIC"
+  2065.98993d0 9.18035435d0 -3.15241908d0 0.0d0 -12.52672493 -5.618220366 0.0d0
+  "Dissolved Inorganic Carbon (constant, seasonal and biseasonal components from salinity fit)"
+"Oxy"
+  148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
+  "Dissolved Oxygen (constant)"
+"Alk"
+  2097.300118 6.25890810 -2.14923091 0.0d0 -8.540367d0 -3.83034506 0.0d0
+  "Alkalinity (constant, seasonal and biseasonal components from salinity fit)"
+! -----------------------------------------
 "Ammonium"   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0   "Ammonium (constant)"
 "Ratio"   1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0    "Ratio of pico/micro plankton (constant and biseasonal)"
 
@@ -128,8 +136,9 @@
 'calpha2'  1500.0d0        "alpha2"
 'cgamma'   0.04d0          "gamma"
 'cbeta'    0.01d0          "beta"
-
-
+! Alkalinity freshwater fit (SOG not RI)
+"slope_alk"      -0.13d0       "slope for alkalinity freshwater fit"
+"intercept_alk"  1020.0d0      "zero-salinity intercept for freshwater fit"
 ! Kpar Fit  - Collins et al 2008 equation 8
 'ialpha'   0.1709d0             "alpha"
 'ibeta'  0.02d0              "beta - relates to chl"

@@ -110,13 +110,13 @@
   "Silicon (constant)"
 "DIC"
   2065.98993d0 9.18035435d0 -3.15241908d0 0.0d0 -12.52672493 -5.618220366 0.0d0
-  "Dissolved Inorganic Carbon (constant)"
+  "Dissolved Inorganic Carbon (constant, seasonal and biseasonal components from salinity fit)"
 "Oxy"
   148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Dissolved Oxygen (constant)"
 "Alk"
   2097.300118 6.25890810 -2.14923091 0.0d0 -8.540367d0 -3.83034506 0.0d0
-  "Alkalinity (**values needed**)"
+  "Alkalinity (constant, seasonal and biseasonal components from salinity fit)"
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
   "Ammonium (constant)"

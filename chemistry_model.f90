@@ -105,8 +105,6 @@ contains
        ! chemistry quantities.
        call solve_chem_equations(grid%M, DIC, Oxy, Alk, day, time)
 
-       ! write(stdout, *) DIC, Alk
-
     enddo !---- End Iteration Loop ----
 
   end subroutine solve_gas_flux
