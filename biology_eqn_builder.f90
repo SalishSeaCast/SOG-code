@@ -225,7 +225,8 @@ contains
     use diffusion, only: diffusion_coeff, diffusion_bot_surf_flux, &
          diffusion_nonlocal_fluxes
     use upwelling, only: upwelling_advection
-    use freshwater, only: freshwater_bio
+    use freshwater, only: freshwater_bio, northern_return
+    use northern_influence, only: northern_advection
     use buoyancy, only: &
          Bf  ! Surface buoyancy forcing
     use io_unit_defs, only: stdout
@@ -332,6 +333,15 @@ contains
     call upwelling_advection(dt, D_DON, D_DON_RHS%diff_adv%new)
     call upwelling_advection(dt, D_PON, D_PON_RHS%diff_adv%new)
     call upwelling_advection(dt, D_bSi, D_bSi_RHS%diff_adv%new)
+
+    ! Add advection from north (only affects T and nutrients, DIC, Oxy)
+    if (northern_return) then
+       call northern_advection (dt, NO, 'NO ', NO_RHS%diff_adv%new)
+       call northern_advection (dt, NH, 'NH ', NH_RHS%diff_adv%new)
+       call northern_advection (dt, Si, 'Si ', Si_RHS%diff_adv%new)
+       call northern_advection (dt, D_DON, 'DON', D_DON_RHS%diff_adv%new)
+       call northern_advection (dt, D_DOC, 'DOC', D_DOC_RHS%diff_adv%new)
+    endif
 
     ! Calculate the sinking term for the quantities that sink
     ! to  calculate sinking at the interfaces used the values above

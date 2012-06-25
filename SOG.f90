@@ -183,7 +183,7 @@ program SOG
 ! Initialize the Northern Influence
   if (Northern_return)  &
        call init_northern(T%new(0), N%O(0), N%H(0), Si(0), &
-       DIC(0), Oxy(0))
+       D%DON(0), DIC(0), D%DOC(0), Oxy(0))
 
   ! Initialize the biology model
   call init_biology(grid%M)
@@ -512,7 +512,7 @@ program SOG
      ! Integrate surface values for northern influence calculation
      if (Northern_return) &
           call integrate_northern(T%new(0), N%O(0), N%H(0), &
-           Si(0), DIC(0), Oxy(0), dt)
+           Si(0), D%DON(0), DIC(0), D%DOC(0), Oxy(0), dt)
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason.    !!!
