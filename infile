@@ -150,6 +150,8 @@
 ! Alkalinity freshwater fit
 "slope_alk"      -0.13d0       "slope for alkalinity freshwater fit"
 "intercept_alk"  1020.0d0      "zero-salinity intercept for freshwater fit"
+! DIC fit parameters
+"pCO2_river"  5.0d-4      "Freshwater pCO2 for DIC obtained from river Alkalinity"
 ! Northern return flow influence
 "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
 ! Kpar Fit  - Collins et al 2008 equation 8

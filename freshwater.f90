@@ -93,23 +93,25 @@ module freshwater
   real(kind=dp), dimension(Ft_store_length) :: &
        Ft_store    ! Ft storage vector
   real(kind=dp) :: &
-       rho_riv,   &  ! Surface freshwater density [kg/m^3]
-       Fresh_avg, &  ! Running 30-day back-average
-       Fw_scale, &   ! Fresh water scale factor for river flows
-       Fw_depth, &   ! Depth to distribute fresh water flux over
+       rho_riv,      &  ! Surface freshwater density [kg/m^3]
+       Fresh_avg,    &  ! Running 30-day back-average
+       Fw_scale,     &  ! Fresh water scale factor for river flows
+       Fw_depth,     &  ! Depth to distribute fresh water flux over
        upwell_const, &  ! Maximum upwelling velocity (tuning parameter)  
-       Qbar, &          ! mean total freshwater 
-       F_SOG, &          ! exponential of SOG component of Ft     
-       F_RI, &           ! exponential of RI component of Ft     
-       cbottom, &       ! bottom salinity   
-       ! values for salinity fit
-       calpha, &        
-       calpha2, &
-       cgamma, &
-       cbeta,  &
+       Qbar,         &  ! Mean total freshwater 
+       F_SOG,        &  ! Exponential of SOG component of Ft     
+       F_RI,         &  ! Exponential of RI component of Ft     
+       cbottom,      &  ! Bottom salinity   
+       ! Values for salinity fit
+       calpha,       &        
+       calpha2,      &
+       cgamma,       &
+       cbeta,        &
        ! Alkalinity fit parameters
-       slope,  &
-       intercept
+       slope,        &  ! Slope of alkalinity versus discharge fit
+       intercept,    &  ! Zero-discharge intercept of alk/discharge fit
+       ! DIC fit parameters
+       pCO2_riv         ! Freshwater pCO2 for DIC obtained from Alkalinity
 
 contains
 
@@ -162,6 +164,9 @@ contains
     ! Alkalinity fit parameters
     slope = getpard('slope_alk')
     intercept = getpard('intercept_alk')
+
+    ! DIC fit parameters
+    pCO2_riv = getpard('pCO2_river')
   end subroutine read_freshwater_params
   
 
@@ -201,8 +206,6 @@ contains
          h                ! Mixing layer depth
 
     ! Local variables
-    real(kind=dp), parameter :: &
-         pCO2_riv = 7.5d-4   ! River pCO2 [atm]
     real(kind=dp) :: &
          RiverTC,    &    ! Major river temperature [deg C]
          river_alk,  &    ! River alkalinity [ueq L-1]

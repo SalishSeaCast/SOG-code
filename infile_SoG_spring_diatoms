@@ -63,6 +63,9 @@
 "std_chem_ts_out"
 	"timeseries/std_chem_2002_spring_diatoms.out"
 	"standard chemistry timeseries"
+"user_chem_ts_out"   
+	"timeseries/user_chem_SOG.out"   
+	"standard chemistry timeseries"
 
 ! Profiles output
 "noprof"	1		"no. of profiles to print"
@@ -109,14 +112,14 @@
   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Silicon (constant)"
 "DIC"
-  2124.2233d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
-  "Dissolved Inorganic Carbon (constant)"
+  2065.98993d0 9.18035435d0 -3.15241908d0 0.0d0 -12.52672493 -5.618220366 0.0d0
+  "Dissolved Inorganic Carbon (constant, seasonal and biseasonal components from salinity fit)"
 "Oxy"
   148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Dissolved Oxygen (constant)"
 "Alk"
-  0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
-  "Alkalinity (**values needed**)"
+  2097.300118 6.25890810 -2.14923091 0.0d0 -8.540367d0 -3.83034506 0.0d0
+  "Alkalinity (constant, seasonal and biseasonal components from salinity fit)"
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Ammonium (constant)"
@@ -147,6 +150,11 @@
 !- doesnt really have an alpha2 value but we dont want to divide by zero - beta =0 to get rid of term
 "cgamma"   0.0633d0             "gamma"
 "cbeta"    0.0d0            "beta"
+! Alkalinity freshwater fit
+"slope_alk"      -0.13d0       "slope for alkalinity freshwater fit"
+"intercept_alk"  1020.0d0      "zero-salinity intercept for freshwater fit"
+! DIC fit parameters
+"pCO2_river"  5.0d-4      "Freshwater pCO2 for DIC obtained from river Alkalinity"
 ! Northern return flow influence
 "northern_return_flow_on" .false.  "include back flow from the north?"
 
