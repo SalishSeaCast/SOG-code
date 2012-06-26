@@ -468,8 +468,6 @@ program SOG
      call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), DIC, Oxy, Alk, &
           day, time)
 
-     write(stdout, *) DIC
-
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.
      call solve_bio_eqns(grid%M, P%micro, P%nano, P%pico, Z, N%O, N%H, Si, &
