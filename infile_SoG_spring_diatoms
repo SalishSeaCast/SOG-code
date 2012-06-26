@@ -41,7 +41,7 @@
   "N/A"
   "IOS bottle data file"
 "chem_in"
-  "../SOG-initial/chem/Chem-SOGS-2010-73.sog"
+  "../SOG-initial/chem/Chem-SOG42-2010-73.sog"
   "IOS chemistry bottle data file"
 "initial chl split"
  1.0d0 0.d0 0.d0
@@ -112,13 +112,13 @@
   54.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Silicon (constant)"
 "DIC"
-  2065.98993d0 9.18035435d0 -3.15241908d0 0.0d0 -12.52672493 -5.618220366 0.0d0
+  2065.98993d0 9.18035435d0 -3.15241908d0 0.0d0 -12.52672493d0 -5.618220366d0 0.0d0
   "Dissolved Inorganic Carbon (constant, seasonal and biseasonal components from salinity fit)"
 "Oxy"
   148.3763d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Dissolved Oxygen (constant)"
 "Alk"
-  2097.300118 6.25890810 -2.14923091 0.0d0 -8.540367d0 -3.83034506 0.0d0
+  2097.300118d0 6.25890810d0 -2.14923091d0 0.0d0 -8.540367d0 -3.83034506d0 0.0d0
   "Alkalinity (constant, seasonal and biseasonal components from salinity fit)"
 "Ammonium"
   1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
