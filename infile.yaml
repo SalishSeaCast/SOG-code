@@ -357,6 +357,22 @@ physics:
         variable_name: cbeta
         description: beta coefficient of fresh water salinity fit
 
+    river_alkalinity_fit:
+      river_alkalinity_slope:
+        value: -0.13
+        variable_name: slope
+        description: slope coefficient of river alkalinity fit
+      river_alkalinity_intercept:
+        value: 1020
+        variable_name: intercept
+        description: zero-salinity intercept coefficient of river alkalinity fit
+
+    river_DIC_fit:
+      river_pCO2:
+        value: 5.0e-4
+        variable_name: pCO2_riv
+        description: freshwater pCO2 for DIC obtained from river alkalinity
+
     upwelling:
       max_upwelling_velocity:
         value: 2.5e-5
