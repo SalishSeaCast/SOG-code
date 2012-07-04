@@ -1233,7 +1233,7 @@ forcing_data:
     variable_name: use_average_forcing_data
     description: yes=avg only; no=fail if data runs out; fill=historic then avg
   wind_forcing_file:
-    value: ../SOG-forcing/wind/SH_patched_Jul22c_2010.dat
+    value: ../SOG-forcing/wind/SH_total_31Dec2011.dat
     variable_name: n/a
     description: wind forcing data path/filename
   air_temperature_forcing_file:
