@@ -38,7 +38,7 @@ module input_processor
   logical :: show_report  ! getpar* routines report to stdout when TRUE
   integer, parameter :: &
        label_len = 25,  &  ! Max length of infile item label
-       desc_len = 50,   &  ! Max length of infile item description
+       desc_len = 70,   &  ! Max length of infile item description
        str_len = 80        ! Max length of string value
 
 contains
@@ -67,7 +67,7 @@ contains
     endif
     ! Start the report, if requested
     if (show_report) then
-       write(stdout, '(a50, " = ", a)') "Date", runDatetime
+       write(stdout, '(a70, " = ", a)') "Date", runDatetime
     end if
 
     ! Open a scratch file to write the non-comment lines from the
@@ -118,7 +118,7 @@ contains
     str = trim(str)
     ! Report the value to stdout, if requested
     if (show_report .and. report_this) then
-       write(stdout,'(a50, " = ", a)') trim(desc), trim(str)
+       write(stdout,'(a70, " = ", a)') trim(desc), trim(str)
     endif
   end function getpars
 
@@ -157,7 +157,7 @@ contains
        ! Create a left justified string representation of the value
        write(str, '(i16)'), int
        str = trim(adjustl(str))
-       write(stdout,'(a50, " = ", a)') trim(desc), str
+       write(stdout,'(a70, " = ", a)') trim(desc), str
     endif
   end function getpari
 
@@ -246,7 +246,7 @@ contains
        ! Create a left justified string representation of the value
        write(str, '(1pg16.8)'), num
        str = trim(adjustl(str))
-       write(stdout,'(a50, " = ", a)') trim(desc), str
+       write(stdout,'(a70, " = ", a)') trim(desc), str
     endif
   end function getpard
 
@@ -287,14 +287,14 @@ contains
        ! Create a left justified string representation of the value
        write(str, '(1pg16.8)'), vec(1)
        str = trim(adjustl(str))
-       write(stdout,'(a46, " [1] = ", a)') trim(desc), str
+       write(stdout,'(a66, " [1] = ", a)') trim(desc), str
        do i = 2, len
           write(str, '(1pg16.8)'), vec(i)
           str = trim(adjustl(str))
           if (i <= 9) then
-             write(stdout, '(46x, " [", i1, "] = ", a)') i, str
+             write(stdout, '(66x, " [", i1, "] = ", a)') i, str
           else
-             write(stdout, '(45x, " [", i2, "] = ", a)') i, str
+             write(stdout, '(65x, " [", i2, "] = ", a)') i, str
           endif
        enddo
     endif
@@ -335,7 +335,7 @@ contains
        ! Create a left justified string representation of the value
        write(str, '(l1)'), bool
        str = trim(adjustl(str))
-       write(stdout,'(a50, " = ", a)') trim(desc), str
+       write(stdout,'(a70, " = ", a)') trim(desc), str
     endif
   end function getparl
 
@@ -452,7 +452,7 @@ contains
        ! Create a left justified string representation of the value
        str = datetime_str(date_time)
        write(stdout, 100) trim(desc), str, date_time%yr_day, date_time%day_sec
-100    format(a50, " = ", a, " year-day = ", i3, " day-sec = ", i5) 
+100    format(a70, " = ", a, " year-day = ", i3, " day-sec = ", i5) 
     endif
   end function getpar_datetime
 
