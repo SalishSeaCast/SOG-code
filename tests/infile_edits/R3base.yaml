@@ -14,31 +14,11 @@ initial_conditions:
 end_datetime:
   value: 2004-11-01 12:00:00
 
-timeseries_results:
-  std_physics:
-    value: timeseries/std_phys_R3base.out
-  user_physics:
-    value: timeseries/user_phys_R3base.out
-  std_biology:
-    value: timeseries/std_bio_R3base.out
-  user_biology:
-    value: timeseries/user_bio_R3base.out
-  std_chemistry:
-    value: timeseries/std_chem_R3base.out
-  user_chemistry:
-    value: timeseries/user_chem_R3base.out
-
 profiles_results:
   profile_days:
     value: [77]
   profile_times:
     value: [48480]
-  profile_file_base:
-    value: profiles/R3base
-  halocline_file:
-    value: profiles/halo-R3base.out
-  hoffmueller_file:
-    value: profiles/hoff-R3base.dat
 
 biology:
   include_flagellates:
