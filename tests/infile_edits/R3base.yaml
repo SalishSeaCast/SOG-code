@@ -1,6 +1,7 @@
 # Edits to create SOG infile for
 # SOG code infile for ~1 yr run starting at cruise 03-20 station S3 CTD cast.
-# This is the R3 baseline regression test infile.
+# These are the edits to be applied to infile.yaml
+# to produce the R3 baseline regression test infile.
 # All biology model complexity is turned off.
 
 initial_conditions:
