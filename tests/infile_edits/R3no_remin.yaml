@@ -1,0 +1,17 @@
+# Edits to create SOG infile for
+# SOG code infile for ~1 yr run starting at cruise 03-20 station S3 CTD cast.
+# These are the edits to be applied to infile.yaml after R3base.yaml
+# to produce the R3 no-remineralization regression test infile.
+# Flagellates, remineralization, and microzooplankton are all
+# disabled in the biology model,
+# and single species light limitation is enabled.
+
+biology:
+  include_flagellates:
+    value: False
+  include_remineralization:
+    value: False
+  include_microzooplankton:
+    value: False
+  single_species_light:
+    value: True
