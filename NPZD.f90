@@ -17,6 +17,7 @@ module NPZD
        remineralization, &   ! Is there a remineralization loop?
        microzooplankton, &   ! Active or not
        strong_limitation, &  ! single species light limitation
+       alkalinitybio, &      ! Include uptake and remin affects on alkalinity?
        micro, &              ! micro-plankton growth profile arrays
        ! diagnostics
        Mesozoo, &
@@ -130,8 +131,9 @@ module NPZD
   logical :: &
        flagellates, &    ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
-       microzooplankton, & ! use a microzooplantkon pool?
-       strong_limitation ! impose single species strong light limitation
+       microzooplankton, &  ! use a microzooplantkon pool?
+       strong_limitation, & ! impose single species strong light limitation
+       alkalinitybio        ! Include uptake and remin affects on alkalinity?
   real(kind=dp), dimension(:), allocatable :: Mesozoo
   type(plankton_growth) :: micro  ! Micro-plankton growth profile arrays
 
@@ -209,6 +211,7 @@ contains
     remineralization = getparl('remineralization')
     microzooplankton = getparl('use microzooplankton')
     strong_limitation = getparl('single species light')
+    alkalinitybio = getparl('alkalinity biology')
 
     ! Biological rate parameters
     ! zooplankton rates
@@ -1331,10 +1334,16 @@ contains
     ! Alkalinity
     bPZ = (PZ_bins%Alk - 1) * M + 1
     ePZ = PZ_bins%Alk * M
-    where (Alk > 0.)
-       dPZdt(bPZ:ePZ) = ((1 + Redfield_NP) * uptake%NO + (1 - Redfield_NP) &
-            * (uptake%NH - remin_NH)) * (1 / Redfield_NP) - 2 * NH_oxid
-    endwhere
+    if (alkalinitybio) then
+       where (Alk > 0.)
+          dPZdt(bPZ:ePZ) = ((1 + Redfield_NP) * uptake%NO + (1 - Redfield_NP) &
+               * (uptake%NH - remin_NH)) * (1 / Redfield_NP) - 2 * NH_oxid
+       endwhere
+    else
+       where (Alk > 0.)
+          dPZdt(bPZ:ePZ) = 0.0d0
+       endwhere
+    end if
 
     ! Dissolved organic carbon detritus
     bPZ = (PZ_bins%D_DOC - 1) * M + 1

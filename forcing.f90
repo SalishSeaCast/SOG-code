@@ -407,6 +407,8 @@ contains
        rivers_startyear = startyear
     endif
 
+    write(stdout, *) rivers_startday, rivers_startyear
+
     ! check if using average data
     if (use_average_forcing_data .eq. "yes" &
         .or. use_average_forcing_data .eq. "fill") then

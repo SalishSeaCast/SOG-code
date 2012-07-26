@@ -169,7 +169,7 @@ contains
     ! bottles).
     use io_unit_defs, only: stdout
     use grid_mod, only: grid
-    use input_processor, only: getpars, getpardv, getpard
+    use input_processor, only: getpars, getpardv, getpard, getparl
     use unit_conversions, only: CtoK
     use forcing, only: vary
     use fundamental_constants, only: Redfield_C
@@ -182,7 +182,7 @@ contains
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records, &  ! IOS bottle data record counter
          chem_records     ! IOS chem bottle data record counter
-    logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Alk, got_Oxy
+    logical :: biology, got_Fluores, got_NO, got_Si, got_DIC, got_Alk, got_Oxy
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
          data  ! Data records read
@@ -191,7 +191,10 @@ contains
     type(col_indices) :: col  ! Column numbers of quantities in data records
 
     ! Initializes N2chl ratio
-     N2chl = getpard('N2chl')
+    N2chl = getpard('N2chl')
+
+    ! Biology 'on' or 'off'
+    biology = getparl('biology')
 
     ! Initialize velocity profiles to assumed values
     U%new = Uo
@@ -372,11 +375,14 @@ contains
 
     ! No phytoplankton data is a degenerate case that someone might
     ! use to test just the physics
+    if (.not. biology) then
+       got_Fluores = .false.
+    endif
     if(.not. got_Fluores) then
        write(stdout, *) "init_state: Phytoplankton initialized to zero. ", &
                         "Testing just the physics?"
        P%micro = 0.0d0
-    endif
+       endif
 
     ! No silicon data is okay, just initialize it to lots
     if(.not. got_Si) then

@@ -508,7 +508,7 @@ contains
          D_PON(grid%M+1), D_refr(grid%M+1), D_bSi(grid%M+1),          &
          Ku(grid%M), Kt(grid%M), Ks(grid%M), I_par(grid%M),           &
          U(grid%M+1), V(grid%M+1)
-600 format(f7.3, 10(2x, f8.4), 2(2x, f12.4), 80(2x, f8.4))
+600 format(f7.3, 10(2x, f8.4), 3(2x, f12.4), 80(2x, f8.4))
   end subroutine write_profiles_numbers
 
 

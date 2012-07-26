@@ -83,11 +83,11 @@ module freshwater
   !
   ! Private:
   logical :: &
-       use_Fw_nutrients  ! Include influence of Fw nutrients?
+       use_Fw_nutrients    ! Include influence of Fw nutrients?
   integer :: &
        n_avg         ! Denominator for 30-day back-average
   integer, parameter :: &
-       Ft_store_length = 30 * 86400 / 900
+       Ft_store_length = 15 * 86400 / 900
   real(kind=dp), dimension(:), allocatable :: &
        Fw    ! Fresh water flux profile
   real(kind=dp), dimension(Ft_store_length) :: &
@@ -108,10 +108,9 @@ module freshwater
        cgamma,       &
        cbeta,        &
        ! Alkalinity fit parameters
-       slope,        &  ! Slope of alkalinity versus discharge fit
-       intercept,    &  ! Zero-discharge intercept of alk/discharge fit
-       ! DIC fit parameters
-       pCO2_riv         ! Freshwater pCO2 for DIC obtained from Alkalinity
+       river_Alk_0,     &  !
+       river_Alk_decay, &  !
+       pH_riv              !
 
 contains
 
@@ -162,11 +161,9 @@ contains
     cbeta = getpard('cbeta')
 
     ! Alkalinity fit parameters
-    slope = getpard('slope_alk')
-    intercept = getpard('intercept_alk')
-
-    ! DIC fit parameters
-    pCO2_riv = getpard('pCO2_river')
+    river_Alk_0 = getpard('river_Alk_0')
+    river_Alk_decay = getpard('river_Alk_decay')
+    pH_riv = getpard('pH_riv')
   end subroutine read_freshwater_params
   
 
@@ -179,6 +176,7 @@ contains
     !
     ! Type Definitions:
     use precision_defs, only: sp
+    use io_unit_defs, only: stdout
     ! Variables:
     use grid_mod, only: &
          grid  ! Grid parameters and depth & spacing arrays
@@ -190,7 +188,7 @@ contains
          UseRiverTemp
     ! Functions and subroutines
     use unit_conversions, only: KtoC
-    use carbonate, only: pCO2_to_carbonate
+    use carbonate, only: pH_to_carbonate
    
     implicit none
 
@@ -266,7 +264,7 @@ contains
 !    (1-exp(-totalfresh/Fm))**F_RI  ! for F_RI
 
     !-------------------------------------------------------------
-    ! Calculate 30-day back average for alkalinity fit
+    ! Calculate 15-day back average for alkalinity fit
     Ft_store(n_avg) = totalfresh
     Fresh_avg = sum(Ft_store) / n_avg
     if (n_avg .lt. Ft_store_length) then
@@ -283,12 +281,12 @@ contains
                            + RiverTC * (-1.120083d-6      &
                            + RiverTC * ( 6.536332d-9)))))
 
-    ! River alkalinity parametrization
-    river_alk = intercept - slope * Fresh_avg
+    ! Calculate River Alkalinity from discharge
+    river_Alk = river_Alk_0 * exp(river_Alk_decay * Fresh_avg)
 
-    ! River DIC parametrization
-    call pCO2_to_carbonate(RiverTemp, 0.0d0, rho_riv, river_alk, &
-         pCO2_riv, river_DIC)
+    ! Calculate DIC from Alk and pH
+    call pH_to_carbonate(RiverTemp, 0.0d0, rho_riv, river_alk, &
+         pH_riv, river_DIC)
 
     ! Circulation strength of a scalar is equal to deep value minus
     ! river value (see BMM Labbook pg 45 for deep values)

@@ -27,7 +27,7 @@ module carbonate
        Kw,          &  ! Dissociation of water [H][OH]
        BO3_total,   &  ! Total borate
        ! Subroutines
-       DIC_to_carbonate, pCO2_to_carbonate
+       DIC_to_carbonate, pH_to_carbonate
 
   ! Variable declarations:
   real(kind=dp) :: &
@@ -173,8 +173,8 @@ contains
   end subroutine DIC_to_carbonate
 
 
-  subroutine pCO2_to_carbonate(T, S, rho, Alk, pCO2, DIC)
-    ! Calculate DIC from total alkalinity and pCO2 at T, S and 1 atm.
+  subroutine pH_to_carbonate(T, S, rho, Alk, pH, DIC)
+    ! Calculate DIC from total alkalinity and pH at T, S and 1 atm.
     !
     ! Elements from other modules:
     ! Type Definitions:
@@ -190,70 +190,37 @@ contains
          S,          &    ! Practical Salinity [PSU]
          rho,        &    ! Seawater density [kg/m^3]
          Alk,        &    ! Total alkalinity [ueq/L]
-         pCO2             ! pCO2 [atm]
+         pH               ! pH
     real(kind=dp), intent(out) :: &
          DIC              ! DIC [uM]
     ! Local variables
     ! Carbonate system properties
     real(kind=dp) :: &
          Alk_molal,  &    ! Total alkalinity [ueq/kg]
-         CO2_star,   &    ! CO2* [mol/kg]
          H_total          ! Total [H+] [mol/kg]
-    ! Iteration parameters
-    real(kind=dp) :: &
-         x1,         &    ! Lower [H+] iteration boundary
-         x2,         &    ! Upper [H+] iteration boundary
-         x_guess,    &    ! Iteration [H+] initialization value 
-         x_acc            ! Iteration [H+] difference limit
 
     ! Set equilibrium constants
     call set_constants(T, S)
 
     ! Convert from uM to mol/kg
     Alk_molal = Alk * (1.0d-3/rho)
-    
-    ! pCO2 to CO2*
-    CO2_star = pCO2 * K0
 
-    ! Calculate [H+] total when DIC and TA are known at T, S and 1 atm.
-    !
-    ! The solution converges to err of x_acc. The solution must be within
-    ! the range x1 to x2.
-    !
-    ! If DIC and TA are known then either a root finding or iterative
-    ! method must be used to calculate H_total. In this case we use the
-    ! Newton-Raphson "safe" method taken from "Numerical Recipes"
-    ! (function "rtsafe.f" with error trapping removed).
-    !
-    ! As currently set, this procedure iterates about 12 times. The x1
-    ! and x2 values set below will accomodate ANY oceanographic values.
-    ! If an initial guess of the pH is known, then the number of iterations
-    ! can be reduced to about 5 by narrowing the gap between x1 and x2.
-    ! It is recommended that the first few time steps be run with x1 and x2
-    ! set as below. After that, set x1 and x2 to the previous value of the
-    ! pH +/- ~0.5. The current setting of x_acc will result in co2_star
-    ! accurate to 3 significant figures (xx.y). Making x_acc bigger will
-    ! result in faster convergence also, but this is not recommended
-    ! (x_acc of 1e-9 drops precision to 2 significant figures)
-
-    x1 = 1.0d-7
-    x2 = 1.0d-9
-    x_guess = 1.0d-8
-    x_acc = 1.0d-10
-
-    call drt_safe('pCO2', Alk_molal, CO2_star, x1, x2, x_guess, x_acc, H_total)
+    ! Convert pH to [H+]
+    H_total = 10**(-pH)
 
     ! Calculate DIC as defined in CDIAC Best Practices 2007, PICES Special
-    ! Publication 3, Dickson et al. eds. (Ch 2 pp 7, 10, Eq 18, 71-73)
+    ! Publication 3, Dickson et al. eds. (Ch 2 pp 7-9, Eq 17, 53-59)
     ! See BMM Lab book pg 49
-    DIC = CO2_star * (1 + K1 / H_total + K1 * K2 / H_total**2)
+    DIC = (1.0d0 / (H_total + 2.0d0 * K2)) &
+        * (Alk_molal - BO3_total/(1.0d0 + H_total/Kb) - Kw/H_total + H_total) &
+        * (H_total**2 / K1 + H_total + K2)
 
     ! Convert units of output arguments
     ! Note: CO2_star, dCO2_star, and DIC are calculated in mol/kg within
     ! this routine, thus convert now from mol/kg -> uM
     DIC = DIC * rho * 1.0d3
 
-  end subroutine pCO2_to_carbonate
+  end subroutine pH_to_carbonate
 
 
   subroutine ta_iter(qty, Alk, par, H, F, dFdH)
