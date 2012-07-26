@@ -228,17 +228,19 @@ physics:
       variable_name: c(:,5)
       description: silicon bottom boundary condition (constant)
     DIC_fit_coefficients:
-      value: [2065.98993 9.18035435 -3.15241908 0 -12.52672493 -5.618220366 0]
+      value: [2065.98993, 9.18035435, -3.15241908, 0, -12.52672493,
+              -5.618220366, 0]
       variable_name: c(:,6)
-      description: dissolved inorganic carbon (constant, seasonal and biseasonal components from salinity fit)
+      description: DIC (constant, seasonal & biseasonal from salinity fit)
     dissolved_oxygen_fit_coefficients:
       value: [148.3763, 0, 0, 0, 0, 0, 0]
       variable_name: c(:,7)
       description: dissolved oxygen bottom boundary condition (constant)
     alkalinity_fit_coefficients:
-      value: [2097.300118 6.25890810 -2.14923091 0 -8.540367 -3.83034506 0]
+      value: [2097.300118, 6.25890810, -2.14923091, 0, -8.540367,
+              -3.83034506, 0]
       variable_name: c(:,8)
-      description: alkalinity bottom boundary condition (constant, seasonal and biseasonal components from salinity fit)
+      description: alkalinity (constant, seasonal & biseasonal from salinity)
     ammonium_fit_coefficients:
       value: [1, 0, 0, 0, 0, 0, 0]
       variable_name: c(:,9)
@@ -354,6 +356,22 @@ physics:
         value: 0
         variable_name: cbeta
         description: beta coefficient of fresh water salinity fit
+
+    river_alkalinity_fit:
+      river_alkalinity_slope:
+        value: -0.13
+        variable_name: slope
+        description: slope coefficient of river alkalinity fit
+      river_alkalinity_intercept:
+        value: 1020
+        variable_name: intercept
+        description: zero-salinity intercept coefficient of river alkalinity fit
+
+    river_DIC_fit:
+      river_pCO2:
+        value: 5.0e-4
+        variable_name: pCO2_riv
+        description: freshwater pCO2 for DIC obtained from river alkalinity
 
     upwelling:
       max_upwelling_velocity:
@@ -1215,7 +1233,7 @@ forcing_data:
     variable_name: use_average_forcing_data
     description: yes=avg only; no=fail if data runs out; fill=historic then avg
   wind_forcing_file:
-    value: ../SOG-forcing/wind/SH_patched_Jul22c_2010.dat
+    value: ../SOG-forcing/wind/SH_total_31Dec2011.dat
     variable_name: n/a
     description: wind forcing data path/filename
   air_temperature_forcing_file:

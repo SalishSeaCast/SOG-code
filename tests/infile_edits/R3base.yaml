@@ -1,0 +1,28 @@
+# Edits to create SOG infile for
+# SOG code infile for ~1 yr run starting at cruise 03-20 station S3 CTD cast.
+# These are the edits to be applied to infile.yaml
+# to produce the R3 baseline regression test infile.
+# All biology model complexity is turned off.
+
+initial_conditions:
+  init_datetime:
+    value: 2003-10-09 11:47:00
+  CTD_file:
+    value: ../SOG-initial/ctd/SG-S3-2003-10-09.sog
+  nutrients_file:
+    value: ../SOG-initial/stratogem_nuts/Nuts-S3-2003-10-09.sog
+
+end_datetime:
+  value: 2004-11-01 12:00:00
+
+profiles_results:
+  profile_days:
+    value: [77]
+  profile_times:
+    value: [48480]
+
+biology:
+  include_flagellates:
+    value: False
+  include_microzooplankton:
+    value: False

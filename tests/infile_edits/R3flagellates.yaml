@@ -1,0 +1,11 @@
+# Edits to create SOG infile for
+# SOG code infile for ~1 yr run starting at cruise 03-20 station S3 CTD cast.
+# These are the edits to be applied to infile.yaml after R3base.yaml
+# to produce the R3 flagellates regression test infile.
+# Flagellates are enabled in the biology model.
+
+biology:
+  include_flagellates:
+    value: True
+  include_microzooplankton:
+    value: False
