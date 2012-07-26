@@ -17,7 +17,6 @@ module NPZD
        remineralization, &   ! Is there a remineralization loop?
        microzooplankton, &   ! Active or not
        strong_limitation, &  ! single species light limitation
-       alkalinitybio, &      ! Include uptake and remin affects on alkalinity?
        micro, &              ! micro-plankton growth profile arrays
        ! diagnostics
        Mesozoo, &
@@ -1336,7 +1335,6 @@ contains
        dPZdt(bPZ:ePZ) = ((1 + Redfield_NP) * uptake%NO + (1 - Redfield_NP) &
             * (uptake%NH - remin_NH)) * (1 / Redfield_NP) - 2 * NH_oxid
     endwhere
-    end if
 
     ! Dissolved organic carbon detritus
     bPZ = (PZ_bins%D_DOC - 1) * M + 1
