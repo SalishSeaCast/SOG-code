@@ -129,11 +129,10 @@ module NPZD
   !
   ! Biological model logicals (turned parts of the model on or off)
   logical :: &
-       flagellates, &    ! Can flagellates can influence other biology?
+       flagellates,      &  ! Can flagellates can influence other biology?
        remineralization, &  ! Is there a remineralization loop?
        microzooplankton, &  ! use a microzooplantkon pool?
-       strong_limitation, & ! impose single species strong light limitation
-       alkalinitybio        ! Include uptake and remin affects on alkalinity?
+       strong_limitation    ! impose single species strong light limitation
   real(kind=dp), dimension(:), allocatable :: Mesozoo
   type(plankton_growth) :: micro  ! Micro-plankton growth profile arrays
 
@@ -211,7 +210,6 @@ contains
     remineralization = getparl('remineralization')
     microzooplankton = getparl('use microzooplankton')
     strong_limitation = getparl('single species light')
-    alkalinitybio = getparl('alkalinity biology')
 
     ! Biological rate parameters
     ! zooplankton rates
@@ -1334,15 +1332,10 @@ contains
     ! Alkalinity
     bPZ = (PZ_bins%Alk - 1) * M + 1
     ePZ = PZ_bins%Alk * M
-    if (alkalinitybio) then
-       where (Alk > 0.)
-          dPZdt(bPZ:ePZ) = ((1 + Redfield_NP) * uptake%NO + (1 - Redfield_NP) &
-               * (uptake%NH - remin_NH)) * (1 / Redfield_NP) - 2 * NH_oxid
-       endwhere
-    else
-       where (Alk > 0.)
-          dPZdt(bPZ:ePZ) = 0.0d0
-       endwhere
+    where (Alk > 0.)
+       dPZdt(bPZ:ePZ) = ((1 + Redfield_NP) * uptake%NO + (1 - Redfield_NP) &
+            * (uptake%NH - remin_NH)) * (1 / Redfield_NP) - 2 * NH_oxid
+    endwhere
     end if
 
     ! Dissolved organic carbon detritus

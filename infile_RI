@@ -31,6 +31,9 @@
 !N2chl ratio
 "N2chl"  1.7d0  "ratio of chl mg/m3 to uMol N in phytoplankton"
 
+! Biology 'on' or 'off'
+"biology" .true.  "Include biology model (if not initializes phyto to zero)"
+
 ! Initial conditions
 "ctd_in"
   "../SOG-initial/ctd/RI-DF02-2007-08-29.sog"
@@ -136,10 +139,9 @@
 'cgamma'   0.04d0          "gamma"
 'cbeta'    0.01d0          "beta"
 ! Alkalinity freshwater fit (SOG not RI)
-"slope_alk"      -0.13d0       "slope for alkalinity freshwater fit"
-"intercept_alk"  1020.0d0      "zero-salinity intercept for freshwater fit"
-! DIC fit parameters
-"pCO2_river"  5.0d-4      "Freshwater pCO2 for DIC obtained from river Alkalinity"
+"river_Alk_0"     1056.9d0      "River alkalinity at zero discharge"
+"river_Alk_decay" -1.8d-4       "River alkalinity decay with discharge"
+"pH_riv"          7.9d0         "River pH"
 ! Northern return flow influence
 "northern_return_flow_on" .false. "include a return freshwater flow from the north?"
 ! Kpar Fit  - Collins et al 2008 equation 8
