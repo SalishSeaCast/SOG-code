@@ -412,6 +412,10 @@ physics:
       description: dl coefficient of K-PAR fit
 
 biology:
+  include_phytoplankton:
+    value: True
+    variable_name: biology
+    description: include phytoplankton in model? (init to zero if False)
   include_flagellates:
     value: True
     variable_name: flagellates
