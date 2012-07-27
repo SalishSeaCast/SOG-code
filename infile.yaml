@@ -358,20 +358,18 @@ physics:
         description: beta coefficient of fresh water salinity fit
 
     river_alkalinity_fit:
-      river_alkalinity_slope:
-        value: -0.13
-        variable_name: slope
-        description: slope coefficient of river alkalinity fit
-      river_alkalinity_intercept:
-        value: 1020
-        variable_name: intercept
-        description: zero-salinity intercept coefficient of river alkalinity fit
-
-    river_DIC_fit:
-      river_pCO2:
-        value: 5.0e-4
-        variable_name: pCO2_riv
-        description: freshwater pCO2 for DIC obtained from river alkalinity
+      river_alkalinity_zero:
+        value: 1056.9
+        variable_name: river_Alk_0
+        description: river alkalinity at zero discharge
+      river_alkalinity_decay:
+        value: -1.8e-4
+        variable_name: river_Alk_decay
+        description: river alkalinity decay with discharge
+      river_pH:
+        value: 7.9
+        variable_name: pH_riv
+        description: pH of river water
 
     upwelling:
       max_upwelling_velocity:
