@@ -98,7 +98,34 @@ vary:
     value: False
     variable_name: vary%wind%enabled
     description: use variation of wind initial conditions or forcing
-    # TODO: Add variation parameter handling when value is True
+  # The following wind_* parameters are only used when wind == True
+  wind_fixed:
+    value: True
+    variable_name: vary%wind%fixed
+    description: use fixed value for wind initial conditions or forcing
+  # The wind_value parameter is only used when wind == True and
+  # wind_fixed == True
+  wind_value:
+    value: 0
+    units: m/s
+    variable_name: vary%wind%value
+    description: fixed value for wind initial conditions or forcing
+  # The wind_shift, wind_fraction and wind_addition parameters are
+  # only used when wind == True wind_fixed == False
+  wind_shift:
+    value: 0
+    units: yr
+    variable_name: vary%wind%value
+    description: fixed value for wind initial conditions or forcing
+  wind_fraction:
+    value: 1
+    variable_name: vary%wind%value
+    description: fixed value for wind initial conditions or forcing
+  wind_addition:
+    value: 0
+    units: m/s
+    variable_name: vary%wind%value
+    description: fixed value for wind initial conditions or forcing
   cloud_fraction:
     value: False
     variable_name: vary%cf%enabled
