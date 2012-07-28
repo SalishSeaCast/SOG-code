@@ -135,7 +135,35 @@ vary:
     value: False
     variable_name: vary%rivers%enabled
     description: use variation of river flows initial conditions or forcing
-    # TODO: Add variation parameter handling when value is True
+  # The following river_flows_* parameters are only used when river_flows == True
+  river_flows_fixed:
+    value: True
+    variable_name: vary%rivers%fixed
+    description: use fixed value for river flows initial conditions or forcing
+  # The river_flows_value parameter is only used when river_flows == True and
+  # river_flows_fixed == True
+  river_flows_value:
+    value: 0
+    units: m/s
+    variable_name: vary%rivers%value
+    description: fixed value for river flows initial conditions or forcing
+  # The river_flows_shift, river_flows_fraction and
+  # river_flows_addition parameters are only used when river_flows ==
+  # True river_flows_fixed == False
+  river_flows_shift:
+    value: 0
+    units: yr
+    variable_name: vary%rivers%value
+    description: fixed value for river flows initial conditions or forcing
+  river_flows_fraction:
+    value: 1
+    variable_name: vary%rivers%value
+    description: fixed value for river flows initial conditions or forcing
+  river_flows_addition:
+    value: 0
+    units: m/s
+    variable_name: vary%rivers%value
+    description: fixed value for river flows initial conditions or forcing
   temperature:
     value: False
     variable_name: vary%temperature%enabled
