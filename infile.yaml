@@ -168,7 +168,35 @@ vary:
     value: False
     variable_name: vary%temperature%enabled
     description: use variation of air temperature initial conditions or forcing
-    # TODO: Add variation parameter handling when value is True
+  # The following temperature_* parameters are only used when temperature == True
+  temperature_fixed:
+    value: True
+    variable_name: vary%temperature%fixed
+    description: use fixed value for temperature initial conditions or forcing
+  # The temperature_value parameter is only used when temperature == True and
+  # temperature_fixed == True
+  temperature_value:
+    value: 0
+    units: m/s
+    variable_name: vary%temperature%value
+    description: fixed value for temperature initial conditions or forcing
+  # The temperature_shift, temperature_fraction and
+  # temperature_addition parameters are only used when
+  # temperature == True temperature_fixed == False
+  temperature_shift:
+    value: 0
+    units: yr
+    variable_name: vary%temperature%value
+    description: fixed value for temperature initial conditions or forcing
+  temperature_fraction:
+    value: 1
+    variable_name: vary%temperature%value
+    description: fixed value for temperature initial conditions or forcing
+  temperature_addition:
+    value: 0
+    units: m/s
+    variable_name: vary%temperature%value
+    description: fixed value for temperature initial conditions or forcing
 
 timeseries_results:
   std_physics:
