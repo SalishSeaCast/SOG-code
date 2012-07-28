@@ -130,7 +130,36 @@ vary:
     value: False
     variable_name: vary%cf%enabled
     description: use variation of cloud fraction initial conditions or forcing
-    # TODO: Add variation parameter handling when value is True
+  # The following cloud_fraction_* parameters are only used when
+  # cloud_fraction == True
+  cloud_fraction_fixed:
+    value: True
+    variable_name: vary%cf%fixed
+    description: use fixed value for cloud fraction initial conditions or forcing
+  # The cloud_fraction_value parameter is only used when
+  # cloud_fraction == True and cloud_fraction_fixed == True
+  cloud_fraction_value:
+    value: 0
+    units: m/s
+    variable_name: vary%cf%value
+    description: fixed value for cloud fraction initial conditions or forcing
+  # The cloud_fraction_shift, cloud_fraction_fraction and
+  # cloud_fraction_addition parameters are only used when
+  # cloud_fraction == True cloud_fraction_fixed == False
+  cloud_fraction_shift:
+    value: 0
+    units: yr
+    variable_name: vary%cf%value
+    description: fixed value for cloud fraction initial conditions or forcing
+  cloud_fraction_fraction:
+    value: 1
+    variable_name: vary%cf%value
+    description: fixed value for cloud fraction initial conditions or forcing
+  cloud_fraction_addition:
+    value: 0
+    units: m/s
+    variable_name: vary%cf%value
+    description: fixed value for cloud fraction initial conditions or forcing
   river_flows:
     value: False
     variable_name: vary%rivers%enabled
