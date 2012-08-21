@@ -1113,7 +1113,7 @@ contains
 
     do jj=1,M
        GrazMort_pico(jj)= max(Mesorub_eat(jj), 0.d0)
-       Mesorub_eat = GrazMort_pico(jj) * rate_mesorub%eff
+       Mesorub_eat(jj) = GrazMort_pico(jj) * rate_mesorub%eff
     enddo
 
     was_NH = was_NH + (frac_waste_FEN%NH) * GrazMort_pico * &
