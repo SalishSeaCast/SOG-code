@@ -110,7 +110,8 @@ module freshwater
        ! Alkalinity fit parameters
        river_Alk_0,     &  !
        river_Alk_decay, &  !
-       pH_riv              !
+       pH_riv,          &  !
+       river_chem          !
 
 contains
 
@@ -164,6 +165,7 @@ contains
     river_Alk_0 = getpard('river_Alk_0')
     river_Alk_decay = getpard('river_Alk_decay')
     pH_riv = getpard('pH_riv')
+    river_chem = pH_riv
   end subroutine read_freshwater_params
   
 
@@ -186,6 +188,8 @@ contains
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
          UseRiverTemp
+    use numerics, only: &
+         day
     ! Functions and subroutines
     use unit_conversions, only: KtoC
     use carbonate, only: pH_to_carbonate
@@ -283,6 +287,9 @@ contains
 
     ! Calculate River Alkalinity from discharge
     river_Alk = river_Alk_0 * exp(river_Alk_decay * Fresh_avg)
+    if (river_chem .lt. 0.0d0) then
+       pH_riv = 0.14d0 * sin(0.0172d0 * (day - 116d0)) + 7.7d0
+    end if
 
     ! Calculate DIC from Alk and pH
     call pH_to_carbonate(RiverTemp, 0.0d0, rho_riv, river_alk, &
