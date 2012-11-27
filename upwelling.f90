@@ -157,7 +157,7 @@ contains
     integer           :: allocstat  ! Allocation return status
     character(len=80) :: msg        ! Allocation failure message prefix
 
-    msg = "Vertical profiles of uwelling velocity arrays"
+    msg = "Vertical profiles of upwelling velocity arrays"
     allocate(w_entrain(0:M), w_upwell(0:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
