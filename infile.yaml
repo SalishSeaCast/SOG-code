@@ -1346,6 +1346,10 @@ biology:
       # match NO3 particles
 
 forcing_data:
+  years_of_forcing_data:
+    value: 2
+    variable_name: NY
+    description: number of years of forcing data to read
   use_average_forcing_data:
     value: "no"
     # NOTE: value must be quoted because yes/no == True/False in YAML

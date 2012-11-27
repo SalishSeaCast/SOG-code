@@ -51,9 +51,8 @@ module forcing
   logical :: UseRiverTemp
 
   ! Private module variable declarations:
-  integer, parameter :: NY = 2 ! number of years of data
   integer ::     &
-!!!       NY,       &  ! Number of years of forcing data
+       NY,       &  ! Number of years of forcing data
        wind_n,   &  ! Size of hourly wind speed forcing data arrays
        met_n,    &  ! Size of daily meteo forcing data arrays
        river_n,  &  ! Size of daily river flow forcing data arrays
@@ -73,11 +72,11 @@ contains
   subroutine init_forcing
     ! Allocate memory for forcing data arrays,
     ! and read forcing data values.
-    !!! use input_processor, only: getpari
+    use input_processor, only: getpari
     implicit none
 
 
-    !!! NY = getpari('')
+    NY = getpari('years of forcing data')
     wind_n = NY * 366 * 24
     met_n =  NY * 366
     river_n = NY * 366
