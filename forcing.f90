@@ -21,7 +21,11 @@ module forcing
        ! Variables:
        UseRiverTemp, vary, &
        ! Subroutines:
-       read_variation, read_forcing, get_forcing
+       init_forcing,   &
+       read_variation, &
+       read_forcing,   &
+       get_forcing,    &
+       dalloc_forcing_variables
 
   ! Public type definitions:
   !
@@ -47,24 +51,39 @@ module forcing
   logical :: UseRiverTemp
 
   ! Private module variable declarations:
-  !
-  ! Number of years of data  (set to NY years)
-  ! Array sizes for forcing data; based on NY years of data
-  integer, parameter :: NY = 2 ! number of years of data
-  integer, parameter :: &
-       wind_n = NY * 366 * 24, &  ! hourly data
-       met_n =  NY * 366, &  ! daily data
-       river_n = NY * 366   ! daily data
-  ! Data variables
-  real(kind=dp) :: wind_eastnorth(wind_n), &
-       wind_northwest(wind_n)
-  real(kind=sp) :: cf(met_n,24), atemp(met_n,24), &
-       humid(met_n,24)
-  real(kind=dp) :: Qriver(river_n), Eriver(river_n)
-  ! Starting year (startyear + NY-1 more years of data)
-  integer :: startyear
+  integer ::     &
+       NY,       &  ! Number of years of forcing data
+       wind_n,   &  ! Size of hourly wind speed forcing data arrays
+       met_n,    &  ! Size of daily meteo forcing data arrays
+       river_n,  &  ! Size of daily river flow forcing data arrays
+       startyear    ! Starting year (startyear + NY-1 more years of data)
+  real(kind=dp), dimension(:), allocatable :: &
+       wind_eastnorth,  &  ! North-east wind speed forcing data array
+       wind_northwest,  &  ! North-west wind speed forcing data array
+       Qriver,          &  ! Major river flow forcing data array
+       Eriver              ! Minor river flow forcing data array
+  real(kind=dp), dimension(:,:), allocatable :: &
+       cf,              &  ! Cloud fraction forcing data array
+       atemp,           &  ! Air temperature forcing data array
+       humid               ! Relative humidity forcing data array
 
 contains
+
+  subroutine init_forcing
+    ! Allocate memory for forcing data arrays,
+    ! and read forcing data values.
+    use input_processor, only: getpari
+    implicit none
+
+
+    NY = getpari('years of forcing data')
+    wind_n = NY * 366 * 24
+    met_n =  NY * 366
+    river_n = NY * 366
+    call alloc_forcing_variables(wind_n, met_n, river_n)
+    call read_forcing
+  end subroutine init_forcing
+
 
   subroutine read_variation
     ! Read variation parameters from the infile.
@@ -902,5 +921,50 @@ end subroutine read_forcing
        call exit(1)
     endif
   end function leapyear
+
+
+  subroutine alloc_forcing_variables(wind_n, met_n, river_n)
+    ! Allocate memory for forcing variable arrays.
+    use malloc, only: alloc_check
+    implicit none
+    ! Arguments:
+    integer, intent(in) :: &
+         wind_n,   &  ! Size of hourly wind speed forcing data arrays
+         met_n,    &  ! Size of daily meteo forcing data arrays
+         river_n      ! Size of daily river flow forcing data arrays
+    ! Local variables:
+    integer           :: allocstat  ! Allocation return status
+    character(len=80) :: msg        ! Allocation failure message prefix
+
+    msg = "Wind forcing data arrays"
+    allocate(wind_eastnorth(wind_n), wind_northwest(wind_n), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "Meteorological forcing data arrays"
+    allocate(cf(met_n, 24), atemp(met_n, 24), humid(met_n, 24), stat=allocstat)
+    call alloc_check(allocstat, msg)
+    msg = "River flow forcing data arrays"
+    allocate(Qriver(river_n), Eriver(river_n), stat=allocstat)
+    call alloc_check(allocstat, msg)
+  end subroutine alloc_forcing_variables
+
+
+  subroutine dalloc_forcing_variables
+    ! Deallocate memory for forcing variable arrays.
+    use malloc, only: dalloc_check
+    implicit none
+    ! Local variables:
+    integer           :: dallocstat  ! Deallocation return status
+    character(len=80) :: msg         ! Deallocation failure message prefix
+
+    msg = "Wind forcing data arrays"
+    deallocate(wind_eastnorth, wind_northwest, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "Meteorological forcing data arrays"
+    deallocate(cf, atemp, humid, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+    msg = "River flow forcing data arrays"
+    deallocate(Qriver, Eriver, stat=dallocstat)
+    call dalloc_check(dallocstat, msg)
+  end subroutine dalloc_forcing_variables
 
 end module forcing

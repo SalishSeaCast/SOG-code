@@ -71,6 +71,11 @@ initial_conditions:
     units: mg/m^3 . uM N
     variable_name: N2chl
     description: phytoplankton nitrate to chlorophyl conversion factor
+  pCO2_atm:
+    value: 3.8e-4
+    units: atm
+    variable_name: pCO2_atm
+    description: partial pressure of atmospheric CO2
 
 end_datetime:
   value: 2005-10-11 00:22:00
@@ -1341,6 +1346,10 @@ biology:
       # match NO3 particles
 
 forcing_data:
+  years_of_forcing_data:
+    value: 2
+    variable_name: NY
+    description: number of years of forcing data to read
   use_average_forcing_data:
     value: "no"
     # NOTE: value must be quoted because yes/no == True/False in YAML

@@ -6,22 +6,16 @@ module air_sea_fluxes
   !
   !   wind_stress -- Calculate the wind-stress.
 
+  use fundamental_constants, only: pCO2_atm
   use precision_defs, only: dp, sp
   implicit none
 
   private
   public :: &
-       ! Parameters:
-       pCO2_atm, &
-       ! Variables:
        ! Subroutines:
        wind_stress, longwave_latent_sensible_heat, gas_flux
 
   ! Parameter Value Declarations:
-  !
-  ! Public
-  real(kind=dp), parameter :: &
-       pCO2_atm = 3.8d-4         ! Partial pressure of CO2 [atm]
   !
   ! Private to module:
   real(kind=dp), parameter :: &

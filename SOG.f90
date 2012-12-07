@@ -108,7 +108,8 @@ program SOG
        find_mixing_layer_indices
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
   use northern_influence, only: Northern_return, integrate_northern
-  use forcing, only: read_variation, read_forcing, get_forcing
+  use forcing, only: init_forcing, get_forcing, read_variation, &
+       dalloc_forcing_variables
   use unit_conversions, only: KtoC
   use datetime, only: os_datetime, calendar_date, clock_time, datetime_str, &
        increment_date_time
@@ -194,8 +195,8 @@ program SOG
   ! *** This should eventually go into init_numerics()
   call init_IMEX_solver(grid%M)
 
-  ! Read forcing data files
-  call read_forcing
+  ! Initialize forcing data arrays and read forcing data files
+  call init_forcing
 
   ! Initialize the profiles of the water column properties
   ! Density (rho), thermal expansion (alpha) and saline contraction (beta)
@@ -591,6 +592,7 @@ program SOG
   call dalloc_biology_variables
   call dalloc_chem_variables
   call dalloc_IMEX_variables
+  call dalloc_forcing_variables
 
   ! Return a successful exit status to the operating system
   call exit(0)
