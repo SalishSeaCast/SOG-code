@@ -54,7 +54,7 @@ module profiles_output
   character(len=80) :: &
        profilesBase_fn, &  ! Profiles results files base file name
        ! (profile date/time gets appended)
-  Hoffmueller_fn      ! Hoffmueler results file name
+       Hoffmueller_fn      ! Hoffmueller results file name
   type(datetime_), dimension(maxprofiles) :: &
        profileDatetime  ! Dates/times to write profiles results at
   ! Temporary storage arrays for profile dates/times (year-days, and

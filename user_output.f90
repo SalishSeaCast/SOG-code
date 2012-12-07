@@ -7,7 +7,11 @@ module user_output
   !
   !   write_user_bio_timeseries_hdr --
   !
+  !   write_user_chem_timeseries_hdr --
+  !
   !   write_user_timeseries --
+  !
+  !   init_user_profiles --
   !
   !   write_user_profiles --
 
@@ -20,12 +24,20 @@ module user_output
        write_user_chem_timeseries_hdr, write_user_timeseries, &
        init_user_profiles, write_user_profiles
 
+  ! Private variable declarations:
+  !
+  character(len=80) :: &
+       userprofilesBase_fn, &  ! User profiles results files base file name
+       ! (profile date/time gets appended)
+       userHoffmueller_fn      ! User Hoffmueller results file name
+
 contains
 
   subroutine init_user_profiles(str_run_Datetime, CTD_Datetime)
     ! Open the user-defined Hoffmueller output file for writing
     use io_unit_defs, only: userHoff
     use datetime, only: datetime_, datetime_str
+    use profiles_output, only: noprof
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: &
@@ -42,8 +54,16 @@ contains
     ! Convert the initial CTD profile date/time to a string
     str_CTD_Datetime = datetime_str(CTD_Datetime)
 
+    if (noprof > 0) then
+       ! Read the user profiles results file base-name
+       userprofilesBase_fn = 'profiles/SOG-user' ! getpars("user_profile_base")
+    endif
+
+    ! Read the user Hoffmueller results file name
+    userHoffmueller_fn = 'profiles/hoff-SOG-user' ! getpars("user Hoffmueller file")
+
     ! Open the user Hoffmueller output results file, and write its header
-    open(unit=userHoff, file='profiles/Hoff-SOG-user', status="replace", &
+    open(unit=userHoff, file=userHoffmueller_fn, status="replace", &
          action="write")
     call write_user_Hoff_hdr(str_run_Datetime, str_CTD_datetime)
   end subroutine init_user_profiles
@@ -244,7 +264,7 @@ contains
 
     subroutine write_user_profiles_hdr(str_run_Datetime, str_CTD_Datetime, &
        pro_Datetime)
-    ! Write the profile results file header.
+    ! Write the user profile results file header.
     use precision_defs, only: dp
     use io_unit_defs, only: userprofiles
     use datetime, only: datetime_, datetime_str
@@ -262,6 +282,7 @@ contains
     ! calls in write statements
     character(len=19) :: str_pro_Datetime
 
+    ! Top of header
     str_pro_Datetime = datetime_str(pro_Datetime)
     write(userprofiles, 400)
 400 format("! Profiles of Depth, Primary Productivity, ", &
@@ -276,7 +297,7 @@ contains
 
 
   subroutine write_user_Hoff_hdr(str_run_Datetime, str_CTD_datetime)
-    ! Write the Hoffmueller results file header
+    ! Write the user Hoffmueller results file header
     use io_unit_defs, only: userHoff
     use profiles_output, only: &
          Hoff_startyr, Hoff_startday, Hoff_startsec, &
@@ -287,6 +308,7 @@ contains
          str_run_Datetime,   &  ! Date/time of code run as a string
          str_CTD_Datetime       ! CTD profile date/time as a string
 
+    ! Top of header
     write(userHoff, 200)
 200 format("! Profiles for user-defined Hoffmueller diagram")
     write(userHoff, 300) str_run_Datetime, str_CTD_Datetime
@@ -307,24 +329,34 @@ contains
   end subroutine write_user_Hoff_hdr
 
 
-  subroutine write_user_profiles(str_run_Datetime, str_CTD_Datetime,   &
+  subroutine write_user_profiles(str_run_Datetime, str_CTD_Datetime, &
        year, day, day_time, dt, grid)
-    ! Check to see if the time is right to write a profiles output
-    ! file.  If so, open the file, write the profile results, and
-    ! close it.  Also write a line of data to the haloclines output
-    ! file.
+    ! Write user-specified profiles results.
+    !
+    ! Recommended signature:
+    !   subroutine write_user_profiles(str_run_Datetime, &
+    !         str_CTD_Datetime, year, day, day_time, dt, grid)
+    ! Arguments have been removed from the subroutine signature because
+    ! they are not presently used.
+    !
+    ! !!! Please add use statements here to bring variables in from !!!
+    ! !!! other module instead of adding them to the argument list. !!!
+    ! !!! Doing the latter requires a change to SOG.f90 that should !!!
+    ! !!! be taken out prior to commits on that file.               !!!
+    !
+    ! !!! You can freely change this subroutine without committing  !!!
+    ! !!! changes.
     use precision_defs, only: dp
     use io_unit_defs, only: userprofiles, userHoff
     use datetime, only: calendar_date, clock_time, datetime_str
     use grid_mod, only: grid_
-    use NPZD, only: uptake
-    use fundamental_constants, only: Redfield_C
-    use upwelling, only: w_upwell
-    use core_variables, only: N
     use datetime, only: datetime_
     use profiles_output, only: &
          iprof, noprof, profday, proftime, profileDatetime, &
          Hoff_yr, Hoff_day, Hoff_sec
+    ! use module1, only: var1
+    ! use module2, only: var2
+    ! use module3, only: var3
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
@@ -332,8 +364,6 @@ contains
     integer, intent(in) :: year, day
     real(kind=dp), intent(in) :: day_time, dt ! can't expect exact time match
     type(grid_), intent(in) :: grid
-    !
-    ! Local variables:
 
     ! Check the day and the time
     if (iprof <= noprof .and. day == profday(iprof)) then
@@ -347,7 +377,7 @@ contains
 
           ! Open the profile results file
           open(unit=userprofiles, &
-               file='profiles/SOGuser-' &
+               file=trim(userprofilesBase_fn) // '-' &
                // datetime_str(profileDatetime(iprof), datetime_sep='T', &
                time_sep='q'), &
                status='replace', action='write')
@@ -355,10 +385,8 @@ contains
           call write_user_profiles_hdr(str_run_Datetime, str_CTD_Datetime, &
                profileDatetime(iprof))
           ! Write the profiles numbers, and close the profiles file
-          call write_user_profiles_numbers(userprofiles, grid,          &
-               (uptake%NO + uptake%NH + uptake%PC) * Redfield_C * 3600, &
-               10.0d3 * (N%O(2:grid%M+1) + N%H(2:grid%M+1)) *           &
-               w_upwell(1:grid%M))
+          call write_user_profiles_numbers(userprofiles, grid) ! , var1, &
+          !     var2, var3, ...)
           close(userprofiles)
        endif
     endif
@@ -367,10 +395,8 @@ contains
     if (year == Hoff_yr .and. day == Hoff_day) then
        if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
           ! Write the profiles numbers
-          call write_user_profiles_numbers(userHoff, grid,              &
-               (uptake%NO + uptake%NH + uptake%PC) * Redfield_C * 3600, &
-               10.0d3 * (N%O(2:grid%M+1) + N%H(2:grid%M+1)) *           &
-               w_upwell(1:grid%M))
+          call write_user_profiles_numbers(userHoff, grid) ! , var1, &
+          !     var2, var3, ...)
           ! Add empty line as separator
           write(userHoff, *)
 
@@ -379,7 +405,7 @@ contains
   end subroutine write_user_profiles
 
 
-  subroutine write_user_profiles_numbers(unit, grid, UptakeC, Nflux)
+  subroutine write_user_profiles_numbers(unit, grid) ! , var1, var2, var3, ...)
     ! Write the profiles numbers.  This is broken out to reduce code
     ! duplications.
     use precision_defs, only: dp
@@ -392,23 +418,25 @@ contains
          unit  ! I/O unit to write to
     type(grid_), intent(in) :: &
          grid  ! Grid arrays
-    real(kind=dp), intent (in) :: &
-         UptakeC(1:), &  ! Carbon uptake [uM C/s]
-         Nflux(1:)       ! Phytoplankton advection profile [umol m-2 s-1]
     ! Local variables:
-    integer :: i  ! Loop index over grid depth
+    ! integer :: i  ! Loop index over grid depth
 
     ! Write the profile values at the surface.  Eddy diffusivity
     ! arrays don't have values there, so write zeros for them
-    write(unit, 600) grid%d_g(0), UptakeC(1), Nflux(1)
+    !
+    ! write(unit, 600) grid%d_g(0) var1(0) var2(0) var3(0) ...
+    !
     ! Write the profile values at the interior grid points
-    do i = 1, grid%M
-       write(unit, 600) grid%d_g(i), UptakeC(i), Nflux(i)
-    enddo
+    !
+    ! do i = 1, grid%M
+    !   write(unit, 600) grid%d_g(i) var1(i) var2(i) var3(i) ...
+    ! enddo
+    !
     ! Write the values at the bottom grid boundary.  Some quantities are
     ! not defined there, so use their values at the Mth grid point.
-    write(unit, 600) grid%d_g(grid%M+1), UptakeC(grid%M), Nflux(grid%M)
-600 format(f7.3, 80(2x, f8.4))
+    !
+    ! write(unit, 600) grid%d_g(grid%M+1) var1(grid%M+1) var2(grid%M+1) ...
+! 600 format(f7.3, 80(2x, f8.4))
   end subroutine write_user_profiles_numbers
 
 
