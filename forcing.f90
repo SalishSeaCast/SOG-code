@@ -116,10 +116,6 @@ contains
           write (stderr, *) "Fixed temperature not enabled"
           call exit (1)
        else
-          if (vary%temperature%shift /= 0) then
-             write (stderr, *) "Fixed temperature not enabled"
-             call exit (1)
-          endif
           if (vary%temperature%fraction /= 1) then
              write (stderr, *) "Multiplication of temperature not enabled, ", &
                   "use addition"
@@ -155,7 +151,13 @@ contains
     integer :: integ_days  ! number of days to integrate over
     real(kind=dp) :: integ_minor_river(river_n)  ! integrated flow
     ! Years and days for data shifting
-    integer :: wind_startyear, cf_startyear, rivers_startyear, rivers_startday
+    integer :: &
+         wind_startyear,    &
+         temp_startyear,    &
+         cf_startyear,      &
+         rivers_startyear,  &
+         rivers_startmonth, &
+         rivers_startday
     logical ::  found_data
 
 
@@ -228,6 +230,13 @@ contains
     endif
 
     ! Air Temperature
+    ! shift the start year if requested
+    if (vary%temperature%enabled) then
+       temp_startyear = startyear + int(vary%temperature%shift)
+    else
+       temp_startyear = startyear
+    endif
+
     ! Average data
     if (use_average_forcing_data .eq. "yes" &
         .or. use_average_forcing_data .eq. "fill") then
@@ -270,7 +279,7 @@ contains
           do j= 1, 24
              atemp(1,j) = CtoK(atemp(1,j) / 10.)
           enddo
-          if (year == startyear) then
+          if (year == temp_startyear) then
              do jc = 2, met_n
                 read (forcing_data, *, end=780) stn, year, month, day, para, &
                   (atemp(jc,j),j=1,24)
@@ -400,14 +409,15 @@ contains
     ! Major river
     ! shift the start year if requested
     if (vary%rivers%enabled .and. .not. vary%rivers%fixed) then
-       call shift_time (1, startyear, vary%rivers%shift, &
-            rivers_startday, rivers_startyear)
+       call shift_time (1, 1, startyear, vary%rivers%shift, &
+            rivers_startday, rivers_startmonth, rivers_startyear)
     else
        rivers_startday = 1
+       rivers_startmonth = 1
        rivers_startyear = startyear
     endif
 
-    write(stdout, *) rivers_startday, rivers_startyear
+    write(stdout, *) rivers_startday, rivers_startmonth, rivers_startyear
 
     ! check if using average data
     if (use_average_forcing_data .eq. "yes" &
@@ -463,7 +473,8 @@ contains
        found_data = .false.
        do while(.not. found_data)
           read(forcing_data, *, end=778) year, month, day, Qriver(1)
-          if(year == rivers_startyear .and. day == rivers_startday) then
+          if(year == rivers_startyear .and. month == rivers_startmonth &
+               .and. day == rivers_startday) then
              do jc = 2, river_n
                 read(forcing_data,*,end=778) year, month, day, Qriver(jc)
              enddo
@@ -784,28 +795,86 @@ end subroutine read_forcing
   end function accum_day
 
 
-  subroutine shift_time (day, year, shift, &
-       shift_day, shift_year)
+  subroutine shift_time (day, month, year, shift, &
+       shift_day, shift_month, shift_year)
 
     ! subroutine to shift by part of a year
 
-    integer, intent(in) :: day, year ! current day and year
+    integer, intent(in) :: day, month, year ! current day, month, and year
     real(kind=dp), intent(in) :: shift ! shift by fraction of a year
 
     ! shifted day and year
-    integer, intent(out) :: shift_day, shift_year
+    integer, intent(out) :: shift_day, shift_month, shift_year
 
+    ! Local variables
+    integer :: yearday
+    integer, dimension(12) :: month_perp, month_leap, month_index
 
-    shift_day = day + floor(365*shift)
-    shift_year = year
-    do while ((shift_day > 365 .and. .not.leapyear(shift_year)) &
-         .or. shift_day .gt. 366)
-       if (leapyear(year)) then
-          shift_day = shift_day - 366
-          shift_year = shift_year + 1
+    month_perp = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
+    month_leap = (/ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
+    shift_day   = day + floor(365 * shift)
+    shift_month = month
+    shift_year  = year
+
+    if (leapyear(shift_year)) then
+       month_index = month_leap
+    else
+       month_index = month_perp
+    endif
+
+    if (month == 1) then
+       yearday = day
+    else
+       yearday = sum(month_index(1: month - 1)) + day
+    endif
+
+    do while (shift_day .gt. month_index(shift_month) .or. shift_day .lt. 0)
+       if ((leapyear(shift_year) .and. shift_day .gt. 366 - yearday) .or. &
+            shift_day .gt. 365 - yearday) then
+          if (leapyear(shift_year)) then
+             shift_day = shift_day - (366 - yearday)
+          else
+             shift_day = shift_day - (365 - yearday)
+          endif
+          shift_year  = shift_year + 1
+          shift_month = 1
+          yearday     = 1
+          if (leapyear(shift_year)) then
+             month_index = month_leap
+          else
+             month_index = month_perp
+          endif
+       elseif (shift_day .lt. -1 * yearday) then
+          shift_day   = shift_day + yearday
+          shift_year  = shift_year - 1
+          shift_month = 12
+          if (leapyear(shift_year)) then
+             yearday = 366
+             month_index = month_leap
+          else
+             yearday = 365
+             month_index = month_perp
+          endif
        else
-          shift_day = shift_day - 365
-          shift_year = shift_year + 1
+          if (shift_day .gt. 0) then
+             shift_day = shift_day - month_index(shift_month)
+             if (shift_month == 12) then
+                shift_month = 1
+             else
+                shift_month = shift_month + 1
+             endif
+          else
+             if (shift_day .gt. -1 * month_index(month)) then
+                shift_day = shift_day + month_index(shift_month)
+             else
+                shift_day = shift_day + month_index(shift_month)
+                if (shift_month == 1) then
+                   shift_month = 12
+                else
+                   shift_month = shift_month - 1
+                endif
+             endif
+          endif
        endif
     enddo
   end subroutine shift_time

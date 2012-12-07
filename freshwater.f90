@@ -85,7 +85,7 @@ module freshwater
   logical :: &
        use_Fw_nutrients    ! Include influence of Fw nutrients?
   integer :: &
-       n_avg         ! Denominator for 30-day back-average
+       n_avg         ! Denominator for 15-day back-average
   integer, parameter :: &
        Ft_store_length = 15 * 86400 / 900
   real(kind=dp), dimension(:), allocatable :: &
@@ -94,7 +94,7 @@ module freshwater
        Ft_store    ! Ft storage vector
   real(kind=dp) :: &
        rho_riv,      &  ! Surface freshwater density [kg/m^3]
-       Fresh_avg,    &  ! Running 30-day back-average
+       Fresh_avg,    &  ! Running 15-day back-average
        Fw_scale,     &  ! Fresh water scale factor for river flows
        Fw_depth,     &  ! Depth to distribute fresh water flux over
        upwell_const, &  ! Maximum upwelling velocity (tuning parameter)  
@@ -122,7 +122,7 @@ contains
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
 
-    ! Initialize 30-day back average for alkalinity fit
+    ! Initialize 15-day back average for alkalinity fit
     Ft_store = 0.0d0;
     n_avg = 1
 

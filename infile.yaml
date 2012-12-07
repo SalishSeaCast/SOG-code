@@ -411,7 +411,7 @@ physics:
         variable_name: use_Fw_nutrients
         description: include influence of fresh water nutrients in biology
       northern_return_flow:
-        value: False
+        value: True
         variable_name: Northern_return
         description: include fresh water return flow from the north?
       # The next 5 "northern" parameters are only used when
@@ -471,15 +471,15 @@ physics:
 
     river_alkalinity_fit:
       river_alkalinity_zero:
-        value: 1056.9
+        value: 989.0
         variable_name: river_Alk_0
         description: river alkalinity at zero discharge
       river_alkalinity_decay:
-        value: -1.8e-4
+        value: -1.6e-4
         variable_name: river_Alk_decay
         description: river alkalinity decay with discharge
       river_pH:
-        value: 7.9
+        value: 7.7
         variable_name: pH_riv
         description: pH of river water
 

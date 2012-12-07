@@ -102,7 +102,8 @@ program SOG
        timeseries_output_close
   use profiles_output, only: init_profiles_output, write_std_profiles, &
        profiles_output_close
-  use user_output, only: write_user_timeseries, write_user_profiles
+  use user_output, only: write_user_timeseries, init_user_profiles, &
+       write_user_profiles
   use mixing_layer, only: find_mixing_layer_depth, &
        find_mixing_layer_indices
   use fitbottom, only: init_fitbottom, bot_bound_time, bot_bound_uniform
@@ -173,6 +174,9 @@ program SOG
 
   ! Initialize profiles writing code
   call init_profiles_output(datetime_str(runDatetime), initDatetime)
+
+  ! Initialize user profiles
+  call init_user_profiles(datetime_str(runDatetime), initDatetime)
 
   ! Initialize fitbottom
   call init_fitbottom()
@@ -532,6 +536,19 @@ program SOG
      ! !!! write_user_timeseries() in the user_output module. !!!
      call write_user_timeseries(time / 3600.)
 
+     ! Write user-specified profiles results
+     call write_user_profiles(datetime_str(runDatetime), &
+          datetime_str(initDatetime), year, day, day_time, dt, grid)
+     ! !!! Change the call signature to the one below to use  !!!
+     ! !!! subroutine. Also change the subroutien declaration !!!
+     ! !!! signature in the user_output module.               !!!
+     ! !!! Put use statements in your local copy of           !!!
+     ! !!! write_user_profiles() in the user_output module    !!!
+     ! !!! to bring in the variable you want to output.       !!!
+     !
+     ! call write_user_profiles(datetime_str(runDatetime), &
+     !      datetime_str(initDatetime), year, day, day_time, dt, grid)
+
      ! Write standard profiles results
      ! !!! Please don't change this argument list without good reason.    !!!
      ! !!! If it is changed, the change should be committed to Mercurial. !!!
@@ -542,18 +559,6 @@ program SOG
           T%new, S%new, rho%g, P%micro, P%nano, P%pico, Z, N%O, N%H, Si,  &
           DIC, Oxy, Alk, D%DOC, D%POC, D%DON, D%PON, D%refr, D%bSi, K%m,  &
           K%T, K%S, U%new, V%new)
-
-     ! Write user-specified profiles results
-     call write_user_profiles
-     ! !!! Change the call signature to the one below to use  !!!
-     ! !!! subroutine. Also change the subroutien declaration !!!
-     ! !!! signature in the user_output module.               !!!
-     ! !!! Put use statements in your local copy of           !!!
-     ! !!! write_user_profiles() in the user_output module    !!!
-     ! !!! to bring in the variable you want to output.       !!!
-     !
-     ! call write_user_profiles(datetime_str(runDatetime), &
-     !      datetime_str(initDatetime), year, day, day_time, dt, grid)
 
      ! Increment time, calendar date and clock time
      call increment_date_time(day_time, day, year, time, dt)

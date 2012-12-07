@@ -11,6 +11,11 @@ module profiles_output
 
   private
   public :: &
+       ! Variables:
+       iprof, noprof, profday, proftime, profileDatetime,   &
+       Hoff_startyr, Hoff_startday, Hoff_startsec,          &
+       Hoff_endyr, Hoff_endday, Hoff_endsec, Hoff_interval, &
+       Hoff_yr, Hoff_day, Hoff_sec,                         &
        ! Subroutines:
        init_profiles_output, &  ! Get the number of profiles output
                                 ! files (different times) to be
@@ -32,7 +37,8 @@ module profiles_output
                                 ! time is right to add results to the
                                 ! Hoffmueller output file, if so,
                                 ! write the results.
-       profiles_output_close    ! Close the haloclines output file.
+       profiles_output_close, & ! Close the haloclines output file.
+       write_cmn_hdr_id
 
   ! Private parameter declarations:
   !
@@ -89,7 +95,7 @@ contains
     ! The Hoffmueller results file is a series of profile results
     ! written to 1 file so that they can be plotted as a contour or
     ! colourmap plot.
-    use io_unit_defs, only: haloclines, Hoffmueller, stdout
+    use io_unit_defs, only: haloclines, Hoffmueller, userHoff, stdout
     use datetime, only: datetime_, datetime_str
     use input_processor, only: getpars, getpari, getpariv, getpardv, getpard
     implicit none
@@ -257,13 +263,11 @@ contains
          NO(0:),      &  ! Nitrates [uM N]
          NH(0:),      &  ! Ammonium [uM N]
          Si(0:),      &  ! Silicon [uM]
-!--- BEGIN CHEMISTRY DECLARATIONS
          DIC(0:),     &  ! Dissolved inorganic carbon [uM C]
          Oxy(0:),     &  ! Dissolved oxygen [uM O2]
          Alk(0:),     &  ! Alkalinity [uM]
          D_DOC(0:),   &  ! Dissolved organic carbon detritus [uM C]
          D_POC(0:),   &  ! Particulate organic carbon detritus [uM C]
-!--- END CHEMISTRY DECLARATIONS
          D_DON(0:),   &  ! Dissolved organic nitrogen detritus [uM N]
          D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
          D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
@@ -427,7 +431,7 @@ contains
          "photosynthetic available radiation, ",                          &
          "u velocity, v velocity"/,                                       &
          "*FieldUnits: m, deg C, None, None, uM N, uM N, uM N, uM N, ",   &
-         "uM N, uM N, uM, uM C, uM O2, uM, uM C, uM C, uM N, uM N, "      &
+         "uM N, uM N, uM, uM C, uM O2, uM, uM C, uM C, uM N, uM N, ",     &
          "uM N, uM, m^2/s, m^2/s, m^2/s, W/m^2, m/s, m/s")
   end subroutine write_cmn_hdr_fields
 
@@ -458,13 +462,11 @@ contains
          NO(0:),      &  ! Nitrates [uM N]
          NH(0:),      &  ! Ammonium [uM N]
          Si(0:),      &  ! Silicon [uM]
-!--- BEGIN CHEMISTRY INPUT DECLARATIONS
          DIC(0:),     &  ! Dissolved inorganic carbon [uM C]
          Oxy(0:),     &  ! Dissolved oxygen [uM O2]
          Alk(0:),     &  ! Alkalinity [uM]
          D_DOC(0:),   &  ! Dissolved organic carbon detritus [uM C]
          D_POC(0:),   &  ! Particulate organic carbon detritus [uM C]
-!--- END CHEMISTY INPUT DECLARATIONS
          D_DON(0:),   &  ! Dissolved organic nitrogen detritus [uM N]
          D_PON(0:),   &  ! Particulate organic nitrogen detritus [uM N]
          D_refr(0:),  &  ! Refractory nitrogen detritus [uM N]
@@ -474,7 +476,7 @@ contains
          Ks(1:),      &  ! Total salinity eddy diffusivity [m^2/s]
          I_par(0:),   &  ! Photosynthetic available radiation [W/m^2]
          U(0:),       &  ! U velocity component [m/s]
-         V(0:)           ! U velocity component [m/s]
+         V(0:)           ! V velocity component [m/s]
     ! Local variables:
     integer :: i  ! Loop index over grid depth
     real(kind=dp) :: &
@@ -514,7 +516,7 @@ contains
 
   subroutine profiles_output_close
     ! Close the haloclines and Hoffmueller output files.
-    use io_unit_defs, only: haloclines, Hoffmueller
+    use io_unit_defs, only: haloclines, Hoffmueller, userHoff
 
     implicit none
 
@@ -527,6 +529,7 @@ contains
 
     close(haloclines)
     close(Hoffmueller)
+    close(userHoff)
   end subroutine profiles_output_close
 
 end module profiles_output

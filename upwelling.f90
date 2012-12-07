@@ -23,7 +23,7 @@ module upwelling
        ! subroutines:
        init_upwelling, &
        upwelling_profile, upwelling_advection, &
-       dalloc_upwelling_variables
+       dalloc_upwelling_variables, w_upwell
 
   ! Variable Declarations:
   !

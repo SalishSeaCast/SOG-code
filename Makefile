@@ -35,7 +35,7 @@ mixing_layer.o diffusion.o baroclinic_pressure.o upwelling.o fitbottom.o \
 physics_eqn_builder.o physics_model.o \
 NPZD.o biology_eqn_builder.o rungekutta.o biology_model.o \
 IMEX_solver.o chemistry_model.o \
-user_output.o timeseries_output.o profiles_output.o \
+profiles_output.o user_output.o timeseries_output.o\
 SOG.o
 
 # The executable is the default target that is built by "make"
