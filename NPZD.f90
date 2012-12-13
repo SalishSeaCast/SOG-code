@@ -113,10 +113,7 @@ module NPZD
      real(kind=dp), dimension(:), pointer :: &
           NO, &  ! Nitrate uptake profile
           NH, &  ! Ammonium uptake profile
-          PC, &  ! Differential carbon uptake profile
-          Uc, &  ! Light-limited uptake profile
-          Sc, &  ! Silica-limited uptake profile
-          Nc     ! N-limited uptake profile
+          PC     ! Differential carbon uptake profile
   end type uptake_
   !
   ! Plankton growth
@@ -487,26 +484,10 @@ contains
     allocate(uptake%NO(1:M), uptake%NH(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    !--- PC Uptake Allocation ---
     msg = "Carbon compounds uptake diagnostic arrays"
     allocate(uptake%PC(1:M), &
          stat=allocstat)
     call alloc_check(allocstat, msg)
-    !----------------------------
-    !--- Limiting Uptake Allocation ---
-    msg = "Light limiting uptake diagnostic arrays"
-    allocate(uptake%Uc(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Silica limiting uptake diagnostic arrays"
-    allocate(uptake%Sc(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "N limiting uptake diagnostic arrays"
-    allocate(uptake%Nc(1:M), &
-         stat=allocstat)
-    call alloc_check(allocstat, msg)
-    !----------------------------
     msg = "Nitrogen remineralization diagnostic arrays"
     allocate(remin_NH(1:M), NH_oxid(1:M), &
          stat=allocstat)
@@ -545,26 +526,10 @@ contains
     deallocate(uptake%NO, uptake%NH, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    !--- PC Uptake Deallocation ---
     msg = "Carbon compounds uptake diagnostic arrays"
     deallocate(uptake%PC, &
          stat=dallocstat)
     call dalloc_check(dallocstat, msg)
-    !------------------------------
-    !--- Limiting Uptake Deallocation ---
-    msg = "Light limiting uptake diagnostic arrays"
-    deallocate(uptake%Uc, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Silica limiting uptake diagnostic arrays"
-    deallocate(uptake%Sc, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "N limiting uptake diagnostic arrays"
-    deallocate(uptake%Nc, &
-         stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    !------------------------------
     msg = "Nitrogen remineralization diagnostic arrays"
     deallocate(remin_NH, NH_oxid, &
          stat=dallocstat)
@@ -757,12 +722,6 @@ contains
           ! Chlr Redux Factor = 0.2 (Ianson and Allen 2002)
           uptake%PC(j) = (Rmax(j) * Uc(j) - plank%growth%new(j)) &
                      * 0.2d0 * P(j) + uptake%PC(j)
-
-          ! Limiting uptake vectors
-          uptake%Uc(j) = Rmax(j) * Uc(j) * P(j) + uptake%Uc(j)
-          uptake%Sc(j) = Rmax(j) * Sc(j) * P(j) + uptake%Sc(j)
-          uptake%Nc(j) = Rmax(j) * (Oup_cell(j) + Hup_cell(j)) * P(j) &
-               + uptake%Nc(j)
 
        endif
     end do
@@ -968,9 +927,6 @@ contains
     uptake%NO = 0.
     uptake%NH = 0.
     uptake%PC = 0.
-    uptake%Uc = 0.
-    uptake%Sc = 0.
-    uptake%Nc = 0.
     ! new waste variables
     was_NH = 0.
     was_DON = 0.
