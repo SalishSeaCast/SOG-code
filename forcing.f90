@@ -62,7 +62,7 @@ module forcing
        wind_northwest,  &  ! North-west wind speed forcing data array
        Qriver,          &  ! Major river flow forcing data array
        Eriver              ! Minor river flow forcing data array
-  real(kind=dp), dimension(:,:), allocatable :: &
+  real(kind=sp), dimension(:,:), allocatable :: &
        cf,              &  ! Cloud fraction forcing data array
        atemp,           &  ! Air temperature forcing data array
        humid               ! Relative humidity forcing data array
@@ -788,7 +788,7 @@ end subroutine read_forcing
 
   integer function accum_day (year, day) result(day_met)
     ! Calculate the accumulated day from Jan 1 of startyear. Based on
-    ! the fact that NY years of data is read in. 
+    ! the fact that NY years of data is read in.
     use io_unit_defs, only: stderr
     implicit none
     ! Arguments:

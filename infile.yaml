@@ -416,7 +416,7 @@ physics:
         variable_name: use_Fw_nutrients
         description: include influence of fresh water nutrients in biology
       northern_return_flow:
-        value: True
+        value: False
         variable_name: Northern_return
         description: include fresh water return flow from the north?
       # The next 5 "northern" parameters are only used when
