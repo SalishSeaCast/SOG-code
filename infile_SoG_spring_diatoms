@@ -69,8 +69,8 @@
 "std_chem_ts_out"
 	"timeseries/std_chem_2002_spring_diatoms.out"
 	"standard chemistry timeseries"
-"user_chem_ts_out"   
-	"timeseries/user_chem_SOG.out"   
+"user_chem_ts_out"
+	"timeseries/user_chem_SOG.out"
 	"standard chemistry timeseries"
 
 ! Profiles output

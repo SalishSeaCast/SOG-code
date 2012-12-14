@@ -57,23 +57,23 @@
   "Ratios of 3 classes of phytoplankton based on chlorophyl (micro, nano, pico)"
 
 ! Time series output files
-"std_phys_ts_out"  
-	"timeseries/std_phys_SOG.out"  
+"std_phys_ts_out"
+	"timeseries/std_phys_SOG.out"
 	"standard physics timeseries"
-"user_phys_ts_out" 
-	"timeseries/user_phys_SOG.out" 
+"user_phys_ts_out"
+	"timeseries/user_phys_SOG.out"
 	"user-defined physics timeseries"
-"std_bio_ts_out"   
-	"timeseries/std_bio_SOG.out"   
+"std_bio_ts_out"
+	"timeseries/std_bio_SOG.out"
 	"standard biology timeseries"
 "user_bio_ts_out"
-	"timeseries/user_bio_SOG.out"  
+	"timeseries/user_bio_SOG.out"
 	"user-defined biology timeseries"
-"std_chem_ts_out"   
-	"timeseries/std_chem_SOG.out"   
+"std_chem_ts_out"
+	"timeseries/std_chem_SOG.out"
 	"standard chemistry timeseries"
-"user_chem_ts_out"   
-	"timeseries/user_chem_SOG.out"   
+"user_chem_ts_out"
+	"timeseries/user_chem_SOG.out"
 	"standard chemistry timeseries"
 
 ! Profiles output
@@ -124,10 +124,10 @@
   2097.300118d0 6.25890810d0 -2.14923091d0 0.0d0 -8.540367d0 -3.83034506d0 0.0d0
   "Alkalinity (constant, seasonal and biseasonal components from salinity fit)"
 "Ammonium"
-  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0 
+  1.0d0 0.d0 0.d0 0.d0 0.d0 0.d0 0.d0
   "Ammonium (constant)"
 "Ratio"
-  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0 
+  1.25948868d0 0.d0 0.d0 0.d0 0.97697686d0 0.46289294d0 0.d0
   "Ratio of pico/micro plankton (constant and biseasonal)"
 !Basin axis lengths (km)
 "Lx"            30.0d3          "Minor axis (cross-strait) of model domain [m]"
@@ -146,7 +146,7 @@
 "Fw_surface"	.false.	       "add all of the fresh water on the surface?"
 "Fw_depth"      3.0d0          "interface thickness"
 "use_Fw_nutrients" .true.      "include influence of Fw nutrients"
-! Salinity Fit 
+! Salinity Fit
 "cbottom"  30.0d0          "bottom salinity"
 "calpha"   2440.0d0             "alpha"
 "calpha2"  1.0d0              "alpha2"
@@ -195,13 +195,13 @@
 "Mesozoo, micro half-sat"    0.2d0 "Mesozoo, micro half-saturation"
 "Mesozoo, pref for nano"      0.15d0 "Mesozoo, preference for nano"
 "Mesozoo, nano pred slope"    0.4d0 "Mesozoo, nano limit of predation"
-"Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation" 
+"Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation"
 "Mesozoo, pref for PON"      0.35d0 "Mesozoo, preference for PON"
 "Mesozoo, PON pred slope"    0.2d0 "Mesozoo, PON limit of predation"
-"Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation" 
+"Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation"
 "Mesozoo, pref for uZoo"      0.20d0 "Mesozoo, preference for microzoo"
 "Mesozoo, uZoo pred slope"    0.2d0 "Mesozoo, microzoo limit of predation"
-"Mesozoo, uZoo half-sat"      0.2d0 "Mesozoo, microzoo half-saturation" 
+"Mesozoo, uZoo half-sat"      0.2d0 "Mesozoo, microzoo half-saturation"
 
 ! mesodinium as zoo rates
 ! 0.24 growth / 0.6 efficiency = 4.63e-6
@@ -305,7 +305,7 @@
 ! Denman 0.1d-1 at 10 degrees
 "PON remin rate"        2.3d-6       "PON detritus remineralization rate [1/s]"
 ! from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
-! of same order as a number of papers including Brzezinski et al,; Bidle and 
+! of same order as a number of papers including Brzezinski et al,; Bidle and
 ! Azam 1998 without bacteria
 "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
 ! Waste and detritus
