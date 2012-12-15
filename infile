@@ -94,6 +94,11 @@
 "Hoffmueller end day"	305			"yr-day to end Hoff output"
 "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
 "Hoffmueller interval"	1.			"days between Hoff outputs"
+! User profiles and Hoffmueller data files
+"user_profile_base"  "profiles/SOG-user"
+    "user profile file base (datetime will be added)"
+"user Hoffmueller file"  "profiles/hoff-SOG-user.dat"
+    "file for user Hoffmueller results"
 
 ! Physics model parameters
 ! Bottom boundary conditions
