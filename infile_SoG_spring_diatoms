@@ -69,8 +69,8 @@
 "std_chem_ts_out"
 	"timeseries/std_chem_2002_spring_diatoms.out"
 	"standard chemistry timeseries"
-"user_chem_ts_out"   
-	"timeseries/user_chem_SOG.out"   
+"user_chem_ts_out"
+	"timeseries/user_chem_SOG.out"
 	"standard chemistry timeseries"
 
 ! Profiles output
@@ -97,6 +97,13 @@
 "Hoffmueller end day"	122			"yr-day to end Hoff output"
 "Hoffmueller end sec"	43200		"day-sec to end (midnight=0)"
 "Hoffmueller interval"	1.			"days between Hoff outputs"
+! User profiles and Hoffmueller data files
+"user_profile_base"
+    "profiles/2002_spring_diatoms_user"
+    "user profile file base (datetime will be added)"
+"user Hoffmueller file"
+    "profiles/hoff_2002_spring_diatoms_user.dat"
+    "file for user Hoffmueller results"
 
 ! Physics model parameters:
 ! Bottom temperature constant

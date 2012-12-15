@@ -277,6 +277,10 @@ profiles_results:
     value: profiles/SOG
     variable_name: profilesBase_fn
     description: path/filename base for profiles (datetime will be appended)
+  user_profile_file_base:
+    value: profiles/SOG-user
+    variable_name: userprofilesBase_fn
+    description: path/filename base for user profiles (datetime appended)
   halocline_file:
     value: profiles/halo-SOG.out
     variable_name: haloclines_fn
@@ -285,6 +289,10 @@ profiles_results:
     value: profiles/hoff-SOG.dat
     variable_name: Hoffmueller_fn
     description: path/filename for Hoffmueller results
+  user_hoffmueller_file:
+    value: profiles/hoff-SOG-user.dat
+    variable_name: userHoffmueller_fn
+    description: path/filename for user Hoffmueller results
   # TODO: Replace Hoffmueller results start and end year, day & second
   # with date/times
   hoffmueller_start_year:

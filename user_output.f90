@@ -38,6 +38,7 @@ contains
     use io_unit_defs, only: userHoff
     use datetime, only: datetime_, datetime_str
     use profiles_output, only: noprof
+    use input_processor, only: getpars
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: &
@@ -56,11 +57,11 @@ contains
 
     if (noprof > 0) then
        ! Read the user profiles results file base-name
-       userprofilesBase_fn = 'profiles/SOG-user' ! getpars("user_profile_base")
+       userprofilesBase_fn = getpars("user_profile_base")
     endif
 
     ! Read the user Hoffmueller results file name
-    userHoffmueller_fn = 'profiles/hoff-SOG-user' ! getpars("user Hoffmueller file")
+    userHoffmueller_fn = getpars("user Hoffmueller file")
 
     ! Open the user Hoffmueller output results file, and write its header
     open(unit=userHoff, file=userHoffmueller_fn, status="replace", &
