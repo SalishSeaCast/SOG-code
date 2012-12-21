@@ -1,10 +1,13 @@
 ! -*- mode: f90 -*-  ! This line must be at the top of the file!
 !*** Rivers Inlet  infile for ~14 mo run at station DF02 using
-!*** CTD cast (2007-08-29 16:10:15 LST) 
+!*** CTD cast (2007-08-29 16:10:15 LST)
 
 
 ! Latitude of basin location
 "latitude"  51.5215d0  "latitude [deg]"
+
+! Atmospheric CO2 partial pressure
+"pCO2_atm"  3.8d-4  "partial pressure of atmospheric CO2 [atm]"
 
 ! Grid parameters:
 "maxdepth"	40.d0	"depth of modelled domain [m]"
@@ -67,15 +70,15 @@
 "std_chem_ts_out"
 	"timeseries/std_chem_RI-test.out"
 	"chemistry model time series"
-"user_chem_ts_out"   
-	"timeseries/user_chem_SOG.out"   
+"user_chem_ts_out"
+	"timeseries/user_chem_SOG.out"
 	"standard chemistry timeseries"
 
 ! Profiles output
 "noprof"        7       "number of profiles to be produced"
 ! *** It would be nice to replace the yr-day and day-sec lists with a list
 ! *** of dates/times for profiles output
-"profday"        078 114 131 146 160 175 191   		
+"profday"        078 114 131 146 160 175 191
 		"year day for profiles"
 "proftime"       46920. 44700. 28800. 48300. 43380. 45480. 43200.
  		"time of day for profiles (s)"
@@ -91,6 +94,11 @@
 "Hoffmueller end day"	306			"yr-day to end Hoff output"
 "Hoffmueller end sec"	43200			"day-sec to end (midnight=0)"
 "Hoffmueller interval"	1.			"days between Hoff outputs"
+! User profiles and Hoffmueller data files
+"user_profile_base"  "profiles/RI-test-user"
+    "user profile file base (datetime will be added)"
+"user Hoffmueller file"  "profiles/hoff-RI-test-user.dat"
+    "file for user Hoffmueller results"
 
 ! Physics model parameters
 ! Bottom temperature parameters
@@ -132,7 +140,7 @@
 "Fw_surface"	.false.		"add all of the fresh water on the surface?"
 "Fw_depth"      3.5d0             "interface thickness"
 "use_Fw_nutrients" .false.       "include influence of Fw nutrients"
-! Salinity Fit 
+! Salinity Fit
 'cbottom'  31.8d0          "bottom salinity"
 'calpha'   80.0d0          "alpha"
 'calpha2'  1500.0d0        "alpha2"
@@ -160,7 +168,8 @@
 "flagellates_on"	.false.	"include flagellates in model?"
 "remineralization"	.false.	"include remineralization loop in model?"
 "use microzooplankton"  .false. "include microzooplankton in model?"
-"single species light"  .true.  "high light limitation for single species case"! Zooplankton values:
+"single species light"  .true.  "high light limitation for single species case"
+! Zooplankton values:
 ! fit from Dower et al
 "Mesozoo, winter conc"       0.0893d0 "Mesozoo background concentration"
 "Mesozoo, summer conc"       0.0d0 "Mesozoo relative sumemr conc"
@@ -180,13 +189,13 @@
 "Mesozoo, micro half-sat"    1.00d0 "Mesozoo, micro half-saturation"
 "Mesozoo, pref for nano"      0.0d0 "Mesozoo, preference for nano"
 "Mesozoo, nano pred slope"    0.4d0 "Mesozoo, nano limit of predation"
-"Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation" 
+"Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation"
 "Mesozoo, pref for PON"      0.0d0 "Mesozoo, preference for PON"
 "Mesozoo, PON pred slope"    0.2d0 "Mesozoo, PON limit of predation"
-"Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation" 
+"Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation"
 "Mesozoo, pref for uZoo"      0.0d0 "Mesozoo, preference for microzoo"
 "Mesozoo, uZoo pred slope"    0.2d0 "Mesozoo, microzoo limit of predation"
-"Mesozoo, uZoo half-sat"      0.2d0 "Mesozoo, microzoo half-saturation" 
+"Mesozoo, uZoo half-sat"      0.2d0 "Mesozoo, microzoo half-saturation"
 
 ! mesodinium as zoo rates
 ! 0.24 growth / 0.6 efficiency = 4.63e-6
@@ -291,7 +300,7 @@
 ! Denman 0.1d-1 at 10 degrees
 "PON remin rate"        2.3d-6       "PON detritus remineralization rate [1/s]"
 ! from Alain 0.07 d-1 @ 0 degrees give 3.24e-6 @ 20 degrees
-! of same order as a number of papers including Brzezinski et al,; Bidle and 
+! of same order as a number of papers including Brzezinski et al,; Bidle and
 ! Azam 1998 without bacteria
 "bSi remin rate"        3.24d-6       "bSi detritus dissolution rate [1/s]"
 ! Waste and detritus
@@ -406,6 +415,7 @@
 "bSi sink rate"         8d-5       "Biogenic Si detritus sinking rate [m/s]"
 
 ! File names and control variables for forcing data (wind, meteorology, river flows)
+"years of forcing data"  2  "number of years of forcing data to read"
 "use average/hist forcing" "no" "yes = use aver. forcing data only; no = fail if insufficient data; fill = use forcing data below to end, then switch to aver. data; histfill = use forcing data below to end, then switch to hist data"
 "wind"          "../SOG-forcing/wind/RI_Winds.txt"  "wind forcing data"
 "air temp"      "../SOG-forcing/met/RIhistAT"       "air temperature forcing data"
@@ -414,5 +424,5 @@
 "major river"  "../SOG-forcing/rivers/Wannock_historic.txt"  "major river flow data"
 ! Do not use in RI - no minor river
 "use river temp"  .false.  "Include cooling/heating effect of major river?"
-"minor river"  "N/A" "minor river flow data" 
+"minor river"  "N/A" "minor river flow data"
 ! end of file

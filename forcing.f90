@@ -581,7 +581,8 @@ contains
           do while (.not. found_data)
              read (forcing_data, *, end=175) year, month, day, Eriver(1)
              ! Use same shift as major river
-             if (year == rivers_startyear .and. day == rivers_startday) then
+             if (year == rivers_startyear .and. month == rivers_startmonth &
+                  .and. day == rivers_startday) then
                 do jc = 2, river_n
                    read (12,*, end=175) year, month, day, Eriver(jc)
                 enddo
@@ -599,7 +600,8 @@ contains
              open(forcing_data, file=minor_river_file)
              do while (.not. found_data)
                 read (forcing_data, *, end=782) year, month, day, Eriver(1)
-                if (year == rivers_startyear .and. day == rivers_startday) then
+                if (year == rivers_startyear .and. month == rivers_startmonth &
+                     .and. day == rivers_startday) then
                    do jc = 2, river_n
                       read (12,*) year, month, day, Eriver(jc)
                    enddo
