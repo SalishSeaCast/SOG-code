@@ -84,7 +84,7 @@ contains
 
   subroutine calc_irradiance(cf, day_time, day, Qriver, &
        Pmicro, Pnano, Ppico)
-    ! *** What does this do?
+    ! Calculates the amount of light (total and PAR) as a function of depth
     use grid_mod, only: grid
     implicit none
     ! Arguments:
@@ -108,7 +108,7 @@ contains
     ! Variable declarations:
     type(tenths) :: cloud
     real(kind=dp) :: lat  ! Latitude of centre of model domain [rad]
-    integer :: k, of
+    integer :: k, fcf, ccf
     real(kind=dp) :: declination, hour, cos_Z, day_length, hour_angle, &
          sunrise, sunset, Qso, a, b, KK
     real(kind=dp):: I_incident
@@ -158,11 +158,14 @@ contains
 
     Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
 
-    of = floor(cf+0.2)  ! "of" is integer type
+    fcf = floor(cf)   ! integer below cf value
+    ccf = ceiling(cf) ! integer above cf value
 
     if (day_time / 3600.0 > sunrise .and. day_time / 3600.0 < sunset) then
-       I_incident = Qso * (cloud%type(of)%A &
-                           + cloud%type(of)%B * cos_Z) * cos_Z   
+       I_incident = Qso * (  &
+            cloud%type(fcf)%A * (ccf-cf) + cloud%type(ccf)%A * (cf-fcf) &
+            + (cloud%type(fcf)%B * (ccf-cf) + cloud%type(ccf)%B * (cf-fcf)) &
+            * cos_Z) * cos_Z   
     else
        I_incident = 0.
     end if
