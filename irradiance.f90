@@ -173,7 +173,6 @@ contains
             cloud%type(fcf)%A * (ccf-cf) + cloud%type(ccf)%A * (cf-fcf) &
             + (cloud%type(fcf)%B * (ccf-cf) + cloud%type(ccf)%B * (cf-fcf)) &
             * cos_Z) * cos_Z   
-       write (*,*) cf, fcf, ccf, ' ***'
     else
        I_incident = 0.
     end if
