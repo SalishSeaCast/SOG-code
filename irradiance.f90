@@ -160,12 +160,20 @@ contains
 
     fcf = floor(cf)   ! integer below cf value
     ccf = ceiling(cf) ! integer above cf value
+    if (fcf.eq.ccf) then
+       if (fcf.eq.10) then
+          fcf = 9
+       else
+          ccf = fcf+1
+       endif
+    endif
 
     if (day_time / 3600.0 > sunrise .and. day_time / 3600.0 < sunset) then
        I_incident = Qso * (  &
             cloud%type(fcf)%A * (ccf-cf) + cloud%type(ccf)%A * (cf-fcf) &
             + (cloud%type(fcf)%B * (ccf-cf) + cloud%type(ccf)%B * (cf-fcf)) &
             * cos_Z) * cos_Z   
+       write (*,*) cf, fcf, ccf, ' ***'
     else
        I_incident = 0.
     end if
