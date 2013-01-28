@@ -22,6 +22,10 @@ module grid_mod
   !                                   grid point stored quantity qty_g
   !                                   between depths d1, and d2.
   !
+  !   trapz(qty_g, d1, d2) -- Return the approximate integral of
+  !                           quantity qty_g between depths d1 and d2
+  !                           using the trapezoid rule
+  !
   !   full_depth_average(qty_g) -- Return the average value of the
   !                                grid point stored quantity qty_g
   !                                over the entire depth of the grid.
@@ -76,7 +80,7 @@ module grid_mod
        grid, &
        ! Functions:
        depth_average, full_depth_average, gradient_g, gradient_i, interp_i, &
-       interp_g, &
+       interp_g, trapz, &
        ! Subroutines:
        dalloc_grid, init_grid, interp_value
 
@@ -454,6 +458,75 @@ contains
        call exit(1)
     endif
   end subroutine interp_value
+
+
+  function trapz(qty_g, d1, d2) result(integ)
+    ! Return the approximate integral of quantity qty_g between depths
+    ! d1 and d2 using the trapezoid rule
+    use io_unit_defs, only: stdout
+    implicit none
+    ! Arguments:
+    real(kind=dp), dimension(0:), intent(in) :: &
+         qty_g  ! Quantity values at grid point depths
+    real(kind=dp), intent(in) :: &
+         d1, &  ! Beginning of depth range to calculate average over
+         d2     ! End of depth range to calculate average over
+    ! Result:
+    real(kind=dp) :: integ  ! Average value
+    ! Local variables:
+    real(kind=dp) :: &
+         q_d1, &    ! Value of quantity at depth d1
+         q_d2       ! Value of quantity at depth d2
+    integer :: &
+         j_below_d1, &  ! Index of grid point below depth d1
+         j_below_d2, &  ! Index of grid point below depth d2
+         j_above_d2     ! Index of grid point above depth d2
+
+    ! Validate the depth arguments
+    if (d1 < grid%d_g(0) .or. d2 > grid%D) then
+       write(stdout, *) "trapz(): depth(s) out of range: ", &
+            "(", d1, ", ", d2, ")"
+       call exit(1)
+    endif
+    ! Find the values of the quantity at the depth limits, and the
+    ! indices of the grid points immediately below those depths
+    call interp_value(d1, 0, grid%d_g, qty_g, q_d1, j_below_d1)
+    call interp_value(d2, 0, grid%d_g, qty_g, q_d2, j_below_d2)
+    ! Handle the special cases of d1 = d2 and q_d1 = q_d2.  Note that
+    ! abs(x) < epsilon(x) is a real-number-robust test for x == 0.
+    if (abs(d2 - d1) < epsilon(d2 - d1) &
+         .and. abs(q_d2 - q_d1) < epsilon(q_d2 - q_d1)) then
+       integ = 0.0d0
+       return
+    endif
+
+    ! Set the indices of the grid points immediately above d2
+    j_above_d2 = j_below_d2 - 1
+    ! Check for d1 and d2 close together
+    if (d2 < grid%d_g(j_below_d1+1)) then
+       if (d2 <= grid%d_g(j_below_d1)) then
+          ! In this case d1 and d2 are between the same pair of grid points
+          integ = (d2 - d1) * (q_d1 + q_d2) / 2.0d0
+       else
+          ! In this case d1 and d2 are within three grid points
+          integ = ((grid%d_g(j_below_d1) - d1) * (q_d1 + qty_g(j_below_d1)) + &
+               (d2 - grid%d_g(j_below_d1)) * (qty_g(j_below_d1) + q_d2)) / 2.0d0
+       endif
+    else
+       ! Inside approximation
+       ! I'm using trapezoidal integration where QTY is defined at the
+       ! grid points so I'm neglecting to deal with interfaces
+       integ = (grid%d_g(j_above_d2) - grid%d_g(j_below_d1)) * &
+            (qty_g(j_below_d1) + qty_g(j_above_d2) +           &
+            2.0d0 * sum(qty_g(j_below_d1+1: j_above_d2-1))) /  &
+            (2.0d0 * (j_above_d2 - j_below_d1 - 1))
+       
+       ! Outside approximation
+       integ = integ + ((grid%d_g(j_below_d1) - d1) * &
+            (q_d1 + qty_g(j_below_d1)) + &
+            (d2 - grid%d_g(j_above_d2)) * (qty_g(j_above_d2) + q_d2)) / 2.0d0
+    endif
+  end function trapz
 
 
   subroutine alloc_grid

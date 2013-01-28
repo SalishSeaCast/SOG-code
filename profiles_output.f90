@@ -239,7 +239,7 @@ contains
     ! close it.  Also write a line of data to the haloclines output
     ! file.
     use precision_defs, only: dp
-    use io_unit_defs, only: profiles, haloclines, Hoffmueller
+    use io_unit_defs, only: profiles, haloclines, Hoffmueller, stdout
     use datetime, only: calendar_date, clock_time, datetime_str
     use unit_conversions, only: KtoC
     use grid_mod, only: grid_
