@@ -7,7 +7,11 @@ EXEC = SOG
 F90 = g95
 # Don't compile with optimization until the code runs properly without it
 # and always revert to -O0 and all checks when adding new features
-FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -ftrace=full -Wall
+FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -Wall
+# g95 extra flags
+FFLAGS-EXTRA = -ftrace=full
+# gfortran extra flags
+#FFLAGS-EXTRA = -fbacktrace
 FFLAGS-PROD = -O3 -fimplicit-none -Wall
 LD = $(F90)
 LDFLAGS = -o
