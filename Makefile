@@ -47,7 +47,7 @@ SOG.o
 # dependencies list by the suffix-based rules below
 # The compiler is set to -O0, and lots of checking flags
 # (i.e. for development and testing)
-$(EXEC): FFLAGS = $(FFLAGS-DEV)
+$(EXEC): FFLAGS = $(FFLAGS-DEV) $(FFLAGS-EXTRA)
 $(EXEC): $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $@
 
@@ -56,7 +56,7 @@ $(EXEC): $(OBJS)
 tests: $(OBJLIB) $(UNITTESTS)/*.f90
 	(cd $(UNITTESTS) && make)
 
-$(OBJLIB): FFLAGS = $(FFLAGS-DEV)
+$(OBJLIB): FFLAGS = $(FFLAGS-DEV) $(FFLAGS-EXTRA)
 $(OBJLIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(OBJLIB) $(OBJS)
 
@@ -81,7 +81,7 @@ changelog:
 
 # "make SOG-dev" does a clean build with the compiler flags set to
 # -O0, and lots of checking (i.e. appropriate for development and testing)
-$(EXEC)-dev: FFLAGS = $(FFLAGS-DEV)
+$(EXEC)-dev: FFLAGS = $(FFLAGS-DEV) $(FFLAGS-EXTRA)
 $(EXEC)-dev: clean $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
 
