@@ -444,7 +444,7 @@ contains
     if (any(mask) .and. .not. all(mask)) then
        ! Find the index of the search array element below the
        ! specified value
-       indices = (/ (i, i = lb, size(mask)) /)
+       indices = (/ (i, i = lb, size(mask) + lb - 1) /)
        j_below = minval(indices, mask)
        ! Interpolate the value of the quantity in interp_array that
        ! corresponds to the specified value in the search array
