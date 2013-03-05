@@ -137,11 +137,10 @@ contains
          "! Time series of ..."/,                                      &
          "*RunDateTime: ", a/,                                         &
          "*InitialCTDDateTime: ", a/,                                  &
-         !SEA         "*FieldNames: time, Avg (0-3m) microplankton biomass, "       &
-    "*FieldNames: time"/,       &
+         "*FieldNames: time, integrated primary productivity"/,        &
          !SEA         "Avg (0-3m) nanoplankton biomass"/, &
          !SEA         "*FieldUnits: hr since ", a, " LST, uM N, uM N"/, &
-         "*FieldUnits: hr since ", a, " LST"/, &
+         "*FieldUnits: hr since ", a, " LST, umol N m-2 hr-1"/, &
          "*EndOfHeader")
   end subroutine write_user_bio_timeseries_hdr
 
@@ -200,10 +199,12 @@ contains
          user_chem_timeseries
     use unit_conversions, only: KtoC
     use baroclinic_pressure, only: ut, vt, dPdx_b, dPdy_b
+    use NPZD, only: uptake
+    use grid_mod, only: trapz
     implicit none
     ! Arguments:
     real(kind=dp), intent(in) :: &
-         time  ! [hr aftr start midnight]
+         time  ! [hr after start midnight]
     ! Local variables:
 
     ! Write user-specified physics model time series results
@@ -240,8 +241,9 @@ contains
     ! !!! and *FieldUnits parts of the header in timeseries_output_open() !!!
     ! !!! be kept in sync with the appropriate write statement in  !!!
     ! !!! above, or compareSOG plotting will fail. !!!
-    write(user_bio_timeseries, 200) time
-200 format(f10.4)
+    write(user_bio_timeseries, 200) time, &
+         trapz((uptake%NO + uptake%NH) * 3.6d6, 0.0d0, 39.0d0)
+200 format(f10.4, 80(2x, f10.4))
 
     ! Write user-specified chemistry model time series results
     !
@@ -355,9 +357,10 @@ contains
     use profiles_output, only: &
          iprof, noprof, profday, proftime, profileDatetime, &
          Hoff_yr, Hoff_day, Hoff_sec
-    ! use module1, only: var1
-    ! use module2, only: var2
-    ! use module3, only: var3
+    use NPZD, only: uptake
+    use fundamental_constants, only: Redfield_C
+    use upwelling, only: w_upwell
+    use core_variables, only: N
     implicit none
     ! Arguments:
     character(len=19), intent(in) :: str_run_Datetime  ! Date/time of code run
@@ -386,8 +389,10 @@ contains
           call write_user_profiles_hdr(str_run_Datetime, str_CTD_Datetime, &
                profileDatetime(iprof))
           ! Write the profiles numbers, and close the profiles file
-          call write_user_profiles_numbers(userprofiles, grid) ! , var1, &
-          !     var2, var3, ...)
+          call write_user_profiles_numbers(userprofiles, grid,          &
+               (uptake%NO + uptake%NH + uptake%PC) * Redfield_C * 3600, &
+               10.0d3 * (N%O(2:grid%M+1) + N%H(2:grid%M+1)) *           &
+               w_upwell(1:grid%M))
           close(userprofiles)
        endif
     endif
@@ -396,8 +401,10 @@ contains
     if (year == Hoff_yr .and. day == Hoff_day) then
        if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
           ! Write the profiles numbers
-          call write_user_profiles_numbers(userHoff, grid) ! , var1, &
-          !     var2, var3, ...)
+          call write_user_profiles_numbers(userHoff, grid,              &
+               (uptake%NO + uptake%NH + uptake%PC) * Redfield_C * 3600, &
+               10.0d3 * (N%O(2:grid%M+1) + N%H(2:grid%M+1)) *           &
+               w_upwell(1:grid%M))
           ! Add empty line as separator
           write(userHoff, *)
 
@@ -406,7 +413,7 @@ contains
   end subroutine write_user_profiles
 
 
-  subroutine write_user_profiles_numbers(unit, grid) ! , var1, var2, var3, ...)
+  subroutine write_user_profiles_numbers(unit, grid, UptakeC, Nflux)
     ! Write the profiles numbers.  This is broken out to reduce code
     ! duplications.
     use precision_defs, only: dp
@@ -419,25 +426,28 @@ contains
          unit  ! I/O unit to write to
     type(grid_), intent(in) :: &
          grid  ! Grid arrays
+    real(kind=dp), intent (in) :: &
+         UptakeC(1:), &  ! Carbon uptake [uM C/s]
+         Nflux(1:)       ! Phytoplankton advection profile [umol m-2 s-1]
     ! Local variables:
-    ! integer :: i  ! Loop index over grid depth
-
+    integer :: i  ! Loop index over grid depth
+    
     ! Write the profile values at the surface.  Eddy diffusivity
     ! arrays don't have values there, so write zeros for them
-    !
-    ! write(unit, 600) grid%d_g(0) var1(0) var2(0) var3(0) ...
-    !
+    
+    write(unit, 600) grid%d_g(0), UptakeC(1), Nflux(1)
+    
     ! Write the profile values at the interior grid points
-    !
-    ! do i = 1, grid%M
-    !   write(unit, 600) grid%d_g(i) var1(i) var2(i) var3(i) ...
-    ! enddo
-    !
+    
+    do i = 1, grid%M
+       write(unit, 600) grid%d_g(i), UptakeC(i), Nflux(i)
+    enddo
+    
     ! Write the values at the bottom grid boundary.  Some quantities are
     ! not defined there, so use their values at the Mth grid point.
-    !
-    ! write(unit, 600) grid%d_g(grid%M+1) var1(grid%M+1) var2(grid%M+1) ...
-! 600 format(f7.3, 80(2x, f8.4))
+    
+    write(unit, 600) grid%d_g(grid%M+1), UptakeC(grid%M), Nflux(grid%M)
+600 format(f7.3, 80(2x, f8.4))
   end subroutine write_user_profiles_numbers
 
 

@@ -484,11 +484,11 @@ physics:
 
     river_alkalinity_fit:
       river_alkalinity_zero:
-        value: 989.0
+        value: 888.8
         variable_name: river_Alk_0
         description: river alkalinity at zero discharge
       river_alkalinity_decay:
-        value: -1.6e-4
+        value: -1.5e-4
         variable_name: river_Alk_decay
         description: river alkalinity decay with discharge
       river_pH:
