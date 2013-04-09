@@ -2,6 +2,13 @@ module carbonate
   ! Variable & parameter value declarations, and subroutines related
   ! to carbonate system calculations in the SOG code
   !
+  ! Constants and alkalinity parametrizations taken from CO2SYS v1.1
+  !  Lewis, E., and D. W. R. Wallace. 1998. Program Developed for
+  !  CO2 System Calculations. ORNL/CDIAC-105. Carbon Dioxide Information
+  !  Analysis Center, Oak Ridge National Laboratory, U.S. Department of Energy,
+  !  Oak Ridge, Tennessee. 
+  !  http://cdiac.ornl.gov/oceans/co2rprt.html
+  !
   ! Public Variables:
   !
   !   DIC      -- Dissolved inorganic carbon in surface
@@ -21,27 +28,45 @@ module carbonate
   public :: &
        ! Carbonate system constant arrays
        K0,          &  ! CO2 solubility
-       K1,          &  ! First equilibrium constant [H][HCO3]/[H2CO3]
-       K2,          &  ! Second equilibrium constant [H][CO3]/[HCO3]
-       Kb,          &  ! Borate equilibrium constant [H][BO2]/[HBO2]
-       Kw,          &  ! Dissociation of water [H][OH]
-       BO3_total,   &  ! Total borate
+       K1,          &  ! First carbonate eq constant [H][HCO3]/[H2CO3]
+       K2,          &  ! Second carbonate eq constant [H][CO3]/[HCO3]
+       KB,          &  ! Borate equilibrium constant [H][BO2]/[HBO2]
+       KW,          &  ! Dissociation of water [H][OH]
+       KP1,         &  ! First phosphate eq constant [H][H2PO4]/[H3PO4]
+       KP2,         &  ! Second phosphate eq constant [H][HPO4]/[H2PO4]
+       KP3,         &  ! Third phosphate eq constant [H][PO4]/[HPO4]
+       KSi,         &  ! Silicate equilibrium constant [H][SiO(OH)3]/[Si(OH)4]
+       KS,          &  ! Sulfate equilibrium constant [H][SO4]/[HSO4]
+       KF,          &  ! Fluoride equilibrium constant [H][F]/[HF]
+       TB,          &  ! Total borate
+       TS,          &  ! Total sulfate
+       TF,          &  ! Total fluoride
        ! Subroutines
-       DIC_to_carbonate, pH_to_carbonate
+       calc_carbonate
+       ! Private to module
+       ! set_contants, pressure_corrections
 
   ! Variable declarations:
   real(kind=dp) :: &
        ! Carbonate system constants
        K0,          &  ! CO2 solubility
-       K1,          &  ! First equilibrium constant [H][HCO3]/[H2CO3]
-       K2,          &  ! Second equilibrium constant [H][CO3]/[HCO3]
-       Kb,          &  ! Borate equilibrium constant [H][BO2]/[HBO2]
-       Kw,          &  ! Dissociation of water [H][OH]
-       BO3_total       ! Total borate
+       K1,          &  ! First carbonate eq constant [H][HCO3]/[H2CO3]
+       K2,          &  ! Second carbonate eq constant [H][CO3]/[HCO3]
+       KB,          &  ! Borate equilibrium constant [H][BO2]/[HBO2]
+       KW,          &  ! Dissociation of water [H][OH]
+       KP1,         &  ! First phosphate eq constant [H][H2PO4]/[H3PO4]
+       KP2,         &  ! Second phosphate eq constant [H][HPO4]/[H2PO4]
+       KP3,         &  ! Third phosphate eq constant [H][PO4]/[HPO4]
+       KSi,         &  ! Silicate equilibrium constant [H][SiO(OH)3]/[Si(OH)4]
+       KS,          &  ! Sulfate equilibrium constant [H][SO4]/[HSO4]
+       KF,          &  ! Fluoride equilibrium constant [H][F]/[HF]
+       TB,          &  ! Total borate
+       TS,          &  ! Total sulfate
+       TF              ! Total fluoride
 
 contains
 
-  subroutine set_constants(T, S)
+  subroutine set_constants(watertype, Sal, TempK, Pdbar)
     ! Calculate the carbonate system constants K0, K1, K2, Kb, Kw,
     ! and total borate from T and S
     !
@@ -55,43 +80,355 @@ contains
     implicit none
 
     ! Arguments
+    character(len=*), intent(in) :: &
+         watertype      ! 'sea' or 'fresh'?
+    real(kind=dp), intent(in) :: &
+         TempK,      &  ! Temperature [K]
+         Sal,        &  ! Practical salinity [PSU]
+         Pdbar          ! Pressure [dbar]
+    ! Local Variables
     real(kind=dp) :: &
-         T,       &  ! Temperature [K]
-         S           ! Practical salinity [PSU]
+         Pbar,     &  ! Pressure [bar]
+         TempK100, &  ! Temperature [K] / 100
+         logTempK, &  ! Natural log of temperature [K]
+         sqrSal,   &  ! Square root salinity
+         IonS,     &  ! Ionic strength
+         sqrIonS,  &  ! Square root ionic strength
+         SWStoTOT, &  ! Seawater scale to total scale conversion factor
+         lnK0,     &  ! Natural log K0
+         pK1,      &  ! -log10 K1
+         pK2,      &  ! -log10 K2
+         lnK1,     &  ! Natural log K1
+         lnK2,     &  ! Natural log K2
+         lnKB,     &  ! Natural log KB
+         lnKW,     &  ! Natural log KW
+         lnKP1,    &  ! Natural log KP1
+         lnKP2,    &  ! Natural log KP2
+         lnKP3,    &  ! Natural log KP3
+         lnKSi,    &  ! Natural log KSi
+         lnKS,     &  ! Natural log KS
+         lnKF         ! Natural log KF
 
-    ! Calculate solubility and equilibrium constants
+    ! Preallocate common operations
+    Pbar = Pdbar / 10
+    TempK100 = TempK / 100.0d0
+    logTempK = log(TempK)
+    sqrSal   = sqrt(Sal)
 
-    ! From Weiss 1974
-    K0 = exp(93.4517d0/(T/100.0d0) - 60.2409d0 + 23.3585d0 * log(T/100.0d0) &
-         + S * (0.023517d0 - 0.023656d0 * (T/100.0d0) + 0.0047036d0 * &
-         (T/100.0d0)**2))
+    ! Calculate IonS:
+    ! This is from the DOE handbook, Chapter 5, p. 13/22, eq. 7.2.4:
+    IonS = 19.924d0 * Sal / (1000.0d0 - 1.005d0 * Sal)
+    sqrIonS = sqrt(IonS)
 
-    ! Millero p.664 (1995) using Mehrbach et al. data on seawater scale 
-    K1 = 10.0d0**(-1.0d0*((3670.7d0/T) - 62.008d0 + 9.7944d0 * log(T) - & 
-         0.0118d0 * S + 0.000116d0 * S**2))
+    ! CALCULATE SEAWATER CONSTITUENTS USING EMPIRCAL FITS
+    ! Calculate total borate:
+    ! Uppstrom, L., Deep-Sea Research 21:161-162, 1974:
+    ! this is 0.000416 * Sali / 35 = 0.0000119 * Sali
+    ! TB = (0.000232d0 / 10.811d0) * (Sal / 1.80655d0) ! in mol/kg-SW
+    TB = 0.0004157d0 * Sal / 35.0d0    ! in mol/kg-SW
 
-    K2 = 10.0d0**(-1.0d0*((1394.7d0/T) + 4.777d0 - 0.0184d0 * S + &
-         0.000118d0 * S**2))
+    ! Calculate total sulfate:
+    ! Morris, A. W., and Riley, J. P., Deep-Sea Research 13:699-705, 1966:
+    ! this is .02824 * Sali / 35 = .0008067 * Sali
+    TS = (0.14d0 / 96.062d0) * (Sal / 1.80655d0)     ! in mol/kg-SW
 
-    ! Millero p.669 (1995) using data from Dickson (1990)
-    Kb = exp((-8966.90d0 - 2890.53d0 * sqrt(S) - 77.942d0 * S + &
-         1.728d0 * S**1.5d0 - 0.0996d0 * S**2)/T + &
-         148.0248d0 + 137.1942d0 * sqrt(S) + 1.62142d0 * S + &
-         (-24.4344d0 - 25.085d0 * sqrt(S) - 0.2474d0 * S) * log(T) + &
-         0.053105d0 * sqrt(S) * T) 
+    ! Calculate total fluoride:
+    ! Riley, J. P., Deep-Sea Research 12:219-220, 1965:
+    ! this is .000068 * Sali / 35 = .00000195 * Sali
+    ! Approximate [F-] of Fraser River is 3 umol/kg
+    TF = max((0.000067d0 / 18.998d0) * (Sal / 1.80655d0), 3.0d-6) ! in mol/kg-SW
+    
+    ! CALCULATE EQUILIBRIUM CONSTANTS (SW scale)
+    ! Calculate KS:
+    ! Dickson, A. G., J. Chemical Thermodynamics, 22:113-127, 1990
+    ! The goodness of fit is .021.
+    ! It was given in mol/kg-H2O. I convert it to mol/kg-SW.
+    ! TYPO on p. 121: the constant e9 should be e8.
+    ! This is from eqs 22 and 23 on p. 123, and Table 4 on p 121:
+    lnKS = -4276.1d0 / TempK + 141.328d0 - 23.093d0 * logTempK +              &
+         (-13856.0d0 / TempK + 324.57d0 - 47.986d0 * logTempK) * sqrIonS + &
+         (35474.0d0 / TempK - 771.54d0 + 114.723d0 * logTempK) * IonS +       &
+         (-2698.0d0 / TempK) * sqrIonS * IonS + (1776.0d0 / TempK) * IonS**2 
+    KS = exp(lnKS)     &     ! this is on the free pH scale in mol/kg-H2O
+         * (1.0d0 - 0.001005d0 * Sal)     ! convert to mol/kg-SW
 
-    ! Millero p.670 (1995) using composite data
-    Kw = exp(-13847.26d0/T + 148.9652d0 - 23.6521d0 * log(T) + &
-         (118.67d0/T - 5.977d0 + 1.0495d0 * log(T)) * sqrt(S) - &
-         0.01615d0 * S)
+    ! Calculate KF:
+    ! Dickson, A. G. and Riley, J. P., Marine Chemistry 7:89-99, 1979:
+    lnKF = 1590.2d0 / TempK - 12.641d0 + 1.525d0 * sqrIonS
+    KF   = exp(lnKF)   &     ! this is on the free pH scale in mol/kg-H2O
+         * (1.0d0 - 0.001005d0 * Sal)     ! convert to mol/kg-SW
 
-    ! Uppstrom (1974)
-    BO3_total = 0.000232d0 * (S/19.53061205d0)
+    ! Calculate pH scale conversion factors ( NOT pressure-corrected)
+    SWStoTOT  = (1 + TS / KS) / (1 + TS / KS + TF / KF)
+
+    ! Calculate K0:
+    ! Weiss, R. F., Marine Chemistry 2:203-215, 1974.
+    lnK0 = -60.2409d0 + 93.4517d0 / TempK100 + 23.3585d0 * log(TempK100) + &
+         Sal * (0.023517d0 - 0.023656d0 * TempK100 + 0.0047036d0 * TempK100**2)
+    K0 = exp(lnK0)               ! this is in mol/kg-SW/atm
+
+    ! Calculate K1 & K2:
+    if (watertype .eq. 'sea') then
+       ! From Lueker, Dickson, Keeling, 2000
+       ! This is Mehrbach's data refit after conversion to the total scale,
+       ! for comparison with their equilibrator work. 
+       ! Mar. Chem. 70 (2000) 105-119
+       ! Total scale and kg-sw
+       pK1 = 3633.86d0 / TempK - 61.2172d0 + 9.6777d0 * logTempK - &
+            0.011555d0 * Sal + 0.0001152d0 * Sal**2
+       K1 = 10**(-1.0d0 * pK1)  & ! this is on the total pH scale in mol/kg-SW
+            / SWStoTOT            ! convert to SWS pH scale
+
+       pK2 = 471.78d0 / TempK + 25.929d0 - 3.16967d0 * logTempK - &
+            0.01781d0 * Sal + 0.0001122d0 * Sal**2
+       K2 = 10**(-1.0d0 * pK2)  & ! this is on the total pH scale in mol/kg-SW
+            / SWStoTOT            ! convert to SWS pH scale
+    elseif (watertype .eq. 'fresh') then
+       ! PURE WATER CASE
+       ! Millero, F. J., Geochemica et Cosmochemica Acta 43:1651-1661, 1979:
+       ! K1 from refit data from Harned and Davis,
+       ! J American Chemical Society, 65:2030-2037, 1943.
+       ! K2 from refit data from Harned and Scholes,
+       ! J American Chemical Society, 43:1706-1709, 1941.
+       ! This is only to be used for Sal=0 water
+       ! (note the absence of S in the below formulations)
+       ! These are the thermodynamic Constants:
+       lnK1 = 290.9097d0 - 14554.21d0 / TempK - 45.0575d0 * logTempK
+       K1 = exp(lnK1)
+       lnK2 = 207.6548d0 - 11843.79d0 / TempK - 33.6485d0 * logTempK
+       K2 = exp(lnK2)
+    else
+       write (stdout, *) 'parameter type in carbonate.f90:', &
+            'Unexpected value: ', watertype
+       call exit(1)
+    end if
+    
+    ! Calculate KW:
+    ! Millero, Geochemica et Cosmochemica Acta 59:661-677, 1995.
+    ! his check value of 1.6 umol/kg-SW should be 6.2
+    lnKW = 148.9802d0 - 13847.26d0 / TempK - 23.6521d0 * logTempK +      &
+         (-5.977d0 + 118.67d0 / TempK + 1.0495d0 * logTempK) * sqrSal -  &
+         0.01615d0 * Sal
+    KW = exp(lnKW) ! this is on the SWS pH scale in (mol/kg-SW)^2
+    
+    ! KB, KP1, KP2, KP3, & KSi
+    if (watertype .eq. 'sea') then
+       ! Calculate KB:
+       ! Dickson, A. G., Deep-Sea Research 37:755-766, 1990:
+       lnKB = (-8966.9d0 - 2890.53d0 * sqrSal - 77.942d0 * Sal +            &
+            1.728d0 * sqrSal * Sal - 0.0996d0 * Sal**2) / TempK +           &
+            148.0248d0 + 137.1942d0 * sqrSal + 1.62142d0 * Sal +            &
+            (-24.4344d0 - 25.085d0 * sqrSal - 0.2474d0 * Sal) * logTempK +  &
+            0.053105d0 * sqrSal * TempK
+       KB = exp(lnKB)         &   ! this is on the total pH scale in mol/kg-SW
+            / SWStoTOT            ! convert to SWS pH scale
+
+       ! Calculate KP1, KP2, KP3, and KSi:
+       ! Yao and Millero, Aquatic Geochemistry 1:53-88, 1995
+       ! KP1, KP2, KP3 are on the SWS pH scale in mol/kg-SW.
+       ! KSi was given on the SWS pH scale in molal units.
+       lnKP1 = -4576.752d0 / TempK + 115.54d0 - 18.453d0 * logTempK +    &
+            (-106.736d0 / TempK + 0.69171d0) * sqrSal +                  &
+            (-0.65643d0 / TempK - 0.01844d0) * Sal
+       KP1 = exp(lnKP1)
+
+       lnKP2 = -8814.715d0 / TempK + 172.1033d0 - 27.927d0 * logTempK +  &
+            (-160.34d0 / TempK + 1.3566d0) * sqrSal +                    &
+            (0.37335d0 / TempK - 0.05778d0) * Sal
+       KP2 = exp(lnKP2)
+
+       lnKP3 = -3070.75d0 / TempK - 18.126d0 + &
+            (17.27039d0 / TempK + 2.81197d0) * sqrSal + &
+            (-44.99486d0 / TempK - 0.09984d0) * Sal
+       KP3 = exp(lnKP3)
+
+       lnKSi = -8904.2d0 / TempK + 117.4d0 - 19.334d0 * logTempK +       &
+            (-458.79d0 / TempK + 3.5913d0) * sqrIonS +                   &
+            (188.74d0 / TempK - 1.5998d0) * IonS +                       &
+            (-12.1652d0 / TempK + 0.07871d0) * IonS**2
+       KSi = exp(lnKSi)   &      ! this is on the SWS pH scale in mol/kg-H2O
+            * (1.0d0 - 0.001005d0 * Sal)      ! convert to mol/kg-SW
+    elseif (watertype .eq. 'fresh') then
+       KB  = 0.0d0
+       KP1 = 0.0d0
+       KP2 = 0.0d0
+       KP3 = 0.0d0
+       KSi = 0.0d0
+    else
+       write (stdout, *) 'parameter type in carbonate.f90:', &
+            'Unexpected value: ', watertype
+       call exit(1)
+    end if
+
+    call pressure_corrections(watertype, TempK, Pbar)
+
+    ! Re-calculate pH scale conversion factors (now pressure-corrected)
+    SWStoTOT  = (1 + TS / KS) / (1 + TS / KS + TF / KF)
+
+    K1  = K1  * SWStoTOT
+    K2  = K2  * SWStoTOT
+    KW  = KW  * SWStoTOT
+    KB  = KB  * SWStoTOT
+    KP1 = KP1 * SWStoTOT
+    KP2 = KP2 * SWStoTOT
+    KP3 = KP3 * SWStoTOT
+    KSi = KSi * SWStoTOT
 
   end subroutine set_constants
 
 
-  subroutine DIC_to_carbonate(T, S, rho, Alk, DIC, CO2_star)
+  subroutine pressure_corrections(watertype, TempK, Pbar)
+    ! Calculate pressure corrections for constants defined in set_constants
+    !
+    ! Elements from other modules:
+    !
+    ! Type Definitions:
+    use precision_defs, only: dp
+    use io_unit_defs, only: stdout
+    ! Parameters:
+    use fundamental_constants, only: R_gas
+    ! Functions:
+    use unit_conversions, only: KtoC
+
+    ! Variable Declarations:
+    implicit none
+
+    ! Arguments
+    character(len=*), intent(in) :: &
+         watertype      ! 'sea' or 'fresh'?
+    real(kind=dp), intent(in) :: &
+         TempK,      &  ! Temperature [K]
+         Pbar           ! Pressure [dbar]
+    ! Local Variables
+    real(kind=dp) :: &
+         RT,         &  ! Temperature * gas constant (ideal gas law)
+         TempC,      &  ! Temperature [deg C]
+         deltaV,     &  ! Molal volume
+         Kappa,      &  ! Compressibility
+         lnK1fac,    &  ! K1  pressure correction factor
+         lnK2fac,    &  ! K2  pressure correction factor
+         lnKBfac,    &  ! KB  pressure correction factor
+         lnKWfac,    &  ! KW  pressure correction factor
+         lnKFfac,    &  ! KF  pressure correction factor
+         lnKSfac,    &  ! KS  pressure correction factor
+         lnKP1fac,   &  ! KP1 pressure correction factor
+         lnKP2fac,   &  ! KP2 pressure correction factor
+         lnKP3fac,   &  ! KP3 pressure correction factor
+         lnKSifac       ! KSi pressure correction factor
+
+    ! Temperature and gas constant
+    RT    = R_gas * TempK
+    TempC = KtoC(TempK)
+
+    if (watertype .eq. 'sea') then
+       ! Pressure effects on K1 & K2:
+       ! These are from Millero, 1995.
+       ! They are the same as Millero, 1979 and Millero, 1992.
+       ! They are from data of Culberson and Pytkowicz, 1968.
+       deltaV = -25.5d0 + 0.1271d0 * TempC
+       ! deltaV = deltaV - .151 * (Sali - 34.8)   ! Millero, 1979
+       Kappa = (-3.08d0 + 0.0877d0 * TempC) / 1000.0d0
+       ! Kappa = Kappa - .578 * (Sali - 34.8) / 1000  ! Millero, 1979
+       lnK1fac = (-deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+       ! The fits given in Millero, 1983 are somewhat different.
+       deltaV = -15.82d0 - 0.0219d0 * TempC
+       ! deltaV = deltaV + .321 * (Sali - 34.8)  ! Millero, 1979
+       Kappa = (1.13d0 - 0.1475d0 * TempC) / 1000.0d0
+       ! Kappa = Kappa - .314 * (Sali - 34.8) / 1000  ! Millero, 1979
+       lnK2fac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+       ! The fit given in Millero, 1983 is different.
+       ! Not by a lot for deltaV, but by much for Kappa.
+
+       ! Pressure effects on KW:
+       ! This is from Millero, 1983 and his programs CO2ROY(T).BAS.
+       deltaV = -20.02d0 + 0.1119d0 * TempC - 0.001409d0 * TempC**2
+       ! Millero, 1992 and Millero, 1995 have:
+       Kappa = (-5.13d0 + 0.0794d0 * TempC) / 1000.0d0  ! Millero, 1983
+       ! Millero, 1995 has this too, but Millero, 1992 is different.
+       lnKWfac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+       ! Millero, 1979 does not list values for these.
+    elseif (watertype .eq. 'fresh') then
+       ! K1, K2 and KW pressure corrections from Millero, 1983
+       deltaV  = -30.54d0 + 0.1849d0 * TempC - 0.0023366d0 * TempC**2
+       Kappa   = (-6.22d0 + 0.1368d0 * TempC - 0.001233d0 * TempC**2) / 1.0d3
+       lnK1fac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+       deltaV  = -29.81d0 + 0.115d0 * TempC - 0.001816d0 * TempC**2
+       Kappa   = (-5.74d0 + 0.093d0 * TempC - 0.001896d0 * TempC**2) / 1.0d3
+       lnK2fac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+       deltaV  =  -25.6d0 + 0.2324d0 * TempC - 0.0036246d0 * TempC**2
+       Kappa   = (-7.33d0 + 0.1368d0 * TempC - 0.001233d0 * TempC**2) / 1.0d3
+       lnKWfac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+       ! NOTE the temperature dependence of KappaK1 and KappaKW
+       ! for fresh water in Millero, 1983 are the same.
+    else
+       write (stdout, *) 'parameter type in carbonate.f90:', &
+            'Unexpected value: ', watertype
+       call exit(1)
+    end if
+    
+    ! Pressure effects on KB:
+    ! This is from Millero, 1979.
+    ! It is from data of Culberson and Pytkowicz, 1968.
+    deltaV = -29.48d0 + 0.1622d0 * TempC - 0.002608d0 * TempC**2
+    ! deltaV = -28.56 + .1211*TempCi - .000321*TempCi*TempCi  ! Millero, 1983
+    ! deltaV = -29.48 + .1622 * TempCi + .295 * (Sali - 34.8) ! Millero, 1992
+    ! deltaV = -29.48 - .1622*TempCi - .002608*TempCi*TempCi  ! Millero, 1995
+    ! deltaV = deltaV + .295 * (Sali - 34.8)                  ! Millero, 1979
+    Kappa = -2.84d0 / 1000.0d0    ! Millero, 1979
+    ! Millero, 1992 and Millero, 1995 also have this.
+    ! Kappa = Kappa + .354 * (Sali - 34.8) / 1000  ! Millero, 1979
+    ! Kappa = (-3.0d0 + .0427d0 * TempCi) / 1000   ! Millero, 1983
+    lnKBfac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+
+    ! Pressure effects on KF & KS:
+    ! These are from Millero, 1995, which is the same as Millero, 1983.
+    ! It is assumed that KF and KS are on the free pH scale.
+    deltaV  = -9.78d0 - 0.009d0 * TempC - 0.000942d0 * TempC**2
+    Kappa   = (-3.91d0 + 0.054d0 * TempC) / 1000.0d0
+    lnKFfac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+    deltaV  = -18.03d0 + 0.0466d0 * TempC + 0.000316d0 * TempC**2
+    Kappa   = (-4.53d0 + 0.09d0 * TempC) / 1000.0d0
+    lnKSfac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+
+    ! Correct KP1, KP2, & KP3 for pressure:
+    ! The corrections for KP1, KP2, and KP3 are from Millero, 1995,
+    ! which are the same as Millero, 1983.
+    deltaV   = -14.51d0 + 0.1211d0 * TempC - 0.000321d0 * TempC**2
+    Kappa    = (-2.67d0 + 0.0427d0 * TempC) / 1000.0d0
+    lnKP1fac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+    deltaV   = -23.12d0 + 0.1758d0 * TempC - 0.002647d0 * TempC**2
+    Kappa    = (-5.15d0 + 0.09d0 * TempC) / 1000.0d0
+    lnKP2fac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+    deltaV   = -26.57d0 + 0.202d0 * TempC - 0.003042d0 * TempC**2
+    Kappa    = (-4.08d0 + 0.0714d0 * TempC) / 1000.0d0
+    lnKP3fac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+
+    ! Pressure effects on KSi:
+    ! The only mention of this is Millero, 1995 where it is stated that the
+    ! values have been estimated from the values of boric acid. HOWEVER,
+    ! there is no listing of the values in the table.
+    ! I used the values for boric acid from above.
+    deltaV   = -29.48d0 + 0.1622d0 * TempC - 0.002608d0 * TempC**2
+    Kappa    = -2.84 / 1000.0d0
+    lnKSifac = (-1.0d0 * deltaV + 0.5d0 * Kappa * Pbar) * Pbar / RT
+
+    ! Correct K's for pressure here:
+    K1  = K1  * exp(lnK1fac)
+    K2  = K2  * exp(lnK2fac)
+    KW  = KW  * exp(lnKWfac)
+    KB  = KB  * exp(lnKBfac)
+    KF  = KF  * exp(lnKFfac)
+    KS  = KS  * exp(lnKSfac)
+    KP1 = KP1 * exp(lnKP1fac)
+    KP2 = KP2 * exp(lnKP2fac)
+    KP3 = KP3 * exp(lnKP3fac)
+    KSi = KSi * exp(lnKSifac)
+
+  end subroutine pressure_corrections
+
+
+  subroutine calc_carbonate(watertype, partype, par1, par2, rho, S, T, P, &
+       PO4, Si, parout)
     ! Calculate pCO2 from DIC at T, S and 1 atm. Total alkalinity
     ! is required for this calculation, but for our purposes will
     ! obtained using a linear fit to salinity.
@@ -107,76 +444,81 @@ contains
     implicit none
     
     ! Arguments
+    character(len=*), intent(in) :: &
+         watertype,  &    ! 'sea' or 'fresh'?
+         partype          ! 'DIC' or 'pH'?
     real(kind=dp), intent(in) :: &
-         T,          &    ! Temperature [K]
+         par1,       &    ! Total alkalinity [ueq/L]
+         par2,       &    ! Either DIC [uM C] or pH [total scale]
+         rho,        &    ! Seawater/freshwater density [kg/m^3]
          S,          &    ! Practical Salinity [PSU]
-         rho,        &    ! Seawater density [kg/m^3]
-         Alk,        &    ! Total alkalinity [ueq/L]
-         DIC              ! DIC [uM]
+         T,          &    ! Temperature [K]
+         P,          &    ! Pressure [dbar]
+         PO4,        &    ! Phosphate [uM]
+         Si               ! Silicate [uM]
     real(kind=dp), intent(out) :: &
-         CO2_star         ! CO2_star [uM]
+         parout           ! Either CO2_star or DIC [uM]
     ! Local variables
     ! Carbonate system properties
     real(kind=dp) :: &
-         Alk_molal,  &    ! Total alkalinity [ueq/kg]
-         DIC_molal,  &    ! DIC [mol/kg]
+         Alk,        &    ! Total alkalinity [eq/kg]
+         DIC,        &    ! DIC [mol/kg]
+         TP,         &    ! Total phosphate [mol/kg]
+         TSi,        &    ! Total silicate [mol/kg]
+         pH,         &    ! pH [total scale]
          H_total          ! Total [H+]
-    ! Iteration parameters
-    real(kind=dp) :: &
-         x1,         &    ! Lower [H+] iteration boundary
-         x2,         &    ! Upper [H+] iteration boundary
-         x_guess,    &    ! Iteration [H+] initialization value 
-         x_acc            ! Iteration [H+] difference limit
 
     ! Set equilibrium constants
-    call set_constants(T, S)
+    call set_constants(watertype, S, T, P)
 
     ! Convert from uM to mol/kg
-    Alk_molal = Alk * (1.0d-3/rho)
-    DIC_molal = DIC * (1.0d-3/rho) ! DIC [mol/kg]
+    Alk = par1 * 1.0d-3 / rho
+    TP  = PO4 * 1.0d-3 / rho
+    TSi = Si * 1.0d-3 / rho
 
-    ! Calculate [H+] total when DIC and TA are known at T, S and 1 atm.
-    !
-    ! The solution converges to err of x_acc. The solution must be within
-    ! the range x1 to x2.
-    !
-    ! If DIC and TA are known then either a root finding or iterative
-    ! method must be used to calculate H_total. In this case we use the
-    ! Newton-Raphson "safe" method taken from "Numerical Recipes"
-    ! (function "rtsafe.f" with error trapping removed).
-    !
-    ! As currently set, this procedure iterates about 12 times. The x1
-    ! and x2 values set below will accomodate ANY oceanographic values.
-    ! If an initial guess of the pH is known, then the number of iterations
-    ! can be reduced to about 5 by narrowing the gap between x1 and x2.
-    ! It is recommended that the first few time steps be run with x1 and x2
-    ! set as below. After that, set x1 and x2 to the previous value of the
-    ! pH +/- ~0.5. The current setting of x_acc will result in co2_star
-    ! accurate to 3 significant figures (xx.y). Making x_acc bigger will
-    ! result in faster convergence also, but this is not recommended
-    ! (x_acc of 1e-9 drops precision to 2 significant figures)
+    if (partype .eq. 'DIC') then
 
-    x1 = 1.0d-7
-    x2 = 1.0d-9
-    x_guess = 1.0d-8
-    x_acc = 1.0d-10
+       ! Convert from uM to mol/kg
+       DIC = par2 * 1.0d-3 / rho
 
-    call drt_safe('DIC', Alk_molal, DIC_molal, x1, x2, x_guess, x_acc, H_total)
+       ! pH from DIC and Alkalinity
+       call CalculatepHfromTATC(Alk, DIC, TP, TSi, pH)
 
-    ! Calculate [CO2*] as defined in DOE Methods Handbook 1994 Ver.2, 
-    ! ORNL/CDIAC-74, Dickson and Goyet, eds. (Ch 2 p 10, Eq A.49)
-    CO2_star = DIC_molal * H_total**2/(H_total**2 + K1 * H_total + K1 * K2)
+       ! [H+] from pH
+       H_total = 10.0d0**(-1.0d0 * pH)
 
-    ! Convert from mol/kg to uM
-    CO2_star = CO2_star * rho * 1.0d3
+       ! Calculate CO2* as defined in CDIAC Best Practices 2007, PICES Special
+       ! Publication 3, Dickson et al. eds. (Ch 2 pp 9-10, EQs 60, 68, & 70)
+       parout = DIC * H_total**2/(H_total**2 + K1 * H_total + K1 * K2)
+       
+    elseif (partype .eq. 'pH') then
 
-  end subroutine DIC_to_carbonate
+       ! DIC from Alkalinity and pH
+       call CalculateTCfromTApH(Alk, par2, TP, TSi, parout)
+
+    else
+       write (stdout, *) 'parameter type in carbonate.f90:', &
+            'Unexpected value: ', partype
+       call exit(1)
+    endif
+
+    ! Convert back to uM
+    parout = parout * rho * 1.0d3
+
+  end subroutine calc_carbonate
 
 
-  subroutine pH_to_carbonate(T, S, rho, Alk, pH, DIC)
-    ! Calculate DIC from total alkalinity and pH at T, S and 1 atm.
+  subroutine CalculateTCfromTApH(TA, pH, TP, TSi, TC)
+    ! SUB CalculateTCfromTApH, version 02.03, 10-10-97, written by Ernie Lewis.
+    ! Inputs: TA, pH, K(), T()
+    ! Output: TC
+    ! This calculates TC from TA and pH.
+    ! Though it is coded for H on the total pH scale, for the pH values
+    ! occuring in seawater (pH > 6) it will be equally valid on any pH scale
+    ! (H terms negligible) as long as the K Constants are on that scale.
     !
     ! Elements from other modules:
+    !
     ! Type Definitions:
     use precision_defs, only: dp
     use io_unit_defs, only: stdout
@@ -186,48 +528,46 @@ contains
     
     ! Arguments
     real(kind=dp), intent(in) :: &
-         T,          &    ! Temperature [K]
-         S,          &    ! Practical Salinity [PSU]
-         rho,        &    ! Seawater density [kg/m^3]
-         Alk,        &    ! Total alkalinity [ueq/L]
-         pH               ! pH
+         TA,       &    ! Total alkalinity [eq kg-1]
+         pH,       &    ! pH
+         TP,       &    ! Phosphate [mol kg-1]
+         TSi            ! Silicate [mol kg-1]
     real(kind=dp), intent(out) :: &
-         DIC              ! DIC [uM]
+         TC             ! Either DIC [mol kg-1] or pH [total scale]
     ! Local variables
     ! Carbonate system properties
     real(kind=dp) :: &
-         Alk_molal,  &    ! Total alkalinity [ueq/kg]
-         H_total          ! Total [H+] [mol/kg]
+         H, CAlk, BAlk, OH, PhosTop, PhosBot, PAlk, SiAlk, &
+         FREEtoTOT, Hfree, HSO4, HF
 
-    ! Set equilibrium constants
-    call set_constants(T, S)
+    ! Calculate alkalinities
+    H         = 10.0d0**(-1.0d0 * pH)
+    BAlk      = TB * KB / (KB + H)
+    OH        = KW / H
+    PhosTop   = KP1 * KP2 * H + 2.0d0 * KP1 * KP2 * KP3 - H * H * H
+    PhosBot   = H * H * H + KP1 * H * H + KP1 * KP2 * H + KP1 * KP2 * KP3
+    PAlk      = TP * PhosTop / PhosBot
+    SiAlk     = TSi * KSi / (KSi + H)
+    FREEtoTOT = (1 + TS / KS) ! pH scale conversion factor
+    Hfree     = H / FREEtoTOT ! for H on the total scale
+    HSO4      = TS / (1 + KS / Hfree) ! since KS is on the free scale
+    HF        = TF /(1 + KF / Hfree) ! since KF is on the free scale
+    CAlk      = TA - BAlk - OH - PAlk - SiAlk + Hfree + HSO4 + HF
+    TC        = CAlk * (H * H + K1 * H + K1 * K2) / (K1 * (H + 2.0d0 * K2))
 
-    ! Convert from uM to mol/kg
-    Alk_molal = Alk * (1.0d-3/rho)
-
-    ! Convert pH to [H+]
-    H_total = 10**(-pH)
-
-    ! Calculate DIC as defined in CDIAC Best Practices 2007, PICES Special
-    ! Publication 3, Dickson et al. eds. (Ch 2 pp 7-9, Eq 17, 53-59)
-    ! See BMM Lab book pg 49
-    DIC = (1.0d0 / (H_total + 2.0d0 * K2)) &
-        * (Alk_molal - BO3_total/(1.0d0 + H_total/Kb) - Kw/H_total + H_total) &
-        * (H_total**2 / K1 + H_total + K2)
-
-    ! Convert units of output arguments
-    ! Note: CO2_star, dCO2_star, and DIC are calculated in mol/kg within
-    ! this routine, thus convert now from mol/kg -> uM
-    DIC = DIC * rho * 1.0d3
-
-  end subroutine pH_to_carbonate
+  end subroutine CalculateTCfromTApH
 
 
-  subroutine ta_iter(qty, Alk, par, H, F, dFdH)
-    ! Expresses TA as a function of parameter, PAR, indicated by PARTYPE,
-    ! H_total and constants, and calculates the derivative dTA([H+])/d[H+],
-    ! which is used in the iterative solution for H_total in the
-    ! drt_safe subroutine.
+  subroutine CalculatepHfromTATC(TA, TC, TP, TSi, pH)
+    ! SUB CalculatepHfromTATC, version 04.01, 10-13-96, written by Ernie Lewis.
+    ! Inputs: TA, TC, TP, TSi
+    ! Output: pH
+    ! This calculates pH from TA and TC using K1 and K2 by Newton's method.
+    ! It tries to solve for the pH at which Residual = 0.
+    ! The starting guess is pH = 8.
+    ! Though it is coded for H on the total pH scale, for the pH values
+    ! occuring in seawater (pH > 6) it will be equally valid on any pH scale
+    ! (H terms negligible) as long as the K Constants are on that scale.
     !
     ! Elements from other modules:
     !
@@ -236,161 +576,62 @@ contains
     use io_unit_defs, only: stdout
 
     ! Variable Declarations:
-    ! Arguments
-    character(len=*), intent(in) :: &
-         qty            ! 'DIC' or 'pCO2'
-    real(kind=dp), intent(in) :: &
-         Alk,        &  ! Total alkalinity [ueq/L]
-         par,        &  ! Surface DIC [uM] or pCO2 (uatm)
-         H              ! Total hydrogen ion concentration, [H+]
-    real(kind=dp), intent(out) :: &
-         F,          &  ! Alkalinity difference function
-         dFdH           ! Derivative of F with respect to [H+]
-
-    ! Local variables
-    real(kind=dp) :: &
-         H2,         &  ! [H+] squared
-         Beta,       &  ! This is the factor [DIC]*K1*K2/[CO3]
-         Beta2          ! Beta-squared
-
-    ! [H+] squared
-    H2 = H**2
-
-    if (qty == 'DIC') then
-
-       ! Compute Beta = [DIC]*K1*K2/[CO3]
-       Beta = H2 + K1 * H + K1 * K2
-       Beta2 = Beta**2
-
-       ! The root equation, F, for Alkalinity in terms of [H+], DIC, and Alk
-       F = K1 * H * par/Beta + 2.0d0 * par * K1 * K2/Beta + &
-            BO3_total/(1.0d0 + H/Kb) + Kw/H - H - Alk
-
-       ! Compute dTAdH = dTA([H+])/d[H+]
-       dFdH = ((K1 * par * Beta) - K1 * H * par * (2.0d0 * H + K1))/Beta2 - &
-            2.0d0 * par * K1 * K2 * (2.0d0 * H + K1)/Beta2 - &
-            BO3_total/(Kb * (1.0d0 + H/Kb)**2) - Kw/H2 - 1.0d0
-
-    elseif (qty == 'pCO2') then
-
-       ! See BMM Lab book pg 49
-       ! The root equation, F, for Alkalinity in terms of [H+], pCO2, and Alk
-       F = (K1 * par) / H + (2.0d0 * K1 * K2 * par) / H2  &
-            + BO3_total/(1.0d0 + H/Kb) + Kw/H - H - Alk
-
-       ! Compute dTAdH = dTA([H+])/d[H+]
-       dFdH = -1.0d0 * (K1 * par) / H2 - (4.0d0 * K1 * K2 * par) / (H2 * H) - &
-            BO3_total/(Kb * (1.0d0 + H/Kb)**2) - Kw/H2 - 1.0d0
-
-    else
-       write (stdout, *) 'parameter type in carbonate.f90:', &
-            'Unexpected value: ', qty
-       call exit(1)
-    endif
-
-  end subroutine ta_iter
-
-
-  subroutine drt_safe(qty, Alk, par, x1, x2, x_guess, x_acc, x)
-    ! Safe iteration to find the zero of a function
-    !
-    ! Returns the correct zero of the TA function using the ta_iter
-    ! subroutine by minimizing the difference between x1, x2, and x_guess
-    ! specified in the calculate_pco2 subroutine
-    !
-    ! File taken from Numerical Recipes. Modified  R.M.Key 4/94
-    ! Transformed into FORTRAN90 (only minimal changes) by C.Voelker, 4/05
-    ! Reformatted for SOG deep estuary model by B.Moore-Maley, 8/2011
-    !
-    ! Elements from other modules:
-    !
-    ! Type Definitions:
-    use precision_defs, only: dp
-
-    ! Variable Declarations:
     implicit none
-
+    
     ! Arguments
-    character(len=*), intent(in) :: &
-         qty              ! 'DIC' or 'pCO2'
     real(kind=dp), intent(in) :: &
-         Alk,        &    ! Total alkalinity [ueq/L]
-         par,        &    ! DIC [uM] or pCO2 [uatm]
-         x1,         &    ! First zero boundary
-         x2,         &    ! Second zero boundary
-         x_guess,    &    ! First zero guess
-         x_acc            ! Zero difference limit
+         TA,       &    ! Total alkalinity [ueq/L]
+         TC,       &    ! Either DIC [uM C] or pH [total scale]
+         TP,       &    ! Phosphate [uM]
+         TSi            ! Silicate [uM]
     real(kind=dp), intent(out) :: &
-         x                ! Function zero
-    ! Local Variables
+         pH             ! pH
+    ! Local variables
+    ! Carbonate system properties
     real(kind=dp) :: &
-         F_low,      &    ! F(x_low)
-         F_high,     &    ! F(x_high)
-         F,          &    ! F(x)
-         dFdx,       &    ! dF(x)/dx
-         x_low,      &    ! Lower zero boundary
-         x_high,     &    ! Upper zero boundary
-         dx,         &    ! Zero difference (i)
-         dx_old,     &    ! Zero difference (i-1)
-         swap,       &    ! Temporary F_low, F_high exchange variable
-         temp             ! Temporary zero comparison variable
-    integer :: &
-         n_iter,     &    ! Interation number
-         max_iter         ! Maximum number of iterations
+         pHGuess, pHTol, ln10, deltapH, H, Denom, CAlk, BAlk, OH, &
+         PhosTop, PhosBot, PAlk, SiAlk, FREEtoTOT, Hfree, HSO4, HF, &
+         Residual, Slope
 
-    ! Set maximum number of iterations to 100
-    max_iter = 100
+    ! Set iteration parameters
+    pHGuess     = 8.0d0       ! this is the first guess
+    pHTol       = 1.0d-4      ! tolerance for iterations end
+    ln10        = log(10.0d0) !
+    pH = pHGuess ! creates a vector holding the first guess for all samples
+    deltapH     = pHTol + 1.0d0
 
-    ! Generate upper and lower boundaries
-    call ta_iter(qty, Alk, par, x1, F_low, dFdx)
-    call ta_iter(qty, Alk, par, x2, F_high, dFdx)
-    if(F_low .lt. 0.0d0) then
-       x_low = x1
-       x_high = x2
-    else
-       x_high = x1
-       x_low = x2
-       swap = F_low
-       F_low = F_high 
-       F_high = swap
-    endif
-
-    ! Initialize zeros for iteration loop
-    x = x_guess
-    dx_old = abs(x2 - x1)
-    dx = dx_old
-    call ta_iter(qty, Alk, par, x, F, dFdx)
-    ! Begin iteration loop
-    do n_iter = 1, max_iter
-       if(((x - x_high) * dFdx - F) * ((x - x_low) * &
-            dFdx - F) .ge. 0.0d0 .or. abs(2.0d0 * F) .gt. &
-            abs(dx_old * dFdx)) then
-          dx_old = dx
-          dx = 0.5d0 * (x_high - x_low)
-          x = x_low + dx
-          if(x_low .eq. x) return
-       else
-          dx_old = dx
-          dx = F/dFdx
-          temp = x
-          x = x - dx
-          if(temp .eq. x) return
-       endif
-       if(abs(dx) .lt. x_acc) return
-       call ta_iter(qty, Alk, par, x, F, dFdx)
-       if(F .lt. 0.0d0) then
-          x_low = x
-          F_low = F
-       else
-          x_high = x
-          F_high = F
-       endif
+    ! Begin iteration to find pH
+    do while (abs(deltapH) > pHTol)
+       H         = 10.d0**(-1.0d0 * pH)
+       Denom     = (H * H + K1 * H + K1 * K2)
+       CAlk      = TC * K1 * (H + 2.0d0 * K2) / Denom
+       BAlk      = TB * KB / (KB + H)
+       OH        = KW / H
+       PhosTop   = KP1 * KP2 * H + 2 * KP1 * KP2 * KP3 - H * H * H
+       PhosBot   = H * H * H + KP1 * H * H + KP1 * KP2 * H + KP1 * KP2 * KP3
+       PAlk      = TP * PhosTop / PhosBot
+       SiAlk     = TSi * KSi / (KSi + H)
+       FREEtoTOT = (1 + TS / KS)         ! pH scale conversion factor
+       Hfree     = H / FREEtoTOT         ! for H on the total scale
+       HSO4      = TS / (1 + KS / Hfree) ! since KS is on the free scale
+       HF        = TF / (1 + KF / Hfree) ! since KF is on the free scale
+       Residual  = TA - CAlk - BAlk - OH - PAlk - SiAlk + Hfree + HSO4 + HF
+       ! find Slope dTA/dpH (not exact, but keeps all important terms)
+       Slope     = ln10 * (TC * K1 * H * (H * H + K1 * K2 + 4.0d0 * H * K2) &
+            / Denom / Denom + BAlk * H / (KB + H) + OH + H)
+       deltapH   = Residual / Slope ! this is Newton's method
+       ! to keep the jump from being too big
+       do while (abs(deltapH) > 1)
+          deltapH = deltapH / 2.0d0
+       end do
+       pH = pH + deltapH ! Is on the same scale as K1 and K2 were calculated
     end do
 
-  end subroutine drt_safe
+  end subroutine CalculatepHfromTATC
 
-  
-  subroutine ca_solubility(S, T_K, P, rho, DIC, pH, Omega_ca, Omega_ar)
+
+  subroutine ca_solubility(watertype, S, TempK, P, rho, DIC, pH, Omega_ca, &
+       Omega_ar)
     ! Taken from CO2SYS subfunction CaSolubility
     ! ***********************************************************************
     ! SUB CaSolubility, version 01.05, 05-23-97, written by Ernie Lewis.
@@ -429,9 +670,11 @@ contains
     implicit none
 
     ! Arguments
+    character(len=*), intent(in) :: &
+         watertype      ! 'sea' or 'fresh'?
     real(kind=dp), intent(in) :: &
          S,          &  ! Salinity profile array
-         T_K,        &  ! Temperature profile array [K]
+         TempK,      &  ! Temperature profile array [K]
          P,          &  ! Pressure profile array [dbar]
          rho,        &  ! Seawater density [kg/m^3]
          DIC,        &  ! Dissolved inorganic carbon profile array [uM]
@@ -441,25 +684,25 @@ contains
          Omega_ar       ! Aragonite saturation state
     ! Local Variables
     real(kind=dp) :: &
-         T_C,        &  ! Temperature profile array [C]
-         logT_K,     &  ! Natural logarithm of T_K
+         TempC,      &  ! Temperature profile array [C]
+         logTempK,   &  ! Natural logarithm of T_K
          sqrtS,      &  ! Square-root of S
          CO3,        &  ! [CO3-] [mol/kg]
          Ca,         &  ! [Ca^2+] [mol/kg]
          H,          &  ! Free [H+] [mol/kg]
          KCa,        &  ! Calcite solubility [(mol/kg)^2]
          KAr,        &  ! Aragonite solubility [(mol/kg)^2]
-         deltaV_KCa, &  ! delta factor for KCa pressure correction
-         deltaV_KAr, &  ! delta factor for KAr pressure correction
-         Kappa_KCa,  &  ! Kappa factor for KCa pressure correction
-         Kappa_KAr      ! Kappa factor for KAr pressure correction
+         deltaV_KCa, &  ! Molal volume for KCa pressure correction
+         deltaV_KAr, &  ! Molal volume for KAr pressure correction
+         Kappa_KCa,  &  ! Compressibility for KCa pressure correction
+         Kappa_KAr      ! Compressibility for KAr pressure correction
 
     ! Set equilibrium constants
-    call set_constants(T_K, S)
+    call set_constants(watertype, S, TempK, P)
 
     ! Precalculate quantities
-    T_C = KtoC(T_K)
-    logT_K = log(T_K)
+    TempC = KtoC(TempK)
+    logTempK = log(TempK)
     sqrtS = sqrt(S)
 
     ! Calculate Ca^2+:
@@ -469,25 +712,25 @@ contains
  
     ! Calcite solubility:
     ! Mucci, Alphonso, Amer. J. of Science 283:781-799, 1983.
-    KCa = 10.0d0**(-171.9065d0 - 0.077993d0 * T_K + 2839.319d0 / T_K     &
-         + 71.595d0 * logT_K / log(10.0d0)                           &
-         + (-0.77712d0 + 0.0028426d0 * T_K + 178.34d0 / T_K) * sqrtS &
+    KCa = 10.0d0**(-171.9065d0 - 0.077993d0 * TempK + 2839.319d0 / TempK     &
+         + 71.595d0 * logTempK / log(10.0d0)                           &
+         + (-0.77712d0 + 0.0028426d0 * TempK + 178.34d0 / TempK) * sqrtS &
          - 0.07711d0 * S + 0.0041249d0 * sqrtS * S)
 
     ! Aragonite solubility:
     ! Mucci, Alphonso, Amer. J. of Science 283:781-799, 1983.
-    KAr = 10.0d0**(-171.945d0 - 0.077993d0 * T_K + 2903.293d0 / T_K &
-         + 71.595d0 * logT_K / log(10.0d0) &
-         + (-0.068393d0 + 0.0017276d0 * T_K + 88.135d0 / T_K) * sqrtS &
+    KAr = 10.0d0**(-171.945d0 - 0.077993d0 * TempK + 2903.293d0 / TempK &
+         + 71.595d0 * logTempK / log(10.0d0) &
+         + (-0.068393d0 + 0.0017276d0 * TempK + 88.135d0 / TempK) * sqrtS &
          - 0.10018d0 * S + 0.0059415d0 * sqrtS * S)
 
     ! Pressure correction for calcite:
     ! Ingle, Marine Chemistry 3:301-319, 1975
     ! same as in Millero, GCA 43:1651-1661, 1979, but Millero, GCA 1995
     ! has typos (-.5304, -.3692, and 10^3 for Kappa factor)
-    deltaV_KCa = -48.76d0 + 0.5304d0 * T_C
-    Kappa_KCa  = (-11.76d0 + 0.3692d0 * T_C) / 1000.0d0
-    KCa = KCa * exp((-deltaV_KCa + 0.5d0 * Kappa_KCa * P) * P / (R_gas * T_K))
+    deltaV_KCa = -48.76d0 + 0.5304d0 * TempC
+    Kappa_KCa  = (-11.76d0 + 0.3692d0 * TempC) / 1000.0d0
+    KCa = KCa * exp((-deltaV_KCa + 0.5d0 * Kappa_KCa * P) * P / (R_gas * TempK))
 
     ! Pressure correction for aragonite:
     ! Millero, Geochemica et Cosmochemica Acta 43:1651-1661, 1979,
@@ -495,7 +738,7 @@ contains
     ! and 10^3 for Kappa factor)
     deltaV_KAr = deltaV_KCa + 2.8d0
     Kappa_KAr  = Kappa_KCa
-    KAr = KAr * exp((-deltaV_KAr + 0.5d0 * Kappa_KAr * P) * P / (R_gas * T_K))
+    KAr = KAr * exp((-deltaV_KAr + 0.5d0 * Kappa_KAr * P) * P / (R_gas * TempK))
 
     ! Calculate Omegas:
     H = 10.0d0**(-pH)

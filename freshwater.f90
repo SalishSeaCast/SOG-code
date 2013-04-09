@@ -36,6 +36,9 @@ module freshwater
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
+       pH_riv,          &  !
+       river_DIC,       &  !
+       river_Alk,       &  !
        ! Diagnostics:
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
@@ -111,6 +114,8 @@ module freshwater
        river_Alk_0,     &  !
        river_Alk_decay, &  !
        pH_riv,          &  !
+       river_DIC,       &  !
+       river_Alk,       &  !
        river_chem          !
 
 contains
@@ -192,7 +197,7 @@ contains
          day
     ! Functions and subroutines
     use unit_conversions, only: KtoC
-    use carbonate, only: pH_to_carbonate
+    use carbonate, only: calc_carbonate
    
     implicit none
 
@@ -209,9 +214,7 @@ contains
 
     ! Local variables
     real(kind=dp) :: &
-         RiverTC,    &    ! Major river temperature [deg C]
-         river_alk,  &    ! River alkalinity [ueq L-1]
-         river_DIC        ! River DIC [uM]
+         RiverTC          ! Major river temperature [deg C]
 
     ! Surface temperature to celsius
     RiverTC = KtoC(RiverTemp)
@@ -292,13 +295,14 @@ contains
     end if
 
     ! Calculate DIC from Alk and pH
-    call pH_to_carbonate(RiverTemp, 0.0d0, rho_riv, river_alk, &
-         pH_riv, river_DIC)
+    call calc_carbonate('fresh', 'pH', river_Alk, pH_riv, rho_riv, 0.0d0, &
+         RiverTemp, 0.0d0, 0.0d0, 0.0d0, river_DIC)
 
     ! Circulation strength of a scalar is equal to deep value minus
     ! river value (see BMM Labbook pg 45 for deep values)
-    phys_circ_Alk = 2092.98d0 - river_alk
+    phys_circ_Alk = 2092.98d0 - river_Alk
     phys_circ_DIC = 2059.68d0 - river_DIC
+
     !-------------------------------------------------------------
 
     ! Calculate the surface turbulent kinematic salinity flux (Large,

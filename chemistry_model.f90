@@ -38,7 +38,7 @@ contains
 
   end subroutine init_chemistry
 
-  subroutine solve_gas_flux(grid, T, S, rho, DIC, Oxy, Alk, &
+  subroutine solve_gas_flux(grid, T, S, rho, PO4, Si, DIC, Oxy, Alk, &
        day, time)
     ! Iteration for successful diffusion of CO2 and oxygen gas fluxes
 
@@ -52,7 +52,7 @@ contains
 
     ! Subroutines from other modules:
     use air_sea_fluxes, only: gas_flux
-    use carbonate, only: DIC_to_carbonate
+    use carbonate, only: calc_carbonate
     use biology_eqn_builder, only: &
          new_to_old_chem_RHS, new_to_old_chem_Bmatrix
 
@@ -68,7 +68,9 @@ contains
     real(kind=dp), intent(in) :: &
          T,         &  ! Sea surface water temperature [K]
          S,         &  ! Sea surface practical salinity [PSU]
-         rho           ! Sea surface water density  [kg/m^3]
+         rho,       &  ! Sea surface water density  [kg/m^3]
+         PO4,       &  ! Total phosphate (from total N and Redfield) [uM]
+         Si            ! Total silicate [uM]
     real(kind=dp), dimension(0:), intent(inout) :: &
          DIC,       &  ! Surface dissolved inorganic carbon [uM]
          Oxy,       &  ! Surface dissolved oxygen [uM]
@@ -88,7 +90,8 @@ contains
        call new_to_old_chem_Bmatrix()
 
        ! Calculate surface CO2* from surface DIC
-       call DIC_to_carbonate(T, S, rho, Alk(1), DIC(1), CO2_star)
+       call calc_carbonate('sea', 'DIC', Alk(1), DIC(1), rho, S, T, 0.0d0, &
+       PO4, Si, CO2_star)
 
        ! Calculate surface CO2 gas flux
        call gas_flux('CO2', T, S, CO2_star, DIC_flux)
@@ -130,6 +133,7 @@ contains
          diffusion_nonlocal_fluxes, diffusion_coeff
     use upwelling, only: upwelling_advection
     use freshwater, only: freshwater_bio
+    use northern_influence, only: northern_advection, northern_return
     use buoyancy, only: Bf
 
     implicit none
@@ -179,6 +183,12 @@ contains
     call upwelling_advection(dt, DIC, DIC_RHS%diff_adv%new)
     call upwelling_advection(dt, Oxy, Oxy_RHS%diff_adv%new)
     call upwelling_advection(dt, Alk, Alk_RHS%diff_adv%new)
+
+    ! Add advection from north (only affects T and nutrients, DIC, Oxy)
+    if (northern_return) then
+       call northern_advection (dt, DIC, 'DIC ', DIC_RHS%diff_adv%new)
+       call northern_advection (dt, Oxy, 'Oxy ', Oxy_RHS%diff_adv%new)
+    endif
 
   end subroutine build_chem_equations
 

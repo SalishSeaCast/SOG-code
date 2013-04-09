@@ -9,7 +9,7 @@ program SOG
   !
   ! Parameter values:
   use io_unit_defs, only: stripped_infile, stdout
-  use fundamental_constants, only: g
+  use fundamental_constants, only: g, Redfield_NP
   !
   ! Variables:
   use grid_mod, only: &
@@ -470,8 +470,8 @@ program SOG
      endif
 
      ! Calculate the gas fluxes and iterate the diffusion
-     call solve_gas_flux(grid, T%new(0), S%new(0), rho%g(0), DIC, Oxy, Alk, &
-          day, time)
+     call solve_gas_flux(grid, T%new(1), S%new(1), rho%g(1), &
+          (N%O(1) + N%H(1)) * Redfield_NP, Si(1), DIC, Oxy, Alk, day, time)
 
      ! Solve the semi-implicit diffusion/advection PDEs for the
      ! biology quantities.

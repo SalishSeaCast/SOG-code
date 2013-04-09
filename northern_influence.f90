@@ -158,6 +158,7 @@ contains
     use freshwater, only: upwell  ! Maximum freshwater upwelling velocity
     use water_properties, only: alpha, rho, Cp ! expansion coefficient, density,
                                                ! specific heat capacity
+    use fundamental_constants, only: Redfield_C
     implicit none
     ! Arguments
     real(kind=dp), intent(in) :: dt ! time step
@@ -178,13 +179,18 @@ contains
        requiredsum = sum%NO
     elseif (quantity .eq. 'NH ') then
        requiredsum = sum%NH
+    elseif (quantity .eq. 'DIC ') then
+    !   requiredsum = sum%DIC
+       requiredsum = sum%NO * Redfield_C + 1863.9274d0
+    elseif (quantity .eq. 'Oxy ') then
+       requiredsum = sum%Oxy
     elseif (quantity .eq. 'Si ') then
        requiredsum = sum%Si    
     elseif (quantity .eq. 'DON') then
        requiredsum = sum%DON
     elseif (quantity .eq. 'DOC') then
        requiredsum = sum%DOC
-    else  ! still need to add carbon/oxygen
+    else
        write (*,*) 'problems in northern_influence'
        stop
     endif
