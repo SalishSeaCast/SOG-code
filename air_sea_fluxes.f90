@@ -190,7 +190,7 @@ contains
          S,        &  ! Sea surface practical salinity [PSU]
          C_water      ! Sea surface gas concentration [uM]
     real(kind=dp), intent(out) :: &
-         gasflux      ! Gas flux [umol m-2 s-1]
+         gasflux      ! Gas flux [mmol m-2 s-1]
 
     ! Local variables:
     real(kind=dp) :: &
@@ -206,12 +206,12 @@ contains
 
     ! Solubility and Schmidt Number
     if (type == 'Oxy') then
-       ! from Wanninkhof 1992
+       ! Bunsen sol coeff from Wanninkhof 1992 (Lgas LSW-1 atm-1)
        ! Divide by molar volume of O2 (22.3914 from SeaBird Electronics)
-       ! (multiply by rho/rho = 1 for mol m-3 atm-1)
+       ! (multiply by 1e3 L/kg for mol m-3 atm-1)
        sol = exp(85.8079d0/(T/100.0d0) - 58.3877d0 + 23.8439d0 * &
             log(T/100.0d0) + S * (-0.034892d0 + 0.015568d0 * (T/100.0d0) - &
-            0.0019387d0 * (T/100.0d0)**2))/22.3914d-3
+            0.0019387d0 * (T/100.0d0)**2))/22.3914d0 * 1.0d3
 
        ! from Wanninkhof 1992
        ! (T in deg C)
@@ -248,7 +248,7 @@ contains
     p_gas = 1.0d3 * (C_water/sol)
 
     ! Gas flux
-    ! (m/s * mol/m^3atm * (umol/mol * m^3/L) * atm = umol m-2 s-1)
+    ! (m/s * mol/m^3atm * (1e3 mmol/mol) * atm = mmol m-2 s-1)
     gasflux = kps * sol * 1.0d3 * (1.0d-6 * p_gas - p_air)
 
   end subroutine gas_flux

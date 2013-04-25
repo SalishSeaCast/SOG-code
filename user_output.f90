@@ -290,8 +290,8 @@ contains
          "and Nitrate Upwelling")
     call write_cmn_hdr_id(userprofiles, str_run_Datetime, str_CTD_Datetime)
     write(userprofiles, 500)
-500 format("*FieldNames: Depth, Primary productivity, Nitrate Upwelling"/, &
-         "*FieldUnits: m, uM C/hr, umol N m-2 s-1")
+500 format("*FieldNames: "/, & ! Depth"/, &
+         "*FieldUnits: ") ! m")
     write(userprofiles, 410) str_pro_datetime
 410 format("*ProfileDateTime: ", a/, "*EndOfHeader")
   end subroutine write_user_profiles_hdr
@@ -315,8 +315,8 @@ contains
     write(userHoff, 300) str_run_Datetime, str_CTD_Datetime
 300 format("*RunDateTime: ", a/, "*InitialCTDDateTime: ", a)
     write(userHoff, 500)
-500 format("*FieldNames: Depth, Primary productivity, Nitrate Upwelling"/, &
-         "*FieldUnits: m, uM C/hr, umol N m-2 s-1")
+500 format("*FieldNames: "/, & ! Depth"/, &
+         "*FieldUnits: ") ! m")
     write(userHoff, 210) Hoff_startyr, Hoff_startday, Hoff_startsec, &
          Hoff_endyr, Hoff_endday, Hoff_endsec, Hoff_interval
 210 format("*HoffmuellerStartYr: ", i4/,  &

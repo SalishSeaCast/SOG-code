@@ -80,8 +80,8 @@ contains
     integer :: &
          count         ! Loop index
     real(kind=dp) :: &
-         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [umol m-2 s-1]
-         Oxy_flux,  &  ! Oxygen surface flux [umol m-2 s-1]
+         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
+         Oxy_flux,  &  ! Oxygen surface flux [mmol m-2 s-1]
          CO2_star      ! Surface CO2 [uM]
 
     do count = 1, chem_steps !---- Begin Iteration Loop ----
@@ -143,8 +143,8 @@ contains
          grid          ! Grid arrays
     real(kind=dp), intent(in) :: &
          dt,        &  ! Time step [s]
-         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [umol m-2 s-1]
-         Oxy_flux      ! Oxygen surface flux [umol m-2 s-1]
+         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
+         Oxy_flux      ! Oxygen surface flux [mmol m-2 s-1]
     real(kind=dp), dimension(0:), intent(in) :: &
          DIC,       &  ! Dissolved inorganic carbon
          Oxy,       &  ! Dissolved oxygen

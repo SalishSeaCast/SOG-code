@@ -736,6 +736,7 @@ contains
          pi, Redfield_C, Redfield_O, Redfield_NP
     use unit_conversions, only: KtoC
     use grid_mod, only: full_depth_average
+    use io_unit_defs, only: stdout
     implicit none
     ! Arguments:
     integer, intent(in) :: &
@@ -1006,16 +1007,16 @@ contains
     Mesozoo(1:M) = rate_mesozoo%winterconc + &
          rate_mesozoo%summerconc * &
          ( sum ( rate_mesozoo%sumpeakval * &
-            exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
-                                rate_mesozoo%sumpeakwid**2 ) ) &
+         exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
+         rate_mesozoo%sumpeakwid**2 ) ) &
          + sum ( rate_mesozoo%sumpeakval * &
-            exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
-                                rate_mesozoo%sumpeakwid**2 ) ) &
+         exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
+         rate_mesozoo%sumpeakwid**2 ) ) &
          + sum ( rate_mesozoo%sumpeakval * &
-            exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
-                                rate_mesozoo%sumpeakwid**2 ) ) )
-
-
+         exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
+         rate_mesozoo%sumpeakwid**2 ) ) )
+    ! Mesozoo(1:M) = -0.15d0 * sin(0.0172d0 * (day + 57.0d0)) + 0.55d0
+    
     average_prey = full_depth_average(Pmicro+D_PON+Pnano+Z)
 
     Mesozoo(1:M) = Mesozoo(1:M) &
@@ -1049,6 +1050,16 @@ contains
             (rate_mesozoo%NanoHalfSat + Pnano(jj) &
             - rate_mesozoo%NanoPredSlope + &
             epsilon(rate_mesozoo%NanoHalfSat)))
+
+       ! -------------------------------------------
+       ! limitation based on picoplankton
+       ! Meso_mort_pico = min(rate_mesozoo%PicoPref * food_limitation &
+       !      * Ppico(jj) / denominator, &
+       !      (Ppico(jj) - rate_mesozoo%PicoPredslope) / &
+       !      (rate_mesozoo%PicoHalfSat + Ppico(jj) &
+       !      - rate_mesozoo%PicoPredSlope + &
+       !      epsilon(rate_mesozoo%PicoHalfSat)))
+       ! -------------------------------------------
 
        ! limitation based on PON
        Meso_graz_PON = min(rate_mesozoo%PON_Pref * food_limitation &
