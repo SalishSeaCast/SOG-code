@@ -385,6 +385,12 @@ contains
     frac_waste_NEM%PON = getpard('Waste, nem, PON')
     frac_waste_NEM%Ref = getpard('Waste, nem, Ref')
     frac_waste_NEM%Bsi = getpard('Waste, nem, Bsi')
+    ! Picophyto eaten by Mesozoo
+    frac_waste_FEM%NH = getpard('Waste, fem, NH')
+    frac_waste_FEM%DON = getpard('Waste, fem, DON')
+    frac_waste_FEM%PON = getpard('Waste, fem, PON')
+    frac_waste_FEM%Ref = getpard('Waste, fem, Ref')
+    frac_waste_FEM%Bsi = getpard('Waste, fem, Bsi')
     ! PON eaten by Mesozoo
     frac_waste_PEM%NH = getpard('Waste, pem, NH')
     frac_waste_PEM%DON = getpard('Waste, pem, DON')
@@ -788,9 +794,9 @@ contains
     real(kind=dp), dimension(1:M) :: temp_Q10
     ! temporary variable to calculate mortality scheme
     real(kind=dp) :: food_limitation, denominator, &
-         Meso_mort_micro, Meso_graz_PON , Meso_mort_nano, average_prey, &
-         Meso_mort_Z, uZoo_mort_micro, uZoo_mort_nano, uZoo_graz_PON, &
-         uZoo_graz_Z, uZoo_mort_pico
+         Meso_mort_micro, Meso_graz_PON , Meso_mort_nano, Meso_mort_pico, &
+         average_prey, Meso_mort_Z, uZoo_mort_micro, uZoo_mort_nano, &
+         uZoo_graz_PON, uZoo_graz_Z, uZoo_mort_pico
 
     integer :: &
          bPZ, &  ! Beginning index for a quantity in the PZ array
@@ -1004,34 +1010,36 @@ contains
 
     ! Mesozooplankton
     ! amount of Mesozoo : const. winter conc + 3 summer Gaussians
-    Mesozoo(1:M) = rate_mesozoo%winterconc + &
-         rate_mesozoo%summerconc * &
-         ( sum ( rate_mesozoo%sumpeakval * &
-         exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
-         rate_mesozoo%sumpeakwid**2 ) ) &
-         + sum ( rate_mesozoo%sumpeakval * &
-         exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
-         rate_mesozoo%sumpeakwid**2 ) ) &
-         + sum ( rate_mesozoo%sumpeakval * &
-         exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
-         rate_mesozoo%sumpeakwid**2 ) ) )
-    ! Mesozoo(1:M) = -0.15d0 * sin(0.0172d0 * (day + 57.0d0)) + 0.55d0
+    ! Mesozoo(1:M) = rate_mesozoo%winterconc + &
+    !     rate_mesozoo%summerconc * &
+    !     ( sum ( rate_mesozoo%sumpeakval * &
+    !     exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
+    !     rate_mesozoo%sumpeakwid**2 ) ) &
+    !     + sum ( rate_mesozoo%sumpeakval * &
+    !     exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
+    !     rate_mesozoo%sumpeakwid**2 ) ) &
+    !     + sum ( rate_mesozoo%sumpeakval * &
+    !     exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
+    !     rate_mesozoo%sumpeakwid**2 ) ) )
+    Mesozoo(1:M) = -0.15d0 * sin(0.0172d0 * (day + 57.0d0)) + 0.55d0
     
-    average_prey = full_depth_average(Pmicro+D_PON+Pnano+Z)
+    average_prey = full_depth_average(Pmicro + D_PON + Pnano + Ppico + Z)
 
     Mesozoo(1:M) = Mesozoo(1:M) &
-         * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) +Z(1:M)) &
+         * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Ppico(1:M) + Z(1:M)) &
          / ( average_prey + epsilon(average_prey))
 
     do jj = 1,M
        ! global food limitation
-       food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) +Z(jj) &
-            - rate_mesozoo%PredSlope) / &
+       food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) + Ppico(jj) &
+            + Z(jj) - rate_mesozoo%PredSlope) / &
             (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
-            + Z(jj) - rate_mesozoo%PredSlope + epsilon(rate_mesozoo%HalfSat))
+            + Ppico(jj) + Z(jj) - rate_mesozoo%PredSlope &
+            + epsilon(rate_mesozoo%HalfSat))
 
        denominator = (rate_mesozoo%MicroPref * Pmicro(jj) + &
             rate_mesozoo%NanoPref * Pnano(jj) + &
+            rate_mesozoo%PicoPref * Ppico(jj) + &
             rate_mesozoo%PON_Pref * D_PON(jj) + &
             rate_mesozoo%Z_Pref * Z(jj) + epsilon(Pmicro(jj)) )
 
@@ -1053,12 +1061,12 @@ contains
 
        ! -------------------------------------------
        ! limitation based on picoplankton
-       ! Meso_mort_pico = min(rate_mesozoo%PicoPref * food_limitation &
-       !      * Ppico(jj) / denominator, &
-       !      (Ppico(jj) - rate_mesozoo%PicoPredslope) / &
-       !      (rate_mesozoo%PicoHalfSat + Ppico(jj) &
-       !      - rate_mesozoo%PicoPredSlope + &
-       !      epsilon(rate_mesozoo%PicoHalfSat)))
+       Meso_mort_pico = min(rate_mesozoo%PicoPref * food_limitation &
+            * Ppico(jj) / denominator, &
+            (Ppico(jj) - rate_mesozoo%PicoPredslope) / &
+            (rate_mesozoo%PicoHalfSat + Ppico(jj) &
+            - rate_mesozoo%PicoPredSlope + &
+            epsilon(rate_mesozoo%PicoHalfSat)))
        ! -------------------------------------------
 
        ! limitation based on PON
@@ -1076,14 +1084,17 @@ contains
             + epsilon(rate_mesozoo%Z_HalfSat)))
 
        ! global corrected by individual
-       food_limitation = Meso_mort_micro + Meso_mort_nano + Meso_graz_PON &
-            + Meso_mort_Z
+       food_limitation = Meso_mort_micro + Meso_mort_nano + Meso_mort_pico &
+            + Meso_graz_PON + Meso_mort_Z
 
        GrazMort_micro(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
             max(0.d0, Meso_mort_micro)
 
        GrazMort_nano(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
             max(0.d0, Meso_mort_nano)
+
+       GrazMort_pico(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
+            max(0.d0, Meso_mort_pico)
 
        Graz_PON(jj) = rate_mesozoo%R * temp_Q10(jj) * Mesozoo(jj) * &
             max(0.d0, Meso_graz_PON)
@@ -1095,22 +1106,27 @@ contains
     was_NH = was_NH + frac_waste_PEM%NH * Graz_PON + &
          frac_waste_DEM%NH * GrazMort_micro + &
          frac_waste_NEM%NH * GrazMort_nano + &
+         frac_waste_FEM%NH * GrazMort_pico + &
          frac_waste_ZEM%NH * GrazMort_Z
     was_DON = was_DON + frac_waste_PEM%DON * Graz_PON + &
          frac_waste_DEM%DON * GrazMort_micro + &
          frac_waste_NEM%DON * GrazMort_nano + &
+         frac_waste_FEM%DON * GrazMort_pico + &
          frac_waste_ZEM%DON * GrazMort_Z
     was_PON = was_PON + frac_waste_PEM%PON * Graz_PON + &
          frac_waste_DEM%PON * GrazMort_micro + &
          frac_waste_NEM%PON * GrazMort_nano + &
+         frac_waste_FEM%PON * GrazMort_pico + &
          frac_waste_ZEM%PON * GrazMort_Z
     was_Ref = was_Ref + frac_waste_PEM%Ref * Graz_PON + &
          frac_waste_DEM%Ref * GrazMort_micro + &
          frac_waste_NEM%Ref * GrazMort_nano + &
+         frac_waste_FEM%Ref * GrazMort_pico + &
          frac_waste_ZEM%Ref * GrazMort_Z
     was_BSi = was_BSi + frac_waste_PEM%BSi * Graz_PON * 0.d0 + &
          frac_waste_DEM%BSi * GrazMort_micro * rate_micro%Si_ratio + &
          frac_waste_NEM%BSi * GrazMort_nano * rate_nano%Si_ratio + &
+         frac_waste_FEM%BSi * GrazMort_pico * rate_pico%Si_ratio + &
          frac_waste_ZEM%BSi * GrazMort_Z * 0.d0
 
     ! Mesodinium rubrum
