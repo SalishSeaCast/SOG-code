@@ -175,6 +175,7 @@ module NPZD
        frac_waste_ZEX, & ! uZoo excretion
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
        frac_waste_NEM, & ! Nano eaten by mesozoo
+       frac_waste_FEM, & ! Flagellates (pico) eaten by mesozoo
        frac_waste_PEM, & ! PON eaten by Mesozoo
        frac_waste_ZEM, & ! uZ eaten by Mesozoo
        frac_waste_PEZ, & ! PON eaten by uZoo
@@ -238,6 +239,12 @@ contains
     rate_mesozoo%NanoPredSlope = getpard('Mesozoo, nano pred slope')
     ! half saturation
     rate_mesozoo%NanoHalfSat = getpard('Mesozoo, nano half-sat')
+    ! preference for pico
+    rate_mesozoo%PicoPref = getpard('Mesozoo, pref for pico')
+    ! limit from predation
+    rate_mesozoo%PicoPredSlope = getpard('Mesozoo, pico pred slope')
+    ! half saturation
+    rate_mesozoo%PicoHalfSat = getpard('Mesozoo, pico half-sat')
     ! preference for PON
     rate_mesozoo%PON_Pref = getpard('Mesozoo, pref for PON')
     ! limit from predation
