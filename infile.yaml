@@ -627,6 +627,20 @@ biology:
       units: uM N
       variable_name: rate_mesozoo%NanoHalfSat
       description: mesozooplankton nano-phyto grazing half saturation const
+    mesozoo_pico_preference:
+      value: 0.1
+      variable_name: rate_mesozoo%PicoPref
+      description: mesozooplankton preference for pico-phytoplankton
+    mesozoo_pico_grazing_limit:
+      value: 0.4
+      units: uM N
+      variable_name: rate_mesozoo%PicoPredSlope
+      description: mesozooplankton pico-phyto grazing limit
+    mesozoo_pico_grazing_half_saturation:
+      value: 0.4
+      units: uM N
+      variable_name: rate_mesozoo%PicoHalfSat
+      description: mesozooplankton pico-phyto grazing half saturation const
     mesozoo_PON_preference:
       value: 0.35
       variable_name: rate_mesozoo%PON_Pref
@@ -1161,6 +1175,26 @@ biology:
       value: 0
       variable_name: frac_waste_NEM%Bsi
       description: waste fraction from mesozoo grazing nanophyto to Bsi
+    mesozoo_picophyto_grazing_NH:
+      value: 0
+      variable_name: frac_waste_FEM%NH
+      description: waste fraction from mesozoo grazing picophyto to NH
+    mesozoo_picophyto_grazing_DON:
+      value: 0
+      variable_name: frac_waste_FEM%DON
+      description: waste fraction from mesozoo grazing picophyto to DON
+    mesozoo_picophyto_grazing_PON:
+      value: 0
+      variable_name: frac_waste_FEM%PON
+      description: waste fraction from mesozoo grazing picophyto to PON
+    mesozoo_picophyto_grazing_refr:
+      value: 0
+      variable_name: frac_waste_FEM%Ref
+      description: waste fraction from mesozoo grazing picophyto to Ref
+    mesozoo_picophyto_grazing_bSi:
+      value: 0
+      variable_name: frac_waste_FEM%Bsi
+      description: waste fraction from mesozoo grazing picophyto to Bsi
     mesozoo_PON_grazing_NH:
       value: 0.03
       variable_name: frac_waste_PEM%NH
