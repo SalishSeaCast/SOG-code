@@ -179,6 +179,8 @@
 
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
 "Mesozoo, max ingestion"      1.39d-5  "Mesozoo, maximum intact rate"
+"Mesozoo, nat mort"      2.3d-6   "Mesozoo, natural mortality"
+"Mesozoo, excretion"     1.39e-6  "Mesozoo, excretion"
 ! Alain 0.75
 "Mesozoo, pred slope"        0.05d0 "Mesozoo, limit on predation"
 ! Alain 2
