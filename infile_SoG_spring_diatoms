@@ -208,6 +208,7 @@
 "Mesozoo, pref for nano"      0.0d0 "Mesozoo, preference for nano"
 "Mesozoo, nano pred slope"    0.4d0 "Mesozoo, nano limit of predation"
 "Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation"
+"Mesozoo, pref for pico"      0.1d0 "Mesozoo, preference for pico"
 "Mesozoo, pico pred slope"    0.4d0 "Mesozoo, pico limit of predation"
 "Mesozoo, pico half-sat"      0.4d0 "Mesozoo, pico half-saturation"
 "Mesozoo, pref for PON"      0.35d0 "Mesozoo, preference for PON"
