@@ -632,7 +632,7 @@ biology:
       variable_name: rate_mesozoo%PicoPref
       description: mesozooplankton preference for pico-phytoplankton
     mesozoo_pico_grazing_limit:
-      value: 0.4
+      value: 0.0
       units: uM N
       variable_name: rate_mesozoo%PicoPredSlope
       description: mesozooplankton pico-phyto grazing limit
@@ -1176,19 +1176,19 @@ biology:
       variable_name: frac_waste_NEM%Bsi
       description: waste fraction from mesozoo grazing nanophyto to Bsi
     mesozoo_picophyto_grazing_NH:
-      value: 0
+      value: 0.03
       variable_name: frac_waste_FEM%NH
       description: waste fraction from mesozoo grazing picophyto to NH
     mesozoo_picophyto_grazing_DON:
-      value: 0
+      value: 0.2
       variable_name: frac_waste_FEM%DON
       description: waste fraction from mesozoo grazing picophyto to DON
     mesozoo_picophyto_grazing_PON:
-      value: 0
+      value: 0.2
       variable_name: frac_waste_FEM%PON
       description: waste fraction from mesozoo grazing picophyto to PON
     mesozoo_picophyto_grazing_refr:
-      value: 0
+      value: 0.57
       variable_name: frac_waste_FEM%Ref
       description: waste fraction from mesozoo grazing picophyto to Ref
     mesozoo_picophyto_grazing_bSi:

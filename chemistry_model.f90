@@ -91,7 +91,7 @@ contains
 
        ! Calculate surface CO2* from surface DIC
        call calc_carbonate('sea', 'DIC', Alk(1), DIC(1), rho, S, T, 0.0d0, &
-       PO4, Si, CO2_star)
+            PO4, Si, CO2_star)
 
        ! Calculate surface CO2 gas flux
        call gas_flux('CO2', T, S, CO2_star, DIC_flux)
