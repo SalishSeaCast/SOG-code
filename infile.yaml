@@ -589,6 +589,16 @@ biology:
       units: uM N / s
       variable_name: rate_mesozoo%R
       description: mesozooplankton maximum ingestion rate @ 20 deg C
+    mesozoo_natural_mortality:
+      value: 2.3e-6
+      units: uM N / s
+      variable_name: rate_mesozoo%Rm
+      description: mesozooplankton natural mortality rate @ 20 deg C
+    mesozoo_excretion:
+      value: 1.39e-6
+      units: uM N / s
+      variable_name: rate_mesozoo%excr
+      description: mesozooplankton excretion rate @ 20 deg C
     mesozoo_grazing_limit:
       value: 0.2
       units: uM N

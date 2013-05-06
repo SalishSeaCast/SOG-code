@@ -179,6 +179,8 @@
 
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
 "Mesozoo, max ingestion"      1.39d-5  "Mesozoo, maximum intact rate"
+"Mesozoo, nat mort"      2.3d-6   "Mesozoo, natural mortality"
+"Mesozoo, excretion"     1.39e-6  "Mesozoo, excretion"
 ! Alain 0.75
 "Mesozoo, pred slope"        0.05d0 "Mesozoo, limit on predation"
 ! Alain 2
@@ -190,6 +192,10 @@
 "Mesozoo, pref for nano"      0.0d0 "Mesozoo, preference for nano"
 "Mesozoo, nano pred slope"    0.4d0 "Mesozoo, nano limit of predation"
 "Mesozoo, nano half-sat"      0.4d0 "Mesozoo, nano half-saturation"
+"Mesozoo, pref for pico"      0.1d0 "Mesozoo, preference for pico"
+"Mesozoo, pico pred slope"    0.4d0 "Mesozoo, pico limit of predation"
+"Mesozoo, pico half-sat"      0.4d0 "Mesozoo, pico half-saturation"
+"Mesozoo, pref for PON"      0.35d0 "Mesozoo, preference for PON"
 "Mesozoo, pref for PON"      0.0d0 "Mesozoo, preference for PON"
 "Mesozoo, PON pred slope"    0.2d0 "Mesozoo, PON limit of predation"
 "Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation"
@@ -356,6 +362,12 @@
 "Waste, nem, PON" 0.2d0 "fraction of waste from mesozoo eat nanophyto to PON"
 "Waste, nem, Ref" 0.57d0 "fraction of waste mesozoo eat nanophyto to Ref"
 "Waste, nem, Bsi" 0.d0  "fraction of waste from mesozoo eat nanophyto to BSi"
+! Picophyto eaten by Mesozoo
+"Waste, fem, NH"  0.d0 "fraction of waste from mesozoo eat picophyto to NH"
+"Waste, fem, DON" 0.d0 "fraction of waste from mesozoo eat picophyto to DON"
+"Waste, fem, PON" 0.d0 "fraction of waste from mesozoo eat picophyto to PON"
+"Waste, fem, Ref" 0.d0 "fraction of waste mesozoo eat picophyto to Ref"
+"Waste, fem, Bsi" 0.d0 "fraction of waste from mesozoo eat picophyto to BSi"
 ! PON eaten by Mesozoo (copy above numbers, except Si)
 "Waste, pem, NH"  0.03d0 "fraction of waste from mesozoo eat PON to NH"
 "Waste, pem, DON" 0.2d0 "fraction of waste from mesozoo eat PON to DON"

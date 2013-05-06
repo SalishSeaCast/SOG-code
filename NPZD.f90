@@ -246,6 +246,10 @@ contains
     call getpardv('Mesozoo, summer peak wid',3, rate_mesozoo%sumpeakwid)
     ! max igestion rate
     rate_mesozoo%R = getpard('Mesozoo, max ingestion')
+    ! natural mortality
+    rate_mesozoo%Rm = getpard("Mesozoo, nat mort")
+    ! excretion
+    rate_mesozoo%excr = getpard("Mesozoo, excretion")
     ! limit from predation
     rate_mesozoo%PredSlope = getpard('Mesozoo, pred slope')
     ! half saturation
