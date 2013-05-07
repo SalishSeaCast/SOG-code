@@ -1099,6 +1099,48 @@ biology:
       variable_name: frac_waste_FNM%Bsi
       description: waste fraction from pico-phyto natural mortality to bSi
 
+  mesozooplankton_waste:
+    mesozoo_mort_NH:
+      value: 0
+      variable_name: frac_waste_MNM%NH
+      description: waste fraction from meso-zoo natural mortality to NH
+    mesozoo_mort_DON:
+      value: 0.475
+      variable_name: frac_waste_MNM%DON
+      description: waste fraction from meso-zoo natural mortality to DON
+    mesozoo_mort_PON:
+      value: 0.475
+      variable_name: frac_waste_MNM%PON
+      description: waste fraction from meso-zoo natural mortality to PON
+    mesozoo_mort_refr:
+      value: 0.05
+      variable_name: frac_waste_MNM%Ref
+      description: waste fraction from meso-zoo natural mortality to refractory
+    mesozoo_mort_bSi:
+      value: 0
+      variable_name: frac_waste_MNM%Bsi
+      description: waste fraction from meso-zoo natural mortality to bSi
+    mesozoo_excrete_NH:
+      value: 1
+      variable_name: frac_waste_MEX%NH
+      description: waste fraction from meso-zoo excretion to NH
+    mesozoo_excrete_DON:
+      value: 0
+      variable_name: frac_waste_MEX%DON
+      description: waste fraction from meso-zoo excretion to DON
+    mesozoo_excrete_PON:
+      value: 0
+      variable_name: frac_waste_MEX%PON
+      description: waste fraction from meso-zoo excretion to PON
+    mesozoo_excrete_refr:
+      value: 0
+      variable_name: frac_waste_MEX%Ref
+      description: waste fraction from meso-zoo excretion to refractory
+    mesozoo_excrete_bSi:
+      value: 0
+      variable_name: frac_waste_MEX%Bsi
+      description: waste fraction from meso-zoo excretion to bSi
+
   microzooplankton_waste:
     microzoo_mort_NH:
       value: 0

@@ -334,6 +334,18 @@
 ! some loss
 "Waste, fnm, Ref"       0.05d0  "fraction of waste from pico nat mort to Ref"
 "Waste, fnm, Bsi"       1.0d0    "fraction of waste from pico nat mort to BSi"
+! Mesozoo Natural Mortality
+"Waste, mnm, NH"        0.d0      "fraction of waste from uzoo nat mort to NH"
+"Waste, mnm, DON"       0.475d0  "fraction of waste from uzoo nat mort to DON"
+"Waste, mnm, PON"       0.475d0  "fraction of waste from uzoo nat mort to PON"
+"Waste, mnm, Ref"       0.05d0  "fraction of waste from uzoo nat mort to Ref"
+"Waste, mnm, Bsi"       0.0d0    "fraction of waste from uzoo nat mort to BSi"
+! Mesozoo excretion
+"Waste, mex, NH"        1.0d0     "fraction of waste from uzoo excretion to NH"
+"Waste, mex, DON"       0.0d0  "fraction of waste from uzoo excretion to DON"
+"Waste, mex, PON"       0.0d0  "fraction of waste from uzoo excretion to PON"
+"Waste, mex, Ref"       0.0d0  "fraction of waste from uzoo excretion to Ref"
+"Waste, mex, Bsi"       0.0d0    "fraction of waste from uzoo excretion to BSi"
 ! uZoo Natural Mortality
 "Waste, znm, NH"        0.d0      "fraction of waste from uzoo nat mort to NH"
 "Waste, znm, DON"       0.475d0  "fraction of waste from uzoo nat mort to DON"

@@ -168,9 +168,12 @@ module NPZD
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano, rate_pico
   type(rate_para_zoo) :: rate_mesozoo, rate_mesorub, rate_uzoo
-  type(nloss_param) :: frac_waste_DNM, & ! Diatom natural mortality
+  type(nloss_param) :: &
+       frac_waste_DNM, & ! Diatom natural mortality
        frac_waste_NNM, & ! Nano natural mortality
        frac_waste_FNM, & ! Flagellates (pico) natural mortality
+       frac_waste_MNM, & ! Mesozoo natural mortality
+       frac_waste_MEX, & ! Mesozoo excretion
        frac_waste_ZNM, & ! uZoo natural mortality
        frac_waste_ZEX, & ! uZoo excretion
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
@@ -372,6 +375,18 @@ contains
     frac_waste_FNM%PON = getpard('Waste, fnm, PON')
     frac_waste_FNM%Ref = getpard('Waste, fnm, Ref')
     frac_waste_FNM%Bsi = getpard('Waste, fnm, Bsi')
+    ! Mesozoo natural mortality
+    frac_waste_MNM%NH = getpard('Waste, mnm, NH')
+    frac_waste_MNM%DON = getpard('Waste, mnm, DON')
+    frac_waste_MNM%PON = getpard('Waste, mnm, PON')
+    frac_waste_MNM%Ref = getpard('Waste, mnm, Ref')
+    frac_waste_MNM%Bsi = getpard('Waste, mnm, Bsi')
+    ! Mesozoo excretion
+    frac_waste_MEX%NH = getpard('Waste, mex, NH')
+    frac_waste_MEX%DON = getpard('Waste, mex, DON')
+    frac_waste_MEX%PON = getpard('Waste, mex, PON')
+    frac_waste_MEX%Ref = getpard('Waste, mex, Ref')
+    frac_waste_MEX%Bsi = getpard('Waste, mex, Bsi')
     ! uZoo natural mortality
     frac_waste_ZNM%NH = getpard('Waste, znm, NH')
     frac_waste_ZNM%DON = getpard('Waste, znm, DON')
