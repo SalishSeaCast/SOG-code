@@ -195,6 +195,7 @@
 "Mesozoo, summer peak wid" 53.8d0 51.6d0 14.6d0 "Width of summer peaks"
 ! Alain 0.3 d-1 at 0 degrees = 1.39e-5 at 20 degrees
 "Mesozoo, max ingestion"     1.39d-5 "Mesozoo, maximum intake rate"
+"Mesozoo, assimil. eff"  0.5d0    "Mesozoo, assimiliation efficiency"
 "Mesozoo, nat mort"      2.3d-6   "Mesozoo, natural mortality"
 "Mesozoo, excretion"     1.39e-6  "Mesozoo, excretion"
 ! Alain 0.75
@@ -212,7 +213,6 @@
 "Mesozoo, pico pred slope"    0.4d0 "Mesozoo, pico limit of predation"
 "Mesozoo, pico half-sat"      0.4d0 "Mesozoo, pico half-saturation"
 "Mesozoo, pref for PON"      0.35d0 "Mesozoo, preference for PON"
-"Mesozoo, pref for PON"      0.0d0 "Mesozoo, preference for PON"
 "Mesozoo, PON pred slope"    0.2d0 "Mesozoo, PON limit of predation"
 "Mesozoo, PON half-sat"      0.2d0 "Mesozoo, PON half-saturation"
 "Mesozoo, pref for uZoo"      0.0d0 "Mesozoo, preference for microzoo"
@@ -351,6 +351,18 @@
 ! some loss
 "Waste, fnm, Ref"       0.05d0  "fraction of waste from pico nat mort to Ref"
 "Waste, fnm, Bsi"       1.0d0    "fraction of waste from pico nat mort to BSi"
+! Mesozoo Natural Mortality
+"Waste, mnm, NH"        0.d0      "fraction of waste from uzoo nat mort to NH"
+"Waste, mnm, DON"       0.475d0  "fraction of waste from uzoo nat mort to DON"
+"Waste, mnm, PON"       0.475d0  "fraction of waste from uzoo nat mort to PON"
+"Waste, mnm, Ref"       0.05d0  "fraction of waste from uzoo nat mort to Ref"
+"Waste, mnm, Bsi"       0.0d0    "fraction of waste from uzoo nat mort to BSi"
+! Mesozoo excretion
+"Waste, mex, NH"        1.0d0     "fraction of waste from uzoo excretion to NH"
+"Waste, mex, DON"       0.0d0  "fraction of waste from uzoo excretion to DON"
+"Waste, mex, PON"       0.0d0  "fraction of waste from uzoo excretion to PON"
+"Waste, mex, Ref"       0.0d0  "fraction of waste from uzoo excretion to Ref"
+"Waste, mex, Bsi"       0.0d0    "fraction of waste from uzoo excretion to BSi"
 ! uZoo Natural Mortality
 "Waste, znm, NH"        0.d0      "fraction of waste from uzoo nat mort to NH"
 "Waste, znm, DON"       0.475d0  "fraction of waste from uzoo nat mort to DON"

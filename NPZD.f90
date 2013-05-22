@@ -20,6 +20,7 @@ module NPZD
        micro,             &  ! micro-plankton growth profile arrays
        ! Diagnostics:
        uptake,            &  ! NO, NH, and PC uptake arrays
+       Mesozoo,           &  ! Mesozooplankton profile array
        f_ratio,           &  ! Ratio of new to total production profile
        ! Subroutines:
        init_NPZD,            &  ! Allocate memory for biology model
@@ -167,13 +168,14 @@ module NPZD
   ! Biological rate parameters
   type(rate_para_phyto) :: rate_micro, rate_nano, rate_pico
   type(rate_para_zoo) :: rate_mesozoo, rate_mesorub, rate_uzoo
-  type(nloss_param) :: frac_waste_DNM, & ! Diatom natural mortality
+  type(nloss_param) :: &
+       frac_waste_DNM, & ! Diatom natural mortality
        frac_waste_NNM, & ! Nano natural mortality
        frac_waste_FNM, & ! Flagellates (pico) natural mortality
+       frac_waste_MNM, & ! Mesozoo natural mortality
+       frac_waste_MEX, & ! Mesozoo excretion
        frac_waste_ZNM, & ! uZoo natural mortality
-       frac_waste_MNM, & ! mesozoo natural mortality -- added by Tara
        frac_waste_ZEX, & ! uZoo excretion
-       frac_waste_MEX, & ! mesozoo excretion -- added by Tara
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
        frac_waste_NEM, & ! Nano eaten by mesozoo
        frac_waste_FEM, & ! Flagellates (pico) eaten by mesozoo
@@ -239,7 +241,7 @@ contains
     ! max igestion rate
     rate_mesozoo%R = getpard('Mesozoo, max ingestion')
     ! assimilation efficiency
-    rate_mesozoo%eff = 0.5d0 !getpard("Mesozoo, assimilation eff")
+    rate_mesozoo%eff = getpard("Mesozoo, assimil. eff")
     ! natural mortality
     rate_mesozoo%Rm = getpard("Mesozoo, nat mort")
     ! excretion
@@ -389,18 +391,18 @@ contains
     frac_waste_FNM%PON = getpard('Waste, fnm, PON')
     frac_waste_FNM%Ref = getpard('Waste, fnm, Ref')
     frac_waste_FNM%Bsi = getpard('Waste, fnm, Bsi')
-    ! mesozoo natural mortality
-    frac_waste_MNM%NH  = 0.0d0   !getpard('Waste, znm, NH')
-    frac_waste_MNM%DON = 0.475d0 !getpard('Waste, znm, DON')
-    frac_waste_MNM%PON = 0.475d0 !getpard('Waste, znm, PON')
-    frac_waste_MNM%Ref = 0.05d0  !getpard('Waste, znm, Ref')
-    frac_waste_MNM%Bsi = 0.0d0   !getpard('Waste, znm, Bsi')
-    ! mesozoo excretion
-    frac_waste_MEX%NH  = 0.3d0 !getpard('Waste, zex, NH')
-    frac_waste_MEX%DON = 0.3d0 !getpard('Waste, zex, DON')
-    frac_waste_MEX%PON = 0.4d0 !getpard('Waste, zex, PON')
-    frac_waste_MEX%Ref = 0.0d0 !getpard('Waste, zex, Ref')
-    frac_waste_MEX%Bsi = 0.0d0 !getpard('Waste, zex, Bsi')
+    ! Mesozoo natural mortality
+    frac_waste_MNM%NH = getpard('Waste, mnm, NH')
+    frac_waste_MNM%DON = getpard('Waste, mnm, DON')
+    frac_waste_MNM%PON = getpard('Waste, mnm, PON')
+    frac_waste_MNM%Ref = getpard('Waste, mnm, Ref')
+    frac_waste_MNM%Bsi = getpard('Waste, mnm, Bsi')
+    ! Mesozoo excretion
+    frac_waste_MEX%NH = getpard('Waste, mex, NH')
+    frac_waste_MEX%DON = getpard('Waste, mex, DON')
+    frac_waste_MEX%PON = getpard('Waste, mex, PON')
+    frac_waste_MEX%Ref = getpard('Waste, mex, Ref')
+    frac_waste_MEX%Bsi = getpard('Waste, mex, Bsi')
     ! uZoo natural mortality
     frac_waste_ZNM%NH = getpard('Waste, znm, NH')
     frac_waste_ZNM%DON = getpard('Waste, znm, DON')
@@ -1052,18 +1054,8 @@ contains
     ! Grazing processes
 
     ! Mesozooplankton
-    ! amount of Mesozoo : const. winter conc + 3 summer Gaussians
-    ! Mesozoo(1:M) = rate_mesozoo%winterconc + &
-    !     rate_mesozoo%summerconc * &
-    !     ( sum ( rate_mesozoo%sumpeakval * &
-    !     exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
-    !     rate_mesozoo%sumpeakwid**2 ) ) &
-    !     + sum ( rate_mesozoo%sumpeakval * &
-    !     exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
-    !     rate_mesozoo%sumpeakwid**2 ) ) &
-    !     + sum ( rate_mesozoo%sumpeakval * &
-    !     exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
-    !     rate_mesozoo%sumpeakwid**2 ) ) )
+    ! Amount of Mesozoo: 365-day periodic fit to 20 year SoG zooplankton avgs
+    ! Mackas et al. 2013 submitted
     Mesozoo(1:M) = -0.15d0 * sin(0.0172d0 * (day + 57.0d0)) + 0.55d0
     
     average_prey = full_depth_average(Pmicro + D_PON + Pnano + Ppico + Z)
@@ -1209,18 +1201,6 @@ contains
          frac_waste_FEM%BSi * Meso_mort_pico * rate_pico%Si_ratio +   &
          frac_waste_ZEM%BSi * Meso_mort_Z * 0.d0
 
-    ! Mesozoo grazing proportions
-    Meso_mort_micro = Meso_mort_micro / (rate_uzoo%R * temp_Q10 * Mesozoo) &
-         * 1.0d2
-    Meso_mort_nano  = Meso_mort_nano  / (rate_uzoo%R * temp_Q10 * Mesozoo) &
-         * 1.0d2
-    Meso_mort_pico  = Meso_mort_pico  / (rate_uzoo%R * temp_Q10 * Mesozoo) &
-         * 1.0d2
-    Meso_graz_PON   = Meso_graz_PON   / (rate_uzoo%R * temp_Q10 * Mesozoo) &
-         * 1.0d2
-    Meso_mort_Z     = Meso_mort_Z     / (rate_uzoo%R * temp_Q10 * Mesozoo) &
-         * 1.0d2
-
     ! Mesodinium rubrum
 
     Mesorub_mort_pico = rate_mesorub%R * (Ppico - rate_mesorub%PicoPredSlope) &
@@ -1342,18 +1322,6 @@ contains
          frac_waste_NEZ%BSi * uZoo_mort_nano * rate_nano%Si_ratio + &
          frac_waste_FEZ%BSi * uZoo_mort_pico * rate_pico%Si_ratio + &
          frac_waste_ZEZ%BSi * uZoo_graz_Z * 0.d0
-
-    ! Microzoo grazing proportions
-    uZoo_mort_micro = uZoo_mort_micro / (rate_uzoo%R * temp_Q10 * Z(1:M)) &
-         * 1.0d2
-    uZoo_mort_nano  = uZoo_mort_nano  / (rate_uzoo%R * temp_Q10 * Z(1:M)) &
-         * 1.0d2
-    uZoo_mort_pico  = uZoo_mort_pico  / (rate_uzoo%R * temp_Q10 * Z(1:M)) &
-         * 1.0d2
-    uZoo_graz_PON   = uZoo_graz_PON   / (rate_uzoo%R * temp_Q10 * Z(1:M)) &
-         * 1.0d2
-    uZoo_graz_Z     = uZoo_graz_Z     / (rate_uzoo%R * temp_Q10 * Z(1:M)) &
-         * 1.0d2
 
     ! Remineralization:
     !
