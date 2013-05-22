@@ -220,6 +220,9 @@ contains
        ! Define partial pressure in air
        p_air = pO2_atm
 
+       ! Partial Pressure
+       p_gas = 1.0d3 * C_water / sol
+
     elseif (type == 'CO2') then
        ! from Weiss 1974 (M/atm)
        ! (multiply by 1.0e3 for mol m-3 atm-1)
@@ -234,6 +237,8 @@ contains
        ! Define partial pressure in air
        p_air = pCO2_atm
 
+       p_gas = C_water
+
     else
        write (stdout,*) 'gas_flux in air_sea_fluxes.f90: ', &
             'Unexpected gas type: ', type
@@ -243,9 +248,6 @@ contains
     ! Transfer velocity, Nightingale et al. 2000
     kps = (0.22d0 * UU**2 + 0.33d0 * UU) * (sc/600.0d0)**(-0.5d0)
     kps = kps * 2.778d-6   ! m/s
-
-    ! Partial Pressure
-    p_gas = 1.0d3 * (C_water/sol)
 
     ! Gas flux
     ! (m/s * mol/m^3atm * (1e3 mmol/mol) * atm = mmol m-2 s-1)

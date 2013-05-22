@@ -41,6 +41,7 @@ module carbonate
        TB,          &  ! Total borate
        TS,          &  ! Total sulfate
        TF,          &  ! Total fluoride
+       FugFac,      &  !
        ! Subroutines
        calc_carbonate
        ! Private to module
@@ -62,7 +63,8 @@ module carbonate
        KF,          &  ! Fluoride equilibrium constant [H][F]/[HF]
        TB,          &  ! Total borate
        TS,          &  ! Total sulfate
-       TF              ! Total fluoride
+       TF,          &  ! Total fluoride
+       FugFac
 
 contains
 
@@ -314,11 +316,19 @@ contains
          lnKP1fac,   &  ! KP1 pressure correction factor
          lnKP2fac,   &  ! KP2 pressure correction factor
          lnKP3fac,   &  ! KP3 pressure correction factor
-         lnKSifac       ! KSi pressure correction factor
+         lnKSifac,   &  ! KSi pressure correction factor
+         Delta,      &  !
+         b              !
 
     ! Temperature and gas constant
     RT    = R_gas * TempK
     TempC = KtoC(TempK)
+
+    ! Fugacity Factor
+    Delta = 57.7d0 - 0.118d0 * TempK
+    b = -1636.75d0 + 12.0408d0 * TempK - 0.0327957d0 * TempK**2 + &
+         3.16528d0 * 1.0d5 * TempK**3
+    FugFac = exp((b + 2.0d0 * Delta) * 1.01325d0 / RT)
 
     if (watertype .eq. 'sea') then
        ! Pressure effects on K1 & K2:

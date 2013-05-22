@@ -19,6 +19,8 @@ module fitbottom
 
   private
   public :: &
+       ! Variables:
+       BottomAlk, &
        ! Subroutines:
        init_fitbottom, bot_bound_time, bot_bound_uniform
 
@@ -29,17 +31,20 @@ module fitbottom
   ! Quantity names
   character(len=3), dimension(NQ), parameter :: quantity &
        = ['sal', 'tmp', 'chl', 'nit', 'sil', 'DIC', 'Oxy', 'Alk', 'NH4', 'prt']
+  
+  ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
+  ! fitted.m in
+  ! sog-forcing/bottom for details of how these coefficient values
+  ! were derived. - Need to read in values from infile
+  real(kind=dp), dimension(7, NQ) :: c 
 
-    ! Unless otherwise specified: tit coefficients (see fitbottom.py and 
-    ! fitted.m in
-    ! sog-forcing/bottom for details of how these coefficient values
-    ! were derived. - Need to read in values from infile
-    real(kind=dp), dimension(7, NQ) :: c 
+  ! Flag for constant bottom temperature
+  logical :: temp_constant  !is the temperature coming up through the 
+  !bottom constant?
 
-    ! Flag for constant bottom temperature
-    logical :: temp_constant  !is the temperature coming up through the 
-                              !bottom constant?
-     
+  ! Variables
+  real(kind=dp) :: BottomAlk
+
 contains
 
   subroutine init_fitbottom()
@@ -163,6 +168,8 @@ contains
     Pnbot = ratio * Pmbot
     Ppbot = Pnbot
     uZbot = Pnbot
+
+    BottomAlk = Alkbot
   end subroutine bot_bound_time
 
 

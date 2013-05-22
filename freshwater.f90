@@ -36,9 +36,6 @@ module freshwater
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
-       pH_riv,          &  !
-       river_DIC,       &  !
-       river_Alk,       &  !
        ! Diagnostics:
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
@@ -114,8 +111,6 @@ module freshwater
        river_Alk_0,     &  !
        river_Alk_decay, &  !
        pH_riv,          &  !
-       river_DIC,       &  !
-       river_Alk,       &  !
        river_chem          !
 
 contains
@@ -214,7 +209,9 @@ contains
 
     ! Local variables
     real(kind=dp) :: &
-         RiverTC          ! Major river temperature [deg C]
+         RiverTC,      &  ! Major river temperature [deg C]
+         River_DIC,    &  !
+         River_Alk
 
     ! Surface temperature to celsius
     RiverTC = KtoC(RiverTemp)

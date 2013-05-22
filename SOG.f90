@@ -94,8 +94,7 @@ program SOG
        dalloc_biology_variables
   use biology_eqn_builder, only: build_biology_equations, &
        new_to_old_bio_RHS, new_to_old_bio_Bmatrix
-  use chemistry_model, only: init_chemistry, solve_gas_flux, &
-       dalloc_chem_variables
+  use chemistry_model, only: solve_gas_flux
   use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
   use timeseries_output, only: init_timeseries_output, write_std_timeseries, &
@@ -187,9 +186,6 @@ program SOG
 
   ! Initialize the biology model
   call init_biology(grid%M)
-
-  ! Initialize the chemistry model
-  call init_chemistry(grid%M)
 
   ! Initialize the IMEX semi-implicit PDE solver
   ! *** This should eventually go into init_numerics()
@@ -590,7 +586,6 @@ program SOG
   call dalloc_core_variables
   call dalloc_physics_variables
   call dalloc_biology_variables
-  call dalloc_chem_variables
   call dalloc_IMEX_variables
   call dalloc_forcing_variables
 

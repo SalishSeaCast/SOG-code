@@ -8,35 +8,17 @@ module chemistry_model
   private
   public :: &
        ! Variables:
-       pH, pCO2, pO2, Omega_ca, Omega_ar, &
+       DIC_flux, &
        ! Subroutines:
-       init_chemistry, solve_gas_flux, dalloc_chem_variables
+       solve_gas_flux
 
   ! Variable Declarations:
   !
   ! Public
-  real(kind=dp), dimension(:), allocatable :: &
-       pH,         &   ! pH profile array
-       pCO2,       &   ! pCO2 profile array [uatm]
-       pO2,        &   ! pO2 profile array [uatm]
-       Omega_ca,   &   ! Calcite saturation state profile array
-       Omega_ar        ! Aragonite saturation state profile array
+  real(kind=dp) :: DIC_flux
+
 
 contains
-
-  subroutine init_chemistry(M)
-    ! Initialize the chemistry model.
-
-    implicit none
-
-    ! Argument:
-    integer, intent(in) :: &
-         M  ! Number of grid points
-
-    ! Allocate memory for arrays for chemistry outputs
-    call alloc_chem_variables(M)
-
-  end subroutine init_chemistry
 
   subroutine solve_gas_flux(grid, T, S, rho, PO4, Si, DIC, Oxy, Alk, &
        day, time)
@@ -80,9 +62,9 @@ contains
     integer :: &
          count         ! Loop index
     real(kind=dp) :: &
-         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
+         !DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
          Oxy_flux,  &  ! Oxygen surface flux [mmol m-2 s-1]
-         CO2_star      ! Surface CO2 [uM]
+         pCO2          ! Surface pCO2 [uatm]
 
     do count = 1, chem_steps !---- Begin Iteration Loop ----
 
@@ -91,10 +73,10 @@ contains
 
        ! Calculate surface CO2* from surface DIC
        call calc_carbonate('sea', 'DIC', Alk(1), DIC(1), rho, S, T, 0.0d0, &
-            PO4, Si, CO2_star)
+            PO4, Si, pCO2)
 
        ! Calculate surface CO2 gas flux
-       call gas_flux('CO2', T, S, CO2_star, DIC_flux)
+       call gas_flux('CO2', T, S, pCO2, DIC_flux)
        call gas_flux('Oxy', T, S, Oxy(1), Oxy_flux)
 
        ! This calculates the values of the precursor diffusion
@@ -262,60 +244,5 @@ contains
          day, time, fatal=.false.)
 
   end subroutine solve_chem_equations
-
-  subroutine alloc_chem_variables(M)
-    ! Allocate memory for chem variable arrays.
-    use malloc, only: alloc_check
-    implicit none
-    ! Argument:
-    integer, intent(in) :: M  ! Number of grid points
-    ! Local variables:
-    integer           :: allocstat  ! Allocation return status
-    character(len=80) :: msg        ! Allocation failure message prefix
-
-    msg = "pH profile array"
-    allocate(pH(0:M+1), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "pCO2 profile array"
-    allocate(pCO2(0:M+1), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "pO2 profile array"
-    allocate(pO2(0:M+1), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Omega calcite profile array"
-    allocate(Omega_ca(0:M+1), stat=allocstat)
-    call alloc_check(allocstat, msg)
-    msg = "Omega aragonite profile array"
-    allocate(Omega_ar(0:M+1), stat=allocstat)
-    call alloc_check(allocstat, msg)
-
-  end subroutine alloc_chem_variables
-
-
-  subroutine dalloc_chem_variables
-    ! Deallocate memory for chem variables arrays.
-    use malloc, only: dalloc_check
-    implicit none
-    ! Local variables:
-    integer           :: dallocstat  ! Deallocation return status
-    character(len=80) :: msg        ! Deallocation failure message prefix
-
-    msg = "pH profile array"
-    deallocate(pH, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "pCO2 profile array"
-    deallocate(pCO2, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "pO2 profile array"
-    deallocate(pO2, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Omega calcite profile array"
-    deallocate(Omega_ca, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-    msg = "Omega aragonite profile array"
-    deallocate(Omega_ar, stat=dallocstat)
-    call dalloc_check(dallocstat, msg)
-
-  end subroutine dalloc_chem_variables
 
 end module chemistry_model

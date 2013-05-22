@@ -20,17 +20,6 @@ module NPZD
        micro,             &  ! micro-plankton growth profile arrays
        ! Diagnostics:
        uptake,            &  ! NO, NH, and PC uptake arrays
-       Meso_mort_micro,   &  ! Mesozooplankton grazing microphyto
-       Meso_mort_nano,    &  ! Mesozooplankton grazing nanophyto
-       Meso_mort_pico,    &  ! Mesozooplankton grazing picophyto
-       Meso_graz_PON,     &  ! Mesozooplankton grazing PON
-       Meso_mort_Z,       &  ! Mesozooplankton grazing microzoo
-       uZoo_mort_micro,   &  ! Micozooplankton grazing microphyto
-       uZoo_mort_nano,    &  ! Micozooplankton grazing nanophyto
-       uZoo_mort_pico,    &  ! Micozooplankton grazing picophyto
-       uZoo_graz_PON,     &  ! Micozooplankton grazing PON
-       uZoo_graz_Z,       &  ! Micozooplankton grazing microzoo
-       Mesozoo,           &  ! Mesozooplankton population array
        f_ratio,           &  ! Ratio of new to total production profile
        ! Subroutines:
        init_NPZD,            &  ! Allocate memory for biology model
@@ -182,7 +171,9 @@ module NPZD
        frac_waste_NNM, & ! Nano natural mortality
        frac_waste_FNM, & ! Flagellates (pico) natural mortality
        frac_waste_ZNM, & ! uZoo natural mortality
+       frac_waste_MNM, & ! mesozoo natural mortality -- added by Tara
        frac_waste_ZEX, & ! uZoo excretion
+       frac_waste_MEX, & ! mesozoo excretion -- added by Tara
        frac_waste_DEM, & ! Diatoms eaten by mesozoo
        frac_waste_NEM, & ! Nano eaten by mesozoo
        frac_waste_FEM, & ! Flagellates (pico) eaten by mesozoo
@@ -215,6 +206,7 @@ module NPZD
          Meso_mort_pico,    &  ! Mesozooplankton grazing picophyto
          Meso_graz_PON,     &  ! Mesozooplankton grazing PON
          Meso_mort_Z,       &  ! Mesozooplankton grazing microzoo
+         Mesorub_mort_pico, &  ! Mesodinium rubrum grazing picophyto
          uZoo_mort_micro,   &  ! Micozooplankton grazing microphyto
          uZoo_mort_nano,    &  ! Micozooplankton grazing nanophyto
          uZoo_mort_pico,    &  ! Micozooplankton grazing picophyto
@@ -246,6 +238,8 @@ contains
     call getpardv('Mesozoo, summer peak wid',3, rate_mesozoo%sumpeakwid)
     ! max igestion rate
     rate_mesozoo%R = getpard('Mesozoo, max ingestion')
+    ! assimilation efficiency
+    rate_mesozoo%eff = 0.5d0 !getpard("Mesozoo, assimilation eff")
     ! natural mortality
     rate_mesozoo%Rm = getpard("Mesozoo, nat mort")
     ! excretion
@@ -395,6 +389,18 @@ contains
     frac_waste_FNM%PON = getpard('Waste, fnm, PON')
     frac_waste_FNM%Ref = getpard('Waste, fnm, Ref')
     frac_waste_FNM%Bsi = getpard('Waste, fnm, Bsi')
+    ! mesozoo natural mortality
+    frac_waste_MNM%NH  = 0.0d0   !getpard('Waste, znm, NH')
+    frac_waste_MNM%DON = 0.475d0 !getpard('Waste, znm, DON')
+    frac_waste_MNM%PON = 0.475d0 !getpard('Waste, znm, PON')
+    frac_waste_MNM%Ref = 0.05d0  !getpard('Waste, znm, Ref')
+    frac_waste_MNM%Bsi = 0.0d0   !getpard('Waste, znm, Bsi')
+    ! mesozoo excretion
+    frac_waste_MEX%NH  = 0.3d0 !getpard('Waste, zex, NH')
+    frac_waste_MEX%DON = 0.3d0 !getpard('Waste, zex, DON')
+    frac_waste_MEX%PON = 0.4d0 !getpard('Waste, zex, PON')
+    frac_waste_MEX%Ref = 0.0d0 !getpard('Waste, zex, Ref')
+    frac_waste_MEX%Bsi = 0.0d0 !getpard('Waste, zex, Bsi')
     ! uZoo natural mortality
     frac_waste_ZNM%NH = getpard('Waste, znm, NH')
     frac_waste_ZNM%DON = getpard('Waste, znm, DON')
@@ -550,8 +556,9 @@ contains
     msg = "Zooplankton grazing arrays"
     allocate(Meso_mort_micro(1:M), Meso_mort_nano(1:M),                  &
          Meso_mort_pico(1:M), Meso_graz_PON(1:M), Meso_mort_Z(1:M),      &
-         uZoo_mort_micro(1:M), uZoo_mort_nano(1:M), uZoo_mort_pico(1:M), &
-         uZoo_graz_PON(1:M), uZoo_graz_Z(1:M), stat=allocstat)
+         Mesorub_mort_pico(1:M), uZoo_mort_micro(1:M), uZoo_mort_nano(1:M), &
+         uZoo_mort_pico(1:M), uZoo_graz_PON(1:M), uZoo_graz_Z(1:M), &
+         stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_NPZD_variables
 
@@ -597,7 +604,7 @@ contains
     call dalloc_check(dallocstat, msg)
     msg = "Zooplankton grazing arrays"
     deallocate(Meso_mort_micro, Meso_mort_nano,           &
-         Meso_mort_pico, Meso_graz_PON, Meso_mort_Z,      &
+         Meso_mort_pico, Meso_graz_PON, Meso_mort_Z, Mesorub_mort_pico,     &
          uZoo_mort_micro, uZoo_mort_nano, uZoo_mort_pico, &
          uZoo_graz_PON, uZoo_graz_Z, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
@@ -828,7 +835,9 @@ contains
           GrazMort_pico,  &  ! Pico phytoplankton grazaing mortality profile
           NatMort_pico,   &  ! Pico phytoplankton natural mortality profile
           NatMort_uzoo,   &  ! uZoo natural mortality profile
+          NatMort_mesozoo,&  ! mesozoo natural mortality profile - added by Tara
           Excr_uzoo,      &  ! uZoo excretion
+          Excr_mesozoo,   &  ! mesozoo excretion - added by Tara
           Graz_PON,       &  ! PON grazing mortality profile
           GrazMort_Z,     &  ! Z grazing mortality profile
           Mesorub_eat,    &  ! Mesorub eat pico
@@ -1018,42 +1027,27 @@ contains
 
     ! phytoplankton natural mortality:
 
-    NatMort_micro= (rate_micro%Rm) * temp_Q10 * Pmicro
-    NatMort_nano = (rate_nano%Rm) * temp_Q10 * Pnano
-    NatMort_pico = (rate_pico%Rm) * temp_Q10 * Ppico
+    NatMort_micro = (rate_micro%Rm) * temp_Q10 * Pmicro
+    NatMort_nano  = (rate_nano%Rm)  * temp_Q10 * Pnano
+    NatMort_pico  = (rate_pico%Rm)  * temp_Q10 * Ppico
 
-    was_NH = was_NH + frac_waste_DNM%NH * NatMort_micro &
+    was_NH = was_NH + (frac_waste_DNM%NH * NatMort_micro &
          + frac_waste_NNM%NH * NatMort_nano &
-         + frac_waste_FNM%NH * NatMort_pico
-    was_DON = was_DON + frac_waste_DNM%DON * NatMort_micro &
+         + frac_waste_FNM%NH * NatMort_pico) * (1-rate_mesozoo%eff)
+    was_DON = was_DON + (frac_waste_DNM%DON * NatMort_micro &
          + frac_waste_NNM%DON * NatMort_nano &
-         + frac_waste_FNM%DON * NatMort_pico
-    was_PON = was_PON + frac_waste_DNM%PON * NatMort_micro &
+         + frac_waste_FNM%DON * NatMort_pico) * (1-rate_mesozoo%eff)
+    was_PON = was_PON + (frac_waste_DNM%PON * NatMort_micro &
          + frac_waste_NNM%PON * NatMort_nano &
-         + frac_waste_FNM%PON * NatMort_pico
-    was_Ref = was_Ref + frac_waste_DNM%Ref * NatMort_micro &
+         + frac_waste_FNM%PON * NatMort_pico) * (1-rate_mesozoo%eff)
+    was_Ref = was_Ref + (frac_waste_DNM%Ref * NatMort_micro &
          + frac_waste_NNM%Ref * NatMort_nano &
-         + frac_waste_FNM%Ref * NatMort_pico
+         + frac_waste_FNM%Ref * NatMort_pico) * (1-rate_mesozoo%eff)
     was_BSi = was_BSi &
-         + frac_waste_DNM%BSi * NatMort_micro * rate_micro%Si_ratio &
+         + (frac_waste_DNM%BSi * NatMort_micro * rate_micro%Si_ratio &
          + frac_waste_NNM%Bsi * NatMort_nano * rate_nano%Si_ratio &
-         + frac_waste_FNM%Bsi * NatMort_pico * rate_pico%Si_ratio
-
-    ! microzoo natural mortality:
-    NatMort_uzoo = rate_uzoo%Rm * temp_Q10 * Z
-    Excr_uzoo = rate_uzoo%excr * temp_Q10 * Z
-
-    was_NH = was_NH + frac_waste_ZNM%NH * NatMort_uzoo &
-         + frac_waste_ZEX%NH * Excr_uzoo
-    was_DON = was_DON + frac_waste_ZNM%DON * NatMort_uzoo &
-         + frac_waste_ZEX%DON * Excr_uzoo
-    was_PON = was_PON + frac_waste_ZNM%PON * NatMort_uzoo &
-         + frac_waste_ZEX%PON * Excr_uzoo
-    was_Ref = was_Ref + frac_waste_ZNM%Ref * NatMort_uzoo &
-         + frac_waste_ZEX%Ref * Excr_uzoo
-    was_BSi = was_BSi &
-         + frac_waste_ZNM%BSi * NatMort_uzoo * 0.d0 &
-         + frac_waste_ZEX%Bsi * Excr_uzoo * 0.d0
+         + frac_waste_FNM%Bsi * NatMort_pico * rate_pico%Si_ratio) &
+         * (1-rate_mesozoo%eff)
 
     ! Grazing processes
 
@@ -1077,6 +1071,38 @@ contains
     Mesozoo(1:M) = Mesozoo(1:M) &
          * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Ppico(1:M) + Z(1:M)) &
          / ( average_prey + epsilon(average_prey))
+
+    ! microzoo natural mortality:
+    NatMort_uzoo = rate_uzoo%Rm * temp_Q10 * Z
+    Excr_uzoo = rate_uzoo%excr * temp_Q10 * Z
+
+    was_NH = was_NH + frac_waste_ZNM%NH * NatMort_uzoo &
+         + frac_waste_ZEX%NH * Excr_uzoo
+    was_DON = was_DON + frac_waste_ZNM%DON * NatMort_uzoo &
+         + frac_waste_ZEX%DON * Excr_uzoo
+    was_PON = was_PON + frac_waste_ZNM%PON * NatMort_uzoo &
+         + frac_waste_ZEX%PON * Excr_uzoo
+    was_Ref = was_Ref + frac_waste_ZNM%Ref * NatMort_uzoo &
+         + frac_waste_ZEX%Ref * Excr_uzoo
+    was_BSi = was_BSi &
+         + frac_waste_ZNM%BSi * NatMort_uzoo * 0.d0 &
+         + frac_waste_ZEX%Bsi * Excr_uzoo * 0.d0
+
+    ! mesozoo natural mortality:
+    NatMort_mesozoo = rate_mesozoo%Rm * temp_Q10 * Mesozoo
+    Excr_mesozoo = rate_mesozoo%excr * temp_Q10 * Mesozoo
+
+    was_NH = was_NH + frac_waste_MNM%NH * NatMort_mesozoo &
+         + frac_waste_MEX%NH * Excr_mesozoo
+    was_DON = was_DON + frac_waste_MNM%DON * NatMort_mesozoo &
+         + frac_waste_MEX%DON * Excr_mesozoo
+    was_PON = was_PON + frac_waste_MNM%PON * NatMort_mesozoo &
+         + frac_waste_MEX%PON * Excr_mesozoo
+    was_Ref = was_Ref + frac_waste_MNM%Ref * NatMort_mesozoo &
+         + frac_waste_MEX%Ref * Excr_mesozoo
+    was_BSi = was_BSi &
+         + frac_waste_MNM%BSi * NatMort_mesozoo * 0.d0 &
+         + frac_waste_MEX%Bsi * Excr_mesozoo * 0.d0
 
     do jj = 1,M
        ! global food limitation
@@ -1197,28 +1223,28 @@ contains
 
     ! Mesodinium rubrum
 
-    Mesorub_eat = rate_mesorub%R * (Ppico - rate_mesorub%PicoPredSlope) / &
-         (rate_mesorub%PicoHalfSat + Ppico - rate_mesorub%PicoPredSlope &
+    Mesorub_mort_pico = rate_mesorub%R * (Ppico - rate_mesorub%PicoPredSlope) &
+         / (rate_mesorub%PicoHalfSat + Ppico - rate_mesorub%PicoPredSlope &
          + epsilon(rate_mesorub%PicoHalfSat)) &
          * Pnano * temp_Q10
 
     do jj=1,M
-       Mesorub_eat(jj) = max(Mesorub_eat(jj), 0.d0)
-       GrazMort_pico(jj) = GrazMort_pico(jj) + Mesorub_eat(jj)
+       Mesorub_mort_pico(jj) = max(Mesorub_mort_pico(jj), 0.d0)
+       GrazMort_pico(jj) = GrazMort_pico(jj) + Mesorub_mort_pico(jj)
     enddo
 
-    was_NH = was_NH + (frac_waste_FEN%NH) * Mesorub_eat * &
+    was_NH = was_NH + (frac_waste_FEN%NH) * Mesorub_mort_pico * &
          (1-rate_mesorub%eff)
-    was_DON = was_DON + (frac_waste_FEN%DON) * Mesorub_eat * &
+    was_DON = was_DON + (frac_waste_FEN%DON) * Mesorub_mort_pico * &
          (1-rate_mesorub%eff)
-    was_PON = was_PON + (frac_waste_FEN%PON) * Mesorub_eat * &
+    was_PON = was_PON + (frac_waste_FEN%PON) * Mesorub_mort_pico * &
          (1-rate_mesorub%eff)
-    was_Ref = was_Ref + (frac_waste_FEN%Ref) * Mesorub_eat * &
+    was_Ref = was_Ref + (frac_waste_FEN%Ref) * Mesorub_mort_pico * &
          (1-rate_mesorub%eff)
-    was_BSi = was_BSi + (frac_waste_FEN%BSi) * Mesorub_eat * &
+    was_BSi = was_BSi + (frac_waste_FEN%BSi) * Mesorub_mort_pico * &
          (1-rate_mesorub%eff)
 
-    Mesorub_eat = Mesorub_eat * rate_mesorub%eff
+    Mesorub_eat = Mesorub_mort_pico * rate_mesorub%eff
 
     ! Microzooplankton grazing
     do jj= 1, M
