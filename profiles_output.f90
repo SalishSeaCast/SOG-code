@@ -204,11 +204,11 @@ contains
          Hoff_endyr, Hoff_endday, Hoff_endsec, Hoff_interval
 210 format("*HoffmuellerStartYr: ", i4/,  &
          "*HoffmuellerStartDay: ", i3/,   &
-         "*HoffmuellerStartSec: :", i5/,  &
+         "*HoffmuellerStartSec: ", i5/,  &
          "*HoffmuellerEndYr: ", i4/,      &
          "*HoffmuellerEndDay: ", i3/,     &
-         "*HoffmuellerEndSec: :", i5/,    &
-         "*HoffmuellerInterval: ", f7.3/, &
+         "*HoffmuellerEndSec: ", i5/,    &
+         "*HoffmuellerInterval: ", f6.3/, &
          "*EndOfHeader")
   end subroutine write_Hoffmueller_header
 

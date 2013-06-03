@@ -327,7 +327,7 @@ contains
     ! Fugacity Factor
     Delta = 57.7d0 - 0.118d0 * TempK
     b = -1636.75d0 + 12.0408d0 * TempK - 0.0327957d0 * TempK**2 + &
-         3.16528d0 * 1.0d5 * TempK**3
+         3.16528d0 * 1.0d-5 * TempK**3
     FugFac = exp((b + 2.0d0 * Delta) * 1.01325d0 / RT)
 
     if (watertype .eq. 'sea') then
@@ -499,21 +499,23 @@ contains
 
        ! Calculate CO2* as defined in CDIAC Best Practices 2007, PICES Special
        ! Publication 3, Dickson et al. eds. (Ch 2 pp 9-10, EQs 60, 68, & 70)
-       parout = DIC * H_total**2/(H_total**2 + K1 * H_total + K1 * K2)
+       parout = DIC * H_total**2/(H_total**2 + K1 * H_total + K1 * K2) / K0
+
+       parout = parout * 1e6 / FugFac
        
     elseif (partype .eq. 'pH') then
 
        ! DIC from Alkalinity and pH
        call CalculateTCfromTApH(Alk, par2, TP, TSi, parout)
 
+       ! Convert back to uM
+       parout = parout * rho * 1.0d3
+
     else
        write (stdout, *) 'parameter type in carbonate.f90:', &
             'Unexpected value: ', partype
        call exit(1)
     endif
-
-    ! Convert back to uM
-    parout = parout * rho * 1.0d3
 
   end subroutine calc_carbonate
 

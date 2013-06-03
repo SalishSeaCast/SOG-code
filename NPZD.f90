@@ -192,10 +192,9 @@ module NPZD
   type(uptake_) :: uptake
   !
   ! Nitrogen remineralization diagnostics
-  real(kind=dp), dimension(:), pointer :: &
-       remin_NH, &  ! Total remineralization to ammonium
-       NH_oxid      ! Bacterial oxidation of NH4 to NO3
   real(kind=dp), dimension(:), allocatable :: &
+       remin_NH, &  ! Total remineralization to ammonium
+       NH_oxid,  &  ! Bacterial oxidation of NH4 to NO3
        f_ratio  ! Ratio of new to total production profile
   !
   ! Nano & pico plankton growth profile arrays

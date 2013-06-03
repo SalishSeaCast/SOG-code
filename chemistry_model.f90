@@ -7,16 +7,8 @@ module chemistry_model
 
   private
   public :: &
-       ! Variables:
-       DIC_flux, &
        ! Subroutines:
        solve_gas_flux
-
-  ! Variable Declarations:
-  !
-  ! Public
-  real(kind=dp) :: DIC_flux
-
 
 contains
 
@@ -62,7 +54,7 @@ contains
     integer :: &
          count         ! Loop index
     real(kind=dp) :: &
-         !DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
+         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
          Oxy_flux,  &  ! Oxygen surface flux [mmol m-2 s-1]
          pCO2          ! Surface pCO2 [uatm]
 
