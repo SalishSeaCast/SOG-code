@@ -12,7 +12,8 @@ biology:
 
 # remove MesoZoo predation on Pico (note that Meso. Rub still eats Pico)
   mesozooplankton:
-    mesozoo_pico_preference:
-      value: 0.1
-    mesozoo_diatom_grazing_half_saturation:
+    mesozoo_diatom_preference:
       value: 0.3
+    mesozoo_pico_preference:
+      value: 0.0
+    
