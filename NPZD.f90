@@ -1050,13 +1050,21 @@ contains
          + frac_waste_FNM%Bsi * NatMort_pico * rate_pico%Si_ratio) &
          * (1-rate_mesozoo%eff)
 
-    ! Grazing processes
+    ! Grazing processes: MesoZooplankton Fit
 
-    ! Mesozooplankton
-    ! Amount of Mesozoo: 365-day periodic fit to 20 year SoG zooplankton avgs
-    ! Mackas et al. 2013 submitted
-    Mesozoo(1:M) = -0.15d0 * sin(0.0172d0 * (day + 57.0d0)) + 0.55d0
-    
+    Mesozoo(1:M) = rate_mesozoo%winterconc + &
+         rate_mesozoo%summerconc * &
+         ( sum ( rate_mesozoo%sumpeakval * &
+            exp( -(day-rate_mesozoo%sumpeakpos)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) ) &
+         + sum ( rate_mesozoo%sumpeakval * &
+            exp( -(day-rate_mesozoo%sumpeakpos-365.25)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) ) &
+         + sum ( rate_mesozoo%sumpeakval * &
+            exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
+                                rate_mesozoo%sumpeakwid**2 ) ) )
+
+
     average_prey = full_depth_average(Pmicro + D_PON + Pnano + Ppico + Z)
 
     Mesozoo(1:M) = Mesozoo(1:M) &
