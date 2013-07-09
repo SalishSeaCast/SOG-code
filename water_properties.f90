@@ -44,8 +44,9 @@ module water_properties
        Cp,    &  ! Specific heat capacity [J/kg.K]
        ! Subroutines:
        calc_rho_alpha_beta_Cp_profiles, &
-       alloc_water_props, &
-       dalloc_water_props
+       alloc_water_props,  &
+       dalloc_water_props, &
+       oxygen_saturation
 
   ! Public type definition:
   !
@@ -231,5 +232,21 @@ contains
          * TC - 3.720283) * TC + 4217.4
     Cp%g = (A + B * sqrtS) * S + C
   end subroutine calc_rho_alpha_beta_Cp_profiles
+
+  subroutine oxygen_saturation(sal,temp,Osat)
+  ! subroutine to calculate oxygen saturation values in [umol/L]
+  ! sal is salinity, temp is temperature in K
+  ! Conversion between mg and ml:  OST[ml/l] = OST[mg/l] * 0.7 [ml/mg]
+  ! This is a modified version of the function oxsat by Christian Mertens, IfM Kiel
+  real(kind=dp), intent(in) :: sal, temp
+  real(kind=dp), intent(out) :: Osat
+  ! local variable
+  real(kind=dp) :: T100
+  T100 = 0.01d0*temp
+  Osat = -173.4292d0 + 249.6339d0/T100 + 143.3483d0*log(T100) - 21.8492d0*T100 &
+        + sal*(-0.033096d0 + (0.014259d0 - 0.0017d0*T100)*T100)
+  Osat = exp(Osat)            ! oxygen saturation in [ml/L]
+  Osat = Osat*1000.0d0/22.4d0 ! [umol/L] or [uM]
+  end subroutine oxygen_saturation
 
 end module water_properties

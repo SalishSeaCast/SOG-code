@@ -60,7 +60,7 @@ module freshwater
   ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
   real(kind=dp) :: phys_circ_DIC
   ! From Environment Canada Fraser River buoy October 2010
-  real(kind=dp), parameter :: phys_circ_Oxy = 148.38d0 - 343.75d0
+  real(kind=dp) :: phys_circ_Oxy
   ! **TODO**: Assign a sensible value for alkalinity
   real(kind=dp) :: phys_circ_Alk
 !--- END CHEMISTRY PARAMETERS
@@ -193,7 +193,9 @@ contains
     ! Functions and subroutines
     use unit_conversions, only: KtoC
     use carbonate, only: calc_carbonate
-   
+    use water_properties, only: oxygen_saturation
+    use fitbottom, only: DeepOxy
+
     implicit none
 
     ! Arguments
@@ -210,8 +212,9 @@ contains
     ! Local variables
     real(kind=dp) :: &
          RiverTC,      &  ! Major river temperature [deg C]
-         River_DIC,    &  !
-         River_Alk
+         River_DIC,    &  ! River DIC [uM]
+         River_Alk,    &  ! River alkalinity [ueq L-1]
+         river_oxy        ! River Oxygen [uM]
 
     ! Surface temperature to celsius
     RiverTC = KtoC(RiverTemp)
@@ -295,10 +298,15 @@ contains
     call calc_carbonate('fresh', 'pH', river_Alk, pH_riv, rho_riv, 0.0d0, &
          RiverTemp, 0.0d0, 0.0d0, 0.0d0, river_DIC)
 
+    ! Calculate Saturated Oxygen from Rivers
+    call oxygen_saturation(0.0d0, RiverTemp, river_oxy)
+
     ! Circulation strength of a scalar is equal to deep value minus
     ! river value (see BMM Labbook pg 45 for deep values)
     phys_circ_Alk = 2092.98d0 - river_Alk
     phys_circ_DIC = 2059.68d0 - river_DIC
+
+    phys_circ_Oxy = DeepOxy - river_oxy ! [umol L^-1]
 
     !-------------------------------------------------------------
 

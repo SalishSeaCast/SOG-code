@@ -20,7 +20,7 @@ module fitbottom
   private
   public :: &
        ! Variables:
-       BottomAlk, &
+       DeepOxy, BottomAlk, &
        ! Subroutines:
        init_fitbottom, bot_bound_time, bot_bound_uniform
 
@@ -43,7 +43,7 @@ module fitbottom
   !bottom constant?
 
   ! Variables
-  real(kind=dp) :: BottomAlk
+  real(kind=dp) :: BottomAlk, DeepOxy
 
 contains
 
@@ -169,6 +169,7 @@ contains
     Ppbot = Pnbot
     uZbot = Pnbot
 
+    DeepOxy = Oxybot
     BottomAlk = Alkbot
   end subroutine bot_bound_time
 

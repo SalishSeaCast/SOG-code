@@ -358,7 +358,7 @@ physics:
       variable_name: c(:,6)
       description: DIC (constant, seasonal & biseasonal from salinity fit)
     dissolved_oxygen_fit_coefficients:
-      value: [148.3763, 0, 0, 0, 0, 0, 0]
+      value: [198.9274, 28.6893, -46.9640, -3.7259, 6.4774, -2.7972, 0]
       variable_name: c(:,7)
       description: dissolved oxygen bottom boundary condition (constant)
     alkalinity_fit_coefficients:
