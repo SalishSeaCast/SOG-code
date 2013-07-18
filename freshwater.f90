@@ -36,12 +36,13 @@ module freshwater
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
+       totalfresh, &  ! total amount of freshwater
+       Fraserfresh, & ! freshwater from Fraser == Qinter
        ! Diagnostics:
        S_riv, &  ! Surface salinity prediction from fit
        ! Subroutines:
        init_freshwater, freshwater_phys, freshwater_bio, &
-       dalloc_freshwater_variables, &
-       totalfresh
+       dalloc_freshwater_variables
 
   ! Parameter Value Declarations:
   !
@@ -76,6 +77,7 @@ module freshwater
   real(kind=dp), dimension(:), allocatable :: &
        F_n     ! Fresh water contribution to salinity flux
   real (kind=dp) :: totalfresh   !total freshwater -use to read in SOG
+  real (kind=dp) :: Fraserfresh  !Fraser freshwater == use in Northern Return Flow
 
   ! Diagnostic:
   real(kind=dp) :: &
@@ -220,7 +222,6 @@ contains
     RiverTC = KtoC(RiverTemp)
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
-    totalfresh = Qriver + Eriver
 
     ! Parameterized fit of the surface salinity 
 
@@ -238,9 +239,10 @@ contains
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qriver + 55.0*Eriver
+    Fraserfresh = Qriver   ! this is bad form, but I need this number in Northern Return flow and haven't figured out a better way.
     
     open(12,file="total_check")
-    write(12,*)totalfresh, Qriver
+    write(12,*) totalfresh, Qriver
     close(12)    
 
  

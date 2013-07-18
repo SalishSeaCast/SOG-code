@@ -10,7 +10,7 @@ module northern_influence
   ! read_northern_params()
   !   - Read parameter values from the infile
   !
-  ! integrate_northern(T, NO, NH, Si, DON, DIC, DOC, Oxy, dt)
+  ! integrate_northern(T, NO, NH, Si, DON, DOC, Oxy, dt)
   !   - Calculates the back average of the surface values of the parameters
   !   Does this by damping the average with a timescale, tauN, and adding the
   !   new value at an appropriate scale
@@ -48,7 +48,6 @@ module northern_influence
           NH,      &  ! Ammonium
           Si,      &  ! Silicon
           DON,     &  ! Dissolved organic nitrogen 
-          DIC,     &  ! Dissolved inorganic carbon
           DOC,     &  ! Dissolved organic carbon 
           Oxy         ! Dissolved oxygen column number in CTD
   end type quantities
@@ -63,7 +62,9 @@ module northern_influence
                          !estimate 1/43m
         central_depth, & ! depth of peak northern influence
         upper_width, &   ! depth range above central depth that is influenced
-        lower_width      ! depth range below central depth that is influenced
+        lower_width, &      ! depth range below central depth that is influenced
+        power, &         ! power of River flow influence on NO3
+        Fo               ! normalization of River flow influence on NO3
 
 
   public :: quantities, sum  ! just for diagnostics
@@ -76,7 +77,6 @@ contains
          N, &  ! current surface nitrate conc.
          Si, &  ! current surface silicon conc.
          D, & ! current surface Detritus %DON diss. org. N  %DOC diss. org. C
-         DIC, & ! current surface DIC conc.
          Oxy    ! current surface oxygen conc.
     implicit none
     ! Argument:
@@ -92,7 +92,6 @@ contains
     sum%NH = N%H(0)
     sum%Si = Si(0)
     sum%DON = D%DON(0)
-    sum%DIC = DIC(0)
     sum%DOC = D%DOC(0)
     sum%Oxy = Oxy(0)
   end subroutine init_northern
@@ -115,10 +114,14 @@ contains
        upper_width = getpard("upper_northern")
        ! Lower width for Northern Influence (m)
        lower_width = getpard("lower_northern")
+       ! Power for influence of River flow on NO3
+       power = getpard("power_northern")
+       ! Normalization for influce of River flow on NO3
+       Fo = getpard("normal_northern")
     endif
   end subroutine read_northern_params
 
-  subroutine integrate_northern (T, NO, NH, Si, DON, DIC, DOC, Oxy, dt)
+  subroutine integrate_northern (T, NO, NH, Si, DON, DOC, Oxy, dt)
     ! updates the integrated value for each of the quantities
     implicit none
     ! Arguments:
@@ -128,7 +131,6 @@ contains
           NH, &  ! current surface ammonium conc.
           Si, &  ! current surface silicon conc.
           DON, & ! current surface DON conc.
-          DIC, & ! current surface DIC conc.
           DOC, & ! current surface DOC conc.
           Oxy, & ! current surface oxygen conc.
           dt     ! time step
@@ -145,7 +147,6 @@ contains
     sum%NH = b*sum%NH + a*NH
     sum%Si = b*sum%Si + a*Si
     sum%DON = b*sum%DON + a*DON
-    sum%DIC = b*sum%DIC + a*DIC
     sum%DOC = b*sum%DOC + a*DOC
     sum%Oxy = b*sum%Oxy + a*Oxy
   end subroutine integrate_northern
@@ -155,7 +156,8 @@ contains
     !  calculate the size of the term for northern advection
     use precision_defs, only: dp
     use grid_mod, only: grid
-    use freshwater, only: upwell  ! Maximum freshwater upwelling velocity
+    use freshwater, only: upwell, &  ! Maximum freshwater upwelling velocity
+         Fraserfresh ! outflow from Fraser
     use water_properties, only: alpha, rho, Cp ! expansion coefficient, density,
                                                ! specific heat capacity
     use fundamental_constants, only: Redfield_C
@@ -171,25 +173,33 @@ contains
     integer :: index ! vertical grid step index
     real(kind=dp) :: requiredsum ! value of integrated sum for the quantity
     real(kind=dp) :: increment ! the increase in temperature at a given depth
+    real(kind=dp) :: coefficient ! 0 if temperature like, non zero if NO3 like
 
     ! choose the sum we wish
     if (quantity .eq. 'T  ') then
        requiredsum = sum%T
+       coefficient = 0
     elseif (quantity .eq. 'NO ') then
        requiredsum = sum%NO
+       coefficient = power
     elseif (quantity .eq. 'NH ') then
        requiredsum = sum%NH
+       coefficient = power
     elseif (quantity .eq. 'DIC ') then
-    !   requiredsum = sum%DIC
        requiredsum = sum%NO * Redfield_C + 1863.9274d0
+       coefficient = power
     elseif (quantity .eq. 'Oxy ') then
        requiredsum = sum%Oxy
+       coefficient = power
     elseif (quantity .eq. 'Si ') then
        requiredsum = sum%Si    
+       coefficient = power
     elseif (quantity .eq. 'DON') then
        requiredsum = sum%DON
+       coefficient = power
     elseif (quantity .eq. 'DOC') then
        requiredsum = sum%DOC
+       coefficient = power
     else
        write (*,*) 'problems in northern_influence'
        stop
@@ -197,12 +207,12 @@ contains
 
     do index = 1, grid%M
        if (grid%d_g(index) .lt. central_depth) then
-       increment =  dt * strength * upwell * &
-            (requiredsum - qty(index)) * &
+       increment =  dt * strength * upwell * (Fraserfresh/Fo)**power &
+            * (requiredsum - qty(index)) * &
             exp(-(grid%d_g(index)-central_depth)**2/(upper_width**2))
        else
-          increment =  dt * strength * upwell * &
-            (requiredsum - qty(index)) * &
+          increment =  dt * strength * upwell * (Fraserfresh/Fo)**power &
+            * (requiredsum - qty(index)) * &
             exp(-(grid%d_g(index)-central_depth)**2/(lower_width**2))
        endif
        advection(index) = advection(index) + increment
