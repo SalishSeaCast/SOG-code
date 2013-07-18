@@ -41,17 +41,17 @@ location:
 
 initial_conditions:
   init_datetime:
-    value: 2001-09-19 19:49:25
+    value: 2004-10-19 12:22:00
     variable_name: initDatetime
     description: initial CTD profile date/time
   CTD_file:
-    value: ../SOG-initial/ctd/SG-39-2001-09-19.sog
+    value: ../SOG-initial/ctd/SG-S3-2004-10-19.sog
     variable_name: ctd_in
     description: path/filename for initialization CTD file
   # Give a path/filename for either STRATOGEM nutrients file
   # or IOS bottle file; set the other to N/A
   nutrients_file:
-    value: ../SOG-initial/stratogem_nuts/Nuts-39-2001-09-19.sog
+    value: ../SOG-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog
     variable_name: nuts_in
     description: path/filename for STRATOGEM nutrients data file
   bottle_file:
@@ -78,7 +78,7 @@ initial_conditions:
     description: partial pressure of atmospheric CO2
 
 end_datetime:
-  value: 2002-09-11 07:49:00
+  value: 2005-10-11 00:22:00
   variable_name: endDatetime
   description: end of run date/time
 
@@ -260,17 +260,17 @@ timeseries_results:
 
 profiles_results:
   num_profiles:
-    value: 7
+    value: 1
     variable_name: noprof
     description: number of profiles to output
   # TODO: Replace year-day and day-second lists with a list of
   # date/times for profile outputs
   profile_days:
-    value: [174, 201, 217, 254, 255, 302, 335]
+    value: [303]
     variable_name: profday
     description: list of year-days to output profiles for
   profile_times:
-    value: [65335., 60120., 43200., 70086., 740., 43200., 43200]
+    value: [43200]
     variable_name: proftime
     description: list of day-seconds to output profiles for
   profile_file_base:
@@ -296,11 +296,11 @@ profiles_results:
   # TODO: Replace Hoffmueller results start and end year, day & second
   # with date/times
   hoffmueller_start_year:
-    value: 2001
+    value: 2004
     variable_name: Hoff_startyr
     description: year to start Hoffmueller results output
   hoffmueller_start_day:
-    value: 263
+    value: 294
     variable_name: Hoff_startday
     description: day to start Hoffmueller results output
   hoffmueller_start_sec:
@@ -308,11 +308,11 @@ profiles_results:
     variable_name: Hoff_startsec
     description: second to start Hoffmueller results output
   hoffmueller_end_year:
-    value: 2005
+    value: 2004
     variable_name: Hoff_endyr
     description: year to end Hoffmueller results output
   hoffmueller_end_day:
-    value: 253
+    value: 305
     variable_name: Hoff_endday
     description: day to end Hoffmueller results output
   hoffmueller_end_sec:
