@@ -568,7 +568,7 @@ biology:
 
   mesozooplankton:
     mesozoo_winter_conc:
-      value: 0.0369
+      value: 0.369
       units: uM N
       variable_name: rate_mesozoo%winterconc
       description: mesozooplankton background concentration
