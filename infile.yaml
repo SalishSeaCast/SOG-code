@@ -308,7 +308,7 @@ profiles_results:
     variable_name: Hoff_startsec
     description: second to start Hoffmueller results output
   hoffmueller_end_year:
-    value: 2004
+    value: 2005
     variable_name: Hoff_endyr
     description: year to end Hoffmueller results output
   hoffmueller_end_day:
@@ -568,7 +568,7 @@ biology:
 
   mesozooplankton:
     mesozoo_winter_conc:
-      value: 0.073
+      value: 0.0369
       units: uM N
       variable_name: rate_mesozoo%winterconc
       description: mesozooplankton background concentration
@@ -578,17 +578,17 @@ biology:
       variable_name: rate_mesozoo%summerconc
       description: mesozooplankton relative summer concentration
     mesozoo_summer_peak_magnitudes:
-      value: [0.525,    0.152,    0.160]
+      value: [0.339,    0.0,    0.0]
       units: uM N
       variable_name: rate_mesozoo%sumpeakval
       description: magnitude of mesozooplankton summer concentration peaks
     mesozoo_summer_peak_days:
-      value: [112.000,  229.000,  300.000]
+      value: [217.000,  229.000,  300.000]
       units: year-day
       variable_name: rate_mesozoo%sumpeakpos
       description: times of mesozooplankton summer concentration peaks
     mesozoo_summer_peak_widths:
-      value: [53.800,   51.600,   40.000]
+      value: [114.0,   51.600,   40.000]
       units: year-days
       variable_name: rate_mesozoo%sumpeakwid
       description: widths of mesozooplankton summer concentration peaks
