@@ -20,6 +20,7 @@ module forcing
        vary_quantity, vary_forcing, &
        ! Variables:
        UseRiverTemp, vary, &
+       Qinter, Einter, &
        ! Subroutines:
        init_forcing,   &
        read_variation, &
@@ -49,6 +50,7 @@ module forcing
   type(vary_forcing) :: vary
   ! Do we add the cooling/warming effect of the Major River?
   logical :: UseRiverTemp
+  real(kind=dp) :: Qinter, Einter
 
   ! Private module variable declarations:
   integer ::     &
@@ -62,6 +64,7 @@ module forcing
        wind_northwest,  &  ! North-west wind speed forcing data array
        Qriver,          &  ! Major river flow forcing data array
        Eriver              ! Minor river flow forcing data array
+
   real(kind=sp), dimension(:,:), allocatable :: &
        cf,              &  ! Cloud fraction forcing data array
        atemp,           &  ! Air temperature forcing data array
@@ -647,7 +650,7 @@ end subroutine read_forcing
 
 
   subroutine get_forcing (year, day, day_time, &
-       Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, unow, vnow)
+       RiverTemp, cf_value, atemp_value, humid_value, unow, vnow)
 
     use unit_conversions, only: CtoK
 
@@ -658,7 +661,6 @@ end subroutine read_forcing
     integer, intent(in) :: day ! current year day
     real(kind=dp), intent(in) :: day_time ! current time of day in seconds
 
-    real(kind=dp), intent(out) :: Qinter, Einter ! values of river flows
     real(kind=dp), intent(out) :: RiverTemp ! temperature of Major River
     real(kind=sp), intent(out) :: cf_value     ! cloud fraction
     real(kind=sp), intent(out) :: atemp_value  ! air temperature

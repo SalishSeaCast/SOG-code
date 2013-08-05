@@ -171,7 +171,7 @@ contains
   end subroutine read_freshwater_params
   
 
-  subroutine freshwater_phys(Qriver, Eriver, RiverTemp, S_old, Ts_old, Td_old, h)
+  subroutine freshwater_phys(RiverTemp, S_old, Ts_old, Td_old, h)
     ! Calculate the strength of upwelling/entrainment, the freshwater
     ! flux, the surface turbulent kinematic salinity flux, and the
     ! profile of fresh water contribution to the salinity flux.
@@ -189,7 +189,7 @@ contains
     use irradiance, only: &
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
-         UseRiverTemp
+         UseRiverTemp, Qinter, Einter
     use numerics, only: &
          day
     ! Functions and subroutines
@@ -202,8 +202,6 @@ contains
 
     ! Arguments
     real(kind=dp), intent(in) :: &
-         Qriver, &  ! Fraser River flow
-         Eriver, &  ! Englishman River flow
          RiverTemp  ! temperature of Major River
     real(kind=dp), intent(in) :: &
          S_old,        &  ! Surface salinity
@@ -238,11 +236,11 @@ contains
     ! below 0 is not predicted.  
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
-    totalfresh = Qriver + 55.0*Eriver
-    Fraserfresh = Qriver   ! this is bad form, but I need this number in Northern Return flow and haven't figured out a better way.
+    totalfresh = Qinter + 55.0*Einter
+    Fraserfresh = Qinter   ! this is bad form, but I need this number in Northern Return flow and haven't figured out a better way.
     
     open(12,file="total_check")
-    write(12,*) totalfresh, Qriver
+    write(12,*) totalfresh, Qinter
     close(12)    
 
  

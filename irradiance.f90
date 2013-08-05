@@ -82,16 +82,16 @@ contains
   end subroutine read_irradiance_params
 
 
-  subroutine calc_irradiance(cf, day_time, day, Qriver, &
+  subroutine calc_irradiance(cf, day_time, day, &
        Pmicro, Pnano, Ppico)
     ! Calculates the amount of light (total and PAR) as a function of depth
     use grid_mod, only: grid
+    use forcing, only:  Qinter    ! major river flow
     implicit none
     ! Arguments:
     real(kind=sp), intent(in) :: cf        ! cloud fraction
     real(kind=dp), intent(in) :: day_time  ! day-second
     integer, intent(in) :: day             ! year-day 
-    real(kind=dp), intent(in) :: Qriver    ! major river flow
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano, &   ! Nano phytoplankton
@@ -199,7 +199,7 @@ contains
     do k = 1, grid%M    
        KK = ialpha +ibeta * (N2chl &
             * (Pmicro(k) + Pnano(k) + Ppico(k))) ** 0.665 &
-            + (igamma * Qriver ** isigma + itheta) * exp(-grid%d_g(k) / idl)
+            + (igamma * Qinter ** isigma + itheta) * exp(-grid%d_g(k) / idl)
        KK = min(2.5d0, KK)
        I_par_i(k) = I_par_i(k-1) * exp(-grid%i_space(k) * KK)
        ! Total light for heat budget

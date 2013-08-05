@@ -127,8 +127,7 @@ program SOG
        sumS=0, sumSriv=0, Sone
   integer :: scount=0, junk
   ! Interpolated river flows
-  real(kind=dp) :: Qinter  ! Fraser River
-  real(kind=dp) :: Einter  ! Englishman River
+
   ! River Temperature (of major river)
   real(kind=dp) :: RiverTemp
   ! Current time met data
@@ -232,11 +231,11 @@ program SOG
 
      ! Get forcing data
      call get_forcing(year, day, day_time, &
-          Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
+          RiverTemp, cf_value, atemp_value, humid_value, &
           unow, vnow)
 
      ! Calculate sunlight effects
-     call calc_irradiance(cf_value, day_time, day, Qinter, &
+     call calc_irradiance(cf_value, day_time, day, &
           P%micro, P%nano, P%pico)
 
      do count = 1, max_iter !---- Beginning of the implicit solver loop ----
@@ -274,7 +273,7 @@ program SOG
         ! (S_riv), the surface turbulent kinematic salinity flux
         ! (wbar%s(0)), and the profile of fresh water contribution to
         ! the salinity (F_n)
-        call freshwater_phys(Qinter, Einter, RiverTemp, S%old(1), &
+        call freshwater_phys(RiverTemp, S%old(1), &
              T%old(1), T%old(grid%M+1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
