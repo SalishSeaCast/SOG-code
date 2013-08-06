@@ -21,6 +21,8 @@ module forcing
        ! Variables:
        UseRiverTemp, vary, &
        Qinter, Einter, RiverTemp, &
+       cf_value, atemp_value, humid_value, &
+       unow, vnow, &
        ! Subroutines:
        init_forcing,   &
        read_variation, &
@@ -52,6 +54,9 @@ module forcing
   logical :: UseRiverTemp
   real(kind=dp) :: Qinter, Einter, &! Current flow of Major and Minor Rivers
                    RiverTemp  ! Current temperature of Major River
+  ! current values of cloud fraction, air temperature and humidity
+  real(kind=sp) :: cf_value, atemp_value, humid_value 
+  real(kind=dp) :: unow, vnow ! Current wind components
 
   ! Private module variable declarations:
   integer ::     &
@@ -650,8 +655,7 @@ contains
 end subroutine read_forcing
 
 
-  subroutine get_forcing (year, day, day_time, &
-       cf_value, atemp_value, humid_value, unow, vnow)
+  subroutine get_forcing (year, day, day_time)
 
     use unit_conversions, only: CtoK
 
@@ -662,13 +666,10 @@ end subroutine read_forcing
     integer, intent(in) :: day ! current year day
     real(kind=dp), intent(in) :: day_time ! current time of day in seconds
 
-    real(kind=sp), intent(out) :: cf_value     ! cloud fraction
-    real(kind=sp), intent(out) :: atemp_value  ! air temperature
-    real(kind=sp), intent(out) :: humid_value  ! humidity
-    real(kind=dp), intent(out) :: unow, vnow ! wind components
-
+    ! arrays we are interpolating across to get current values:
     ! Wind data is in a single array with 1 hour per line, cf, atemp and
-    ! hmid are in array of day and time, and the river flows are one value per day.
+    ! humid are in array of day and time
+    ! the river flows are one value per day.
 
     ! local variable
 

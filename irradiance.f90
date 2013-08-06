@@ -82,14 +82,14 @@ contains
   end subroutine read_irradiance_params
 
 
-  subroutine calc_irradiance(cf, day_time, day, &
+  subroutine calc_irradiance(day_time, day, &
        Pmicro, Pnano, Ppico)
     ! Calculates the amount of light (total and PAR) as a function of depth
     use grid_mod, only: grid
-    use forcing, only:  Qinter    ! major river flow
+    use forcing, only:  Qinter, &    ! major river flow
+                        cf_value     ! cloud fraction
     implicit none
     ! Arguments:
-    real(kind=sp), intent(in) :: cf        ! cloud fraction
     real(kind=dp), intent(in) :: day_time  ! day-second
     integer, intent(in) :: day             ! year-day 
     real(kind=dp), dimension(0:), intent(in) :: &
@@ -158,8 +158,8 @@ contains
 
     Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
 
-    fcf = floor(cf)   ! integer below cf value
-    ccf = ceiling(cf) ! integer above cf value
+    fcf = floor(cf_value)   ! integer below cf value
+    ccf = ceiling(cf_value) ! integer above cf value
     if (fcf.eq.ccf) then
        if (fcf.eq.10) then
           fcf = 9
@@ -170,8 +170,10 @@ contains
 
     if (day_time / 3600.0 > sunrise .and. day_time / 3600.0 < sunset) then
        I_incident = Qso * (  &
-            cloud%type(fcf)%A * (ccf-cf) + cloud%type(ccf)%A * (cf-fcf) &
-            + (cloud%type(fcf)%B * (ccf-cf) + cloud%type(ccf)%B * (cf-fcf)) &
+            cloud%type(fcf)%A * (ccf-cf_value) & 
+          + cloud%type(ccf)%A * (cf_value-fcf) &
+          + (cloud%type(fcf)%B * (ccf-cf_value) &
+          + cloud%type(ccf)%B * (cf_value-fcf)) &
             * cos_Z) * cos_Z   
     else
        I_incident = 0.
