@@ -480,3 +480,4 @@
 "alt minor river"
     "../SOG-forcing/rivers/NanimoNorm_historic.dat"
     "alternative minor river flow data"
+"river nutrients file" "../SOG-forcing/rivers/fraser_nuts.dat" "River nutrients, not used in spring bloom"

@@ -449,4 +449,5 @@
 ! Do not use in RI - no minor river
 "use river temp"  .false.  "Include cooling/heating effect of major river?"
 "minor river"  "N/A" "minor river flow data"
+"river nutrients file" "../SOG-forcing/rivers/fraser_nuts.dat" "River nutrients, not used in RI"
 ! end of file
