@@ -1,0 +1,48 @@
+# run from Fall 2001 through July 2005
+# include all the STRATOGEM profiles
+
+initial_conditions:
+  init_datetime:
+    value: 2001-09-19 18:49:00
+    variable_name: initDatetime
+    description: initial CTD profile date/time
+  CTD_file:
+    value: ../SOG-initial/ctd/SG-S3-2001-09-19.sog
+    variable_name: ctd_in
+    description: path/filename for initialization CTD file
+  # Give a path/filename for either STRATOGEM nutrients file
+  # or IOS bottle file; set the other to N/A
+  nutrients_file:
+    value: ../SOG-initial/stratogem_nuts/Nuts-39-2001-09-19.sog
+    variable_name: nuts_in
+    description: path/filename for STRATOGEM nutrients data file
+
+end_datetime:
+  value: 2005-07-01 00:49:00
+  variable_name: endDatetime
+  description: end of run date/time
+
+forcing_data:
+  years_of_forcing_data:
+    value: 5
+    variable_name: NY
+    description: number of years of forcing data to read
+
+profiles_results:  
+  num_profiles:
+    value: 48
+  profile_days:
+    value: [101, 128, 156, 191, 219, 241, 281, 309, 338, 8, 36, 64, 78, 92, 99, 106, 113, 148, 184, 226, 253, 282, 310, 344, 16, 42, 62, 77, 84, 89, 98, 105, 119, 159, 192, 224, 245, 293, 316, 342, 14, 33, 54, 67, 81, 97, 136, 174]
+  profile_times:
+    value: [46200., 43620., 40860., 40800., 41400., 41400., 40680., 50880., 44280., 47100., 45780., 44880., 44460., 44040., 40800., 40260., 40980., 49500., 37620., 39600., 38520., 42420., 41760., 42120., 43020., 42600., 43620., 48480., 42360., 48120., 34560., 48300., 64920., 24600., 21240., 43800., 40620., 44520., 42900., 40380., 43260., 41760., 40860., 48300., 53100., 38580., 37620., 36840.]
+  hoffmueller_start_year:
+    value: 2001
+    variable_name: Hoff_startyr
+    description: year to start Hoffmueller results output
+  hoffmueller_start_day:
+    value: 263
+  hoffmueller_end_year:
+    value: 2005
+  hoffmueller_end_day:
+    value: 185
+

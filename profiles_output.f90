@@ -44,7 +44,7 @@ module profiles_output
   !
   ! Maximum number of profiles (related to storage for date/times)
   integer, parameter :: &
-       maxprofiles = 20  ! Maximum number of profiles
+       maxprofiles = 50  ! Maximum number of profiles
   ! (related to storage for date/times)
 
   ! Private variable declarations:
