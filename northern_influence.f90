@@ -156,8 +156,8 @@ contains
     !  calculate the size of the term for northern advection
     use precision_defs, only: dp
     use grid_mod, only: grid
-    use freshwater, only: upwell, &  ! Maximum freshwater upwelling velocity
-         Fraserfresh ! outflow from Fraser
+    use freshwater, only: upwell  ! Maximum freshwater upwelling velocity
+    use forcing, only: Qinter     ! outflow from major river
     use water_properties, only: alpha, rho, Cp ! expansion coefficient, density,
                                                ! specific heat capacity
     use fundamental_constants, only: Redfield_C
@@ -207,11 +207,11 @@ contains
 
     do index = 1, grid%M
        if (grid%d_g(index) .lt. central_depth) then
-       increment =  dt * strength * upwell * (Fraserfresh/Fo)**power &
+       increment =  dt * strength * upwell * (Qinter/Fo)**power &
             * (requiredsum - qty(index)) * &
             exp(-(grid%d_g(index)-central_depth)**2/(upper_width**2))
        else
-          increment =  dt * strength * upwell * (Fraserfresh/Fo)**power &
+          increment =  dt * strength * upwell * (Qinter/Fo)**power &
             * (requiredsum - qty(index)) * &
             exp(-(grid%d_g(index)-central_depth)**2/(lower_width**2))
        endif

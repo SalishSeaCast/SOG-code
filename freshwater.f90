@@ -37,9 +37,9 @@ module freshwater
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
        totalfresh, &  ! total amount of freshwater
-       Fraserfresh, & ! freshwater from Fraser == Qinter
+
        ! Diagnostics:
-       S_riv, &  ! Surface salinity prediction from fit
+       S_riv, & ! Surface salinity prediction from fit
        ! Subroutines:
        init_freshwater, freshwater_phys, freshwater_bio, &
        dalloc_freshwater_variables
@@ -77,7 +77,6 @@ module freshwater
   real(kind=dp), dimension(:), allocatable :: &
        F_n     ! Fresh water contribution to salinity flux
   real (kind=dp) :: totalfresh   !total freshwater -use to read in SOG
-  real (kind=dp) :: Fraserfresh  !Fraser freshwater == use in Northern Return Flow
 
   ! Diagnostic:
   real(kind=dp) :: &
@@ -237,7 +236,6 @@ contains
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qinter + 55.0*Einter
-    Fraserfresh = Qinter   ! this is bad form, but I need this number in Northern Return flow and haven't figured out a better way.
     
     open(12,file="total_check")
     write(12,*) totalfresh, Qinter
