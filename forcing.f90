@@ -169,7 +169,7 @@ contains
     ! Should average data be used
     character*80 :: use_average_forcing_data
     ! File name for minor and major river data files
-    character*80 :: minor_river_file, major_river_file
+    character*80 :: minor_river_file, major_river_file, river_nut_file
     ! Indices
     integer :: ic, jc, j
     ! Data file values
@@ -652,6 +652,10 @@ contains
        enddo
        Eriver(1:river_n) = integ_minor_river(1:river_n)
     endif
+
+    ! read River Nutrients file (just a stub here)
+
+    river_nut_file = getpars("river nutrients file")
 end subroutine read_forcing
 
 
