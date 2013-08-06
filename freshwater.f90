@@ -170,7 +170,7 @@ contains
   end subroutine read_freshwater_params
   
 
-  subroutine freshwater_phys(RiverTemp, S_old, Ts_old, Td_old, h)
+  subroutine freshwater_phys(S_old, Ts_old, Td_old, h)
     ! Calculate the strength of upwelling/entrainment, the freshwater
     ! flux, the surface turbulent kinematic salinity flux, and the
     ! profile of fresh water contribution to the salinity flux.
@@ -188,7 +188,7 @@ contains
     use irradiance, only: &
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
-         UseRiverTemp, Qinter, Einter
+         UseRiverTemp, Qinter, Einter, RiverTemp
     use numerics, only: &
          day
     ! Functions and subroutines
@@ -200,8 +200,6 @@ contains
     implicit none
 
     ! Arguments
-    real(kind=dp), intent(in) :: &
-         RiverTemp  ! temperature of Major River
     real(kind=dp), intent(in) :: &
          S_old,        &  ! Surface salinity
          Ts_old,       &  ! Surface temperature
