@@ -207,11 +207,11 @@ contains
 
     do index = 1, grid%M
        if (grid%d_g(index) .lt. central_depth) then
-       increment =  dt * strength * upwell * (Qinter/Fo)**power &
+       increment =  dt * strength * upwell * (Qinter/Fo)**coefficient &
             * (requiredsum - qty(index)) * &
             exp(-(grid%d_g(index)-central_depth)**2/(upper_width**2))
        else
-          increment =  dt * strength * upwell * (Qinter/Fo)**power &
+          increment =  dt * strength * upwell * (Qinter/Fo)**coefficient &
             * (requiredsum - qty(index)) * &
             exp(-(grid%d_g(index)-central_depth)**2/(lower_width**2))
        endif
