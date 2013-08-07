@@ -477,7 +477,8 @@
     "../SOG-forcing/rivers/Englishman_fullyears.dat"
     "minor river flow data"
 "minor river integ days"  20  "Days over which to integrate minor river flow"
+"river nutrients file" "../SOG-forcing/rivers/fraser_nuts.dat" "River nutrients, not used in spring bloom"
 "alt minor river"
     "../SOG-forcing/rivers/NanimoNorm_historic.dat"
     "alternative minor river flow data"
-"river nutrients file" "../SOG-forcing/rivers/fraser_nuts.dat" "River nutrients, not used in spring bloom"
+
