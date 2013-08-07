@@ -554,7 +554,7 @@ program SOG
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
-     write (129, *) S_riv,  S%new(1)
+     write (129, *) S_riv,  Sone
 
   end do  !--------- End of time loop ----------
 
