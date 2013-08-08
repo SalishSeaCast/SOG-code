@@ -7,12 +7,10 @@ EXEC = SOG
 F90 = gfortran
 # Don't compile with optimization until the code runs properly without it
 # and always revert to -O0 and all checks when adding new features
-FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -Wall
-# g95 extra flags
-#FFLAGS-EXTRA = -ftrace=full
-# gfortran extra flags
-FFLAGS-EXTRA = -fbacktrace
+FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -fbacktrace -Wall
 FFLAGS-PROD = -O3 -fimplicit-none -Wall
+# Extra compile flags
+FFLAGS-EXTRA =
 LD = $(F90)
 LDFLAGS = -o
 
@@ -90,7 +88,7 @@ $(EXEC)-dev: clean $(OBJS)
 # is working in development mode, and you've compared the results of a
 # few production and development builds to ensure that the code is stable
 # with optimization enabled. ***  Consider yourself warned!
-$(EXEC)-prod: FFLAGS = $(FFLAGS-PROD)
+$(EXEC)-prod: FFLAGS = $(FFLAGS-PROD) $(FFLAGS-EXTRA)
 $(EXEC)-prod: clean $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
 
