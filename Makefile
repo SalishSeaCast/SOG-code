@@ -71,12 +71,6 @@ tags:
 clean:
 	$(RM) $(RMFLAGS) *.o *.mod core $(EXEC) $(OBJLIB)
 
-# "make changelog" builds or updates a GNU-style ChangeLog file
-# from the CVS log messages
-.PHONY: changelog
-changelog:
-	$(CVS2CL) $(CLFLAGS)
-
 # "make SOG-dev" does a clean build with the compiler flags set to
 # -O0, and lots of checking (i.e. appropriate for development and testing)
 $(EXEC)-dev: FFLAGS = $(FFLAGS-DEV) $(FFLAGS-EXTRA)
