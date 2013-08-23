@@ -138,6 +138,7 @@ contains
        ! Read the haloclines results file name, open it, and write its
        ! header
        haloclines_fn = getpars("haloclinefile")
+       call system('mkdir -p profiles')
        open(unit=haloclines, file=haloclines_fn, status="replace", &
             action="write")
        call write_haloclines_header(str_run_Datetime, str_CTD_Datetime)
