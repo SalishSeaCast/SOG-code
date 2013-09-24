@@ -257,6 +257,10 @@ timeseries_results:
     value: timeseries/user_chem_SOG.out
     variable_name: user_chem_ts_out
     description: path/filename for user chemistry time series output
+  salinity_check:
+    value: salinity_check
+    variable_name: salinity_checkfile
+    description: path/filename for salinity check file
 
 profiles_results:
   num_profiles:

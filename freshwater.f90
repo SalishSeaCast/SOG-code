@@ -286,7 +286,19 @@ contains
                            + RiverTC * ( 6.536332d-9)))))
 
     ! Calculate River Alkalinity from discharge
-    river_Alk = river_Alk_0 * exp(river_Alk_decay * Fresh_avg)
+    ! river_Alk = river_Alk_0 * exp(river_Alk_decay * Fresh_avg)
+    if (river_alk_0 .lt. 0.0d0) then
+       if (Fresh_avg .gt. 6.0d3) then
+          river_Alk = min(1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &
+               + 1127.8132d0, 805.3502d0)
+       else
+          river_Alk = 1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &
+               + 1127.8132d0
+       end if
+    else
+       river_Alk = river_alk_0
+    end if
+
     if (river_chem .lt. 0.0d0) then
        pH_riv = 0.14d0 * sin(0.0172d0 * (day - 116d0)) + 7.7d0
     end if

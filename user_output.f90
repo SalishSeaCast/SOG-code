@@ -394,7 +394,8 @@ contains
 
     ! Check to see if we're in a Hoffmueller results output time step
     if (year == Hoff_yr .and. day == Hoff_day) then
-       if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
+       if ((abs(day_time - Hoff_sec) < 0.5d0 * dt) .or. &
+           (abs(day_time - Hoff_sec) < dt .and. Hoff_sec < dt)) then
           ! Write the profiles numbers
           call write_user_profiles_numbers(userHoff, grid) ! , var1, &
           !     var2, var3, ...)

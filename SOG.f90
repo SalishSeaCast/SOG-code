@@ -147,8 +147,8 @@ program SOG
   ! below.
   call init_input_processor(datetime_str(runDatetime))
 
-  ! Initialize the salinity linearity file
-  open (unit=129, file="salinity_check")
+  ! Initialize the salinity linearity file (now in init_timeseries_output)
+  ! open (unit=129, file="salinity_check")
 
   ! Initialize fundamental constants
   call init_constants()

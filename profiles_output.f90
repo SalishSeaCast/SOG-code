@@ -333,7 +333,8 @@ contains
 
     ! Check to see if we're in a Hoffmueller results output time step
     if (year == Hoff_yr .and. day == Hoff_day) then
-       if (abs(day_time - Hoff_sec) < 0.5d0 * dt) then
+       if ((abs(day_time - Hoff_sec) < 0.5d0 * dt) .or. &
+           (abs(day_time - Hoff_sec) < dt .and. Hoff_sec < dt)) then
           ! Write the profiles numbers
           call write_profiles_numbers(Hoffmueller, grid, T, S, rho,   &
                Pmicro, Pnano, Ppico, Z, NO, NH, Si, DIC, Oxy, Alk,    &
@@ -342,15 +343,14 @@ contains
           ! Add empty line as separator
           write(Hoffmueller, *)
           ! Increment the Hoffmueller output counters
-          Hoff_day = Hoff_day + int(Hoff_interval)
+          Hoff_sec = Hoff_sec + int(Hoff_interval * 86400.0d0)
+          if (Hoff_sec .ge. 86400) then
+             Hoff_sec = Hoff_sec - 86400
+             Hoff_day = Hoff_day + 1
+          endif
           if (Hoff_day > 365) then
              Hoff_yr = Hoff_yr + 1
              Hoff_day = Hoff_day - 365
-          endif
-          Hoff_sec = Hoff_sec + int(mod(Hoff_interval, 1.0d0) * 86400.0d0)
-          if (Hoff_sec == 86400) then
-             Hoff_sec = 0
-             Hoff_day = Hoff_day + 1
           endif
           ! Check to see if we're beyond the end of the Hoffmueller
           ! output time interval
