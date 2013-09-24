@@ -36,12 +36,13 @@ module freshwater
        F_n,        &  ! Fresh water contribution to salinity flux
        upwell,     &  ! Upwelling velocity from river flows
                       ! parameterization.
+       totalfresh, &  ! total amount of freshwater
+
        ! Diagnostics:
-       S_riv, &  ! Surface salinity prediction from fit
+       S_riv, & ! Surface salinity prediction from fit
        ! Subroutines:
        init_freshwater, freshwater_phys, freshwater_bio, &
-       dalloc_freshwater_variables, &
-       totalfresh
+       dalloc_freshwater_variables
 
   ! Parameter Value Declarations:
   !
@@ -60,7 +61,7 @@ module freshwater
   ! From IOS cruise 2010-73 Oct 29th - Nov 2nd 2010
   real(kind=dp) :: phys_circ_DIC
   ! From Environment Canada Fraser River buoy October 2010
-  real(kind=dp), parameter :: phys_circ_Oxy = 148.38d0 - 343.75d0
+  real(kind=dp) :: phys_circ_Oxy
   ! **TODO**: Assign a sensible value for alkalinity
   real(kind=dp) :: phys_circ_Alk
 !--- END CHEMISTRY PARAMETERS
@@ -169,7 +170,7 @@ contains
   end subroutine read_freshwater_params
   
 
-  subroutine freshwater_phys(Qriver, Eriver, RiverTemp, S_old, Ts_old, Td_old, h)
+  subroutine freshwater_phys(S_old, Ts_old, Td_old, h)
     ! Calculate the strength of upwelling/entrainment, the freshwater
     ! flux, the surface turbulent kinematic salinity flux, and the
     ! profile of fresh water contribution to the salinity flux.
@@ -187,20 +188,18 @@ contains
     use irradiance, only: &
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
-         UseRiverTemp
+         UseRiverTemp, Qinter, Einter, RiverTemp
     use numerics, only: &
          day
     ! Functions and subroutines
     use unit_conversions, only: KtoC
     use carbonate, only: calc_carbonate
-   
+    use water_properties, only: oxygen_saturation
+    use fitbottom, only: DeepOxy
+
     implicit none
 
     ! Arguments
-    real(kind=dp), intent(in) :: &
-         Qriver, &  ! Fraser River flow
-         Eriver, &  ! Englishman River flow
-         RiverTemp  ! temperature of Major River
     real(kind=dp), intent(in) :: &
          S_old,        &  ! Surface salinity
          Ts_old,       &  ! Surface temperature
@@ -210,14 +209,14 @@ contains
     ! Local variables
     real(kind=dp) :: &
          RiverTC,      &  ! Major river temperature [deg C]
-         River_DIC,    &  !
-         River_Alk
+         River_DIC,    &  ! River DIC [uM]
+         River_Alk,    &  ! River alkalinity [ueq L-1]
+         river_oxy        ! River Oxygen [uM]
 
     ! Surface temperature to celsius
     RiverTC = KtoC(RiverTemp)
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
-    totalfresh = Qriver + Eriver
 
     ! Parameterized fit of the surface salinity 
 
@@ -234,10 +233,10 @@ contains
     ! below 0 is not predicted.  
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
-    totalfresh = Qriver + 55.0*Eriver
+    totalfresh = Qinter + 55.0*Einter
     
     open(12,file="total_check")
-    write(12,*)totalfresh, Qriver
+    write(12,*) totalfresh, Qinter
     close(12)    
 
  
@@ -307,10 +306,15 @@ contains
     call calc_carbonate('fresh', 'pH', river_Alk, pH_riv, rho_riv, 0.0d0, &
          RiverTemp, 0.0d0, 0.0d0, 0.0d0, river_DIC)
 
+    ! Calculate Saturated Oxygen from Rivers
+    call oxygen_saturation(0.0d0, RiverTemp, river_oxy)
+
     ! Circulation strength of a scalar is equal to deep value minus
     ! river value (see BMM Labbook pg 45 for deep values)
     phys_circ_Alk = 2092.98d0 - river_Alk
     phys_circ_DIC = 2059.68d0 - river_DIC
+
+    phys_circ_Oxy = DeepOxy - river_oxy ! [umol L^-1]
 
     !-------------------------------------------------------------
 

@@ -7,12 +7,10 @@ EXEC = SOG
 F90 = gfortran
 # Don't compile with optimization until the code runs properly without it
 # and always revert to -O0 and all checks when adding new features
-FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -Wall
-# g95 extra flags
-#FFLAGS-EXTRA = -ftrace=full
-# gfortran extra flags
-FFLAGS-EXTRA = -fbacktrace
+FFLAGS-DEV = -O0 -g -fimplicit-none -fbounds-check -fbacktrace -Wall
 FFLAGS-PROD = -O3 -fimplicit-none -Wall
+# Extra compile flags
+FFLAGS-EXTRA =
 LD = $(F90)
 LDFLAGS = -o
 
@@ -34,8 +32,8 @@ ETFLAGS =
 OBJS = precision_defs.o io_unit_defs.o datetime.o input_processor.o \
 fundamental_constants.o malloc.o unit_conversions.o \
 grid.o numerics.o forcing.o core_variables.o water_properties.o \
-irradiance.o turbulence.o air_sea_fluxes.o carbonate.o freshwater.o northern_influence.o buoyancy.o \
-mixing_layer.o diffusion.o baroclinic_pressure.o upwelling.o fitbottom.o \
+irradiance.o turbulence.o air_sea_fluxes.o carbonate.o fitbottom.o freshwater.o northern_influence.o buoyancy.o \
+mixing_layer.o diffusion.o baroclinic_pressure.o upwelling.o \
 physics_eqn_builder.o physics_model.o \
 NPZD.o biology_eqn_builder.o rungekutta.o biology_model.o \
 IMEX_solver.o chemistry_model.o \
@@ -73,12 +71,6 @@ tags:
 clean:
 	$(RM) $(RMFLAGS) *.o *.mod core $(EXEC) $(OBJLIB)
 
-# "make changelog" builds or updates a GNU-style ChangeLog file
-# from the CVS log messages
-.PHONY: changelog
-changelog:
-	$(CVS2CL) $(CLFLAGS)
-
 # "make SOG-dev" does a clean build with the compiler flags set to
 # -O0, and lots of checking (i.e. appropriate for development and testing)
 $(EXEC)-dev: FFLAGS = $(FFLAGS-DEV) $(FFLAGS-EXTRA)
@@ -90,7 +82,7 @@ $(EXEC)-dev: clean $(OBJS)
 # is working in development mode, and you've compared the results of a
 # few production and development builds to ensure that the code is stable
 # with optimization enabled. ***  Consider yourself warned!
-$(EXEC)-prod: FFLAGS = $(FFLAGS-PROD)
+$(EXEC)-prod: FFLAGS = $(FFLAGS-PROD) $(FFLAGS-EXTRA)
 $(EXEC)-prod: clean $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) $(EXEC)
 

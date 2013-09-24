@@ -8,4 +8,11 @@ biology:
   include_flagellates:
     value: True
   include_microzooplankton:
-    value: False
+    value: True
+
+# remove MesoZoo predation on Pico 
+  mesozooplankton:
+    mesozoo_pico_preference:
+      value: 0.0
+
+    

@@ -82,16 +82,16 @@ contains
   end subroutine read_irradiance_params
 
 
-  subroutine calc_irradiance(cf, day_time, day, Qriver, &
+  subroutine calc_irradiance(day_time, day, &
        Pmicro, Pnano, Ppico)
     ! Calculates the amount of light (total and PAR) as a function of depth
     use grid_mod, only: grid
+    use forcing, only:  Qinter, &    ! major river flow
+                        cf_value     ! cloud fraction
     implicit none
     ! Arguments:
-    real(kind=sp), intent(in) :: cf        ! cloud fraction
     real(kind=dp), intent(in) :: day_time  ! day-second
     integer, intent(in) :: day             ! year-day 
-    real(kind=dp), intent(in) :: Qriver    ! major river flow
     real(kind=dp), dimension(0:), intent(in) :: &
          Pmicro, &  ! Micro phytoplankton
          Pnano, &   ! Nano phytoplankton
@@ -158,8 +158,8 @@ contains
 
     Qso = Q_o*(1.0+0.033*COS(DBLE(day)/365.25*2.0*PI))*(1.0-albedo) !*(1.0-insol)
 
-    fcf = floor(cf)   ! integer below cf value
-    ccf = ceiling(cf) ! integer above cf value
+    fcf = floor(cf_value)   ! integer below cf value
+    ccf = ceiling(cf_value) ! integer above cf value
     if (fcf.eq.ccf) then
        if (fcf.eq.10) then
           fcf = 9
@@ -170,8 +170,10 @@ contains
 
     if (day_time / 3600.0 > sunrise .and. day_time / 3600.0 < sunset) then
        I_incident = Qso * (  &
-            cloud%type(fcf)%A * (ccf-cf) + cloud%type(ccf)%A * (cf-fcf) &
-            + (cloud%type(fcf)%B * (ccf-cf) + cloud%type(ccf)%B * (cf-fcf)) &
+            cloud%type(fcf)%A * (ccf-cf_value) & 
+          + cloud%type(ccf)%A * (cf_value-fcf) &
+          + (cloud%type(fcf)%B * (ccf-cf_value) &
+          + cloud%type(ccf)%B * (cf_value-fcf)) &
             * cos_Z) * cos_Z   
     else
        I_incident = 0.
@@ -199,7 +201,7 @@ contains
     do k = 1, grid%M    
        KK = ialpha +ibeta * (N2chl &
             * (Pmicro(k) + Pnano(k) + Ppico(k))) ** 0.665 &
-            + (igamma * Qriver ** isigma + itheta) * exp(-grid%d_g(k) / idl)
+            + (igamma * Qinter ** isigma + itheta) * exp(-grid%d_g(k) / idl)
        KK = min(2.5d0, KK)
        I_par_i(k) = I_par_i(k-1) * exp(-grid%i_space(k) * KK)
        ! Total light for heat budget

@@ -1,7 +1,4 @@
-# SOG code infile template
-
-# SOG code infile for 356.5 day run starting at cruise 04-14 station
-# S3 CTD cast (2004-10-19 12:22 LST).
+# SOG code infile for 2013 bloomcast run with average forcing data
 
 grid:
   model_depth:
@@ -41,17 +38,17 @@ location:
 
 initial_conditions:
   init_datetime:
-    value: 2004-10-19 12:22:00
+    value: 2012-09-19 18:49:00
     variable_name: initDatetime
     description: initial CTD profile date/time
   CTD_file:
-    value: ../SOG-initial/ctd/SG-S3-2004-10-19.sog
+    value: ../SOG-initial/ctd/SG-39-2001-09-19.sog
     variable_name: ctd_in
     description: path/filename for initialization CTD file
   # Give a path/filename for either STRATOGEM nutrients file
   # or IOS bottle file; set the other to N/A
   nutrients_file:
-    value: ../SOG-initial/stratogem_nuts/Nuts-S3-2004-10-19.sog
+    value: ../SOG-initial/stratogem_nuts/Nuts-39-2001-09-19.sog
     variable_name: nuts_in
     description: path/filename for STRATOGEM nutrients data file
   bottle_file:
@@ -63,11 +60,11 @@ initial_conditions:
     variable_name: chem_in
     description: path/filename for IOS chemistry bottle data file
   init_chl_ratios:
-    value: [0.33, 0.33, 0.33]
+    value: [1, 0, 0]
     variable_name: Psplit
     description: initial micro/nano/pico phytoplankton ratios from chlorophyl
   nitrate_chl_conversion:
-    value: 1.600
+    value: 1.5
     units: mg/m^3 . uM N
     variable_name: N2chl
     description: phytoplankton nitrate to chlorophyl conversion factor
@@ -78,7 +75,7 @@ initial_conditions:
     description: partial pressure of atmospheric CO2
 
 end_datetime:
-  value: 2005-10-11 00:22:00
+  value: 2013-05-01 00:49:00
   variable_name: endDatetime
   description: end of run date/time
 
@@ -89,7 +86,7 @@ numerics:
     variable_name: dt
     description: time step
   chem_dt:
-    value: 5
+    value: 900
     units: s
     variable_name: chem_dt
     description: internal chemistry time step
@@ -234,33 +231,29 @@ vary:
 
 timeseries_results:
   std_physics:
-    value: timeseries/std_phys_SOG.out
+    value: timeseries/std_phys_2013_bloomcast.out
     variable_name: std_phys_ts_out
     description: path/filename for standard physics time series output
   user_physics:
-    value: timeseries/user_phys_SOG.out
+    value: timeseries/user_phys_2013_bloomcast.out
     variable_name: user_phys_ts_out
     description: path/filename for user physics time series output
   std_biology:
-    value: timeseries/std_bio_SOG.out
+    value: timeseries/std_bio_2013_bloomcast.out
     variable_name: std_bio_ts_out
     description: path/filename for standard biology time series output
   user_biology:
-    value: timeseries/user_bio_SOG.out
+    value: timeseries/user_bio_2013_bloomcast.out
     variable_name: user_bio_ts_out
     description: path/filename for user biology time series output
   std_chemistry:
-    value: timeseries/std_chem_SOG.out
+    value: timeseries/std_chem_2013_bloomcast.out
     variable_name: std_chem_ts_out
     description: path/filename for standard chemistry time series output
   user_chemistry:
-    value: timeseries/user_chem_SOG.out
+    value: timeseries/user_chem_2013_bloomcast.out
     variable_name: user_chem_ts_out
     description: path/filename for user chemistry time series output
-  salinity_check:
-    value: salinity_check
-    variable_name: salinity_checkfile
-    description: path/filename for salinity check file
 
 profiles_results:
   num_profiles:
@@ -270,7 +263,7 @@ profiles_results:
   # TODO: Replace year-day and day-second lists with a list of
   # date/times for profile outputs
   profile_days:
-    value: [303]
+    value: [60]
     variable_name: profday
     description: list of year-days to output profiles for
   profile_times:
@@ -278,33 +271,33 @@ profiles_results:
     variable_name: proftime
     description: list of day-seconds to output profiles for
   profile_file_base:
-    value: profiles/SOG
+    value: profiles/2013_bloomcast
     variable_name: profilesBase_fn
     description: path/filename base for profiles (datetime will be appended)
   user_profile_file_base:
-    value: profiles/SOG-user
+    value: profiles/2013_bloomcast_user
     variable_name: userprofilesBase_fn
     description: path/filename base for user profiles (datetime appended)
   halocline_file:
-    value: profiles/halo-SOG.out
+    value: profiles/halo_2013_bloomcast.out
     variable_name: haloclines_fn
     description: path/filename for halocline results
   hoffmueller_file:
-    value: profiles/hoff-SOG.dat
+    value: profiles/hoff_2013_bloomcast.out
     variable_name: Hoffmueller_fn
     description: path/filename for Hoffmueller results
   user_hoffmueller_file:
-    value: profiles/hoff-SOG-user.dat
+    value: profiles/hoff_2013_bloomcast_user.out
     variable_name: userHoffmueller_fn
     description: path/filename for user Hoffmueller results
   # TODO: Replace Hoffmueller results start and end year, day & second
   # with date/times
   hoffmueller_start_year:
-    value: 2004
+    value: 2012
     variable_name: Hoff_startyr
     description: year to start Hoffmueller results output
   hoffmueller_start_day:
-    value: 294
+    value: 264
     variable_name: Hoff_startday
     description: day to start Hoffmueller results output
   hoffmueller_start_sec:
@@ -312,11 +305,11 @@ profiles_results:
     variable_name: Hoff_startsec
     description: second to start Hoffmueller results output
   hoffmueller_end_year:
-    value: 2005
+    value: 2013
     variable_name: Hoff_endyr
     description: year to end Hoffmueller results output
   hoffmueller_end_day:
-    value: 305
+    value: 122
     variable_name: Hoff_endday
     description: day to end Hoffmueller results output
   hoffmueller_end_sec:
@@ -335,7 +328,7 @@ physics:
       variable_name: temp_constant
       description: is bottom temperature constant over time?
     temperature_fit_coefficients:
-      value: [9.07, -0.088, -0.906, 0.0, -0.030, -0.088, 0.0]
+      value: [9.07, -0.088, -0.906, 0, -0.030, -0.088, 0]
       variable_name: c(:,2)
       description: temperature (constant, seasonal and biseasonal components)
     salinity_fit_coefficients:
@@ -380,12 +373,12 @@ physics:
 
   turbulence:
     momentum_wave_break_diffusivity:
-      value: 1.0e-4
+      value: 1e-4
       units: m^2/s
       variable_name: nu%m%int_wave
       description: internal wave breaking diffusivity for momentum qtys
     scalar_wave_break_diffusivity:
-      value: 1.0e-5
+      value: 1e-5
       units: m^2/s
       variable_name: nu%T%int_wave, nu%S%int_wave
       description: internal wave breaking diffusivity for scalar qtys
@@ -410,7 +403,7 @@ physics:
         variable_name: F_RI
         description: exponent for extra SoG term component of flux
       scale_factor:
-        value: 11.87e-10
+        value: 11.67e-10
         variable_name: Fw_scale
         description: fresh water scale factor for rivers flows
       add_freshwater_on_surface:
@@ -423,11 +416,11 @@ physics:
         variable_name: Fw_depth
         description: depth to distribute fresh water flux over
       include_fresh_water_nutrients:
-        value: True
+        value: False
         variable_name: use_Fw_nutrients
         description: include influence of fresh water nutrients in biology
       northern_return_flow:
-        value: True
+        value: False
         variable_name: Northern_return
         description: include fresh water return flow from the north?
       # The next 7 "northern" parameters are only used when
@@ -554,45 +547,45 @@ biology:
     variable_name: biology
     description: include phytoplankton in model? (init to zero if False)
   include_flagellates:
-    value: True
+    value: False
     variable_name: flagellates
     description: include flagellates in model?
   include_remineralization:
-    value: True
+    value: False
     variable_name: remineralization
     description: include remineralization in model?
   include_microzooplankton:
-    value: True
+    value: False
     variable_name: microzooplankton
     description: include microzooplankton in model?
   single_species_light:
-    value: False
+    value: True
     variable_name: strong_limitation
     description: high light limitation for single species case
 
   mesozooplankton:
     mesozoo_winter_conc:
-      value: 0.369
+      value: 0.073
       units: uM N
       variable_name: rate_mesozoo%winterconc
       description: mesozooplankton background concentration
     mesozoo_summer_conc:
-      value: 1.0
+      value: 1
       units: uM N
       variable_name: rate_mesozoo%summerconc
       description: mesozooplankton relative summer concentration
     mesozoo_summer_peak_magnitudes:
-      value: [0.339,    0.0,    0.0]
+      value: [0.525, 0.152, 0.0318]
       units: uM N
       variable_name: rate_mesozoo%sumpeakval
       description: magnitude of mesozooplankton summer concentration peaks
     mesozoo_summer_peak_days:
-      value: [217.000,  229.000,  300.000]
+      value: [112, 229, 316]
       units: year-day
       variable_name: rate_mesozoo%sumpeakpos
       description: times of mesozooplankton summer concentration peaks
     mesozoo_summer_peak_widths:
-      value: [114.0,   51.600,   40.000]
+      value: [53.8, 51.6, 14.6]
       units: year-days
       variable_name: rate_mesozoo%sumpeakwid
       description: widths of mesozooplankton summer concentration peaks
@@ -616,49 +609,49 @@ biology:
       variable_name: rate_mesozoo%excr
       description: mesozooplankton excretion rate @ 20 deg C
     mesozoo_grazing_limit:
-      value: 0.500
+      value: 0
       units: uM N
       variable_name: rate_mesozoo%PredSlope
       description: mesozooplankton total grazing limit
     mesozoo_grazing_half_saturation:
-      value: 1.000
+      value: 1
       units: uM N
       variable_name: rate_mesozoo%HalfSat
       description: mesozooplankton total grazing half saturation constant
     mesozoo_diatom_preference:
-      value: 0.250
+      value: 1
       variable_name: rate_mesozoo%MicroPref
       description: mesozooplankton preference for diatoms
     mesozoo_diatom_grazing_limit:
-      value: 0.000
+      value: 0
       units: uM N
       variable_name: rate_mesozoo%MicroPredSlope
       description: mesozooplankton diatom grazing limit
     mesozoo_diatom_grazing_half_saturation:
-      value: 0.200
+      value: 1
       units: uM N
       variable_name: rate_mesozoo%MicroHalfSat
       description: mesozooplankton diatom grazing half saturation constant
     mesozoo_nano_preference:
-      value: 0.250
+      value: 0
       variable_name: rate_mesozoo%NanoPref
       description: mesozooplankton preference for nano-phytoplankton
     mesozoo_nano_grazing_limit:
-      value: 0.2
+      value: 0.4
       units: uM N
       variable_name: rate_mesozoo%NanoPredSlope
       description: mesozooplankton nano-phyto grazing limit
     mesozoo_nano_grazing_half_saturation:
-      value: 1.000
+      value: 0.4
       units: uM N
       variable_name: rate_mesozoo%NanoHalfSat
       description: mesozooplankton nano-phyto grazing half saturation const
     mesozoo_pico_preference:
-      value: 0.1
+      value: 0
       variable_name: rate_mesozoo%PicoPref
       description: mesozooplankton preference for pico-phytoplankton
     mesozoo_pico_grazing_limit:
-      value: 0.0
+      value: 0
       units: uM N
       variable_name: rate_mesozoo%PicoPredSlope
       description: mesozooplankton pico-phyto grazing limit
@@ -668,37 +661,37 @@ biology:
       variable_name: rate_mesozoo%PicoHalfSat
       description: mesozooplankton pico-phyto grazing half saturation const
     mesozoo_PON_preference:
-      value: 0.192
+      value: 0
       variable_name: rate_mesozoo%PON_Pref
       description: mesozooplankton preference for PON
     mesozoo_PON_grazing_limit:
-      value: 0.000
+      value: 0.2
       units: uM N
       variable_name: rate_mesozoo%PON_PredSlope
       description: mesozooplankton PON feeding limit
     mesozoo_PON_grazing_half_saturation:
-      value: 0.400
+      value: 0.2
       units: uM N
       variable_name: rate_mesozoo%PON_HalfSat
       description: mesozooplankton PON feeding half saturation const
     mesozoo_microzoo_preference:
-      value: 0.308
+      value: 0
       variable_name: rate_mesozoo%Z_Pref
       description: mesozooplankton preference for microzooplankton
     mesozoo_microzoo_grazing_limit:
-      value: 0.500
+      value: 0.2
       units: uM N
       variable_name: rate_mesozoo%Z_PredSlope
       description: mesozooplankton microzooplankton grazing limit
     mesozoo_microzoo_grazing_half_saturation:
-      value: 1.200
+      value: 0.2
       units: uM N
       variable_name: rate_mesozoo%Z_HalfSat
       description: mesozooplankton microzoo grazing half saturation const
 
   mesodinium_rubrum:
     mesorub_max_ingestion:
-      value: 0.8e-5
+      value: 4.63e-6
       units: uM N / s
       variable_name: rate_mesorub%R
       description: mesodinium rubrum maximum ingestion rate @ 20 deg C
@@ -707,19 +700,19 @@ biology:
       variable_name: rate_mesorub%eff
       description: mesodinium rubrum grazed mass assimilation efficiency
     mesorub_grazing_limit:
-      value: 0.4
+      value: 0.2
       units: uM N
       variable_name: rate_mesozoo%PicoPredSlope
       description: mesodinium rubrum grazing limit
     mesorub_grazing_half_saturation:
-      value: 1.0
+      value: 0.5
       units: uM N
       variable_name: rate_mesozoo%PicoHalfSat
       description: mesodinium rubrum grazing half saturation constant
 
   microzooplankton:
     microzoo_max_ingestion:
-      value: 1.5e-5 
+      value: 2.32e-5
       units: uM N / s
       variable_name: rate_uzoo%R
       description: microzooplankton maximum ingestion rate @ 20 deg C
@@ -728,141 +721,141 @@ biology:
       variable_name: rate_uzoo%eff
       description: microzooplankton grazed mass assimilation efficiency
     microzoo_natural_mortality:
-      value: 0.700E-06
+      value: 2.3e-6
       units: uM N / s
       variable_name: rate_uzoo%Rm
       description: microzooplankton natural mortality rate @ 20 deg C
     microzoo_excretion:
-      value: 0.500E-07
+      value: 1.39e-6
       units: uM N / s
       variable_name: rate_uzoo%excr
       description: microzooplankton excretion rate @ 20 deg C
     microzoo_grazing_limit:
-      value: 0.500
+      value: 0.4
       units: uM N
       variable_name: rate_uzoo%PredSlope
       description: microzooplankton total grazing limit
     microzoo_grazing_half_saturation:
-      value: 1.250
+      value: 0.4
       units: uM N
       variable_name: rate_uzoo%HalfSat
       description: microzooplankton total grazing half saturation constant
     microzoo_pico_preference:
-      value: 0.280
+      value: 1
       variable_name: rate_uzoo%PicoPref
       description: microzooplankton preference for pico-phytoplankton
     microzoo_pico_grazing_limit:
-      value: 0.400
+      value: 0.2
       units: uM N
       variable_name: rate_uzoo%PicoPredSlope
       description: microzooplankton pico-phyto grazing limit
     microzoo_pico_grazing_half_saturation:
-      value: 1.000
+      value: 0.4
       units: uM N
       variable_name: rate_uzoo%PicoHalfSat
       description: microzooplankton pico-phyto grazing half saturation const
     microzoo_micro_preference:
-      value: 0.280
+      value: 0.34
       variable_name: rate_uzoo%MicroPref
       description: microzooplankton preference for micro-phytoplankton
     microzoo_micro_grazing_limit:
-      value: 0.300
+      value: 1
       units: uM N
       variable_name: rate_uzoo%MicroPredSlope
       description: microzooplankton micro-phyto grazing limit
     microzoo_micro_grazing_half_saturation:
-      value: 1.000
+      value: 2
       units: uM N
       variable_name: rate_uzoo%MicroHalfSat
       description: microzooplankton micro-phyto grazing half saturation const
     microzoo_nano_preference:
-      value: 0.170
+      value: 0.16
       variable_name: rate_uzoo%NanoPref
       description: microzooplankton preference for nano-phytoplankton
     microzoo_nano_grazing_limit:
-      value: 0.500
+      value: 1
       units: uM N
       variable_name: rate_uzoo%NanoPredSlope
       description: microzooplankton nano-phyto grazing limit
     microzoo_nano_grazing_half_saturation:
-      value: 1.000
+      value: 2
       units: uM N
       variable_name: rate_uzoo%NanoHalfSat
       description: microzooplankton nano-phyto grazing half saturation const
     microzoo_PON_preference:
-      value: 0.090
+      value: 0.33
       variable_name: rate_uzoo%PON_Pref
       description: microzooplankton preference for PON
     microzoo_PON_grazing_limit:
-      value: 0.600
+      value: 0.4
       units: uM N
       variable_name: rate_uzoo%PON_PredSlope
       description: microzooplankton PON grazing limit
     microzoo_PON_grazing_half_saturation:
-      value: 2.000
+      value: 0.4
       units: uM N
       variable_name: rate_uzoo%PON_HalfSat
       description: microzooplankton PON grazing half saturation const
     microzoo_microzoo_preference:
-      value: 0.180
+      value: 0.16
       variable_name: rate_uzoo%PON_Pref
       description: microzooplankton preference for microzoo cannibalism
     microzoo_microzoo_grazing_limit:
-      value: 0.300
+      value: 1
       units: uM N
       variable_name: rate_uzoo%PON_PredSlope
       description: microzooplankton microzoo grazing limit
     microzoo_microzoo_grazing_half_saturation:
-      value: 0.500
+      value: 2
       units: uM N
       variable_name: rate_uzoo%PON_HalfSat
       description: microzooplankton microzoo grazing half saturation const
 
   phytoplankton_growth:
     micro_max_growth:
-      value: 0.600E-04
+      value: 5.165e-5
       units: 1/s
       variable_name: rate_micro%R
       description: micro-phyto maximum growth rate
       # Hitchcock 1980, 1.4 d-1 for T. nordenskelii at 10degrees
     nano_max_growth:
-      value: 0.250E-04
+      value: 1.2e-5
       units: 1/s
       variable_name: rate_nano%R
       description: nano-phyto maximum growth rate
       # Yih 2004, 0.5 d-1 for Mesodinium rubrum (at 15 degrees) and
       # Q10**2 tuned up and at Q10**1
     pico_max_growth:
-      value: 0.250E-04 
+      value: 1.74e-5
       units: 1/s
       variable_name: rate_pico%R
       description: pico-phyto maximum growth rate
     micro_optimal_light:
-      value: 42.000
+      value: 38.4
       units: W/m^2
       variable_name: rate_micro%Iopt
       description: micro-phyto growth optimal light level
       #  Durbin, 1974 3.3 lg/s for T. nordenskelii at 10 degrees
     nano_optimal_light:
-      value: 37.000
+      value: 38.4
       units: W/m^2
       variable_name: rate_nano%Iopt
       description: nano-phyto growth optimal light level
       # Yih plus Cloern 1977 Half-sat very similar
     pico_optimal_light:
-      value: 10.000
+      value: 10
       units: W/m^2
       variable_name: rate_pico%Iopt
       description: pico-phyto growth optimal light level
     micro_max_temperature:
-      value: 35
+      value: 18
       units: deg C
       variable_name: rate_micro%maxtemp
       description: micro-phyto growth high temperature limit
       # Durbin, 1974 T. nordenskelli cannot grow at 18 degrees
       # general diatoms increase this
     nano_max_temperature:
-      value: 35
+      value: 28
       units: deg C
       variable_name: rate_nano%maxtemp
       description: nano-phyto growth high temperature limit
@@ -873,20 +866,20 @@ biology:
       variable_name: rate_pico%maxtemp
       description: pico-phyto growth high temperature limit
     micro_temperature_range:
-      value: 5
+      value: 8
       units: deg C
       variable_name: rate_micro%temprange
       description: micro-phyto growth limit range below max temperature
       # equal growth at 10 and 15 so range down 8
       # (which Q10 should be about const)
     nano_temperature_range:
-      value: 5
+      value: 12
       units: deg C
       variable_name: rate_nano%temprange
       description: nano-phyto growth limit range below max temperature
       # starts turning over earlier
     pico_temperature_range:
-      value: 5
+      value: 1
       units: deg C
       variable_name: rate_pico%temprange
       description: pico-phyto growth limit range below max temperature
@@ -917,27 +910,27 @@ biology:
       variable_name: rate_pico%gamma
       description: pico-phyto growth light limitation loss parameter
     micro_NO3_half_saturation:
-      value: 2.0
+      value: 0.5
       variable_name: rate_micro%k
       description: micro-phyto growth NO3 half-saturation constant
     nano_NO3_half_saturation:
-      value: 0.5
+      value: 0.3
       variable_name: rate_nano%k
       description: nano-phyto growth NO3 half-saturation constant
     pico_NO3_half_saturation:
-      value: 0.1
+      value: 0.3
       variable_name: rate_pico%k
       description: pico-phyto growth NO3 half-saturation constant
     micro_NO3_vs_NH_preference:
-      value: 1.0
+      value: 1
       variable_name: rate_micro%kapa
       description: micro-phyto growth preference for NO3 over NH factor
     nano_NO3_vs_NH_preference:
-      value: 0.5
+      value: 0.6
       variable_name: rate_nano%kapa
       description: nano-phyto growth preference for NO3 over NH factor
     pico_NO3_vs_NH_preference:
-      value: 0.300
+      value: 0.6
       variable_name: rate_pico%kapa
       description: pico-phyto growth preference for NO3 over NH factor
     micro_NH_inhibition_exponent:
@@ -977,7 +970,7 @@ biology:
       variable_name: rate_pico%N_x
       description: pico-phyto growth N inhibition exponent
     micro_Si_N_ratio:
-      value: 2.
+      value: 0
       variable_name: rate_micro%Si_ratio
       description: micro-phyto silicon/nitrogen ratio
     nano_Si_N_ratio:
@@ -989,7 +982,7 @@ biology:
       variable_name: rate_pico%Si_ratio
       description: pico-phyto silicon/nitrogen ratio
     micro_Si_half_saturation:
-      value: 0.600
+      value: 0
       variable_name: rate_micro%K_Si
       description: micro-phyto growth Si half saturation constant
     nano_Si_half_saturation:
@@ -1001,17 +994,17 @@ biology:
       variable_name: rate_pico%K_Si
       description: pico-phyto growth Si half saturation constant
     micro_natural_mortality:
-      value: 0.265E-05
+      value: 2.3e-6
       units: 1/s
       variable_name: rate_micro%Rm
       description: micro-phyto natural mortality
     nano_natural_mortality:
-      value: 0.270E-05
+      value: 2.3e-6
       units: 1/s
       variable_name: rate_nano%Rm
       description: nano-phyto natural mortality
     pico_natural_mortality:
-      value: 0.250E-05
+      value: 2.3e-6
       units: 1/s
       variable_name: rate_pico%Rm
       description: pico-phyto natural mortality
@@ -1461,13 +1454,13 @@ forcing_data:
     variable_name: NY
     description: number of years of forcing data to read
   use_average_forcing_data:
-    value: "no"
+    value: "fill"
     # NOTE: value must be quoted because yes/no == True/False in YAML
     variable_name: use_average_forcing_data
     description: yes=avg only; no=fail if data runs out; fill=historic then avg
 
   wind_forcing_file:
-    value: ../SOG-forcing/wind/SH_total_31Dec2011.dat
+    value: Sandheads_wind
     variable_name: n/a
     description: wind forcing data path/filename
   # The avg_historical_wind_file parameter is only used when
@@ -1478,7 +1471,7 @@ forcing_data:
     description: average/historical wind forcing data path/filename
 
   air_temperature_forcing_file:
-    value: ../SOG-forcing/met/YVRhistAT
+    value: YVR_air_temperature
     variable_name: n/a
     description: air temperature forcing data path/filename
   # The avg_historical_air_temperature_file parameter is only used when
@@ -1489,7 +1482,7 @@ forcing_data:
     description: average/historical air temperature forcing data path/filename
 
   cloud_fraction_forcing_file:
-    value: ../SOG-forcing/met/YVRhistCF
+    value: YVR_cloud_fraction
     variable_name: n/a
     description: cloud fraction forcing data path/filename
   # The avg_historical_cloud_file parameter is only used when
@@ -1500,7 +1493,7 @@ forcing_data:
     description: average/historical cloud fraction forcing data path/filename
 
   humidity_forcing_file:
-    value: ../SOG-forcing/met/YVRhistHum
+    value: YVR_relative_humidity
     variable_name: n/a
     description: relative humidity forcing data path/filename
   # The avg_historical_humidity_file parameter is only used when
@@ -1511,7 +1504,7 @@ forcing_data:
     description: average/historical humidity forcing data path/filename
 
   major_river_forcing_file:
-    value: ../SOG-forcing/rivers/Fraser_total_10Jul2012.dat
+    value: Fraser_flow
     variable_name: n/a
     description: major river flow forcing data path/filename
   # The avg_historical_major_river_file parameter is only used when
@@ -1529,8 +1522,14 @@ forcing_data:
     variable_name: n/a
     description: file containing monthly climatology values of NO3 and Si
 
+  river_nutrients_file:
+    value: ../SOG-forcing/rivers/fraser_nuts.dat
+    variable_name: n/a
+    description: file containing monthly climatology values of NO3 and Si
+
+
   minor_river_forcing_file:
-    value: ../SOG-forcing/rivers/Englishman_total_21Aug2012.dat
+    value: Englishman_flow
     variable_name: Eriver
     description: minor river flow forcing data path/filename
   # The avg_historical_minor_river_file parameter is only used when

@@ -1,0 +1,41 @@
+# change output file names
+# to use, replace "change" with your phrase
+
+timeseries_results:
+  std_physics:
+    value: timeseries/std_phys_change.out
+    variable_name: std_phys_ts_out
+  user_physics:
+    value: timeseries/user_phys_change.out
+    variable_name: user_phys_ts_out
+  std_biology:
+    value: timeseries/std_bio_change.out
+    variable_name: std_bio_ts_out
+  user_biology:
+    value: timeseries/user_bio_change.out
+    variable_name: user_bio_ts_out
+  std_chemistry:
+    value: timeseries/std_chem_change.out
+    variable_name: std_chem_ts_out
+  user_chemistry:
+    value: timeseries/user_chem_change.out
+    variable_name: user_chem_ts_out
+ 
+profiles_results:  
+  profile_file_base:
+    value: profiles/SOG_change
+    variable_name: profilesBase_fn
+  user_profile_file_base:
+    value: profiles/SOG-user_change
+    variable_name: userprofilesBase_fn
+  halocline_file:
+    value: profiles/halo_change.out
+    variable_name: haloclines_fn
+  hoffmueller_file:
+    value: profiles/hoff_change.out
+    variable_name: Hoffmueller_fn
+  user_hoffmueller_file:
+    value: profiles/hoff-user_change.out
+    variable_name: userHoffmueller_fn
+
+

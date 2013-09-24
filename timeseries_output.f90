@@ -62,6 +62,7 @@ contains
     !
     ! Standard physics model time series results
     fn = getpars("std_phys_ts_out")
+    call system("mkdir -p timeseries")
     open(unit=std_phys_timeseries, file=fn, status="replace", action="write")
     call write_std_phys_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)

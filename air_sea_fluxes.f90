@@ -31,7 +31,7 @@ module air_sea_fluxes
 
 contains
 
-  subroutine wind_stress(unow, vnow, rho)
+  subroutine wind_stress(rho)
     ! Calculate the wind-stress.
     !
     ! This calculates the values of the wbar%u(0), and wbar%v(0)
@@ -44,15 +44,15 @@ contains
     ! Variable Declarations:
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
+    use forcing, only: unow, vnow ! Current wind components
 
     implicit none
 
     ! Arguments:
     real(kind=dp), intent(in) :: &
-         unow, &  ! 35 degree wind component (cross-strait)
-         vnow, &  ! 325 degree wind component (along-strait)
          rho      ! surface water density (doesn't have to be current
                   ! value)
+
     ! Local variables:
     real(kind=dp) :: &
          C_D,      &  ! drag coefficient (Large and Pond)
@@ -79,7 +79,7 @@ contains
   end subroutine wind_stress
 
 
-  subroutine longwave_latent_sensible_heat(cf, atemp, humid, T_o, rho_o, Cp_o)
+  subroutine longwave_latent_sensible_heat(T_o, rho_o, Cp_o)
     ! Calculate the surface turbulent heat flux.
     !
     ! This calculates the values of the wbar%t(0) variable that is
@@ -92,22 +92,25 @@ contains
     ! Variable Declarations:
     use turbulence, only: &
          wbar  ! Turbulent kinematic flux profile arrays
+    use forcing, only: &
+         cf_value, &  ! cloud fraction as stored (10x fraction)
+         atemp_value, & ! current air temperature [K]
+         humid_value ! current air humidity [%]
     ! Functions:
     use unit_conversions, only: KtoC
 
     implicit none
 
     ! Arguments
-    real(kind=sp),intent(in) :: &
-         cf,    & ! Cloud fraction [0 to 1]
-         atemp, & ! Air temperature [K]
-         humid    ! humidity [%]
     real(kind=dp),intent(in) :: &
          T_o,   & ! Sea surface water temperature [K]
          rho_o, & ! Sea surface water density  [kg/m^3]
          Cp_o     ! Sea surface water specific heat [kJ/kg-K]
     ! Local parameter values and variables:
     !
+    ! cloud fraction [0 to 1]
+    real(kind=sp) :: cf
+
     ! Longwave radiation
     real(kind=dp), parameter :: &
          r = 0.03,         &
@@ -140,18 +143,19 @@ contains
          h_latent, &  ! Latent heat
          Q_t          ! Surface heat flux [W/m^2]
 
+    cf = cf_value/10.
     ! Downward radiation from atmosphere
     ! *** There are several different ways to calculate this
-    lw_in = (1 - r) * (1 + 0.170 * cf**2) * Ce * atemp**2 &
-         * sigma * atemp**4
+    lw_in = (1 - r) * (1 + 0.170 * cf**2) * Ce * atemp_value**2 &
+         * sigma * atemp_value**4
     ! Upward emission of radiation from earth's surface, stull page 48
     lw_out = -epsilon_w * sigma * T_o**4
     lw_net = lw_in + lw_out
     ! Sensible heat flux
-    h_sens = Cs * rho_atm * Cp * UU * (atemp - T_o)
+    h_sens = Cs * rho_atm * Cp * UU * (atemp_value - T_o)
     ! Vapour pressure in mb
-    ea = (humid / 100) * &
-         exp(2.303 * ((a * KtoC(atemp) / ( KtoC(atemp) + b)) + c))
+    ea = (humid_value / 100) * &
+         exp(2.303 * ((a * KtoC(atemp_value) / ( KtoC(atemp_value) + b)) + c))
     !Saturated vapour pressure
     ! *** Same const as above??
     es = exp(2.3026 * ((a * KtoC(T_o) / (KtoC(T_o) + b)) + c))

@@ -20,6 +20,9 @@ module forcing
        vary_quantity, vary_forcing, &
        ! Variables:
        UseRiverTemp, vary, &
+       Qinter, Einter, RiverTemp, &
+       cf_value, atemp_value, humid_value, &
+       unow, vnow, &
        ! Subroutines:
        init_forcing,   &
        read_variation, &
@@ -49,6 +52,11 @@ module forcing
   type(vary_forcing) :: vary
   ! Do we add the cooling/warming effect of the Major River?
   logical :: UseRiverTemp
+  real(kind=dp) :: Qinter, Einter, &! Current flow of Major and Minor Rivers
+                   RiverTemp  ! Current temperature of Major River
+  ! current values of cloud fraction, air temperature and humidity
+  real(kind=sp) :: cf_value, atemp_value, humid_value 
+  real(kind=dp) :: unow, vnow ! Current wind components
 
   ! Private module variable declarations:
   integer ::     &
@@ -62,6 +70,7 @@ module forcing
        wind_northwest,  &  ! North-west wind speed forcing data array
        Qriver,          &  ! Major river flow forcing data array
        Eriver              ! Minor river flow forcing data array
+
   real(kind=sp), dimension(:,:), allocatable :: &
        cf,              &  ! Cloud fraction forcing data array
        atemp,           &  ! Air temperature forcing data array
@@ -160,7 +169,7 @@ contains
     ! Should average data be used
     character*80 :: use_average_forcing_data
     ! File name for minor and major river data files
-    character*80 :: minor_river_file, major_river_file
+    character*80 :: minor_river_file, major_river_file, river_nut_file
     ! Indices
     integer :: ic, jc, j
     ! Data file values
@@ -643,11 +652,14 @@ contains
        enddo
        Eriver(1:river_n) = integ_minor_river(1:river_n)
     endif
+
+    ! read River Nutrients file (just a stub here)
+
+    river_nut_file = getpars("river nutrients file")
 end subroutine read_forcing
 
 
-  subroutine get_forcing (year, day, day_time, &
-       Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, unow, vnow)
+  subroutine get_forcing (year, day, day_time)
 
     use unit_conversions, only: CtoK
 
@@ -658,15 +670,10 @@ end subroutine read_forcing
     integer, intent(in) :: day ! current year day
     real(kind=dp), intent(in) :: day_time ! current time of day in seconds
 
-    real(kind=dp), intent(out) :: Qinter, Einter ! values of river flows
-    real(kind=dp), intent(out) :: RiverTemp ! temperature of Major River
-    real(kind=sp), intent(out) :: cf_value     ! cloud fraction
-    real(kind=sp), intent(out) :: atemp_value  ! air temperature
-    real(kind=sp), intent(out) :: humid_value  ! humidity
-    real(kind=dp), intent(out) :: unow, vnow ! wind components
-
+    ! arrays we are interpolating across to get current values:
     ! Wind data is in a single array with 1 hour per line, cf, atemp and
-    ! hmid are in array of day and time, and the river flows are one value per day.
+    ! humid are in array of day and time
+    ! the river flows are one value per day.
 
     ! local variable
 

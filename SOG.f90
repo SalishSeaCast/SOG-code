@@ -126,16 +126,6 @@ program SOG
   real(kind=dp) :: &
        sumS=0, sumSriv=0, Sone
   integer :: scount=0, junk
-  ! Interpolated river flows
-  real(kind=dp) :: Qinter  ! Fraser River
-  real(kind=dp) :: Einter  ! Englishman River
-  ! River Temperature (of major river)
-  real(kind=dp) :: RiverTemp
-  ! Current time met data
-  real(kind=sp) :: cf_value, atemp_value, humid_value
-  ! Wind data
-  real(kind=dp) :: unow, vnow
-
 
   ! ---------- Beginning of Initialization Section ----------
   ! Get the current date/time from operating system to timestamp the
@@ -231,12 +221,10 @@ program SOG
 
 
      ! Get forcing data
-     call get_forcing(year, day, day_time, &
-          Qinter, Einter, RiverTemp, cf_value, atemp_value, humid_value, &
-          unow, vnow)
+     call get_forcing(year, day, day_time)
 
      ! Calculate sunlight effects
-     call calc_irradiance(cf_value, day_time, day, Qinter, &
+     call calc_irradiance(day_time, day, &
           P%micro, P%nano, P%pico)
 
      do count = 1, max_iter !---- Beginning of the implicit solver loop ----
@@ -255,14 +243,14 @@ program SOG
         !
         ! This calculates the values of the wbar%u(0), and wbar%v(0)
         ! variables that are declared in the turbulence module.
-        call wind_stress (unow, vnow, rho%g(1))
+        call wind_stress (rho%g(1))
         !
         ! Turbulent heat flux at the surface.
         !
         ! This calculates the value of the wbar%t(0) variable that is
-        ! declared in the turbulence module.
-        call longwave_latent_sensible_heat(cf_value/10.0, atemp_value, &
-             humid_value, T%new(0), rho%g(0), Cp%i(0))
+        ! declared in the turbulence module. Uses air properties:
+        ! cloud fraction, temperature and humidity
+        call longwave_latent_sensible_heat(T%new(0), rho%g(0), Cp%i(0))
 
         ! Calculate non-turbulent heat flux profile
         Q_n = I_total / (Cp%i * rho%i)
@@ -274,7 +262,7 @@ program SOG
         ! (S_riv), the surface turbulent kinematic salinity flux
         ! (wbar%s(0)), and the profile of fresh water contribution to
         ! the salinity (F_n)
-        call freshwater_phys(Qinter, Einter, RiverTemp, S%old(1), &
+        call freshwater_phys(S%old(1), &
              T%old(1), T%old(grid%M+1), h%new)
 
         ! Calculate the buoyancy profile, surface turbulent kinematic
@@ -511,7 +499,7 @@ program SOG
      ! Integrate surface values for northern influence calculation
      if (Northern_return) &
           call integrate_northern(T%new(0), N%O(0), N%H(0), &
-           Si(0), D%DON(0), DIC(0), D%DOC(0), Oxy(0), dt)
+           Si(0), D%DON(0), D%DOC(0), Oxy(0), dt)
 
      ! Write standard time series results
      ! !!! Please don't change this argument list without good reason.    !!!
@@ -566,7 +554,7 @@ program SOG
      sumSriv = sumSriv + S_riv
      ! Diagnostic, to check linearity of the freshwater forcing
      ! comment out for production runs
-     write (129, *) S_riv,  S%new(1)
+     write (129, *) S_riv,  Sone
 
   end do  !--------- End of time loop ----------
 
