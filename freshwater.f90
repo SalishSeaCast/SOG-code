@@ -286,7 +286,15 @@ contains
 
     ! Calculate River Alkalinity from discharge
     ! river_Alk = river_Alk_0 * exp(river_Alk_decay * Fresh_avg)
-    if (river_alk_0 .lt. 0.0d0) then
+    ! New fits:
+    !      >  0: Constant
+    !     == -1: Poly2  (SoG data)
+    !     == -2: Power1 (Hope data)
+    !     == -3: Linear (Estuary data)
+    !
+    if (river_alk_0 .gt. 0.0d0) then        ! Constant
+       river_Alk = river_alk_0
+    elseif (river_alk_0 .eq. -1.0d0) then   ! Poly2  (SoG data)
        if (Fresh_avg .gt. 6.0d3) then
           river_Alk = min(1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &
                + 1127.8132d0, 805.3502d0)
@@ -294,8 +302,14 @@ contains
           river_Alk = 1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &
                + 1127.8132d0
        end if
+    elseif (river_alk_0 .eq. -2.0d0) then   ! Power1 (Hope data)
+       river_Alk = min(3466.0049d0 * Fresh_avg**(-0.1576d0), 1360.8297d0)
+    elseif (river_alk_0 .eq. -3.0d0) then   ! Linear (Estuary data)
+       river_Alk = -0.0243d0 * Fresh_avg + 932.5315d0
     else
-       river_Alk = river_alk_0
+       write (*,*) "uninterpretable value ", river_alk_0, &
+            " for river_alk_0 in freshwater.f90"
+       call exit(1)
     end if
 
     if (river_chem .lt. 0.0d0) then
