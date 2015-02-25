@@ -94,7 +94,7 @@ program SOG
        dalloc_biology_variables
   use biology_eqn_builder, only: build_biology_equations, &
        new_to_old_bio_RHS, new_to_old_bio_Bmatrix
-  use chemistry_model, only: solve_gas_flux
+  use chemistry_model, only: solve_gas_flux, &
   use IMEX_solver, only: init_IMEX_solver, solve_phys_eqns, solve_bio_eqns, &
        dalloc_IMEX_variables
   use timeseries_output, only: init_timeseries_output, write_std_timeseries, &

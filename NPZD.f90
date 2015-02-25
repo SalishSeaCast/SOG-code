@@ -22,6 +22,8 @@ module NPZD
        uptake,            &  ! NO, NH, and PC uptake arrays
        Mesozoo,           &  ! Mesozooplankton profile array
        f_ratio,           &  ! Ratio of new to total production profile
+       remin_NH,          &
+       NH_oxid,           &
        ! Subroutines:
        init_NPZD,            &  ! Allocate memory for biology model
                                 ! variables, and read parameter values
@@ -1032,23 +1034,22 @@ contains
     NatMort_nano  = (rate_nano%Rm)  * temp_Q10 * Pnano
     NatMort_pico  = (rate_pico%Rm)  * temp_Q10 * Ppico
 
-    was_NH = was_NH + (frac_waste_DNM%NH * NatMort_micro &
+    was_NH = was_NH + frac_waste_DNM%NH * NatMort_micro &
          + frac_waste_NNM%NH * NatMort_nano &
-         + frac_waste_FNM%NH * NatMort_pico) * (1-rate_mesozoo%eff)
-    was_DON = was_DON + (frac_waste_DNM%DON * NatMort_micro &
+         + frac_waste_FNM%NH * NatMort_pico
+    was_DON = was_DON + frac_waste_DNM%DON * NatMort_micro &
          + frac_waste_NNM%DON * NatMort_nano &
-         + frac_waste_FNM%DON * NatMort_pico) * (1-rate_mesozoo%eff)
-    was_PON = was_PON + (frac_waste_DNM%PON * NatMort_micro &
+         + frac_waste_FNM%DON * NatMort_pico
+    was_PON = was_PON + frac_waste_DNM%PON * NatMort_micro &
          + frac_waste_NNM%PON * NatMort_nano &
-         + frac_waste_FNM%PON * NatMort_pico) * (1-rate_mesozoo%eff)
-    was_Ref = was_Ref + (frac_waste_DNM%Ref * NatMort_micro &
+         + frac_waste_FNM%PON * NatMort_pico
+    was_Ref = was_Ref + frac_waste_DNM%Ref * NatMort_micro &
          + frac_waste_NNM%Ref * NatMort_nano &
-         + frac_waste_FNM%Ref * NatMort_pico) * (1-rate_mesozoo%eff)
+         + frac_waste_FNM%Ref * NatMort_pico
     was_BSi = was_BSi &
-         + (frac_waste_DNM%BSi * NatMort_micro * rate_micro%Si_ratio &
+         + frac_waste_DNM%BSi * NatMort_micro * rate_micro%Si_ratio &
          + frac_waste_NNM%Bsi * NatMort_nano * rate_nano%Si_ratio &
-         + frac_waste_FNM%Bsi * NatMort_pico * rate_pico%Si_ratio) &
-         * (1-rate_mesozoo%eff)
+         + frac_waste_FNM%Bsi * NatMort_pico * rate_pico%Si_ratio
 
     ! Grazing processes: MesoZooplankton Fit
 
@@ -1064,12 +1065,16 @@ contains
             exp( -(day-rate_mesozoo%sumpeakpos+365.25)**2 / &
                                 rate_mesozoo%sumpeakwid**2 ) ) )
 
-
+    ! PREY MOD: added Ppico to Meso prey - BMM
     average_prey = full_depth_average(Pmicro + D_PON + Pnano + Ppico + Z)
+    !average_prey = full_depth_average(Pmicro + D_PON + Pnano + Z)
 
     Mesozoo(1:M) = Mesozoo(1:M) &
          * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Ppico(1:M) + Z(1:M)) &
          / ( average_prey + epsilon(average_prey))
+    !Mesozoo(1:M) = Mesozoo(1:M) &
+    !     * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Z(1:M)) &
+    !     / ( average_prey + epsilon(average_prey))
 
     ! microzoo natural mortality:
     NatMort_uzoo = rate_uzoo%Rm * temp_Q10 * Z
@@ -1105,17 +1110,24 @@ contains
 
     do jj = 1,M
        ! global food limitation
+
+       ! PREY MOD: added Ppico to Meso prey - BMM
        food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) + Ppico(jj) &
             + Z(jj) - rate_mesozoo%PredSlope) / &
             (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
             + Ppico(jj) + Z(jj) - rate_mesozoo%PredSlope &
             + epsilon(rate_mesozoo%HalfSat))
+       !food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) &
+       !     + Z(jj) - rate_mesozoo%PredSlope) / &
+       !     (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
+       !     + Z(jj) - rate_mesozoo%PredSlope &
+       !     + epsilon(rate_mesozoo%HalfSat))
 
        denominator = (rate_mesozoo%MicroPref * Pmicro(jj) + &
             rate_mesozoo%NanoPref * Pnano(jj) + &
             rate_mesozoo%PicoPref * Ppico(jj) + &
             rate_mesozoo%PON_Pref * D_PON(jj) + &
-            rate_mesozoo%Z_Pref * Z(jj) + epsilon(Pmicro(jj)) )
+            rate_mesozoo%Z_Pref * Z(jj) + epsilon(Pmicro(jj)))
 
        ! limitation based on microplankton
        Meso_mort_micro(jj) = min(rate_mesozoo%MicroPref * food_limitation &
@@ -1182,26 +1194,26 @@ contains
     Graz_PON       = Graz_PON       + Meso_graz_PON
     GrazMort_Z     = GrazMort_Z     + Meso_mort_Z
 
-    was_NH = was_NH + frac_waste_PEM%NH * Meso_graz_PON +     &
+    was_NH = was_NH + (frac_waste_PEM%NH * Meso_graz_PON +     &
          frac_waste_DEM%NH  * Meso_mort_micro +               &
          frac_waste_NEM%NH  * Meso_mort_nano +                &
          frac_waste_FEM%NH  * Meso_mort_pico +                &
-         frac_waste_ZEM%NH  * Meso_mort_Z
-    was_DON = was_DON + frac_waste_PEM%DON * Meso_graz_PON +  &
+         frac_waste_ZEM%NH  * Meso_mort_Z) * (1-rate_mesozoo%eff)
+    was_DON = was_DON + (frac_waste_PEM%DON * Meso_graz_PON +  &
          frac_waste_DEM%DON * Meso_mort_micro +               &
          frac_waste_NEM%DON * Meso_mort_nano +                &
          frac_waste_FEM%DON * Meso_mort_pico +                &
-         frac_waste_ZEM%DON * Meso_mort_Z
-    was_PON = was_PON + frac_waste_PEM%PON * Meso_graz_PON +  &
+         frac_waste_ZEM%DON * Meso_mort_Z) * (1-rate_mesozoo%eff)
+    was_PON = was_PON + (frac_waste_PEM%PON * Meso_graz_PON +  &
          frac_waste_DEM%PON * Meso_mort_micro +               &
          frac_waste_NEM%PON * Meso_mort_nano +                &
          frac_waste_FEM%PON * Meso_mort_pico +                &
-         frac_waste_ZEM%PON * Meso_mort_Z
-    was_Ref = was_Ref + frac_waste_PEM%Ref * Meso_graz_PON +  &
+         frac_waste_ZEM%PON * Meso_mort_Z) * (1-rate_mesozoo%eff)
+    was_Ref = was_Ref + (frac_waste_PEM%Ref * Meso_graz_PON +  &
          frac_waste_DEM%Ref * Meso_mort_micro +               &
          frac_waste_NEM%Ref * Meso_mort_nano +                &
          frac_waste_FEM%Ref * Meso_mort_pico +                &
-         frac_waste_ZEM%Ref * Meso_mort_Z
+         frac_waste_ZEM%Ref * Meso_mort_Z) * (1-rate_mesozoo%eff)
     was_BSi = was_BSi + frac_waste_PEM%BSi * Meso_graz_PON * 0.d0 +   &
          frac_waste_DEM%BSi * Meso_mort_micro * rate_micro%Si_ratio + &
          frac_waste_NEM%BSi * Meso_mort_nano * rate_nano%Si_ratio +   &

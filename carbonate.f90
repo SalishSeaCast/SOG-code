@@ -89,6 +89,8 @@ contains
          Sal,        &  ! Practical salinity [PSU]
          Pdbar          ! Pressure [dbar]
     ! Local Variables
+    character(len=4) :: &
+         seaconstants   ! 'L-00' or 'M-10'?
     real(kind=dp) :: &
          Pbar,     &  ! Pressure [bar]
          TempK100, &  ! Temperature [K] / 100
@@ -110,6 +112,16 @@ contains
          lnKSi,    &  ! Natural log KSi
          lnKS,     &  ! Natural log KS
          lnKF         ! Natural log KF
+    ! Millero 2010 Variables
+    real(kind=dp) :: &
+         pK10,     &  !
+         A1,       &  !
+         B1,       &  !
+         C1,       &  !
+         pK20,     &  !
+         A2,       &  !
+         B2,       &  !
+         C2
 
     ! Preallocate common operations
     Pbar = Pdbar / 10
@@ -171,20 +183,58 @@ contains
 
     ! Calculate K1 & K2:
     if (watertype .eq. 'sea') then
-       ! From Lueker, Dickson, Keeling, 2000
-       ! This is Mehrbach's data refit after conversion to the total scale,
-       ! for comparison with their equilibrator work. 
-       ! Mar. Chem. 70 (2000) 105-119
-       ! Total scale and kg-sw
-       pK1 = 3633.86d0 / TempK - 61.2172d0 + 9.6777d0 * logTempK - &
-            0.011555d0 * Sal + 0.0001152d0 * Sal**2
-       K1 = 10**(-1.0d0 * pK1)  & ! this is on the total pH scale in mol/kg-SW
-            / SWStoTOT            ! convert to SWS pH scale
 
-       pK2 = 471.78d0 / TempK + 25.929d0 - 3.16967d0 * logTempK - &
-            0.01781d0 * Sal + 0.0001122d0 * Sal**2
-       K2 = 10**(-1.0d0 * pK2)  & ! this is on the total pH scale in mol/kg-SW
-            / SWStoTOT            ! convert to SWS pH scale
+       ! Which constants?
+       seaconstants = 'M-10'
+
+       if (seaconstants .eq. 'L-00') then
+
+          ! From Lueker, Dickson, Keeling, 2000
+          ! This is Mehrbach's data refit after conversion to the total scale,
+          ! for comparison with their equilibrator work. 
+          ! Mar. Chem. 70 (2000) 105-119
+          ! Total scale and kg-sw
+          pK1 = 3633.86d0 / TempK - 61.2172d0 + 9.6777d0 * logTempK - &
+               0.011555d0 * Sal + 0.0001152d0 * Sal**2
+          K1 = 10**(-1.0d0 * pK1)  & ! this is on the total pH scale in mol/kg-SW
+               / SWStoTOT            ! convert to SWS pH scale
+
+          pK2 = 471.78d0 / TempK + 25.929d0 - 3.16967d0 * logTempK - &
+               0.01781d0 * Sal + 0.0001122d0 * Sal**2
+          K2 = 10**(-1.0d0 * pK2)  & ! this is on the total pH scale in mol/kg-SW
+               / SWStoTOT            ! convert to SWS pH scale
+
+       else if (seaconstants .eq. 'M-10') then
+
+          ! From Millero, 2010, also for estuarine use.
+          ! Marine and Freshwater Research, v. 61, p. 139–142.
+          ! Fits through compilation of real seawater titration results:
+          ! Mehrbach et al. (1973), Mojica-Prieto & Millero (2002),
+          ! Millero et al. (2006)
+          ! Constants for K's on the SWS;
+          ! This is from page 141
+          pK10 = -126.34048d0 + 6320.813d0 / TempK + 19.568224d0 * log(TempK)
+          ! This is from their table 2, page 140.
+          A1   = 13.4038d0 * Sal**0.5 + 0.03206d0 * Sal - 5.242d-5 * Sal**2
+          B1   = -530.659d0 * Sal**0.5 - 5.8210d0 * Sal
+          C1   = -2.0664d0 * Sal**0.5
+          pK1  = pK10 + A1 + B1 / TempK + C1 * log(TempK)
+          K1   = 10**(-pK1)
+          ! This is from page 141
+          pK20 =  -90.18333d0 + 5143.692d0 / TempK + 14.613358d0 * log(TempK)
+          ! This is from their table 3, page 140.
+          A2   = 21.3728d0 * Sal**0.5 + 0.1218d0 * Sal - 3.688d-4 * Sal**2
+          B2   = -788.289d0 * Sal**0.5 - 19.189d0 * Sal
+          C2   = -3.374d0 * Sal**0.5
+          pK2  = pK20 + A2 + B2 / TempK + C2 * log(TempK)
+          K2   = 10**(-pK2)
+
+       else
+          write (stdout, *) 'parameter type in carbonate.f90:', &
+               'Unexpected value: ', seaconstants
+          call exit(1)
+       end if
+       
     elseif (watertype .eq. 'fresh') then
        ! PURE WATER CASE
        ! Millero, F. J., Geochemica et Cosmochemica Acta 43:1651-1661, 1979:
@@ -199,6 +249,17 @@ contains
        K1 = exp(lnK1)
        lnK2 = 207.6548d0 - 11843.79d0 / TempK - 33.6485d0 * logTempK
        K2 = exp(lnK2)
+
+       ! Assign Millero 2010 vars to zero so compiler doesn't get angry
+       pK10 = 0.0d0
+       A1   = 0.0d0
+       B1   = 0.0d0
+       C1   = 0.0d0
+       pK20 = 0.0d0
+       A2   = 0.0d0
+       B2   = 0.0d0
+       C2   = 0.0d0
+
     else
        write (stdout, *) 'parameter type in carbonate.f90:', &
             'Unexpected value: ', watertype
@@ -437,8 +498,8 @@ contains
   end subroutine pressure_corrections
 
 
-  subroutine calc_carbonate(watertype, partype, par1, par2, rho, S, T, P, &
-       PO4, Si, parout)
+  subroutine calc_carbonate(watertype, typein, typeout, par1, par2, &
+       rho, S, T, P, PO4, Si, parout)
     ! Calculate pCO2 from DIC at T, S and 1 atm. Total alkalinity
     ! is required for this calculation, but for our purposes will
     ! obtained using a linear fit to salinity.
@@ -456,7 +517,8 @@ contains
     ! Arguments
     character(len=*), intent(in) :: &
          watertype,  &    ! 'sea' or 'fresh'?
-         partype          ! 'DIC' or 'pH'?
+         typein,     &    ! 'DIC' or 'pH'?
+         typeout          ! 'DIC', 'pH', 'pCO2', or 'Omega'?
     real(kind=dp), intent(in) :: &
          par1,       &    ! Total alkalinity [ueq/L]
          par2,       &    ! Either DIC [uM C] or pH [total scale]
@@ -467,7 +529,7 @@ contains
          PO4,        &    ! Phosphate [uM]
          Si               ! Silicate [uM]
     real(kind=dp), intent(out) :: &
-         parout           ! Either CO2_star or DIC [uM]
+         parout           ! 'DIC', 'pH', 'pCO2', or 'Omega'?
     ! Local variables
     ! Carbonate system properties
     real(kind=dp) :: &
@@ -486,34 +548,99 @@ contains
     TP  = PO4 * 1.0d-3 / rho
     TSi = Si * 1.0d-3 / rho
 
-    if (partype .eq. 'DIC') then
+    if (typein .eq. 'DIC') then
 
-       ! Convert from uM to mol/kg
-       DIC = par2 * 1.0d-3 / rho
+       if (typeout .eq. 'DIC') then
+          write (stdout, *) 'output parameter type in carbonate.f90:', &
+            typeout, 'is not appropriate for input type: ', typein
+          call exit(1)
+       else
 
-       ! pH from DIC and Alkalinity
-       call CalculatepHfromTATC(Alk, DIC, TP, TSi, pH)
+          ! Convert from uM to mol/kg
+          DIC = par2 * 1.0d-3 / rho
 
-       ! [H+] from pH
-       H_total = 10.0d0**(-1.0d0 * pH)
+          ! pH from DIC and Alkalinity
+          call CalculatepHfromTATC(Alk, DIC, TP, TSi, pH)
+          
+          if (typeout .eq. 'pH') then
 
-       ! Calculate CO2* as defined in CDIAC Best Practices 2007, PICES Special
-       ! Publication 3, Dickson et al. eds. (Ch 2 pp 9-10, EQs 60, 68, & 70)
-       parout = DIC * H_total**2/(H_total**2 + K1 * H_total + K1 * K2) / K0
+             ! Parout equals pH
+             parout = pH
 
-       parout = parout * 1e6 / FugFac
-       
-    elseif (partype .eq. 'pH') then
+          elseif (typeout .eq. 'pCO2') then
 
-       ! DIC from Alkalinity and pH
-       call CalculateTCfromTApH(Alk, par2, TP, TSi, parout)
+             ! [H+] from pH
+             H_total = 10.0d0**(-1.0d0 * pH)
 
-       ! Convert back to uM
-       parout = parout * rho * 1.0d3
+             ! Calculate pCO2 as defined in CDIAC Best Practices 2007,
+             ! PICES Special Publication 3, Dickson et al. eds.
+             ! (Ch 2 pp 9-10, EQs 60, 68, & 70)
+             parout = DIC * H_total**2 / &
+                  (H_total**2 + K1 * H_total + K1 * K2) / K0
+
+             ! Parout equals pCO2
+             parout = parout * 1e6 / FugFac
+
+          elseif (typeout .eq. 'Omega_A') then
+
+             ! Parout equals Omega_A
+             call ca_solubility(S, T, P, DIC, pH, parout)
+             
+          else
+             write (stdout, *) 'output parameter type in carbonate.f90:', &
+                  'Unexpected value: ', typeout
+             call exit(1)
+          endif
+
+       end if
+
+    elseif (typein .eq. 'pH') then
+
+       if (typeout .eq. 'pH') then
+          write (stdout, *) 'output parameter type in carbonate.f90:', &
+               typeout, 'is not appropriate for input type: ', typein
+          call exit(1)
+       else
+
+          ! DIC from Alkalinity and pH
+          call CalculateTCfromTApH(Alk, par2, TP, TSi, DIC)
+
+          if (typeout .eq. 'DIC') then
+
+             ! Parout equals DIC
+             parout = DIC * rho * 1.0d3
+          
+          else if (typeout .eq. 'pCO2') then
+
+             ! [H+] from pH
+             H_total = 10.0d0**(-1.0d0 * pH)
+
+             ! Calculate CO2* as defined in CDIAC Best Practices 2007,
+             ! PICES Special Publication 3, Dickson et al. eds.
+             ! (Ch 2 pp 9-10, EQs 60, 68, & 70)
+             parout = DIC * H_total**2 / &
+                  (H_total**2 + K1 * H_total + K1 * K2) / K0
+
+             ! Parout equals pCO2
+             parout = parout * 1e6 / FugFac
+
+          elseif (typeout .eq. 'Omega_A') then
+
+             ! Parout equals Omega_A
+             call ca_solubility(S, T, P, DIC, pH, parout)
+
+          else
+             write (stdout, *) 'output parameter type in carbonate.f90:', &
+                  'Unexpected value: ', typeout
+             call exit(1)
+
+          end if
+
+       end if
 
     else
        write (stdout, *) 'parameter type in carbonate.f90:', &
-            'Unexpected value: ', partype
+            'Unexpected value: ', typein
        call exit(1)
     endif
 
@@ -642,8 +769,7 @@ contains
   end subroutine CalculatepHfromTATC
 
 
-  subroutine ca_solubility(watertype, S, TempK, P, rho, DIC, pH, Omega_ca, &
-       Omega_ar)
+  subroutine ca_solubility(S, TempK, P, DIC, pH, Omega_ar)
     ! Taken from CO2SYS subfunction CaSolubility
     ! ***********************************************************************
     ! SUB CaSolubility, version 01.05, 05-23-97, written by Ernie Lewis.
@@ -682,17 +808,13 @@ contains
     implicit none
 
     ! Arguments
-    character(len=*), intent(in) :: &
-         watertype      ! 'sea' or 'fresh'?
     real(kind=dp), intent(in) :: &
          S,          &  ! Salinity profile array
          TempK,      &  ! Temperature profile array [K]
          P,          &  ! Pressure profile array [dbar]
-         rho,        &  ! Seawater density [kg/m^3]
-         DIC,        &  ! Dissolved inorganic carbon profile array [uM]
+         DIC,        &  ! Dissolved inorganic carbon profile array [mol kg-1]
          pH             ! pH profile array
     real(kind=dp), intent(out) :: &
-         Omega_ca,   &  ! Calcite saturation state
          Omega_ar       ! Aragonite saturation state
     ! Local Variables
     real(kind=dp) :: &
@@ -707,10 +829,8 @@ contains
          deltaV_KCa, &  ! Molal volume for KCa pressure correction
          deltaV_KAr, &  ! Molal volume for KAr pressure correction
          Kappa_KCa,  &  ! Compressibility for KCa pressure correction
-         Kappa_KAr      ! Compressibility for KAr pressure correction
-
-    ! Set equilibrium constants
-    call set_constants(watertype, S, TempK, P)
+         Kappa_KAr,  &  ! Compressibility for KAr pressure correction
+         Omega_ca       ! Calcite saturation state
 
     ! Precalculate quantities
     TempC = KtoC(TempK)
@@ -754,7 +874,7 @@ contains
 
     ! Calculate Omegas:
     H = 10.0d0**(-pH)
-    CO3 = (1.0d-3/rho) * DIC * K1 * K2 / (K1 * H + H * H + K1 * K2)
+    CO3 = DIC * K1 * K2 / (K1 * H + H * H + K1 * K2)
     Omega_ca = CO3 * Ca / KCa
     Omega_ar = CO3 * Ca / KAr
 

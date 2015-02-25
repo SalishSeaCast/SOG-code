@@ -20,10 +20,10 @@ module upwelling
 
   private
   public :: &
-       ! subroutines:
+       ! Subroutines:
        init_upwelling, &
        upwelling_profile, upwelling_advection, &
-       dalloc_upwelling_variables, w_upwell
+       dalloc_upwelling_variables
 
   ! Variable Declarations:
   !
@@ -47,6 +47,7 @@ contains
     call alloc_upwelling_variables(M)
     ! Read upwelling parameter values from the infile.
     call read_upwelling_params()
+    
   end subroutine init_upwelling
 
 
@@ -158,9 +159,9 @@ contains
     character(len=80) :: msg        ! Allocation failure message prefix
 
     msg = "Vertical profiles of upwelling velocity arrays"
-    allocate(w_entrain(0:M), w_upwell(0:M), &
-         stat=allocstat)
+    allocate(w_entrain(0:M), w_upwell(0:M), stat=allocstat)
     call alloc_check(allocstat, msg)
+
   end subroutine alloc_upwelling_variables
 
 
@@ -173,9 +174,9 @@ contains
     character(len=80) :: msg         ! Deallocation failure message prefix
 
     msg = "Vertical profiles of upwelling velocity arrays"
-    deallocate(w_entrain, w_upwell, &
-         stat=dallocstat)
+    deallocate(w_entrain, w_upwell, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
+
   end subroutine dalloc_upwelling_variables
 
 end module upwelling

@@ -7,8 +7,14 @@ module chemistry_model
 
   private
   public :: &
+       ! Variables:
+       pCO2, &
        ! Subroutines:
        solve_gas_flux
+
+  ! Public variable declarations
+  real(kind=dp) :: &
+       pCO2          ! Surface pCO2 [uatm]
 
 contains
 
@@ -54,9 +60,8 @@ contains
     integer :: &
          count         ! Loop index
     real(kind=dp) :: &
-         DIC_flux,  &  ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
-         Oxy_flux,  &  ! Oxygen surface flux [mmol m-2 s-1]
-         pCO2          ! Surface pCO2 [uatm]
+         DIC_flux,   & ! Dissolved inorganic carbon surface flux [mmol m-2 s-1]
+         Oxy_flux      ! Oxygen surface flux [mmol m-2 s-1]
 
     do count = 1, chem_steps !---- Begin Iteration Loop ----
 
@@ -64,8 +69,8 @@ contains
        call new_to_old_chem_Bmatrix()
 
        ! Calculate surface CO2* from surface DIC
-       call calc_carbonate('sea', 'DIC', Alk(1), DIC(1), rho, S, T, 0.0d0, &
-            PO4, Si, pCO2)
+       call calc_carbonate('sea', 'DIC', 'pCO2', Alk(1), DIC(1), rho, S, T, &
+            0.0d0, PO4, Si, pCO2)
 
        ! Calculate surface CO2 gas flux
        call gas_flux('CO2', T, S, pCO2, DIC_flux)
@@ -142,6 +147,7 @@ contains
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
          surf_flux + DIC_flux, distrib_flux, DIC(grid%M+1),  &  ! in
          DIC_RHS%diff_adv%new)                                  ! out
+    DICfresh = DICfresh + distrib_flux
     call freshwater_bio ('Oxy', Oxy(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in

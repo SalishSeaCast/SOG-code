@@ -266,7 +266,7 @@ contains
     ! Calculate the strength of the diffusion coefficients for biology
     ! model quantities.  They diffuse like salinity.
     call diffusion_coeff(dt, K%S, & ! in
-         Bmatrix%bio%new)                ! out
+         Bmatrix%bio%new)           ! out
 
     ! Initialize the RHS *%diff_adv%new arrays, and calculate the diffusive
     ! fluxes at the bottom and top of the grid

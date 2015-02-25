@@ -317,8 +317,8 @@ contains
     end if
 
     ! Calculate DIC from Alk and pH
-    call calc_carbonate('fresh', 'pH', river_Alk, pH_riv, rho_riv, 0.0d0, &
-         RiverTemp, 0.0d0, 0.0d0, 0.0d0, river_DIC)
+    call calc_carbonate('fresh', 'pH', 'DIC', river_Alk, pH_riv, rho_riv, &
+         0.0d0, RiverTemp, 0.0d0, 0.0d0, 0.0d0, river_DIC)
 
     ! Calculate Saturated Oxygen from Rivers
     call oxygen_saturation(0.0d0, RiverTemp, river_oxy)
@@ -327,7 +327,6 @@ contains
     ! river value (see BMM Labbook pg 45 for deep values)
     phys_circ_Alk = 2092.98d0 - river_Alk
     phys_circ_DIC = 2059.68d0 - river_DIC
-
     phys_circ_Oxy = DeepOxy - river_oxy ! [umol L^-1]
 
     !-------------------------------------------------------------
