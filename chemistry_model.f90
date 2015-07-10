@@ -147,7 +147,6 @@ contains
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in
          surf_flux + DIC_flux, distrib_flux, DIC(grid%M+1),  &  ! in
          DIC_RHS%diff_adv%new)                                  ! out
-    DICfresh = DICfresh + distrib_flux
     call freshwater_bio ('Oxy', Oxy(0:grid%M),               &
          surf_flux, distrib_flux)
     call diffusion_nonlocal_fluxes(dt, K%S, 0.0d0, Bf,       &  ! in

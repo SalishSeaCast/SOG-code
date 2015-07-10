@@ -415,7 +415,7 @@ contains
     ! Initial zooplankton biomass and detritus profiles
     Z = P%nano  ! *** hard value to estimate
     D%PON = P%micro / 5.0d0  ! estimate
-    D%DON = D%PON / 10.0d0 ! estimate
+    D%DON = D%PON * 10.0d0 ! estimate
     D%bSi = D%PON
     D%refr = 0.0d0
     D%DOC = D%DON * Redfield_C

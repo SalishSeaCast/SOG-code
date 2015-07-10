@@ -356,7 +356,7 @@ physics:
       variable_name: c(:,5)
       description: silicon bottom boundary condition (constant)
     DIC_fit_coefficients:
-      value: [2065.98993, 9.18035435, -3.15241908, 0, -12.52672493,
+      value: [2098.2, 9.18035435, -3.15241908, 0, -12.52672493,
               -5.618220366, 0]
       variable_name: c(:,6)
       description: DIC (constant, seasonal & biseasonal from salinity fit)
@@ -496,7 +496,7 @@ physics:
 
     river_alkalinity_fit:
       river_alkalinity_zero:
-        value: 888.8
+        value: 873.7440
         variable_name: river_Alk_0
         description: river alkalinity at zero discharge
       river_alkalinity_decay:

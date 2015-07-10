@@ -421,25 +421,24 @@ contains
     type(grid_), intent(in) :: &
          grid  ! Grid arrays
     ! Local variables:
-    ! integer :: i  ! Loop index over grid depth
+    integer :: i  ! Loop index over grid depth
 
     ! Write the profile values at the surface.  Eddy diffusivity
     ! arrays don't have values there, so write zeros for them
     !
-    ! write(unit, 600) grid%d_g(0) var1(0) var2(0) var3(0) ...
+    write(unit, 600) grid%d_g(0) ! var1(0) var2(0) var3(0) ...
     !
     ! Write the profile values at the interior grid points
     !
-    ! do i = 1, grid%M
-    !   write(unit, 600) grid%d_g(i) var1(i) var2(i) var3(i) ...
-    ! enddo
+    do i = 1, grid%M
+      write(unit, 600) grid%d_g(i) ! var1(i) var2(i) var3(i) ...
+    enddo
     !
     ! Write the values at the bottom grid boundary.  Some quantities are
     ! not defined there, so use their values at the Mth grid point.
     !
-    ! write(unit, 600) grid%d_g(grid%M+1) var1(grid%M+1) var2(grid%M+1) ...
-! 600 format(f7.3, 80(2x, f8.4))
+    write(unit, 600) grid%d_g(grid%M+1) ! var1(grid%M+1) var2(grid%M+1) ...
+600 format(f7.3, 80(2x, f8.4))
   end subroutine write_user_profiles_numbers
-
 
 end module user_output
