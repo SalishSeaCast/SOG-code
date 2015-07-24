@@ -92,8 +92,8 @@ contains
     call write_user_chem_timeseries_hdr(str_run_Datetime, &
          str_CTD_Datetime, str_start_Datetime)
     ! Salinity check file
-    fn = getpars("salinity_checkfile")
-    open(unit=129, file=fn)
+    ! fn = getpars("salinity_checkfile")
+    ! open(unit=129, file=fn)
   end subroutine init_timeseries_output
 
 
