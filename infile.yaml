@@ -89,7 +89,7 @@ numerics:
     variable_name: dt
     description: time step
   chem_dt:
-    value: 5
+    value: 900
     units: s
     variable_name: chem_dt
     description: internal chemistry time step
@@ -636,7 +636,7 @@ biology:
       variable_name: rate_mesozoo%MicroHalfSat
       description: mesozooplankton diatom grazing half saturation constant
     mesozoo_nano_preference:
-      value: 0.250
+      value: 0.200
       variable_name: rate_mesozoo%NanoPref
       description: mesozooplankton preference for nano-phytoplankton
     mesozoo_nano_grazing_limit:
@@ -650,7 +650,7 @@ biology:
       variable_name: rate_mesozoo%NanoHalfSat
       description: mesozooplankton nano-phyto grazing half saturation const
     mesozoo_pico_preference:
-      value: 0.1
+      value: 0.200
       variable_name: rate_mesozoo%PicoPref
       description: mesozooplankton preference for pico-phytoplankton
     mesozoo_pico_grazing_limit:
@@ -664,7 +664,7 @@ biology:
       variable_name: rate_mesozoo%PicoHalfSat
       description: mesozooplankton pico-phyto grazing half saturation const
     mesozoo_PON_preference:
-      value: 0.192
+      value: 0.150
       variable_name: rate_mesozoo%PON_Pref
       description: mesozooplankton preference for PON
     mesozoo_PON_grazing_limit:
@@ -678,11 +678,11 @@ biology:
       variable_name: rate_mesozoo%PON_HalfSat
       description: mesozooplankton PON feeding half saturation const
     mesozoo_microzoo_preference:
-      value: 0.308
+      value: 0.200
       variable_name: rate_mesozoo%Z_Pref
       description: mesozooplankton preference for microzooplankton
     mesozoo_microzoo_grazing_limit:
-      value: 0.500
+      value: 1.000
       units: uM N
       variable_name: rate_mesozoo%Z_PredSlope
       description: mesozooplankton microzooplankton grazing limit
@@ -1463,7 +1463,7 @@ forcing_data:
     description: yes=avg only; no=fail if data runs out; fill=historic then avg
 
   wind_forcing_file:
-    value: ../SOG-forcing/wind/SH_total_31Dec2011.dat
+    value: ../SOG-forcing/wind/SH_total_31May2013.dat
     variable_name: n/a
     description: wind forcing data path/filename
   # The avg_historical_wind_file parameter is only used when
@@ -1507,7 +1507,7 @@ forcing_data:
     description: average/historical humidity forcing data path/filename
 
   major_river_forcing_file:
-    value: ../SOG-forcing/rivers/Fraser_total_10Jul2012.dat
+    value: ../SOG-forcing/rivers/Fraser_total_31May2013.dat
     variable_name: n/a
     description: major river flow forcing data path/filename
   # The avg_historical_major_river_file parameter is only used when
@@ -1526,7 +1526,7 @@ forcing_data:
     description: file containing monthly climatology values of NO3 and Si
 
   minor_river_forcing_file:
-    value: ../SOG-forcing/rivers/Englishman_total_21Aug2012.dat
+    value: ../SOG-forcing/rivers/Englishman_total_31May2013.dat
     variable_name: Eriver
     description: minor river flow forcing data path/filename
   # The avg_historical_minor_river_file parameter is only used when
