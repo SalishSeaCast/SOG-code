@@ -55,7 +55,7 @@ module forcing
   real(kind=dp) :: Qinter, Einter, &! Current flow of Major and Minor Rivers
                    RiverTemp  ! Current temperature of Major River
   ! current values of cloud fraction, air temperature and humidity
-  real(kind=sp) :: cf_value, atemp_value, humid_value 
+  real(kind=sp) :: cf_value, atemp_value, humid_value
   real(kind=dp) :: unow, vnow ! Current wind components
 
   ! Private module variable declarations:
@@ -914,12 +914,13 @@ end subroutine read_forcing
     integer, intent(in) :: year
 
     leapyear = .FALSE.
-    if (year .gt. 1953 .and. year .lt. 2013) then
+    if (year .gt. 1953 .and. year .lt. 2025) then
        if (year .eq. 1956 .or. year .eq. 1960 .or. year .eq. 1964 .or.  &
             year .eq. 1968 .or. year .eq. 1972 .or. year .eq. 1976 .or.  &
             year .eq. 1980 .or. year .eq. 1984 .or. year .eq. 1988 .or.  &
             year .eq. 1992 .or. year .eq. 1996 .or. year .eq. 2000 .or.  &
-            year .eq. 2004 .or. year .eq. 2008 .or. year .eq. 2012) then
+            year .eq. 2004 .or. year .eq. 2008 .or. year .eq. 2012 .or.  &
+            year .eq. 2016 .or. year .eq. 2020 .or. year .eq. 2024) then
           leapyear = .TRUE.
        endif
     else
