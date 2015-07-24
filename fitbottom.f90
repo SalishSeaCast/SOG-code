@@ -74,7 +74,8 @@ contains
     use precision_defs, only: dp
     use io_unit_defs, only: stdout
     use fundamental_constants, only: pi
-    
+    use core_variables, only: biology
+
     implicit none
     ! Arguments:
     real(kind=dp), intent(in):: arg
@@ -101,6 +102,16 @@ contains
        endif
     elseif (qty == quantity(3)) then
        index = 3
+       ! Apply zero biology bottom boundary condition, if requested
+       if(.not. biology) then
+          c(1,index) = 0.d0
+          c(2,index) = 0.d0
+          c(3,index) = 0.d0
+          c(4,index) = 0.d0
+          c(5,index) = 0.d0
+          c(6,index) = 0.d0
+          c(7,index) = 0.d0
+       endif
     elseif (qty == quantity(4)) then
        index = 4
     elseif (qty == quantity(5)) then

@@ -44,15 +44,15 @@ module core_variables
 
        ! Parameter values:
        N2chl, &  ! ratio of chl mg/m3 to uMol N in phytoplankton
-       ho         ! Initial mixing layer depth [m]
-
+       ho,    &  ! Initial mixing layer depth [m]
+       biology   ! No phytoplankton: test just the physics
 
   ! Public parameter declaration:
   real(kind=dp), parameter :: &
        ho = 2.0d0        ! Initial mixing layer depth [m]
   real(kind=dp) :: &
        N2chl    ! ratio of chlorophyl mg/m3 to uMol N in phytoplankton
-
+  logical :: biology  ! No phytoplankton: test just the physics
 
   ! Public type definitions:
   !
@@ -182,7 +182,7 @@ contains
          nuts_records, &  ! STRATOGEM bottle data (Nuts*.txt) record counter
          botl_records, &  ! IOS bottle data record counter
          chem_records     ! IOS chem bottle data record counter
-    logical :: biology, got_Fluores, got_NO, got_Si, got_DIC, got_Alk, got_Oxy
+    logical :: got_Fluores, got_NO, got_Si, got_DIC, got_Alk, got_Oxy
     real(kind=dp), dimension(0:3*int(grid%M+1), 24) :: &
 
          data  ! Data records read
