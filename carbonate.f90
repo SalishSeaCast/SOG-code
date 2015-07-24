@@ -159,9 +159,9 @@ contains
     ! It was given in mol/kg-H2O. I convert it to mol/kg-SW.
     ! TYPO on p. 121: the constant e9 should be e8.
     ! This is from eqs 22 and 23 on p. 123, and Table 4 on p 121:
-    lnKS = -4276.1d0 / TempK + 141.328d0 - 23.093d0 * logTempK +              &
-         (-13856.0d0 / TempK + 324.57d0 - 47.986d0 * logTempK) * sqrIonS + &
-         (35474.0d0 / TempK - 771.54d0 + 114.723d0 * logTempK) * IonS +       &
+    lnKS = -4276.1d0 / TempK + 141.328d0 - 23.093d0 * logTempK +             &
+         (-13856.0d0 / TempK + 324.57d0 - 47.986d0 * logTempK) * sqrIonS +   &
+         (35474.0d0 / TempK - 771.54d0 + 114.723d0 * logTempK) * IonS +      &
          (-2698.0d0 / TempK) * sqrIonS * IonS + (1776.0d0 / TempK) * IonS**2 
     KS = exp(lnKS)     &     ! this is on the free pH scale in mol/kg-H2O
          * (1.0d0 - 0.001005d0 * Sal)     ! convert to mol/kg-SW
@@ -196,13 +196,13 @@ contains
           ! Total scale and kg-sw
           pK1 = 3633.86d0 / TempK - 61.2172d0 + 9.6777d0 * logTempK - &
                0.011555d0 * Sal + 0.0001152d0 * Sal**2
-          K1 = 10**(-1.0d0 * pK1)  & ! this is on the total pH scale in mol/kg-SW
-               / SWStoTOT            ! convert to SWS pH scale
+          K1 = 10**(-1.0d0 * pK1) & ! this is on the total pH scale in mol/kg-SW
+               / SWStoTOT           ! convert to SWS pH scale
 
           pK2 = 471.78d0 / TempK + 25.929d0 - 3.16967d0 * logTempK - &
                0.01781d0 * Sal + 0.0001122d0 * Sal**2
-          K2 = 10**(-1.0d0 * pK2)  & ! this is on the total pH scale in mol/kg-SW
-               / SWStoTOT            ! convert to SWS pH scale
+          K2 = 10**(-1.0d0 * pK2) & ! this is on the total pH scale in mol/kg-SW
+               / SWStoTOT           ! convert to SWS pH scale
 
        else if (seaconstants .eq. 'M-10') then
 
