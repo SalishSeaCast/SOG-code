@@ -1066,15 +1066,15 @@ contains
                                 rate_mesozoo%sumpeakwid**2 ) ) )
 
     ! PREY MOD: added Ppico to Meso prey - BMM
-    average_prey = full_depth_average(Pmicro + D_PON + Pnano + Ppico + Z)
-    !average_prey = full_depth_average(Pmicro + D_PON + Pnano + Z)
+    !average_prey = full_depth_average(Pmicro + D_PON + Pnano + Ppico + Z)
+    average_prey = full_depth_average(Pmicro + D_PON + Pnano + Z)
 
-    Mesozoo(1:M) = Mesozoo(1:M) &
-         * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Ppico(1:M) + Z(1:M)) &
-         / ( average_prey + epsilon(average_prey))
     !Mesozoo(1:M) = Mesozoo(1:M) &
-    !     * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Z(1:M)) &
+    !     * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Ppico(1:M) + Z(1:M)) &
     !     / ( average_prey + epsilon(average_prey))
+    Mesozoo(1:M) = Mesozoo(1:M) &
+         * (Pmicro(1:M) + D_PON(1:M) + Pnano(1:M) + Z(1:M)) &
+         / ( average_prey + epsilon(average_prey))
 
     ! microzoo natural mortality:
     NatMort_uzoo = rate_uzoo%Rm * temp_Q10 * Z
@@ -1112,16 +1112,16 @@ contains
        ! global food limitation
 
        ! PREY MOD: added Ppico to Meso prey - BMM
-       food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) + Ppico(jj) &
-            + Z(jj) - rate_mesozoo%PredSlope) / &
-            (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
-            + Ppico(jj) + Z(jj) - rate_mesozoo%PredSlope &
-            + epsilon(rate_mesozoo%HalfSat))
-       !food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) &
+       !food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) + Ppico(jj) &
        !     + Z(jj) - rate_mesozoo%PredSlope) / &
        !     (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
-       !     + Z(jj) - rate_mesozoo%PredSlope &
+       !     + Ppico(jj) + Z(jj) - rate_mesozoo%PredSlope &
        !     + epsilon(rate_mesozoo%HalfSat))
+       food_limitation = (Pmicro(jj) + D_PON(jj) + Pnano(jj) &
+            + Z(jj) - rate_mesozoo%PredSlope) / &
+            (rate_mesozoo%HalfSat + Pmicro(jj) + D_PON(jj) + Pnano(jj) &
+            + Z(jj) - rate_mesozoo%PredSlope &
+            + epsilon(rate_mesozoo%HalfSat))
 
        denominator = (rate_mesozoo%MicroPref * Pmicro(jj) + &
             rate_mesozoo%NanoPref * Pnano(jj) + &
