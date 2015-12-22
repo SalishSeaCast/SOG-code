@@ -185,7 +185,7 @@ contains
     if (watertype .eq. 'sea') then
 
        ! Which constants?
-       seaconstants = 'L-00'
+       seaconstants = 'M-10'
 
        if (seaconstants .eq. 'L-00') then
 
