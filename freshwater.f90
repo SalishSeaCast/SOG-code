@@ -293,7 +293,7 @@ contains
     !     == -3: Linear (Estuary data)
     !
     if (river_alk_0 .gt. 0.0d0) then        ! Constant
-       river_Alk = river_alk_0 * exp(river_Alk_decay * Fresh_avg)
+       river_Alk = river_alk_0
     elseif (river_alk_0 .eq. -1.0d0) then   ! Poly2  (SoG data)
        if (Fresh_avg .gt. 6.0d3) then
           river_Alk = min(1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &

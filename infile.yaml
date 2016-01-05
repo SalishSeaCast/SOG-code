@@ -636,7 +636,7 @@ biology:
       variable_name: rate_mesozoo%MicroHalfSat
       description: mesozooplankton diatom grazing half saturation constant
     mesozoo_nano_preference:
-      value: 0.250
+      value: 0.200
       variable_name: rate_mesozoo%NanoPref
       description: mesozooplankton preference for nano-phytoplankton
     mesozoo_nano_grazing_limit:
@@ -650,7 +650,7 @@ biology:
       variable_name: rate_mesozoo%NanoHalfSat
       description: mesozooplankton nano-phyto grazing half saturation const
     mesozoo_pico_preference:
-      value: 0.100
+      value: 0.200
       variable_name: rate_mesozoo%PicoPref
       description: mesozooplankton preference for pico-phytoplankton
     mesozoo_pico_grazing_limit:
@@ -664,7 +664,7 @@ biology:
       variable_name: rate_mesozoo%PicoHalfSat
       description: mesozooplankton pico-phyto grazing half saturation const
     mesozoo_PON_preference:
-      value: 0.192
+      value: 0.150
       variable_name: rate_mesozoo%PON_Pref
       description: mesozooplankton preference for PON
     mesozoo_PON_grazing_limit:
@@ -678,11 +678,11 @@ biology:
       variable_name: rate_mesozoo%PON_HalfSat
       description: mesozooplankton PON feeding half saturation const
     mesozoo_microzoo_preference:
-      value: 0.308
+      value: 0.150
       variable_name: rate_mesozoo%Z_Pref
       description: mesozooplankton preference for microzooplankton
     mesozoo_microzoo_grazing_limit:
-      value: 0.500
+      value: 1.000
       units: uM N
       variable_name: rate_mesozoo%Z_PredSlope
       description: mesozooplankton microzooplankton grazing limit
