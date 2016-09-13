@@ -552,9 +552,13 @@ contains
 
     ! Interpolate quantity values at grid point depths
     i_data = 1
+    ! loop below changed to allow for data at higher resolution than model 
+    !   (EO 7/6/15, committed 9/13/16)
     do i_g = 0, grid%M + 1
        if(grid%d_g(i_g) > depth_clean(i_data)) then
-          i_data = i_data + 1
+          do while((grid%d_g(i_g) > depth_clean(i_data)) .AND. (i_data<data_records-1))
+            i_data = i_data + 1
+          enddo
        endif
        qty(i_g) = qty_clean(i_data-1) + del_qty(i_data-1) &
                   * ((grid%d_g(i_g) - depth_clean(i_data-1)) &
