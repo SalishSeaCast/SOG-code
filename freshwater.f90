@@ -115,10 +115,6 @@ contains
     ! Argument:
     integer, intent(in) :: M  ! Number of grid points
 
-    ! Initialize 15-day back average for alkalinity fit
-    Ft_store = 0.0d0;
-    n_avg = 1
-
     ! Allocate memory for fresh water quantity arrays
     call alloc_freshwater_variables(M)
     ! Read fresh water parameter values from the infile.
@@ -180,8 +176,6 @@ contains
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
          UseRiverTemp, Qinter, Einter, RiverTemp, TAinter
-    use numerics, only: &
-         day
     ! Functions and subroutines
     use unit_conversions, only: KtoC
     use carbonate, only: calc_carbonate
