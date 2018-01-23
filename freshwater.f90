@@ -25,6 +25,7 @@ module freshwater
   !   freshwater_bio -- Calculate the freshwater biological fluxes.
 
   use precision_defs, only: dp
+  use forcing, only: river_TA_record
 
   implicit none
 
@@ -129,7 +130,6 @@ contains
   subroutine read_freshwater_params()
     ! Read the fresh water parameter values from the infile.
     use input_processor, only: getpard, getparl
-    use forcing, only: river_TA_record
     implicit none
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
@@ -264,7 +264,7 @@ contains
                            + RiverTC * (-1.120083d-6      &
                            + RiverTC * ( 6.536332d-9)))))
 
-    # Constant or variable river TA
+    ! Constant or variable river TA
     if (river_TA_record) then
        river_Alk = TAinter
     else
