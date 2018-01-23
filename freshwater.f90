@@ -32,7 +32,6 @@ module freshwater
   public :: &
        ! Variables:
        Fw_surface,      &  ! Add all of the fresh water on the surface?
-       river_TA_record, &  ! Read in river TA record from file
        Ft,              &  ! Total fresh water flux
        F_n,             &  ! Fresh water contribution to salinity flux
        upwell,          &  ! Upwelling velocity from river flows
@@ -71,8 +70,7 @@ module freshwater
   !
   ! Public:
   logical :: &
-       Fw_surface,      &  ! Add all of the fresh water on the surface?
-       river_TA_record     !
+       Fw_surface        ! Add all of the fresh water on the surface?
   real(kind=dp) :: &
        Ft,  &  ! Total fresh water flux
        upwell  ! Upwelling velocity from river flows parameterization
@@ -131,6 +129,7 @@ contains
   subroutine read_freshwater_params()
     ! Read the fresh water parameter values from the infile.
     use input_processor, only: getpard, getparl
+    use forcing, only: river_TA_record
     implicit none
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")

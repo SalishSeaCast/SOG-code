@@ -19,7 +19,7 @@ module forcing
        ! Types:
        vary_quantity, vary_forcing, &
        ! Variables:
-       UseRiverTemp, vary, &
+       river_TA_record, UseRiverTemp, vary, &
        Qinter, Einter, RiverTemp, TAinter, &
        cf_value, atemp_value, humid_value, &
        unow, vnow, &
@@ -51,7 +51,7 @@ module forcing
   ! Public Variable Declarations:
   type(vary_forcing) :: vary
   ! Do we add the cooling/warming effect of the Major River?
-  logical :: UseRiverTemp
+  logical :: UseRiverTemp, river_TA_record
   real(kind=dp) :: Qinter, Einter,  & ! Current flow of Major and Minor Rivers
                    RiverTemp,       & ! Current temperature of Major River
                    TAinter            ! Total Alkalinity of Major River
@@ -164,7 +164,6 @@ contains
     use unit_conversions, only: CtoK
     use numerics, only: &
          initDatetime   ! Date/time of initial conditions
-    use freshwater only: river_TA_record
     implicit none
     ! Local variables:
     !
