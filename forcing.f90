@@ -20,7 +20,7 @@ module forcing
        vary_quantity, vary_forcing, &
        ! Variables:
        UseRiverTemp, vary, &
-       Qinter, Einter, RiverTemp, &
+       Qinter, Einter, RiverTemp, TAinter, &
        cf_value, atemp_value, humid_value, &
        unow, vnow, &
        ! Subroutines:
@@ -52,8 +52,9 @@ module forcing
   type(vary_forcing) :: vary
   ! Do we add the cooling/warming effect of the Major River?
   logical :: UseRiverTemp
-  real(kind=dp) :: Qinter, Einter, &! Current flow of Major and Minor Rivers
-                   RiverTemp  ! Current temperature of Major River
+  real(kind=dp) :: Qinter, Einter,  & ! Current flow of Major and Minor Rivers
+                   RiverTemp,       & ! Current temperature of Major River
+                   TAinter            ! Total Alkalinity of Major River
   ! current values of cloud fraction, air temperature and humidity
   real(kind=sp) :: cf_value, atemp_value, humid_value
   real(kind=dp) :: unow, vnow ! Current wind components
@@ -69,7 +70,8 @@ module forcing
        wind_eastnorth,  &  ! North-east wind speed forcing data array
        wind_northwest,  &  ! North-west wind speed forcing data array
        Qriver,          &  ! Major river flow forcing data array
-       Eriver              ! Minor river flow forcing data array
+       Eriver,          &  ! Minor river flow forcing data array
+       TAriver             ! Major river total alkalinity
 
   real(kind=sp), dimension(:,:), allocatable :: &
        cf,              &  ! Cloud fraction forcing data array
@@ -162,6 +164,7 @@ contains
     use unit_conversions, only: CtoK
     use numerics, only: &
          initDatetime   ! Date/time of initial conditions
+    use freshwater only: river_TA_record
     implicit none
     ! Local variables:
     !
@@ -445,6 +448,9 @@ contains
        rivers_startyear = startyear
     endif
 
+    ! Initialize river TA array to zero
+    TAriver = 0.
+
     ! check if using average data
     if (use_average_forcing_data .eq. "yes" &
         .or. use_average_forcing_data .eq. "fill") then
@@ -452,39 +458,72 @@ contains
        flush(stdout)
        open(unit=forcing_data, file=major_river_file)
        do jc = 1, rivers_startday-1
-          read(forcing_data, *) year, month, day, Qriver(jc)
+          if (river_TA_record) then
+             read(forcing_data, *) year, month, day, Qriver(jc), TAriver(jc)
+          else
+             read(forcing_data, *) year, month, day, Qriver(jc)
+          endif
        enddo
        do jc = rivers_startday, river_n/NY
-          read(forcing_data,*) year, month, day, Qriver(jc+1-rivers_startday)
+          if (river_TA_record) then
+             read(forcing_data,*) year, month, day, &
+                  Qriver(jc+1-rivers_startday), TAriver(jc+1-rivers_startday)
+          else
+             read(forcing_data,*) year, month, day, Qriver(jc+1-rivers_startday)
+          endif
        enddo
        close(forcing_data)
        if (rivers_startday .ne. 1) then
           open(unit=forcing_data, file=major_river_file)
           do jc = 1, rivers_startday-1
-             read(forcing_data,*) year, month, day, &
-                  Qriver(river_n/NY+1-rivers_startday+jc)
+             if (river_TA_record) then
+                read(forcing_data,*) year, month, day, &
+                     Qriver(river_n/NY+1-rivers_startday+jc), &
+                     TAriver(river_n/NY+1-rivers_startday+jc)
+             else
+                read(forcing_data,*) year, month, day, &
+                     Qriver(river_n/NY+1-rivers_startday+jc)
+             endif
           enddo
           close(forcing_data)
        endif
        do jc = river_n/NY+1, river_n
           Qriver(jc) = Qriver(jc-river_n/NY)
+          if (river_TA_record) then
+             TAriver(jc) = TAriver(jc-river_n/NY)
+          endif
        enddo
     elseif  (use_average_forcing_data .eq. "histfill") then
        major_river_file = getpars("average/hist major river")
        flush(stdout)
        open(unit=forcing_data, file=major_river_file)
        do jc = 1, rivers_startday-1
-          read(forcing_data, *) year, month, day, Qriver(jc)
+          if (river_TA_record) then
+             read(forcing_data, *) year, month, day, Qriver(jc), TAriver(jc)
+          else
+             read(forcing_data, *) year, month, day, Qriver(jc)
+          endif
        enddo
        do jc = rivers_startday, river_n
-          read(forcing_data,*) year, month, day, Qriver(jc+1-rivers_startday)
+          if (river_TA_record) then
+             read(forcing_data,*) year, month, day, &
+                  Qriver(jc+1-rivers_startday), TAriver(jc+1-rivers_startday)
+          else
+             read(forcing_data,*) year, month, day, Qriver(jc+1-rivers_startday)
+          endif
        enddo
        close(forcing_data)
        if (rivers_startday .ne. 1) then
           open(unit=forcing_data, file=major_river_file)
           do jc = 1, rivers_startday-1
-             read(forcing_data,*) year, month, day, &
-                  Qriver(river_n+1-rivers_startday+jc)
+             if (river_TA_record) then
+                read(forcing_data,*) year, month, day, &
+                     Qriver(river_n+1-rivers_startday+jc), &
+                     TAriver(river_n+1-rivers_startday+jc)
+             else
+                read(forcing_data,*) year, month, day, &
+                     Qriver(river_n+1-rivers_startday+jc)
+             endif
           enddo
           close(forcing_data)
        endif
@@ -498,11 +537,21 @@ contains
        flush(stdout)
        found_data = .false.
        do while(.not. found_data)
-          read(forcing_data, *, end=778) year, month, day, Qriver(1)
+          if (river_TA_record) then
+             read(forcing_data, *, end=778) year, month, day, Qriver(1), &
+                  TAriver(1)
+          else
+             read(forcing_data, *, end=778) year, month, day, Qriver(1)
+          endif
           if(year == rivers_startyear .and. month == rivers_startmonth &
                .and. day == rivers_startday) then
              do jc = 2, river_n
-                read(forcing_data,*,end=778) year, month, day, Qriver(jc)
+                if (river_TA_record) then
+                   read(forcing_data,*,end=778) year, month, day, Qriver(jc), &
+                        TAriver(jc)
+                else
+                   read(forcing_data,*,end=778) year, month, day, Qriver(jc)
+                endif
              enddo
              found_data = .true.
           endif
@@ -691,11 +740,14 @@ end subroutine read_forcing
     if (vary%rivers%enabled .and. vary%rivers%fixed) then
        Qinter = SNGL(vary%rivers%value)
        Einter = 0.
+       TAinter = 750.
     else
        Qinter = (day_time * Qriver(accul_day) &
             + (86400 - day_time) * Qriver(accul_day - 1)) / 86400.
        Einter = (day_time * Eriver(accul_day) &
             + (86400 - day_time) * Eriver(accul_day-1)) / 86400.
+       TAinter = (day_time * TAriver(accul_day) &
+            + (86400 - day_time) * TAriver(accul_day - 1)) / 86400.
        if (vary%rivers%enabled) then
           Qinter = Qinter * SNGL(vary%rivers%fraction)
           Einter = Einter * SNGL(vary%rivers%fraction)
@@ -951,7 +1003,7 @@ end subroutine read_forcing
     allocate(cf(met_n, 24), atemp(met_n, 24), humid(met_n, 24), stat=allocstat)
     call alloc_check(allocstat, msg)
     msg = "River flow forcing data arrays"
-    allocate(Qriver(river_n), Eriver(river_n), stat=allocstat)
+    allocate(Qriver(river_n), Eriver(river_n), TAriver(river_n), stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_forcing_variables
 
@@ -971,7 +1023,7 @@ end subroutine read_forcing
     deallocate(cf, atemp, humid, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
     msg = "River flow forcing data arrays"
-    deallocate(Qriver, Eriver, stat=dallocstat)
+    deallocate(Qriver, Eriver, TAriver, stat=dallocstat)
     call dalloc_check(dallocstat, msg)
   end subroutine dalloc_forcing_variables
 

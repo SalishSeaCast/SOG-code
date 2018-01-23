@@ -31,12 +31,13 @@ module freshwater
   private
   public :: &
        ! Variables:
-       Fw_surface, &  ! Add all of the fresh water on the surface?
-       Ft,         &  ! Total fresh water flux
-       F_n,        &  ! Fresh water contribution to salinity flux
-       upwell,     &  ! Upwelling velocity from river flows
-                      ! parameterization.
-       totalfresh, &  ! total amount of freshwater
+       Fw_surface,      &  ! Add all of the fresh water on the surface?
+       river_TA_record, &  ! Read in river TA record from file
+       Ft,              &  ! Total fresh water flux
+       F_n,             &  ! Fresh water contribution to salinity flux
+       upwell,          &  ! Upwelling velocity from river flows
+                           ! parameterization.
+       totalfresh,      &  ! total amount of freshwater
 
        ! Diagnostics:
        S_riv, & ! Surface salinity prediction from fit
@@ -70,7 +71,8 @@ module freshwater
   !
   ! Public:
   logical :: &
-       Fw_surface   ! Add all of the fresh water on the surface?
+       Fw_surface,      &  ! Add all of the fresh water on the surface?
+       river_TA_record     !
   real(kind=dp) :: &
        Ft,  &  ! Total fresh water flux
        upwell  ! Upwelling velocity from river flows parameterization
@@ -84,35 +86,26 @@ module freshwater
   !
   ! Private:
   logical :: &
-       use_Fw_nutrients    ! Include influence of Fw nutrients?
-  integer :: &
-       n_avg         ! Denominator for 15-day back-average
-  integer, parameter :: &
-       Ft_store_length = 15 * 86400 / 900
+       use_Fw_nutrients   ! Include influence of Fw nutrients?
   real(kind=dp), dimension(:), allocatable :: &
        Fw    ! Fresh water flux profile
-  real(kind=dp), dimension(Ft_store_length) :: &
-       Ft_store    ! Ft storage vector
   real(kind=dp) :: &
        rho_riv,      &  ! Surface freshwater density [kg/m^3]
-       Fresh_avg,    &  ! Running 15-day back-average
        Fw_scale,     &  ! Fresh water scale factor for river flows
        Fw_depth,     &  ! Depth to distribute fresh water flux over
-       upwell_const, &  ! Maximum upwelling velocity (tuning parameter)  
-       Qbar,         &  ! Mean total freshwater 
-       F_SOG,        &  ! Exponential of SOG component of Ft     
-       F_RI,         &  ! Exponential of RI component of Ft     
-       cbottom,      &  ! Bottom salinity   
+       upwell_const, &  ! Maximum upwelling velocity (tuning parameter)
+       Qbar,         &  ! Mean total freshwater
+       F_SOG,        &  ! Exponential of SOG component of Ft
+       F_RI,         &  ! Exponential of RI component of Ft
+       cbottom,      &  ! Bottom salinity
        ! Values for salinity fit
-       calpha,       &        
+       calpha,       &
        calpha2,      &
        cgamma,       &
        cbeta,        &
-       ! Alkalinity fit parameters
-       river_Alk_0,     &  !
-       river_Alk_decay, &  !
-       pH_riv,          &  !
-       river_chem          !
+       ! River CO2 chemistry parameters
+       river_TA,     &  !
+       river_pH         !
 
 contains
 
@@ -141,16 +134,16 @@ contains
     implicit none
     ! Maximum upwelling velocity (tuning parameter)
     upwell_const = getpard("upwell_const")
-   ! Fresh water scale factor for river flows 
+   ! Fresh water scale factor for river flows
     Qbar = getpard("Qbar")
-    F_SOG = getpard("F_SOG") 
+    F_SOG = getpard("F_SOG")
     F_RI = getpard("F_RI")
-    Fw_scale = getpard('Fw_scale')     
+    Fw_scale = getpard('Fw_scale')
     ! Add all fresh water on surface?
-    Fw_surface = getparl('Fw_surface') 
+    Fw_surface = getparl('Fw_surface')
     ! Depth to distribute freshwater flux over
     if (.not. Fw_surface) then
-       Fw_depth = getpard('Fw_depth')  
+       Fw_depth = getpard('Fw_depth')
     endif
     ! Include effect of Fw nutrients?
     use_Fw_nutrients = getparl('use_Fw_nutrients')
@@ -163,12 +156,11 @@ contains
     cbeta = getpard('cbeta')
 
     ! Alkalinity fit parameters
-    river_Alk_0 = getpard('river_Alk_0')
-    river_Alk_decay = getpard('river_Alk_decay')
-    pH_riv = getpard('pH_riv')
-    river_chem = pH_riv
+    river_TA_record = getparl('river_TA_record')
+    river_TA = getpard('river_TA')
+    river_pH = getpard('river_pH')
   end subroutine read_freshwater_params
-  
+
 
   subroutine freshwater_phys(S_old, Ts_old, Td_old, h)
     ! Calculate the strength of upwelling/entrainment, the freshwater
@@ -188,7 +180,7 @@ contains
     use irradiance, only: &
          Q_n   ! Non-turbulent heat flux profile array
     use forcing, only: &
-         UseRiverTemp, Qinter, Einter, RiverTemp
+         UseRiverTemp, Qinter, Einter, RiverTemp, TAinter
     use numerics, only: &
          day
     ! Functions and subroutines
@@ -203,7 +195,7 @@ contains
     real(kind=dp), intent(in) :: &
          S_old,        &  ! Surface salinity
          Ts_old,       &  ! Surface temperature
-         Td_old,       &  ! Deep (bottom of grid) temperature        
+         Td_old,       &  ! Deep (bottom of grid) temperature
          h                ! Mixing layer depth
 
     ! Local variables
@@ -218,43 +210,40 @@ contains
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
 
-    ! Parameterized fit of the surface salinity 
+    ! Parameterized fit of the surface salinity
 
-    ! For the  Strait of Georgia at station S3 based on the river flows.  
+    ! For the  Strait of Georgia at station S3 based on the river flows.
     !(Re-derived by S.Allen numerous times.  This time, late June 2007
     ! Labbook 125 to 131)
 
-    ! For Rivers Inlet at Station DF02 based on river flows - derived by M.Wolfe, 
+    ! For Rivers Inlet at Station DF02 based on river flows - derived by M.Wolfe,
     ! March 2009 labbok March19th.
-  
-    ! This value is not 
+
+    ! This value is not
     ! directly used in the model but is used to make sure the tuned Ft value
     ! is correct. tanh fn means no matter what the total fresh, a salinity
-    ! below 0 is not predicted.  
+    ! below 0 is not predicted.
 
     ! fit to freshwater and entrainment pg 58-59, 29-Mar-2007
     totalfresh = Qinter + 55.0*Einter
-    
+
+    ! River diagnostics
     open(12,file="total_check")
     write(12,*) totalfresh, Qinter
-    close(12)    
-
- 
+    close(12)
     S_riv = cbottom * ((exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)) / &
-         ( cgamma + exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)))   
-
+         ( cgamma + exp(-totalfresh/calpha) + cbeta*exp(-totalfresh/calpha2)))
     open(12,file="S_riv_check")
     write(12,*)S_riv
     close(12)
- 
+
     ! The entrainment of deep water into the bottom of the
     ! grid is based on the parameterization derived by Susan Allen in
     ! Jun-2006 (See entrainment.pdf) exponent with significant modifications
     ! in Mar-2007 (labbook pg 59)
-    
     upwell = upwell_const * totalfresh/Qbar * exp(-totalfresh/Qbar) &
          /0.368
- 
+
     ! Tuned fresh water flux value (to give, on average) the parameterized
     ! value above.
     Ft = Fw_scale * totalfresh * S_old/cbottom *  &
@@ -262,20 +251,12 @@ contains
          (totalfresh/Qbar)**F_SOG) ! for both
 
 
-!    Ft = Fw_scale * totalfresh * S_old/cbottom *  &
-!    ((1-0.35*exp(-(totalfresh-1.2*Qbar)**2/(4.*Qbar**2)))*(totalfresh/Qbar)**0.2)**F_SOG * & ! for SoG
-!    (1-exp(-totalfresh/Fm))**F_RI  ! for F_RI
+    ! Old Rivers Inlet fit
+    ! Ft = Fw_scale * totalfresh * S_old/cbottom *  &
+    ! ((1-0.35*exp(-(totalfresh-1.2*Qbar)**2/(4.*Qbar**2)))*(totalfresh/Qbar)**0.2)**F_SOG * & ! for SoG
+    ! (1-exp(-totalfresh/Fm))**F_RI  ! for F_RI
 
     !-------------------------------------------------------------
-    ! Calculate 15-day back average for alkalinity fit
-    Ft_store(n_avg) = totalfresh
-    Fresh_avg = sum(Ft_store) / n_avg
-    if (n_avg .lt. Ft_store_length) then
-       n_avg = n_avg + 1
-    else
-       Ft_store = cshift(Ft_store, 1)
-    endif
-
     ! River density
     ! Density of pure water at p = 0 from Rich Pawlowicz limstate.m
     rho_riv = 999.842594d0 + RiverTC * ( 6.793952d-2      &
@@ -284,40 +265,15 @@ contains
                            + RiverTC * (-1.120083d-6      &
                            + RiverTC * ( 6.536332d-9)))))
 
-    ! Calculate River Alkalinity from discharge
-    ! river_Alk = river_Alk_0 * exp(river_Alk_decay * Fresh_avg)
-    ! New fits:
-    !      >  0: Constant
-    !     == -1: Poly2  (SoG data)
-    !     == -2: Power1 (Hope data)
-    !     == -3: Linear (Estuary data)
-    !
-    if (river_alk_0 .gt. 0.0d0) then        ! Constant
-       river_Alk = river_alk_0
-    elseif (river_alk_0 .eq. -1.0d0) then   ! Poly2  (SoG data)
-       if (Fresh_avg .gt. 6.0d3) then
-          river_Alk = min(1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &
-               + 1127.8132d0, 805.3502d0)
-       else
-          river_Alk = 1.8766d-5 * Fresh_avg**2 - 0.2217d0 * Fresh_avg &
-               + 1127.8132d0
-       end if
-    elseif (river_alk_0 .eq. -2.0d0) then   ! Power1 (Hope data)
-       river_Alk = min(3466.0049d0 * Fresh_avg**(-0.1576d0), 1360.8297d0)
-    elseif (river_alk_0 .eq. -3.0d0) then   ! Linear (Estuary data)
-       river_Alk = -0.0243d0 * Fresh_avg + 932.5315d0
+    # Constant or variable river TA
+    if (river_TA_record) then
+       river_Alk = TAinter
     else
-       write (*,*) "uninterpretable value ", river_alk_0, &
-            " for river_alk_0 in freshwater.f90"
-       call exit(1)
-    end if
-
-    if (river_chem .lt. 0.0d0) then
-       pH_riv = 0.14d0 * sin(0.0172d0 * (day - 116d0)) + 7.7d0
+       river_Alk = river_TA
     end if
 
     ! Calculate DIC from Alk and pH
-    call calc_carbonate('fresh', 'pH', 'DIC', river_Alk, pH_riv, rho_riv, &
+    call calc_carbonate('fresh', 'pH', 'DIC', river_Alk, river_pH, rho_riv, &
          0.0d0, RiverTemp, 0.0d0, 0.0d0, 0.0d0, river_DIC)
 
     ! Calculate Saturated Oxygen from Rivers
@@ -349,9 +305,9 @@ contains
        F_n = 0.0d0
     else
        Fw = Ft * exp(-grid%d_i / (Fw_depth * h))
-       F_n = cbottom * Fw  
+       F_n = cbottom * Fw
        if (UseRiverTemp) then
-          Q_n = Q_n + (RiverTemp - Td_old) * Fw  
+          Q_n = Q_n + (RiverTemp - Td_old) * Fw
        endif
     endif
   end subroutine freshwater_phys
@@ -362,7 +318,7 @@ contains
 
     use grid_mod, only: grid
     implicit none
-    
+
     character (len=*), intent(in) :: qty
     real (kind=dp), dimension(0:), intent(in) :: current_value
     real (kind=dp), intent(out) :: surf_flux
@@ -374,7 +330,7 @@ contains
        if (Fw_surface) then
           distrib_flux = 0.
           if (qty.eq."nitrate") then
-             ! if phyto are using the nitrate the grad is zero'd. 
+             ! if phyto are using the nitrate the grad is zero'd.
              ! 4.0 = 2 x (Michalis-Menton K)
              surf_flux = Ft * phys_circ_nitrate * &
                   min(4.0, current_value(1))/ 4.0
@@ -453,7 +409,7 @@ contains
 
     msg = "Fresh water flux and salinity contribution profile arrays"
     allocate(Fw(0:M), F_n(0:M), &
-         stat=allocstat) 
+         stat=allocstat)
     call alloc_check(allocstat, msg)
   end subroutine alloc_freshwater_variables
 

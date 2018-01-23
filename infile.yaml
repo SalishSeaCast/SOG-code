@@ -490,18 +490,18 @@ physics:
         variable_name: cbeta
         description: beta coefficient of fresh water salinity fit
 
-    river_alkalinity_fit:
-      river_alkalinity_zero:
-        value: 873.7440
-        variable_name: river_Alk_0
-        description: river alkalinity at zero discharge
-      river_alkalinity_decay:
-        value: -1.5e-4
-        variable_name: river_Alk_decay
-        description: river alkalinity decay with discharge
+    river_CO2_chemistry:
+      river_TA_record:
+        value: False
+        variable_name: river_TA_record
+        description: river total alkalinity record
+      river_total_alkalinity:
+        value: 750.
+        variable_name: river_TA
+        description: river total alkalinity
       river_pH:
         value: 7.7
-        variable_name: pH_riv
+        variable_name: river_pH
         description: pH of river water
 
     upwelling:
