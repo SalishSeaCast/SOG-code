@@ -175,7 +175,7 @@ contains
     use fundamental_constants, only: Redfield_C
     implicit none
     ! Local variables:
-    character*80 :: fn  ! name of data file to read
+    character*120 :: fn  ! name of data file to read
     integer :: &
          i,            &  ! loop index
          ctd_records,  &  ! CTD data record counter
@@ -440,7 +440,7 @@ contains
     use grid_mod, only: grid
     implicit none
     ! Arguments:
-    character*80, intent(in) :: filename  ! Name of data file to read
+    character*120, intent(in) :: filename  ! Name of data file to read
     integer, intent(out) :: n_records     ! Number of records read
     type(col_indices), intent(out):: col  ! Column number of various
                                           ! data quantities

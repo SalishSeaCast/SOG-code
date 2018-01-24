@@ -169,9 +169,9 @@ contains
     !
 
     ! Should average data be used
-    character*80 :: use_average_forcing_data
+    character*120 :: use_average_forcing_data
     ! File name for minor and major river data files
-    character*80 :: minor_river_file, major_river_file, river_nut_file
+    character*120 :: minor_river_file, major_river_file, river_nut_file
     ! Indices
     integer :: ic, jc, j
     ! Data file values

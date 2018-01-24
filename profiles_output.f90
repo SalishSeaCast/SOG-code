@@ -51,7 +51,7 @@ module profiles_output
   !
   integer :: &
        noprof  ! Number of profiles output files to be written
-  character(len=80) :: &
+  character(len=120) :: &
        profilesBase_fn, &  ! Profiles results files base file name
        ! (profile date/time gets appended)
        Hoffmueller_fn      ! Hoffmueller results file name
@@ -105,7 +105,7 @@ contains
     type(datetime_), intent(in)   :: &
          CTD_Datetime  ! Date/time of CTD profile that initialized the run
     ! Local variables:
-    character(len=80) :: &
+    character(len=120) :: &
          haloclines_fn  ! halocline results file name
     ! Temporary storage for formated datetime string.  Needed to work around
     ! an idiocyncracy in pgf90 that seems to disallow non-intrinsic function

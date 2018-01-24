@@ -39,7 +39,7 @@ module input_processor
   integer, parameter :: &
        label_len = 25,  &  ! Max length of infile item label
        desc_len = 70,   &  ! Max length of infile item description
-       str_len = 80        ! Max length of string value
+       str_len = 120       ! Max length of string value
 
 contains
 
@@ -48,7 +48,7 @@ contains
     !   -Setting the state of the getpar* report to stdout
     !   -Starting the report, if requested
     !   -Read the infile from stdin, stripping comments from it, and
-    !    writing the non-comment lines to a scratch file, ready for 
+    !    writing the non-comment lines to a scratch file, ready for
     !    the read_* subroutines of other modules the get values from.
     use io_unit_defs, only: stdout, stripped_infile
     implicit none
@@ -452,7 +452,7 @@ contains
        ! Create a left justified string representation of the value
        str = datetime_str(date_time)
        write(stdout, 100) trim(desc), str, date_time%yr_day, date_time%day_sec
-100    format(a70, " = ", a, " year-day = ", i3, " day-sec = ", i5) 
+100    format(a70, " = ", a, " year-day = ", i3, " day-sec = ", i5)
     endif
   end function getpar_datetime
 

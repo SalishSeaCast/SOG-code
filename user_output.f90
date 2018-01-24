@@ -26,7 +26,7 @@ module user_output
 
   ! Private variable declarations:
   !
-  character(len=80) :: &
+  character(len=120) :: &
        userprofilesBase_fn, &  ! User profiles results files base file name
        ! (profile date/time gets appended)
        userHoffmueller_fn      ! User Hoffmueller results file name

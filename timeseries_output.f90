@@ -37,7 +37,7 @@ contains
     type(datetime_), intent(in) :: &
          CTD_Datetime  ! Date/time of CTD profile that initialized the run
     ! Local variables:
-    character(len=80) :: &
+    character(len=120) :: &
          fn  ! File name to open
     type(datetime_) :: &
          start_Datetime  ! Midnight of the run start day
